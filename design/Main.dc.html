@@ -1,0 +1,361 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Book a lesson</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0;font-family:'Figtree',system-ui,sans-serif;color:#14212B;background:#FFFFFF}
+a{color:#0B5E7A}a:hover{color:#084A61}
+</style>
+</helmet>
+<div style="width: 390px; height: 1460px; box-sizing: border-box; background: #FFFFFF; display: flex; flex-direction: column; font-family: 'Figtree', system-ui, sans-serif; color: #14212B">
+<div style="display: flex; flex-direction: column; gap: 24px; padding: 28px 20px 20px">
+<div style="display: flex; flex-direction: column; gap: 2px">
+<div style="font-size: 13px; color: #5F6B73">Hi, Mei Ling</div>
+<h1 style="margin: 0; font-size: 24px; font-weight: 600; line-height: 1.25">Book a lesson</h1>
+</div>
+<div style="padding: 12px 14px; border-radius: 10px; background: #F6F6F4; font-size: 13px; line-height: 1.5; color: #14212B"><span style="font-weight: 600">Coach:</span> If lightning closes the pool, your lesson goes back to your package.</div>
+<div style="display: flex; flex-direction: column; gap: 16px">
+<div style="display: flex; flex-direction: column; gap: 8px">
+<fieldset style="margin: 0; padding: 0; border: none; min-width: 0; display: flex; flex-direction: column; gap: 8px">
+<legend style="padding: 0; margin-bottom: 8px; font-size: 13px; font-weight: 500; color: #5F6B73">Who’s this lesson for?</legend>
+<sc-for list="{{groups}}" as="g" hint-placeholder-count="2">
+<label style="display: flex; align-items: center; gap: 10px; min-height: 48px; box-sizing: border-box; padding: 0 14px; border-radius: 10px; border: 1px solid {{g.bd}}; background: {{g.bg}}; cursor: pointer">
+<input type="radio" name="book-group" checked="{{g.on}}" onChange="{{g.pick}}" style="width: 18px; height: 18px; margin: 0; flex-shrink: 0; accent-color: #0B5E7A">
+<span style="flex: 1; font-size: 15px; font-weight: 500">{{g.names}}</span>
+<span style="padding: 2px 8px; border-radius: 6px; background: #F1F1EE; color: #3F4A52; font-size: 12px; font-weight: 600">{{g.type}}</span>
+</label>
+</sc-for>
+</fieldset>
+<span style="font-size: 12px; line-height: 1.45; color: #5F6B73">Your coach sets up who books together. Ask them if you need a new group.</span>
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<div style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px">
+<span style="font-size: 15px; font-weight: 600">{{pkgTitle}}</span>
+<span style="font-size: 13px; color: #5F6B73">Paid</span>
+</div>
+<div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px">
+<sc-for list="{{segs}}" as="s" hint-placeholder-count="4">
+<div style="height: 4px; border-radius: 2px; background: {{s.bg}}"></div>
+</sc-for>
+</div>
+<div style="font-size: 13px; color: #5F6B73">{{pkgCaption}}</div>
+<sc-if value="{{onCredit}}" hint-placeholder-val="{{ false }}">
+<div style="font-size: 13px; line-height: 1.5; color: #9A3412">{{creditText}}</div>
+</sc-if>
+</div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<div style="display: flex; align-items: baseline; justify-content: space-between">
+<span style="font-size: 13px; font-weight: 500; color: #5F6B73">Day</span>
+<span style="font-size: 13px; color: #5F6B73">28 Sep – 4 Oct</span>
+</div>
+<div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px">
+<sc-for list="{{days}}" as="d" hint-placeholder-count="7">
+<button type="button" onClick="{{d.pick}}" aria-pressed="{{d.pressed}}" aria-label="{{d.aria}}" style="height: 76px; padding: 0; border: none; background: transparent; font-family: inherit; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px">
+<span style="font-size: 12px; color: #5F6B73">{{d.dow}}</span>
+<span style="width: 36px; height: 36px; border-radius: 18px; display: flex; align-items: center; justify-content: center; background: {{d.circle}}; color: {{d.dateFg}}; font-size: 16px; font-weight: {{d.wt}}">{{d.date}}</span>
+<span style="width: 4px; height: 4px; border-radius: 2px; background: {{d.dot}}"></span>
+</button>
+</sc-for>
+</div>
+</div>
+<div style="display: flex; gap: 2px; padding: 3px; border-radius: 10px; background: #F6F6F4">
+<button type="button" onClick="{{setLen1}}" aria-pressed="{{len1.pressed}}" style="flex: 1; height: 44px; border: 1px solid {{len1.bd}}; border-radius: 8px; background: {{len1.bg}}; color: {{len1.fg}}; font-family: inherit; font-size: 14px; font-weight: {{len1.wt}}; cursor: pointer">1 hour</button>
+<button type="button" onClick="{{setLen2}}" aria-pressed="{{len2.pressed}}" style="flex: 1; height: 44px; border: 1px solid {{len2.bd}}; border-radius: 8px; background: {{len2.bg}}; color: {{len2.fg}}; font-family: inherit; font-size: 14px; font-weight: {{len2.wt}}; cursor: pointer">2 hours</button>
+</div>
+<div style="display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+<span style="font-size: 13px; font-weight: 500; color: #5F6B73">Start time · {{dayFull}}</span>
+<a href="Schedule.dc.html" style="display: flex; align-items: center; min-height: 44px; font-size: 13px; font-weight: 600; color: #0B5E7A; text-decoration: none">See the week</a>
+</div>
+<sc-if value="{{hasMine}}" hint-placeholder-val="{{ false }}">
+<div style="font-size: 13px; color: #0B5E7A">{{mineText}}</div>
+</sc-if>
+<sc-if value="{{hasMorning}}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; flex-direction: column; gap: 8px">
+<span style="font-size: 12px; color: #5F6B73">Morning</span>
+<div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px">
+<sc-for list="{{morning}}" as="t" hint-placeholder-count="5">
+<button type="button" onClick="{{t.pick}}" aria-pressed="{{t.pressed}}" aria-label="{{t.aria}}" style="height: 44px; padding: 0; border-radius: 10px; border: 1px solid {{t.bd}}; background: {{t.bg}}; color: {{t.fg}}; text-decoration: {{t.deco}}; font-family: inherit; font-size: 13px; font-weight: 500; cursor: pointer">{{t.label}}</button>
+</sc-for>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{hasEvening}}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; flex-direction: column; gap: 8px">
+<span style="font-size: 12px; color: #5F6B73">Evening</span>
+<div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px">
+<sc-for list="{{evening}}" as="t" hint-placeholder-count="8">
+<button type="button" onClick="{{t.pick}}" aria-pressed="{{t.pressed}}" aria-label="{{t.aria}}" style="height: 44px; padding: 0; border-radius: 10px; border: 1px solid {{t.bd}}; background: {{t.bg}}; color: {{t.fg}}; text-decoration: {{t.deco}}; font-family: inherit; font-size: 13px; font-weight: 500; cursor: pointer">{{t.label}}</button>
+</sc-for>
+</div>
+</div>
+</sc-if>
+<span style="font-size: 12px; line-height: 1.45; color: #5F6B73">Crossed-out times clash with another lesson or your coach’s travel time. Tap one to see why.</span>
+</div>
+</div>
+<div style="margin-top: auto; display: flex; flex-direction: column">
+<div style="display: flex; flex-direction: column; gap: 12px; padding: 16px 20px; border-top: 1px solid #ECECE9">
+<div style="display: flex; flex-direction: column; gap: 2px">
+<div style="font-size: 16px; font-weight: 600">{{summaryTitle}}</div>
+<div style="font-size: 13px; line-height: 1.45; color: {{useFg}}">{{summaryUse}}</div>
+</div>
+<sc-if value="{{canRepeat}}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; align-items: center; gap: 10px; min-height: 44px">
+<input id="book-repeat" type="checkbox" checked="{{repeat}}" onChange="{{toggleRepeat}}" style="width: 20px; height: 20px; margin: 0; flex-shrink: 0; accent-color: #0B5E7A">
+<label for="book-repeat" style="font-size: 14px; line-height: 1.4">{{repeatText}}</label>
+</div>
+</sc-if>
+<button type="button" disabled="{{noPick}}" style="height: 50px; border: none; border-radius: 10px; background: {{bookBg}}; color: {{bookFg}}; font-family: inherit; font-size: 15px; font-weight: 600; cursor: pointer">{{bookLabel}}</button>
+<div style="font-size: 12px; color: #5F6B73; text-align: center">Free to cancel or reschedule up to 6 hours before.</div>
+</div>
+<nav aria-label="Main" style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); padding: 4px 8px 16px; border-top: 1px solid #ECECE9">
+<a href="Main.dc.html" aria-current="page" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; min-height: 52px; text-decoration: none; color: #0B5E7A; font-size: 11px; font-weight: 600">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18M8 3v4M16 3v4M12 13v5M9.5 15.5h5"></path></svg>
+<span>Book</span>
+</a>
+<a href="Schedule.dc.html" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; min-height: 52px; text-decoration: none; color: #5F6B73; font-size: 11px; font-weight: 500">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"></rect><path d="M3 9h18M9 9v12M15 9v12"></path></svg>
+<span>Schedule</span>
+</a>
+<a href="MyClasses.dc.html" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; min-height: 52px; text-decoration: none; color: #5F6B73; font-size: 11px; font-weight: 500">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13"></path><path d="M3.5 6h.01M3.5 12h.01M3.5 18h.01"></path></svg>
+<span>My classes</span>
+</a>
+<button type="button" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; min-height: 52px; border: none; background: transparent; font-family: inherit; color: #5F6B73; font-size: 11px; font-weight: 500; cursor: pointer">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"></circle><path d="M4 21a8 8 0 0 1 16 0"></path></svg>
+<span>Account</span>
+</button>
+</nav>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1460}}'>
+class Component extends DCLogic {
+  constructor(...args) {
+    super(...args);
+    this.state = { group: 'as', day: 1, len: 1, picked: 1170, repeat: true };
+  }
+
+  renderVals() {
+    const S = Object.assign({ group: 'as', day: 1, len: 1, picked: 1170, repeat: true }, this.state || {});
+    const GAP = 60;
+    const STEP = 30;
+    const LESSONS_PER_PACKAGE = 4;
+    const INK = '#14212B';
+    const MUTED = '#5F6B73';
+    const ACCENT = '#0B5E7A';
+    const WARN = '#9A3412';
+
+    // Groups the coach has set up for this account. Each group shares one package.
+    const GROUPS = [
+      { key: 'as', names: 'Aiman & Sofia', type: '1-to-2', pkg: { no: 4, used: 0, booked: 2 } },
+      { key: 'sofia', names: 'Sofia', type: '1-to-1', pkg: { no: 2, used: 3, booked: 1 } }
+    ];
+
+    // Sample week, in minutes from midnight. "mine" marks this account's own lessons.
+    const DAYS = [
+      { dow: 'Mon', date: '28', full: 'Mon 28 Sep', next: 'Mon 5 Oct', open: [[1050, 1320]], booked: [{ s: 1170, e: 1230 }] },
+      { dow: 'Tue', date: '29', full: 'Tue 29 Sep', next: 'Tue 6 Oct', open: [[1050, 1320]], booked: [{ s: 1050, e: 1110 }] },
+      { dow: 'Wed', date: '30', full: 'Wed 30 Sep', next: 'Wed 7 Oct', open: [[1050, 1320]], booked: [{ s: 1230, e: 1290 }] },
+      { dow: 'Thu', date: '1', full: 'Thu 1 Oct', next: 'Thu 8 Oct', open: [[1050, 1320]], booked: [{ s: 1050, e: 1110 }, { s: 1230, e: 1290 }] },
+      { dow: 'Fri', date: '2', full: 'Fri 2 Oct', next: 'Fri 9 Oct', open: [[1050, 1320]], booked: [{ s: 1170, e: 1230 }, { s: 1260, e: 1320 }] },
+      { dow: 'Sat', date: '3', full: 'Sat 3 Oct', next: 'Sat 10 Oct', open: [[420, 720], [960, 1320]], booked: [{ s: 540, e: 600, mine: 'Aiman & Sofia' }, { s: 660, e: 720 }, { s: 1020, e: 1080 }] },
+      { dow: 'Sun', date: '4', full: 'Sun 4 Oct', next: 'Sun 11 Oct', open: [[420, 720], [960, 1320]], booked: [{ s: 480, e: 540 }, { s: 600, e: 720 }, { s: 1020, e: 1080, mine: 'Sofia' }, { s: 1140, e: 1200 }] }
+    ];
+
+    const clock = (m) => {
+      const h = Math.floor(m / 60);
+      const mm = m % 60;
+      return (((h + 11) % 12) + 1) + ':' + (mm < 10 ? '0' : '') + mm;
+    };
+    const half = (m) => (m < 720 ? 'am' : 'pm');
+    const fmt = (m) => clock(m) + ' ' + half(m);
+    const range = (a, b) => (half(a) === half(b) ? clock(a) + '–' + clock(b) + ' ' + half(b) : fmt(a) + '–' + fmt(b));
+
+    // Every start time inside open hours.
+    const startsFor = (d, L) => {
+      const out = [];
+      d.open.forEach((w) => {
+        for (let s = w[0]; s + L <= w[1]; s += STEP) out.push(s);
+      });
+      return out;
+    };
+
+    // Why a lesson from s to s + L can't happen, or null if it fits.
+    // Overlaps are reported first, then clashes with the 1-hour travel gap.
+    const conflictFor = (d, s, L) => {
+      const e = s + L;
+      for (const b of d.booked) {
+        if (s < b.e && e > b.s) {
+          return b.mine
+            ? 'It overlaps ' + b.mine + '’s lesson at ' + range(b.s, b.e)
+            : 'It overlaps another lesson at ' + range(b.s, b.e);
+        }
+      }
+      for (const b of d.booked) {
+        if (e <= b.s && e + GAP > b.s) {
+          return 'It ends too close to the ' + fmt(b.s) + ' lesson. Your coach needs 1 hour to travel between lessons';
+        }
+        if (s >= b.e && b.e + GAP > s) {
+          return 'It starts too soon after the lesson that ends at ' + fmt(b.e) + '. Your coach needs 1 hour to travel between lessons';
+        }
+      }
+      return null;
+    };
+
+    const g = GROUPS.find((x) => x.key === S.group) || GROUPS[0];
+    const groups = GROUPS.map((x) => {
+      const on = x.key === g.key;
+      return {
+        names: x.names,
+        type: x.type,
+        on: on,
+        bd: on ? ACCENT : '#D8D8D4',
+        bg: on ? '#EAF3F6' : '#FFFFFF',
+        pick: () => this.setState({ group: x.key })
+      };
+    });
+    const used = g.pkg.used;
+    const booked = g.pkg.booked;
+    const leftToBook = LESSONS_PER_PACKAGE - used - booked;
+    const onCredit = leftToBook <= 0;
+    const segs = [0, 1, 2, 3].map((i) => ({
+      bg: i < used ? ACCENT : (i < used + booked ? '#A9CFDB' : '#ECECE9')
+    }));
+
+    const lenMin = S.len * 60;
+    const day = DAYS[S.day];
+    const all = startsFor(day, lenMin);
+    const picked = all.indexOf(S.picked) >= 0 ? S.picked : null;
+    const pickedConflict = picked !== null ? conflictFor(day, picked, lenMin) : null;
+
+    const toChip = (m) => {
+      const blocked = conflictFor(day, m, lenMin) !== null;
+      const on = m === picked;
+      let bg = '#FFFFFF';
+      let fg = INK;
+      let bd = '#D8D8D4';
+      if (blocked) {
+        bg = on ? '#FBE7DA' : '#F6F6F4';
+        fg = on ? WARN : MUTED;
+        bd = on ? WARN : '#F6F6F4';
+      } else if (on) {
+        bg = ACCENT;
+        fg = '#FFFFFF';
+        bd = ACCENT;
+      }
+      return {
+        label: fmt(m),
+        aria: fmt(m) + (blocked ? ', not available' : ', available'),
+        pressed: on,
+        bg: bg,
+        fg: fg,
+        bd: bd,
+        deco: blocked ? 'line-through' : 'none',
+        pick: () => this.setState({ picked: m })
+      };
+    };
+    const morning = all.filter((m) => m < 720).map(toChip);
+    const evening = all.filter((m) => m >= 720).map(toChip);
+
+    const days = DAYS.map((d, i) => {
+      const n = startsFor(d, lenMin).filter((m) => conflictFor(d, m, lenMin) === null).length;
+      const on = i === S.day;
+      return {
+        dow: d.dow,
+        date: d.date,
+        pressed: on,
+        aria: d.full + (n === 0 ? ', fully booked' : ', ' + n + (n === 1 ? ' free start time' : ' free start times')),
+        circle: on ? ACCENT : 'transparent',
+        dateFg: on ? '#FFFFFF' : (n === 0 ? MUTED : INK),
+        wt: on ? '600' : '500',
+        dot: n > 0 ? ACCENT : 'transparent',
+        pick: () => this.setState({ day: i, picked: null })
+      };
+    });
+
+    const seg = (on) => ({
+      pressed: on,
+      bg: on ? '#FFFFFF' : 'transparent',
+      bd: on ? '#E4E4E0' : 'transparent',
+      fg: on ? INK : MUTED,
+      wt: on ? '600' : '500'
+    });
+
+    const mineBooking = day.booked.find((b) => b.mine);
+
+    let summaryTitle = 'Pick a start time';
+    let summaryUse = 'Crossed-out times clash with another lesson or travel time.';
+    let useFg = MUTED;
+    let bookLabel = 'Pick a time';
+    let canRepeat = false;
+    let repeatText = '';
+    let noPick = true;
+    if (picked !== null && pickedConflict) {
+      summaryTitle = fmt(picked) + ' isn’t available';
+      summaryUse = pickedConflict + '.';
+      useFg = WARN;
+      bookLabel = 'Pick a free time';
+    } else if (picked !== null) {
+      noPick = false;
+      summaryTitle = day.full + ' · ' + range(picked, picked + lenMin);
+      const uses = S.len === 1 ? '1 lesson' : '2 lessons';
+      if (!onCredit) {
+        const after = leftToBook - S.len;
+        summaryUse = g.type + ' for ' + g.names + ' · uses ' + uses + ' from Package ' + g.pkg.no + (after > 0 ? ', ' + after + ' left to book after this' : ', completes the package');
+        const weeks = Math.floor(leftToBook / S.len);
+        canRepeat = weeks > 1;
+        repeatText = weeks === 2 ? 'Repeat weekly: also book ' + day.next : 'Repeat weekly for ' + weeks + ' weeks';
+      } else {
+        summaryUse = g.type + ' for ' + g.names + ' · uses ' + uses + ' from Package ' + (g.pkg.no + 1) + ', not paid yet';
+        const weeks = Math.floor(LESSONS_PER_PACKAGE / S.len);
+        canRepeat = weeks > 1;
+        repeatText = 'Repeat weekly for the rest of Package ' + (g.pkg.no + 1) + ' (' + weeks + ' weeks)';
+      }
+      bookLabel = 'Book ' + fmt(picked) + ' for ' + g.names;
+    }
+
+    return {
+      groups: groups,
+      pkgTitle: g.type + ' · Package ' + g.pkg.no,
+      pkgCaption: used + ' used · ' + booked + ' booked · ' + (leftToBook > 0 ? leftToBook + ' left to book' : 'fully booked'),
+      segs: segs,
+      onCredit: onCredit,
+      creditText: 'New bookings start Package ' + (g.pkg.no + 1) + '. Pay RM [PRICE] before or at its first lesson.',
+      days: days,
+      dayFull: day.full,
+      len1: seg(S.len === 1),
+      len2: seg(S.len === 2),
+      setLen1: () => this.setState({ len: 1, picked: null }),
+      setLen2: () => this.setState({ len: 2, picked: null }),
+      hasMine: Boolean(mineBooking),
+      mineText: mineBooking ? 'Already booked this day: ' + mineBooking.mine + ', ' + range(mineBooking.s, mineBooking.e) : '',
+      morning: morning,
+      evening: evening,
+      hasMorning: morning.length > 0,
+      hasEvening: evening.length > 0,
+      summaryTitle: summaryTitle,
+      summaryUse: summaryUse,
+      useFg: useFg,
+      bookLabel: bookLabel,
+      noPick: noPick,
+      bookBg: noPick ? '#ECECE9' : ACCENT,
+      bookFg: noPick ? MUTED : '#FFFFFF',
+      canRepeat: canRepeat,
+      repeatText: repeatText,
+      repeat: S.repeat,
+      toggleRepeat: () => this.setState({ repeat: !S.repeat })
+    };
+  }
+}
+</script>
+</body>
+</html>

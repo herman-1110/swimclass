@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Students and payments</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0;font-family:'Figtree',system-ui,sans-serif;color:#14212B;background:#FFFFFF}
+a{color:#0B5E7A}a:hover{color:#084A61}
+</style>
+</helmet>
+<div style="width: 1440px; height: 1040px; box-sizing: border-box; display: flex; background: #FFFFFF; font-family: 'Figtree', system-ui, sans-serif; color: #14212B">
+<aside style="width: 220px; flex-shrink: 0; box-sizing: border-box; padding: 28px 14px 24px; border-right: 1px solid #ECECE9; display: flex; flex-direction: column; gap: 32px">
+<div style="padding: 0 12px; font-size: 15px; font-weight: 600; color: #0B5E7A">Swim Class Booking</div>
+<nav aria-label="Admin" style="display: flex; flex-direction: column; gap: 2px">
+<a href="AdminSchedule.dc.html" style="display: flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: 8px; color: #5F6B73; text-decoration: none; font-size: 14px; font-weight: 500">Schedule</a>
+<a href="AdminStudents.dc.html" aria-current="page" style="display: flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: 8px; background: #F6F6F4; color: #14212B; text-decoration: none; font-size: 14px; font-weight: 600">Students &amp; payments</a>
+<a href="AdminSettings.dc.html" style="display: flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: 8px; color: #5F6B73; text-decoration: none; font-size: 14px; font-weight: 500">Settings</a>
+</nav>
+<div style="margin-top: auto; display: flex; flex-direction: column; gap: 2px">
+<a href="Main.dc.html" style="display: flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: 8px; color: #5F6B73; text-decoration: none; font-size: 14px">View as customer</a>
+<span style="padding: 8px 12px 0; font-size: 12px; color: #5F6B73">Signed in as Coach</span>
+</div>
+</aside>
+<main style="flex: 1; min-width: 0; box-sizing: border-box; padding: 32px 32px 28px; display: flex; flex-direction: column; gap: 24px">
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 16px">
+<h1 style="margin: 0; font-size: 26px; font-weight: 600">Students &amp; payments</h1>
+<div style="display: flex; align-items: center; gap: 12px">
+<input type="text" aria-label="Search students" placeholder="Search students" style="width: 200px; height: 44px; box-sizing: border-box; padding: 0 14px; border: 1px solid #D8D8D4; border-radius: 10px; background: #FFFFFF; font-family: inherit; font-size: 14px; color: #14212B">
+<a href="AdminAddStudents.dc.html" style="display: flex; align-items: center; height: 44px; padding: 0 18px; border-radius: 10px; background: #0B5E7A; font-size: 14px; font-weight: 600; color: #FFFFFF; text-decoration: none">Add students</a>
+</div>
+</div>
+<div style="display: flex; gap: 56px">
+<div style="display: flex; flex-direction: column; gap: 2px">
+<span style="font-size: 24px; font-weight: 600; line-height: 1.2; color: #9A3412">2</span>
+<span style="font-size: 13px; color: #5F6B73">Unpaid · Hana, Wei Jie</span>
+</div>
+<div style="display: flex; flex-direction: column; gap: 2px">
+<span style="font-size: 24px; font-weight: 600; line-height: 1.2">2</span>
+<span style="font-size: 13px; color: #5F6B73">On last lesson · Priya, Sofia</span>
+</div>
+<div style="display: flex; flex-direction: column; gap: 2px">
+<span style="font-size: 24px; font-weight: 600; line-height: 1.2">15</span>
+<span style="font-size: 13px; color: #5F6B73">Students · 13 packages</span>
+</div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; border-bottom: 1px solid #ECECE9">
+<div style="display: flex; gap: 24px">
+<button type="button" aria-pressed="true" style="height: 44px; padding: 0 2px; margin-bottom: -1px; border: none; border-bottom: 2px solid #0B5E7A; background: transparent; font-family: inherit; font-size: 14px; font-weight: 600; color: #14212B; cursor: pointer">All 13</button>
+<button type="button" aria-pressed="false" style="height: 44px; padding: 0 2px; margin-bottom: -1px; border: none; border-bottom: 2px solid transparent; background: transparent; font-family: inherit; font-size: 14px; font-weight: 500; color: #5F6B73; cursor: pointer">Unpaid 2</button>
+<button type="button" aria-pressed="false" style="height: 44px; padding: 0 2px; margin-bottom: -1px; border: none; border-bottom: 2px solid transparent; background: transparent; font-family: inherit; font-size: 14px; font-weight: 500; color: #5F6B73; cursor: pointer">Last lesson 2</button>
+<button type="button" aria-pressed="false" style="height: 44px; padding: 0 2px; margin-bottom: -1px; border: none; border-bottom: 2px solid transparent; background: transparent; font-family: inherit; font-size: 14px; font-weight: 500; color: #5F6B73; cursor: pointer">Paid 11</button>
+</div>
+<span style="font-size: 12px; color: #5F6B73">One row per package · needs action first</span>
+</div>
+<div style="border: 1px solid #E2E2DE; border-radius: 12px; overflow: hidden">
+<table style="width: 100%; border-collapse: collapse">
+<thead>
+<tr style="background: #F4F5F3">
+<th scope="col" style="width: 200px; padding: 11px 14px; text-align: left; font-size: 12px; font-weight: 600; color: #3F4A52; border-bottom: 1px solid #E2E2DE">Students</th>
+<th scope="col" style="width: 72px; padding: 11px 14px; text-align: left; font-size: 12px; font-weight: 600; color: #3F4A52; border-bottom: 1px solid #E2E2DE">Type</th>
+<th scope="col" style="width: 160px; padding: 11px 14px; text-align: left; font-size: 12px; font-weight: 600; color: #3F4A52; border-bottom: 1px solid #E2E2DE">Package</th>
+<th scope="col" style="width: 118px; padding: 11px 14px; text-align: left; font-size: 12px; font-weight: 600; color: #3F4A52; border-bottom: 1px solid #E2E2DE">Status</th>
+<th scope="col" style="width: 96px; padding: 11px 14px; text-align: left; font-size: 12px; font-weight: 600; color: #3F4A52; border-bottom: 1px solid #E2E2DE">Last paid</th>
+<th scope="col" style="padding: 11px 14px; text-align: right; font-size: 12px; font-weight: 600; color: #3F4A52; border-bottom: 1px solid #E2E2DE">Action</th>
+</tr>
+</thead>
+<tbody>
+<tr style="background: #EAF3F6">
+<td style="padding: 10px 14px; border-bottom: 1px solid #E6E6E2"><div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 14px; font-weight: 600">Hana</span><span style="font-size: 12px; color: #5F6B73">Farah’s account · Sunrise Res.</span></div></td>
+<td style="padding: 10px 14px; border-bottom: 1px solid #E6E6E2"><span style="padding: 2px 8px; border-radius: 6px; background: #F1F1EE; color: #3F4A52; font-size: 12px; font-weight: 600; white-space: nowrap">1-to-1</span></td>
+<td style="padding: 10px 14px; border-bottom: 1px solid #E6E6E2"><div style="display: flex; flex-direction: column; gap: 5px"><span style="font-size: 13px; font-weight: 600">Package 6</span><div style="display: flex; gap: 3px"><span style="width: 26px; height: 6px; border-radius: 3px; background: #A9CFDB"></span><span style="width: 26px; height: 6px; border-radius: 3px; background: #A9CFDB"></span><span style="width: 26px; height: 6px; border-radius: 3px; background: #E4E4E0"></span><span style="width: 26px; height: 6px; border-radius: 3px; background: #E4E4E0"></span></div><span style="font-size: 12px; color: #5F6B73">0 used · 2 booked</span></div></td>
+<td style="padding: 10px 14px; border-bottom: 1px solid #E6E6E2"><div style="display: flex; flex-direction: column; align-items: flex-start; gap: 4px"><span style="padding: 3px 10px; border-radius: 999px; background: #FBE7DA; color: #9A3412; font-size: 12px; font-weight: 600">Unpaid</span><span style="font-size: 12px; color: #5F6B73">Starts today</span></div></td>
+<td style="padding: 10px 14px; border-bottom: 1px solid #E6E6E2"><div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 13px">22 Aug</span><span style="font-size: 12px; color: #5F6B73">Cash</span></div></td>
+<td style="padding: 10px 14px; border-bottom: 1px solid #E6E6E2; text-align: right"><button type="button" style="height: 44px; padding: 0 14px; border: none; border-radius: 8px; background: #0B5E7A; color: #FFFFFF; font-family: inherit; font-size: 13px; font-weight: 600; white-space: nowrap; cursor: pointer">Record payment</button></td>
+</tr>
+<tr style="background: #FAFAF8">
+<td style="padding: 10px 14px; border-bottom: 1px solid #E6E6E2"><div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 14px; font-weight: 600">Wei Jie</span><span style="font-size: 12px; color: #5F6B73">Own account · Palm Court</span></div></td>
+<td style="padding: 10px 14px; border-bottom: 1px solid #E6E6E2"><span style="padding: 2px 8px; border-radius: 6px; background: #F1F1EE; color: #3F4A52; font-size: 12px; font-weight: 600; white-space: nowrap">1-to-1</span></td>
+<td style="padding: 10px 14px; border-bottom: 1px solid #E6E6E2"><div style="display: flex; flex-direction: column; gap: 5px"><span style="font-size: 13px; font-weight: 600">Package 2</span><div style="display: flex; gap: 3px"><span style="width: 26px; height: 6px; border-radius: 3px; background: #0B5E7A"></span><span style="width: 26px; height: 6px; border-radius: 3px; background: #0B5E7A"></span><span style="width: 26px; height: 6px; border-radius: 3px; background: #A9CFDB"></span><span style="width: 26px; height: 6px; border-radius: 3px; background: #E4E4E0"></span></div><span style="font-size: 12px; color: #5F6B73">2 used · 1 booked</span></div></td>
+<td style="padding: 10px 14px; border-bottom: 1px solid #E6E6E2"><div style="display: flex; flex-direction: column; align-items: flex-start; gap: 4px"><span style="padding: 3px 10px; border-radius: 999px; background: #FBE7DA; color: #9A3412; font-size: 12px; font-weight: 600">Unpaid</span><span style="font-size: 12px; color: #5F6B73">Since 18 Sep</span></div></td>
+<td style="padding: 10px 14px; border-bottom: 1px solid #E6E6E2"><div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 13px">16 Aug</span><span style="font-size: 12px; color: #5F6B73">FPX</span></div></td>
+<td style="padding: 10px 14px; border-bottom: 1px solid #E6E6E2; text-align: right"><button type="button" style="height: 44px; padding: 0 14px; border: none; border-radius: 8px; background: #0B5E7A; color: #FFFFFF; font-family: inherit; font-size: 13px; font-weight: 600; white-space: nowrap; cursor: pointer">Record payment</button></td>
+</tr>
+<tr>
+<td style="padding: 10px 14px; border-bottom: 1px solid #E6E6E2"><div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 14px; font-weight: 600">Priya</span><span style="font-size: 12px; color: #5F6B73">Own account · Seri Maya</span></div></td>
+<td style="padding: 10px 14px; border-bottom: 1px solid #E6E6E2"><span style="padding: 2px 8px; border-radius: 6px; background: #F1F1EE; color: #3F4A52; font-size: 12px; font-weight: 600; white-space: nowrap">1-to-1</span></td>
+<td style="padding: 10px 14px; border-bottom: 1px solid #E6E6E2"><div style="display: flex; flex-direction: column; gap: 5px"><span style="font-size: 13px; font-weight: 600">Package 4</span><div style="display: flex; gap: 3px"><span style="width: 26px; height: 6px; border-radius: 3px; background: #0B5E7A"></span><span style="width: 26px; height: 6px; border-radius: 3px; background: #0B5E7A"></span><span style="width: 26px; height: 6px; border-radius: 3px; background: #A9CFDB"></span><span style="width: 26px; height: 6px; border-radius: 3px; background: #A9CFDB"></span></div><span style="font-size: 12px; color: #5F6B73">2 used · 2 booked</span></div></td>
+<td style="padding: 10px 14px; border-bottom: 1px solid #E6E6E2"><div style="display: flex; flex-direction: column; align-items: flex-start; gap: 4px"><span style="padding: 3px 10px; border-radius: 999px; background: #E3EFF3; color: #0B5E7A; font-size: 12px; font-weight: 600">Paid</span><span style="font-size: 12px; color: #9A3412">Last lesson 1 Oct</span></div></td>
+<td style="padding: 10px 14px; border-bottom: 1px solid #E6E6E2"><div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 13px">5 Sep</span><span style="font-size: 12px; color: #5F6B73">Cash</span></div></td>
+<td style="padding: 10px 14px; border-bottom: 1px solid #E6E6E2; text-align: right"><button type="button" style="min-height: 44px; padding: 0 6px; border: none; background: transparent; font-family: inherit; font-size: 13px; font-weight: 500; color: #3F4A52; text-decoration: underline; text-underline-offset: 3px; cursor: pointer">History</button></td>
+</tr>
+<tr style="background: #FAFAF8">
+<td style="padding: 10px 14px; border-bottom: 1px solid #E6E6E2"><div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 14px; font-weight: 600">Sofia</span><span style="font-size: 12px; color: #5F6B73">Mei Ling’s account · Palm Court</span></div></td>
+<td style="padding: 10px 14px; border-bottom: 1px solid #E6E6E2"><span style="padding: 2px 8px; border-radius: 6px; background: #F1F1EE; color: #3F4A52; font-size: 12px; font-weight: 600; white-space: nowrap">1-to-1</span></td>
+<td style="padding: 10px 14px; border-bottom: 1px solid #E6E6E2"><div style="display: flex; flex-direction: column; gap: 5px"><span style="font-size: 13px; font-weight: 600">Package 2</span><div style="display: flex; gap: 3px"><span style="width: 26px; height: 6px; border-radius: 3px; background: #0B5E7A"></span><span style="width: 26px; height: 6px; border-radius: 3px; background: #0B5E7A"></span><span style="width: 26px; height: 6px; border-radius: 3px; background: #0B5E7A"></span><span style="width: 26px; height: 6px; border-radius: 3px; background: #A9CFDB"></span></div><span style="font-size: 12px; color: #5F6B73">3 used · 1 booked</span></div></td>
+<td style="padding: 10px 14px; border-bottom: 1px solid #E6E6E2"><div style="display: flex; flex-direction: column; align-items: flex-start; gap: 4px"><span style="padding: 3px 10px; border-radius: 999px; background: #E3EFF3; color: #0B5E7A; font-size: 12px; font-weight: 600">Paid</span><span style="font-size: 12px; color: #9A3412">Last lesson 4 Oct</span></div></td>
+<td style="padding: 10px 14px; border-bottom: 1px solid #E6E6E2"><div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 13px">29 Aug</span><span style="font-size: 12px; color: #5F6B73">Transfer</span></div></td>
+<td style="padding: 10px 14px; border-bottom: 1px solid #E6E6E2; text-align: right"><button type="button" style="min-height: 44px; padding: 0 6px; border: none; background: transparent; font-family: inherit; font-size: 13px; font-weight: 500; color: #3F4A52; text-decoration: underline; text-underline-offset: 3px; cursor: pointer">History</button></td>
+</tr>
+<tr>
+<td style="padding: 10px 14px; border-bottom: 1px solid #E6E6E2"><div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 14px; font-weight: 600">Aiman &amp; Sofia</span><span style="font-size: 12px; color: #5F6B73">Mei Ling’s account · Palm Court</span></div></td>
+<td style="padding: 10px 14px; border-bottom: 1px solid #E6E6E2"><span style="padding: 2px 8px; border-radius: 6px; background: #F1F1EE; color: #3F4A52; font-size: 12px; font-weight: 600; white-space: nowrap">1-to-2</span></td>
+<td style="padding: 10px 14px; border-bottom: 1px solid #E6E6E2"><div style="display: flex; flex-direction: column; gap: 5px"><span style="font-size: 13px; font-weight: 600">Package 4</span><div style="display: flex; gap: 3px"><span style="width: 26px; height: 6px; border-radius: 3px; background: #A9CFDB"></span><span style="width: 26px; height: 6px; border-radius: 3px; background: #A9CFDB"></span><span style="width: 26px; height: 6px; border-radius: 3px; background: #E4E4E0"></span><span style="width: 26px; height: 6px; border-radius: 3px; background: #E4E4E0"></span></div><span style="font-size: 12px; color: #5F6B73">0 used · 2 booked</span></div></td>
+<td style="padding: 10px 14px; border-bottom: 1px solid #E6E6E2"><div style="display: flex; flex-direction: column; align-items: flex-start; gap: 4px"><span style="padding: 3px 10px; border-radius: 999px; background: #E3EFF3; color: #0B5E7A; font-size: 12px; font-weight: 600">Paid</span></div></td>
+<td style="padding: 10px 14px; border-bottom: 1px solid #E6E6E2"><div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 13px">19 Sep</span><span style="font-size: 12px; color: #5F6B73">FPX</span></div></td>
+<td style="padding: 10px 14px; border-bottom: 1px solid #E6E6E2; text-align: right"><button type="button" style="min-height: 44px; padding: 0 6px; border: none; background: transparent; font-family: inherit; font-size: 13px; font-weight: 500; color: #3F4A52; text-decoration: underline; text-underline-offset: 3px; cursor: pointer">History</button></td>
+</tr>
+<tr style="background: #FAFAF8">
+<td style="padding: 10px 14px; border-bottom: 1px solid #E6E6E2"><div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 14px; font-weight: 600">Adam, Alya &amp; Amir</span><span style="font-size: 12px; color: #5F6B73">Zulaikha’s account · Maple Condo</span></div></td>
+<td style="padding: 10px 14px; border-bottom: 1px solid #E6E6E2"><span style="padding: 2px 8px; border-radius: 6px; background: #F1F1EE; color: #3F4A52; font-size: 12px; font-weight: 600; white-space: nowrap">1-to-3</span></td>
+<td style="padding: 10px 14px; border-bottom: 1px solid #E6E6E2"><div style="display: flex; flex-direction: column; gap: 5px"><span style="font-size: 13px; font-weight: 600">Package 1</span><div style="display: flex; gap: 3px"><span style="width: 26px; height: 6px; border-radius: 3px; background: #0B5E7A"></span><span style="width: 26px; height: 6px; border-radius: 3px; background: #A9CFDB"></span><span style="width: 26px; height: 6px; border-radius: 3px; background: #E4E4E0"></span><span style="width: 26px; height: 6px; border-radius: 3px; background: #E4E4E0"></span></div><span style="font-size: 12px; color: #5F6B73">1 used · 1 booked</span></div></td>
+<td style="padding: 10px 14px; border-bottom: 1px solid #E6E6E2"><div style="display: flex; flex-direction: column; align-items: flex-start; gap: 4px"><span style="padding: 3px 10px; border-radius: 999px; background: #E3EFF3; color: #0B5E7A; font-size: 12px; font-weight: 600">Paid</span></div></td>
+<td style="padding: 10px 14px; border-bottom: 1px solid #E6E6E2"><div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 13px">18 Sep</span><span style="font-size: 12px; color: #5F6B73">Cash</span></div></td>
+<td style="padding: 10px 14px; border-bottom: 1px solid #E6E6E2; text-align: right"><button type="button" style="min-height: 44px; padding: 0 6px; border: none; background: transparent; font-family: inherit; font-size: 13px; font-weight: 500; color: #3F4A52; text-decoration: underline; text-underline-offset: 3px; cursor: pointer">History</button></td>
+</tr>
+<tr>
+<td style="padding: 10px 14px; border-bottom: 1px solid #E6E6E2"><div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 14px; font-weight: 600">Jun Hao</span><span style="font-size: 12px; color: #5F6B73">Own account · Vista Heights</span></div></td>
+<td style="padding: 10px 14px; border-bottom: 1px solid #E6E6E2"><span style="padding: 2px 8px; border-radius: 6px; background: #F1F1EE; color: #3F4A52; font-size: 12px; font-weight: 600; white-space: nowrap">1-to-1</span></td>
+<td style="padding: 10px 14px; border-bottom: 1px solid #E6E6E2"><div style="display: flex; flex-direction: column; gap: 5px"><span style="font-size: 13px; font-weight: 600">Package 2</span><div style="display: flex; gap: 3px"><span style="width: 26px; height: 6px; border-radius: 3px; background: #0B5E7A"></span><span style="width: 26px; height: 6px; border-radius: 3px; background: #A9CFDB"></span><span style="width: 26px; height: 6px; border-radius: 3px; background: #E4E4E0"></span><span style="width: 26px; height: 6px; border-radius: 3px; background: #E4E4E0"></span></div><span style="font-size: 12px; color: #5F6B73">1 used · 1 booked</span></div></td>
+<td style="padding: 10px 14px; border-bottom: 1px solid #E6E6E2"><div style="display: flex; flex-direction: column; align-items: flex-start; gap: 4px"><span style="padding: 3px 10px; border-radius: 999px; background: #E3EFF3; color: #0B5E7A; font-size: 12px; font-weight: 600">Paid</span></div></td>
+<td style="padding: 10px 14px; border-bottom: 1px solid #E6E6E2"><div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 13px">1 Sep</span><span style="font-size: 12px; color: #5F6B73">Transfer</span></div></td>
+<td style="padding: 10px 14px; border-bottom: 1px solid #E6E6E2; text-align: right"><button type="button" style="min-height: 44px; padding: 0 6px; border: none; background: transparent; font-family: inherit; font-size: 13px; font-weight: 500; color: #3F4A52; text-decoration: underline; text-underline-offset: 3px; cursor: pointer">History</button></td>
+</tr>
+<tr style="background: #FAFAF8">
+<td style="padding: 10px 14px; border-bottom: 1px solid #E6E6E2"><div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 14px; font-weight: 600">Chloe</span><span style="font-size: 12px; color: #5F6B73">Grace’s account · Vista Heights</span></div></td>
+<td style="padding: 10px 14px; border-bottom: 1px solid #E6E6E2"><span style="padding: 2px 8px; border-radius: 6px; background: #F1F1EE; color: #3F4A52; font-size: 12px; font-weight: 600; white-space: nowrap">1-to-1</span></td>
+<td style="padding: 10px 14px; border-bottom: 1px solid #E6E6E2"><div style="display: flex; flex-direction: column; gap: 5px"><span style="font-size: 13px; font-weight: 600">Package 3</span><div style="display: flex; gap: 3px"><span style="width: 26px; height: 6px; border-radius: 3px; background: #A9CFDB"></span><span style="width: 26px; height: 6px; border-radius: 3px; background: #A9CFDB"></span><span style="width: 26px; height: 6px; border-radius: 3px; background: #E4E4E0"></span><span style="width: 26px; height: 6px; border-radius: 3px; background: #E4E4E0"></span></div><span style="font-size: 12px; color: #5F6B73">0 used · 2 booked</span></div></td>
+<td style="padding: 10px 14px; border-bottom: 1px solid #E6E6E2"><div style="display: flex; flex-direction: column; align-items: flex-start; gap: 4px"><span style="padding: 3px 10px; border-radius: 999px; background: #E3EFF3; color: #0B5E7A; font-size: 12px; font-weight: 600">Paid</span></div></td>
+<td style="padding: 10px 14px; border-bottom: 1px solid #E6E6E2"><div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 13px">20 Sep</span><span style="font-size: 12px; color: #5F6B73">FPX</span></div></td>
+<td style="padding: 10px 14px; border-bottom: 1px solid #E6E6E2; text-align: right"><button type="button" style="min-height: 44px; padding: 0 6px; border: none; background: transparent; font-family: inherit; font-size: 13px; font-weight: 500; color: #3F4A52; text-decoration: underline; text-underline-offset: 3px; cursor: pointer">History</button></td>
+</tr>
+<tr>
+<td style="padding: 10px 14px"><div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 14px; font-weight: 600">Ethan</span><span style="font-size: 12px; color: #5F6B73">Own account · Kiara Park</span></div></td>
+<td style="padding: 10px 14px"><span style="padding: 2px 8px; border-radius: 6px; background: #F1F1EE; color: #3F4A52; font-size: 12px; font-weight: 600; white-space: nowrap">1-to-1</span></td>
+<td style="padding: 10px 14px"><div style="display: flex; flex-direction: column; gap: 5px"><span style="font-size: 13px; font-weight: 600">Package 7</span><div style="display: flex; gap: 3px"><span style="width: 26px; height: 6px; border-radius: 3px; background: #0B5E7A"></span><span style="width: 26px; height: 6px; border-radius: 3px; background: #A9CFDB"></span><span style="width: 26px; height: 6px; border-radius: 3px; background: #E4E4E0"></span><span style="width: 26px; height: 6px; border-radius: 3px; background: #E4E4E0"></span></div><span style="font-size: 12px; color: #5F6B73">1 used · 1 booked</span></div></td>
+<td style="padding: 10px 14px"><div style="display: flex; flex-direction: column; align-items: flex-start; gap: 4px"><span style="padding: 3px 10px; border-radius: 999px; background: #E3EFF3; color: #0B5E7A; font-size: 12px; font-weight: 600">Paid</span></div></td>
+<td style="padding: 10px 14px"><div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 13px">12 Sep</span><span style="font-size: 12px; color: #5F6B73">Cash</span></div></td>
+<td style="padding: 10px 14px; text-align: right"><button type="button" style="min-height: 44px; padding: 0 6px; border: none; background: transparent; font-family: inherit; font-size: 13px; font-weight: 500; color: #3F4A52; text-decoration: underline; text-underline-offset: 3px; cursor: pointer">History</button></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div style="display: flex; align-items: center; justify-content: space-between; font-size: 13px; color: #5F6B73">
+<span>Showing 9 of 13 packages</span>
+<button type="button" style="min-height: 44px; padding: 0 4px; border: none; background: transparent; font-family: inherit; font-size: 13px; font-weight: 600; color: #0B5E7A; cursor: pointer">Show all</button>
+</div>
+</div>
+</main>
+<aside style="width: 340px; flex-shrink: 0; box-sizing: border-box; padding: 32px 24px; border-left: 1px solid #ECECE9; display: flex; flex-direction: column; gap: 18px">
+<div style="display: flex; flex-direction: column; gap: 2px">
+<h2 style="margin: 0; font-size: 18px; font-weight: 600">Record payment</h2>
+<span style="font-size: 13px; color: #5F6B73">Hana · Farah’s account</span>
+</div>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<label for="pay-package" style="font-size: 13px; font-weight: 500; color: #5F6B73">Package</label>
+<select id="pay-package" style="height: 46px; box-sizing: border-box; padding: 0 12px; border: 1px solid #D8D8D4; border-radius: 10px; background: #FFFFFF; font-family: inherit; font-size: 14px; color: #14212B">
+<option>1-to-1 · Package 6 · 4 lessons</option>
+<option>Custom number of lessons</option>
+</select>
+</div>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<label for="pay-amount" style="font-size: 13px; font-weight: 500; color: #5F6B73">Amount</label>
+<div style="display: flex; align-items: center; gap: 8px; height: 46px; box-sizing: border-box; padding: 0 12px; border: 1px solid #D8D8D4; border-radius: 10px; background: #FFFFFF">
+<span style="font-size: 14px; color: #5F6B73">RM</span>
+<input id="pay-amount" type="text" inputmode="decimal" placeholder="[PRICE]" style="flex: 1; min-width: 0; border: none; background: transparent; font-family: inherit; font-size: 14px; color: #14212B">
+</div>
+</div>
+<fieldset style="margin: 0; padding: 0; border: none; min-width: 0">
+<legend style="padding: 0; margin-bottom: 2px; font-size: 13px; font-weight: 500; color: #5F6B73">Paid by</legend>
+<div style="display: flex; gap: 20px">
+<label style="display: flex; align-items: center; gap: 8px; min-height: 44px; font-size: 14px; cursor: pointer"><input type="radio" name="pay-method" checked="true" style="width: 18px; height: 18px; margin: 0; accent-color: #0B5E7A">Cash</label>
+<label style="display: flex; align-items: center; gap: 8px; min-height: 44px; font-size: 14px; cursor: pointer"><input type="radio" name="pay-method" style="width: 18px; height: 18px; margin: 0; accent-color: #0B5E7A">Transfer</label>
+<label style="display: flex; align-items: center; gap: 8px; min-height: 44px; font-size: 14px; cursor: pointer"><input type="radio" name="pay-method" style="width: 18px; height: 18px; margin: 0; accent-color: #0B5E7A">FPX</label>
+</div>
+</fieldset>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<label for="pay-date" style="font-size: 13px; font-weight: 500; color: #5F6B73">Date paid</label>
+<input id="pay-date" type="text" value="26 Sep 2026" style="height: 46px; box-sizing: border-box; padding: 0 12px; border: 1px solid #D8D8D4; border-radius: 10px; background: #FFFFFF; font-family: inherit; font-size: 14px; color: #14212B">
+</div>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<label for="pay-note" style="font-size: 13px; font-weight: 500; color: #5F6B73">Note (optional)</label>
+<textarea id="pay-note" rows="2" placeholder="e.g. Paid by Farah at the pool" style="box-sizing: border-box; padding: 10px 12px; border: 1px solid #D8D8D4; border-radius: 10px; background: #FFFFFF; font-family: inherit; font-size: 14px; line-height: 1.45; color: #14212B; resize: none"></textarea>
+</div>
+<div style="display: flex; align-items: center; gap: 8px">
+<button type="button" style="flex: 1; height: 46px; border: none; border-radius: 10px; background: #0B5E7A; color: #FFFFFF; font-family: inherit; font-size: 14px; font-weight: 600; cursor: pointer">Save payment</button>
+<button type="button" style="height: 46px; padding: 0 14px; border: none; border-radius: 10px; background: transparent; color: #5F6B73; font-family: inherit; font-size: 14px; font-weight: 500; cursor: pointer">Cancel</button>
+</div>
+<div style="display: flex; flex-direction: column; align-items: flex-start; padding-top: 14px; border-top: 1px solid #ECECE9">
+<span style="margin-bottom: 2px; font-size: 13px; font-weight: 500; color: #5F6B73">Other adjustments</span>
+<button type="button" style="min-height: 44px; padding: 0; border: none; background: transparent; font-family: inherit; font-size: 14px; font-weight: 600; color: #0B5E7A; cursor: pointer">Add a free lesson</button>
+<button type="button" style="min-height: 44px; padding: 0; border: none; background: transparent; font-family: inherit; font-size: 14px; font-weight: 600; color: #0B5E7A; cursor: pointer">Excuse a missed lesson</button>
+</div>
+<p style="margin: 0; font-size: 12px; line-height: 1.5; color: #5F6B73">Online payments (FPX, DuitNow) record themselves once a payment gateway is connected.</p>
+</aside>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1040}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

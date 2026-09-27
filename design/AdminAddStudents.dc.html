@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Add students</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0;font-family:'Figtree',system-ui,sans-serif;color:#14212B;background:#FFFFFF}
+a{color:#0B5E7A}a:hover{color:#084A61}
+</style>
+</helmet>
+<div style="width: 1440px; height: 1000px; box-sizing: border-box; display: flex; background: #FFFFFF; font-family: 'Figtree', system-ui, sans-serif; color: #14212B">
+<aside style="width: 220px; flex-shrink: 0; box-sizing: border-box; padding: 28px 14px 24px; border-right: 1px solid #ECECE9; display: flex; flex-direction: column; gap: 32px">
+<div style="padding: 0 12px; font-size: 15px; font-weight: 600; color: #0B5E7A">Swim Class Booking</div>
+<nav aria-label="Admin" style="display: flex; flex-direction: column; gap: 2px">
+<a href="AdminSchedule.dc.html" style="display: flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: 8px; color: #5F6B73; text-decoration: none; font-size: 14px; font-weight: 500">Schedule</a>
+<a href="AdminStudents.dc.html" aria-current="page" style="display: flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: 8px; background: #F6F6F4; color: #14212B; text-decoration: none; font-size: 14px; font-weight: 600">Students &amp; payments</a>
+<a href="AdminSettings.dc.html" style="display: flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: 8px; color: #5F6B73; text-decoration: none; font-size: 14px; font-weight: 500">Settings</a>
+</nav>
+<div style="margin-top: auto; display: flex; flex-direction: column; gap: 2px">
+<a href="Main.dc.html" style="display: flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: 8px; color: #5F6B73; text-decoration: none; font-size: 14px">View as customer</a>
+<span style="padding: 8px 12px 0; font-size: 12px; color: #5F6B73">Signed in as Coach</span>
+</div>
+</aside>
+<main style="flex: 1; min-width: 0; box-sizing: border-box; padding: 24px 40px 32px; display: flex; flex-direction: column; gap: 20px">
+<a href="AdminStudents.dc.html" style="align-self: flex-start; display: flex; align-items: center; gap: 6px; min-height: 44px; font-size: 13px; font-weight: 600; color: #0B5E7A; text-decoration: none">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg>
+<span>Students &amp; payments</span>
+</a>
+<div style="display: flex; flex-direction: column; gap: 4px">
+<h1 style="margin: 0; font-size: 26px; font-weight: 600">Add students</h1>
+<p style="margin: 0; font-size: 14px; color: #5F6B73">Set up who books together. Students in one group share their lessons and one package.</p>
+</div>
+<div style="display: flex; gap: 48px; align-items: flex-start">
+<div style="width: 600px; flex-shrink: 0; display: flex; flex-direction: column; gap: 22px">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<label for="add-account" style="font-size: 13px; font-weight: 500; color: #5F6B73">Account</label>
+<select id="add-account" style="height: 46px; box-sizing: border-box; padding: 0 12px; border: 1px solid #D8D8D4; border-radius: 10px; background: #FFFFFF; font-family: inherit; font-size: 14px; color: #14212B">
+<option>Zulaikha · zulaikha</option>
+<option>Mei Ling · meiling</option>
+<option>Create a new account…</option>
+</select>
+<span style="font-size: 12px; line-height: 1.45; color: #5F6B73">The person who books and pays. A new account gets an email to set its password.</span>
+</div>
+<fieldset style="margin: 0; padding: 0; border: none; min-width: 0; display: flex; flex-direction: column; gap: 6px">
+<legend style="padding: 0; margin-bottom: 6px; font-size: 13px; font-weight: 500; color: #5F6B73">Lesson type</legend>
+<div style="display: flex; gap: 2px; padding: 3px; border-radius: 10px; background: #F6F6F4">
+<button type="button" onClick="{{t1.pick}}" aria-pressed="{{t1.pressed}}" style="flex: 1; height: 44px; border: 1px solid {{t1.bd}}; border-radius: 8px; background: {{t1.bg}}; color: {{t1.fg}}; font-family: inherit; font-size: 14px; font-weight: {{t1.wt}}; cursor: pointer">1-to-1</button>
+<button type="button" onClick="{{t2.pick}}" aria-pressed="{{t2.pressed}}" style="flex: 1; height: 44px; border: 1px solid {{t2.bd}}; border-radius: 8px; background: {{t2.bg}}; color: {{t2.fg}}; font-family: inherit; font-size: 14px; font-weight: {{t2.wt}}; cursor: pointer">1-to-2</button>
+<button type="button" onClick="{{t3.pick}}" aria-pressed="{{t3.pressed}}" style="flex: 1; height: 44px; border: 1px solid {{t3.bd}}; border-radius: 8px; background: {{t3.bg}}; color: {{t3.fg}}; font-family: inherit; font-size: 14px; font-weight: {{t3.wt}}; cursor: pointer">1-to-3</button>
+</div>
+<span style="font-size: 12px; line-height: 1.45; color: #5F6B73">Up to 3 students from the same account per lesson.</span>
+</fieldset>
+<fieldset style="margin: 0; padding: 0; border: none; min-width: 0; display: flex; flex-direction: column; gap: 12px">
+<legend style="padding: 0; margin-bottom: 6px; font-size: 13px; font-weight: 500; color: #5F6B73">Students</legend>
+<sc-for list="{{fields}}" as="f" hint-placeholder-count="3">
+<div style="display: flex; align-items: center; gap: 12px">
+<label for="{{f.id}}" style="width: 80px; flex-shrink: 0; font-size: 14px; font-weight: 500">{{f.label}}</label>
+<input id="{{f.id}}" type="text" placeholder="{{f.ph}}" style="flex: 1; min-width: 0; height: 46px; box-sizing: border-box; padding: 0 12px; border: 1px solid #D8D8D4; border-radius: 10px; background: #FFFFFF; font-family: inherit; font-size: 14px; color: #14212B">
+</div>
+</sc-for>
+</fieldset>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<label for="add-location" style="font-size: 13px; font-weight: 500; color: #5F6B73">Pool location</label>
+<input id="add-location" type="text" placeholder="e.g. Maple Condo pool" style="height: 46px; box-sizing: border-box; padding: 0 12px; border: 1px solid #D8D8D4; border-radius: 10px; background: #FFFFFF; font-family: inherit; font-size: 14px; color: #14212B">
+</div>
+<div style="display: flex; flex-direction: column; gap: 2px">
+<div style="display: flex; align-items: center; gap: 10px; min-height: 44px">
+<input id="add-paid" type="checkbox" style="width: 18px; height: 18px; margin: 0; flex-shrink: 0; accent-color: #0B5E7A">
+<label for="add-paid" style="font-size: 14px">First package already paid</label>
+</div>
+<span style="padding-left: 28px; font-size: 12px; color: #5F6B73">{{priceText}}</span>
+</div>
+<div style="display: flex; align-items: center; gap: 12px; padding-top: 4px">
+<button type="button" style="height: 46px; padding: 0 22px; border: none; border-radius: 10px; background: #0B5E7A; color: #FFFFFF; font-family: inherit; font-size: 14px; font-weight: 600; cursor: pointer">{{saveLabel}}</button>
+<a href="AdminStudents.dc.html" style="display: flex; align-items: center; min-height: 44px; padding: 0 8px; font-size: 14px; font-weight: 500; color: #5F6B73; text-decoration: none">Cancel</a>
+</div>
+</div>
+<aside style="width: 320px; flex-shrink: 0; display: flex; flex-direction: column; gap: 12px; padding: 20px; border: 1px solid #E2E2DE; border-radius: 12px">
+<span style="font-size: 13px; font-weight: 500; color: #5F6B73">What the customer sees when booking</span>
+<div style="display: flex; align-items: center; gap: 10px; min-height: 48px; box-sizing: border-box; padding: 0 14px; border-radius: 10px; border: 1px solid #0B5E7A; background: #EAF3F6">
+<span style="width: 16px; height: 16px; box-sizing: border-box; border-radius: 8px; border: 5px solid #0B5E7A; background: #FFFFFF; flex-shrink: 0"></span>
+<span style="flex: 1; font-size: 15px; font-weight: 500">{{preview}}</span>
+<span style="padding: 2px 8px; border-radius: 6px; background: #F1F1EE; color: #3F4A52; font-size: 12px; font-weight: 600">{{type}}</span>
+</div>
+<span style="font-size: 13px; line-height: 1.5; color: #14212B">{{shareText}}</span>
+<span style="font-size: 12px; line-height: 1.5; color: #5F6B73">To let one of them book alone as well, add that student again as 1-to-1. Each group keeps its own package.</span>
+</aside>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+  constructor(...args) {
+    super(...args);
+    this.state = { n: 3 };
+  }
+
+  renderVals() {
+    const S = Object.assign({ n: 3 }, this.state || {});
+    const NAMES = ['Adam', 'Alya', 'Amir'];
+    const n = S.n;
+    const type = '1-to-' + n;
+    const chosen = NAMES.slice(0, n);
+    const joinNames = (names) => (names.length <= 1 ? names.join('') : names.slice(0, -1).join(', ') + ' & ' + names[names.length - 1]);
+    const seg = (k) => {
+      const on = n === k;
+      return {
+        pressed: on,
+        bg: on ? '#FFFFFF' : 'transparent',
+        bd: on ? '#E4E4E0' : 'transparent',
+        fg: on ? '#14212B' : '#5F6B73',
+        wt: on ? '600' : '500',
+        pick: () => this.setState({ n: k })
+      };
+    };
+    return {
+      t1: seg(1),
+      t2: seg(2),
+      t3: seg(3),
+      fields: chosen.map((name, i) => ({ id: 'add-student-' + (i + 1), label: 'Student ' + (i + 1), ph: 'e.g. ' + name })),
+      type: type,
+      preview: joinNames(chosen),
+      priceText: type + ' package · 4 lessons · RM [PRICE]',
+      saveLabel: n === 1 ? 'Add student' : 'Add ' + n + ' students',
+      shareText: n === 1
+        ? 'Books on their own. Each lesson uses 1 lesson from this student’s package.'
+        : 'They always book together, and each lesson uses 1 lesson from their shared package.'
+    };
+  }
+}
+</script>
+</body>
+</html>
