@@ -1,0 +1,118 @@
+@import 'tailwindcss';
+
+/*
+ * Design tokens from docs/DESIGN.md §2. Change colours here only.
+ * Components use the Tailwind names from the @theme block below
+ * (bg-accent, text-muted, border-line, bg-warn-tint, ...).
+ */
+:root {
+  --ink: #14212b; /* main text */
+  --muted: #5f6b73; /* secondary text (5.4:1 on white) */
+  --accent: #0b5e7a; /* primary buttons, selected states, links, lesson blocks */
+  --accent-hover: #084a61; /* hover / pressed */
+  --accent-soft: #eaf3f6; /* selected option background, selected table row */
+  --accent-tint: #e3eff3; /* Paid pill, open-hour chips */
+  --on-accent-muted: #cfe4eb; /* secondary text on accent blocks */
+  --warn: #9a3412; /* unpaid, clash, last-lesson text */
+  --warn-tint: #fbe7da; /* Unpaid pill, selected clashing time */
+  --line: #ecece9; /* dividers */
+  --line-row: #e6e6e2; /* table row dividers */
+  --frame: #e2e2de; /* table and settings frames */
+  --field: #d8d8d4; /* input and chip borders */
+  --subtle: #f6f6f4; /* banners, segmented control track, crossed-out chips */
+  --table-head: #f4f5f3; /* table header row */
+  --zebra: #fafaf8; /* alternate table rows */
+  --travel: #f5d9c4; /* travel-gap blocks */
+  --closed: #f0f0ed; /* closed blocks */
+  --booked-other: #9aa5ad; /* other people's lessons in the customer schedule */
+  --seg-booked: #a9cfdb; /* booked lessons in package bars */
+  --seg-free: #ecece9; /* unused lessons in package bars */
+  --tag: #f1f1ee; /* 1-to-1 / 1-to-2 / 1-to-3 tag background */
+  --tag-ink: #3f4a52; /* 1-to-1 / 1-to-2 / 1-to-3 tag text */
+
+  color-scheme: light;
+}
+
+@theme inline {
+  /* Only the design tokens exist as colours, so off-palette classes such as
+     bg-blue-500 don't compile. Keeps the one-accent look (DESIGN §1). */
+  --color-*: initial;
+  --color-white: #ffffff;
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-tint: var(--accent-tint);
+  --color-on-accent-muted: var(--on-accent-muted);
+  --color-warn: var(--warn);
+  --color-warn-tint: var(--warn-tint);
+  --color-line: var(--line);
+  --color-line-row: var(--line-row);
+  --color-frame: var(--frame);
+  --color-field: var(--field);
+  --color-subtle: var(--subtle);
+  --color-table-head: var(--table-head);
+  --color-zebra: var(--zebra);
+  --color-travel: var(--travel);
+  --color-closed: var(--closed);
+  --color-booked-other: var(--booked-other);
+  --color-seg-booked: var(--seg-booked);
+  --color-seg-free: var(--seg-free);
+  --color-tag: var(--tag);
+  --color-tag-ink: var(--tag-ink);
+
+  /* Figtree is the only typeface (self-hosted with @fontsource/figtree in main.tsx). */
+  --font-sans: 'Figtree', system-ui, sans-serif;
+
+  /* Type scale (DESIGN §2). rem so text follows the phone's font-size setting. */
+  --text-small: 0.75rem; /* 12px: small text, table headers */
+  --text-label: 0.8125rem; /* 13px: section labels */
+  --text-body: 0.9375rem; /* 15px: body (text-sm is the 14px body size) */
+  --text-title: 1.5rem; /* 24px: page title on phones */
+  --text-title-desktop: 1.625rem; /* 26px: page title on the coach's desktop */
+
+  /* Radius (DESIGN §2). Pills use rounded-full. */
+  --radius-control: 10px; /* buttons and inputs */
+  --radius-small: 8px; /* small controls */
+  --radius-frame: 12px; /* tables, settings frames, dialogs */
+  --radius-block: 6px; /* calendar blocks */
+}
+
+@layer base {
+  body {
+    background-color: var(--color-white);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-size: var(--text-body);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  a {
+    color: var(--accent);
+  }
+
+  a:hover {
+    color: var(--accent-hover);
+  }
+
+  /* Visible focus for keyboard users: 2px accent outline, 2px offset (DESIGN §5). */
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+}
+
+/* Respect "reduce motion": dialogs and state changes appear without animating. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
