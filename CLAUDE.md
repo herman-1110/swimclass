@@ -72,14 +72,20 @@ docs/  prompts/
 ```
 
 ## Commands
-- `npm run dev`: Vite dev server
+- `npm run dev`: Vite dev server on http://localhost:5173 (fixed port: auth redirects use it)
 - `npm run build`: type-check and build to `dist/`
-- `npm run test`: Vitest (unit and database tests)
+- `npm run preview`: serve the built `dist/` locally
+- `npm run test`: Vitest once (unit and database tests); `npm run test:watch` re-runs on save
 - `npm run lint` / `npm run typecheck`
-- `npm run db:types`: regenerate `src/lib/database.types.ts`
+- `npm run format` / `npm run format:check`: Prettier
+- `npm run db:types`: regenerate `src/lib/database.types.ts` from the linked Supabase project
+  (`npm run db:types:local` when Supabase runs locally in Docker)
 - `npx supabase db reset` (local) or `npx supabase db push` (linked project)
 - `npx supabase functions deploy <name>`
-- `npx wrangler deploy`: publish `dist/` to Cloudflare
+- `npx wrangler deploy`: publish `dist/` to Cloudflare (`--dry-run` checks without publishing)
+
+The Supabase CLI and Wrangler are pinned dev dependencies, so `npx` runs those versions.
+Dev environment setup (no Docker: the `swimclass-dev` project): `docs/DEV_SETUP.md`.
 
 Keep this list current when you add scripts.
 

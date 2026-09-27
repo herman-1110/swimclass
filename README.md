@@ -26,7 +26,7 @@ Everything Claude Code needs to build the booking site, in build order.
 ## Things you set up yourself (all free)
 | When | What |
 |---|---|
-| Before prompt 01 | Node 20+, Git, and ideally Docker Desktop (for local Supabase) |
+| Before prompt 01 | Node 24.15+ (24 LTS recommended; 22.22.2+ or 26+ also work, 25 doesn't), Git, and ideally Docker Desktop (for local Supabase) |
 | Before prompt 02 | Supabase account; if no Docker, a project `swimclass-dev` in Singapore |
 | Before prompt 11 | Google 2-Step Verification on, then an App Password for Gmail |
 | Prompt 12 | Supabase project `swimclass` (prod), Cloudflare account, Apps Script project, GitHub secret for backups |
