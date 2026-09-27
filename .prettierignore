@@ -1,0 +1,17 @@
+dist
+coverage
+.wrangler
+package-lock.json
+
+# Planning pack and design references: keep as written
+CLAUDE.md
+README.md
+docs
+prompts
+design
+
+# Generated or copied verbatim
+src/lib/database.types.ts
+wrangler.jsonc
+supabase/.temp
+supabase/.branches
