@@ -6,11 +6,10 @@ Keep entries short; link to files instead of pasting code.
 ## v0.2 · 28 Sep 2026 · Prompt 02: Database schema, security and seed data
 **State**: The data layer is live on `swimclass-dev`: 4 migrations and the seed applied
 with `npx supabase db push --include-seed`; `src/lib/database.types.ts` generated. Typecheck,
-lint, build and the 46 unit tests pass. **The 90 database tests have not run yet**: they
-need `DATABASE_URL` in `.env.local` (DEV_SETUP §4) and are skipped without it. Before
-that, the migrations + seed were dry-run on the dev project in rolled-back transactions,
-and `group_balance` matched the TECH_SPEC §10 table for all 10 groups (as the coach and
-as meiling). Work is committed on branch `02-database-schema` (not pushed).
+lint and build pass; `npm run test` runs all 136 tests (46 unit, 90 database against
+`swimclass-dev` via `DATABASE_URL`) and they pass, twice in a row, leaving the seed
+unchanged. `group_balance` matches the TECH_SPEC §10 table for all 10 groups. Work is
+committed on branch `02-database-schema` (not pushed).
 **Done**
 - Migrations in `supabase/migrations/`: `…_schema.sql` (enums, all §3 tables with checks,
   FKs, the listed indexes, `bookings_no_overlap`, the settings row), `…_triggers.sql`
@@ -35,8 +34,7 @@ as meiling). Work is committed on branch `02-database-schema` (not pushed).
   before its first push and relinks dev after); test TLS now verifies Supabase's CA; the
   pristine-seed check now catches edits; shift-seed test clock; a wrong trigger comment
   and a seed block that could never work; doc gaps listed under Open issues.
-**Next**: run the database tests once `DATABASE_URL` is set (`npm run test`: all
-`tests/db` files must pass, not skip), then `prompts/03-availability-engine.md`.
+**Next**: `prompts/03-availability-engine.md`.
 **Decisions**
 - `btree_gist` isn't needed: the exclusion constraint is range-only (plain gist).
 - The schema migration inserts the settings row; `coach_email` defaults to `''` (the
@@ -93,7 +91,6 @@ as meiling). Work is committed on branch `02-database-schema` (not pushed).
   rules). RLS-without-policies on the three service-role tables is intended.
   Leaked-password protection is an Auth setting to consider in prompt 05.
 **Manual steps waiting on Herman**
-- Add `DATABASE_URL` to `.env.local` (DEV_SETUP §4), then `npm run test`.
 - Rename the dev project from `swimclass` to `swimclass-dev` (Project Settings → General).
 - Optional: compare `tests/db/supabase-root-2021-ca.crt` with Dashboard → Project Settings →
   Database → SSL configuration → Download certificate (SHA-256 starts `80:70:25:AD`).
