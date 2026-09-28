@@ -1,24 +1,808 @@
-// Placeholder until the schema exists (prompt 02). Regenerate with `npm run db:types`;
-// never edit by hand after that.
-
-export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[]
 
 export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "14.5"
+  }
   public: {
     Tables: {
-      [_ in never]: never
+      announcements: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          message: string
+          pinned: boolean
+          removed_at: string | null
+          send_email: boolean
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          message: string
+          pinned?: boolean
+          removed_at?: string | null
+          send_email?: boolean
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          message?: string
+          pinned?: boolean
+          removed_at?: string | null
+          send_email?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "announcements_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      availability_exceptions: {
+        Row: {
+          created_at: string
+          ends_at: string
+          id: string
+          kind: Database["public"]["Enums"]["exception_kind"]
+          note: string | null
+          starts_at: string
+        }
+        Insert: {
+          created_at?: string
+          ends_at: string
+          id?: string
+          kind: Database["public"]["Enums"]["exception_kind"]
+          note?: string | null
+          starts_at: string
+        }
+        Update: {
+          created_at?: string
+          ends_at?: string
+          id?: string
+          kind?: Database["public"]["Enums"]["exception_kind"]
+          note?: string | null
+          starts_at?: string
+        }
+        Relationships: []
+      }
+      availability_rules: {
+        Row: {
+          closes_at: string
+          id: string
+          opens_at: string
+          weekday: number
+        }
+        Insert: {
+          closes_at: string
+          id?: string
+          opens_at: string
+          weekday: number
+        }
+        Update: {
+          closes_at?: string
+          id?: string
+          opens_at?: string
+          weekday?: number
+        }
+        Relationships: []
+      }
+      bookings: {
+        Row: {
+          cancel_reason: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
+          created_at: string
+          created_by: string | null
+          ends_at: string
+          gap_override: boolean
+          group_id: string
+          id: string
+          location: string
+          series_id: string | null
+          starts_at: string
+          status: Database["public"]["Enums"]["booking_status"]
+        }
+        Insert: {
+          cancel_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          ends_at: string
+          gap_override?: boolean
+          group_id: string
+          id?: string
+          location: string
+          series_id?: string | null
+          starts_at: string
+          status?: Database["public"]["Enums"]["booking_status"]
+        }
+        Update: {
+          cancel_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          ends_at?: string
+          gap_override?: boolean
+          group_id?: string
+          id?: string
+          location?: string
+          series_id?: string | null
+          starts_at?: string
+          status?: Database["public"]["Enums"]["booking_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_cancelled_by_fkey"
+            columns: ["cancelled_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "group_balance"
+            referencedColumns: ["group_id"]
+          },
+          {
+            foreignKeyName: "bookings_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "group_details"
+            referencedColumns: ["group_id"]
+          },
+          {
+            foreignKeyName: "bookings_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      daily_jobs: {
+        Row: {
+          done_at: string
+          for_date: string
+          job: string
+        }
+        Insert: {
+          done_at?: string
+          for_date: string
+          job: string
+        }
+        Update: {
+          done_at?: string
+          for_date?: string
+          job?: string
+        }
+        Relationships: []
+      }
+      email_outbox: {
+        Row: {
+          attempts: number
+          body_html: string | null
+          body_text: string
+          claimed_at: string | null
+          created_at: string
+          dedupe_key: string | null
+          id: number
+          kind: string
+          last_error: string | null
+          sent_at: string | null
+          subject: string
+          to_email: string
+        }
+        Insert: {
+          attempts?: number
+          body_html?: string | null
+          body_text: string
+          claimed_at?: string | null
+          created_at?: string
+          dedupe_key?: string | null
+          id?: never
+          kind: string
+          last_error?: string | null
+          sent_at?: string | null
+          subject: string
+          to_email: string
+        }
+        Update: {
+          attempts?: number
+          body_html?: string | null
+          body_text?: string
+          claimed_at?: string | null
+          created_at?: string
+          dedupe_key?: string | null
+          id?: never
+          kind?: string
+          last_error?: string | null
+          sent_at?: string | null
+          subject?: string
+          to_email?: string
+        }
+        Relationships: []
+      }
+      group_members: {
+        Row: {
+          group_id: string
+          student_id: string
+        }
+        Insert: {
+          group_id: string
+          student_id: string
+        }
+        Update: {
+          group_id?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_members_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "group_balance"
+            referencedColumns: ["group_id"]
+          },
+          {
+            foreignKeyName: "group_members_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "group_details"
+            referencedColumns: ["group_id"]
+          },
+          {
+            foreignKeyName: "group_members_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_members_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      groups: {
+        Row: {
+          account_id: string
+          active: boolean
+          created_at: string
+          id: string
+          location: string
+          opening_paid_lessons: number
+          opening_used_lessons: number
+        }
+        Insert: {
+          account_id: string
+          active?: boolean
+          created_at?: string
+          id?: string
+          location: string
+          opening_paid_lessons?: number
+          opening_used_lessons?: number
+        }
+        Update: {
+          account_id?: string
+          active?: boolean
+          created_at?: string
+          id?: string
+          location?: string
+          opening_paid_lessons?: number
+          opening_used_lessons?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "groups_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      login_attempts: {
+        Row: {
+          attempted_at: string
+          id: number
+          ok: boolean
+          username: string
+        }
+        Insert: {
+          attempted_at?: string
+          id?: never
+          ok: boolean
+          username: string
+        }
+        Update: {
+          attempted_at?: string
+          id?: never
+          ok?: boolean
+          username?: string
+        }
+        Relationships: []
+      }
+      payments: {
+        Row: {
+          amount_cents: number
+          created_at: string
+          created_by: string | null
+          gateway_ref: string | null
+          group_id: string
+          id: string
+          lessons: number
+          method: Database["public"]["Enums"]["payment_method"]
+          note: string | null
+          paid_on: string
+        }
+        Insert: {
+          amount_cents: number
+          created_at?: string
+          created_by?: string | null
+          gateway_ref?: string | null
+          group_id: string
+          id?: string
+          lessons: number
+          method: Database["public"]["Enums"]["payment_method"]
+          note?: string | null
+          paid_on: string
+        }
+        Update: {
+          amount_cents?: number
+          created_at?: string
+          created_by?: string | null
+          gateway_ref?: string | null
+          group_id?: string
+          id?: string
+          lessons?: number
+          method?: Database["public"]["Enums"]["payment_method"]
+          note?: string | null
+          paid_on?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "group_balance"
+            referencedColumns: ["group_id"]
+          },
+          {
+            foreignKeyName: "payments_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "group_details"
+            referencedColumns: ["group_id"]
+          },
+          {
+            foreignKeyName: "payments_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          approved: boolean
+          created_at: string
+          display_name: string
+          id: string
+          phone: string | null
+          role: Database["public"]["Enums"]["app_role"]
+          username: string
+        }
+        Insert: {
+          approved?: boolean
+          created_at?: string
+          display_name: string
+          id: string
+          phone?: string | null
+          role?: Database["public"]["Enums"]["app_role"]
+          username: string
+        }
+        Update: {
+          approved?: boolean
+          created_at?: string
+          display_name?: string
+          id?: string
+          phone?: string | null
+          role?: Database["public"]["Enums"]["app_role"]
+          username?: string
+        }
+        Relationships: []
+      }
+      settings: {
+        Row: {
+          booking_confirmations: boolean
+          booking_window_weeks: number
+          business_name: string
+          cancel_cutoff_hours: number
+          coach_email: string
+          digest_time: string
+          id: number
+          late_change_alert: boolean
+          lesson_expiry_months: number | null
+          lesson_lengths: number[]
+          lessons_per_package: number
+          max_students_per_lesson: number
+          payment_instructions: string | null
+          price_1to1_cents: number | null
+          price_1to2_cents: number | null
+          price_1to3_cents: number | null
+          reminder_time: string
+          require_approval: boolean
+          start_step_minutes: number
+          travel_gap_minutes: number
+          unpaid_packages_allowed: number
+          updated_at: string
+        }
+        Insert: {
+          booking_confirmations?: boolean
+          booking_window_weeks?: number
+          business_name?: string
+          cancel_cutoff_hours?: number
+          coach_email?: string
+          digest_time?: string
+          id?: number
+          late_change_alert?: boolean
+          lesson_expiry_months?: number | null
+          lesson_lengths?: number[]
+          lessons_per_package?: number
+          max_students_per_lesson?: number
+          payment_instructions?: string | null
+          price_1to1_cents?: number | null
+          price_1to2_cents?: number | null
+          price_1to3_cents?: number | null
+          reminder_time?: string
+          require_approval?: boolean
+          start_step_minutes?: number
+          travel_gap_minutes?: number
+          unpaid_packages_allowed?: number
+          updated_at?: string
+        }
+        Update: {
+          booking_confirmations?: boolean
+          booking_window_weeks?: number
+          business_name?: string
+          cancel_cutoff_hours?: number
+          coach_email?: string
+          digest_time?: string
+          id?: number
+          late_change_alert?: boolean
+          lesson_expiry_months?: number | null
+          lesson_lengths?: number[]
+          lessons_per_package?: number
+          max_students_per_lesson?: number
+          payment_instructions?: string | null
+          price_1to1_cents?: number | null
+          price_1to2_cents?: number | null
+          price_1to3_cents?: number | null
+          reminder_time?: string
+          require_approval?: boolean
+          start_step_minutes?: number
+          travel_gap_minutes?: number
+          unpaid_packages_allowed?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      students: {
+        Row: {
+          account_id: string
+          active: boolean
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          account_id: string
+          active?: boolean
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          account_id?: string
+          active?: boolean
+          created_at?: string
+          id?: string
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "students_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
-      [_ in never]: never
+      booking_ledger: {
+        Row: {
+          booking_id: string | null
+          ends_at: string | null
+          first_index: number | null
+          group_id: string | null
+          last_index: number | null
+          lesson_in_package: number | null
+          lessons: number | null
+          package_no: number | null
+          starts_at: string | null
+          used: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "group_balance"
+            referencedColumns: ["group_id"]
+          },
+          {
+            foreignKeyName: "bookings_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "group_details"
+            referencedColumns: ["group_id"]
+          },
+          {
+            foreignKeyName: "bookings_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      group_balance: {
+        Row: {
+          account_id: string | null
+          booked_in_package: number | null
+          booked_lessons: number | null
+          can_still_book: number | null
+          group_id: string | null
+          last_lesson_at: string | null
+          last_paid_on: string | null
+          last_payment_method:
+            | Database["public"]["Enums"]["payment_method"]
+            | null
+          left_in_package: number | null
+          package_no: number | null
+          package_size: number | null
+          paid_lessons: number | null
+          unpaid: boolean | null
+          unpaid_since: string | null
+          used_in_package: number | null
+          used_lessons: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "groups_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      group_details: {
+        Row: {
+          account_id: string | null
+          active: boolean | null
+          created_at: string | null
+          display_names: string | null
+          group_id: string | null
+          location: string | null
+          opening_paid_lessons: number | null
+          opening_used_lessons: number | null
+          size: number | null
+          student_ids: string[] | null
+          type_label: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "groups_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
-      [_ in never]: never
+      app_now: { Args: never; Returns: string }
+      is_approved: { Args: never; Returns: boolean }
+      is_coach: { Args: never; Returns: boolean }
+      lessons_for: {
+        Args: { p_ends_at: string; p_starts_at: string }
+        Returns: number
+      }
+      my_account_id: { Args: never; Returns: string }
+      package_settings: {
+        Args: never
+        Returns: {
+          lessons_per_package: number
+          unpaid_packages_allowed: number
+        }[]
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "coach" | "customer"
+      booking_status: "booked" | "cancelled" | "excused"
+      exception_kind: "closed" | "open"
+      payment_method: "cash" | "transfer" | "fpx" | "free" | "other"
     }
     CompositeTypes: {
       [_ in never]: never
     }
   }
 }
+
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+
+export type Tables<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never) = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R
+    }
+    ? R
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
+      : never
+    : never
+
+export type TablesInsert<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never) = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I
+    }
+    ? I
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
+    : never
+
+export type TablesUpdate<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never) = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U
+    }
+    ? U
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
+    : never
+
+export type Enums<
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never) = never,
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never) = never,
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
+
+export const Constants = {
+  public: {
+    Enums: {
+      app_role: ["coach", "customer"],
+      booking_status: ["booked", "cancelled", "excused"],
+      exception_kind: ["closed", "open"],
+      payment_method: ["cash", "transfer", "fpx", "free", "other"],
+    },
+  },
+} as const
