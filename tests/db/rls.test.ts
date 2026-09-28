@@ -360,11 +360,14 @@ describe.skipIf(!hasDatabase)('security checklist (TECH_SPEC §13)', () => {
     )
     expect(rows.map((r) => r.name)).toEqual([
       'app_now()',
+      'coach_week(date)', // prompt 03; checks is_coach() first
       'is_approved()',
       'is_coach()',
       'lessons_for(timestamp with time zone,timestamp with time zone)',
       'my_account_id()',
       'package_settings()',
+      'week_busy(date)', // prompt 03
+      'week_slots(date,integer,uuid)', // prompt 03
     ])
   })
 
