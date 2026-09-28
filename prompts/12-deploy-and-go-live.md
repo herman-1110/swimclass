@@ -14,13 +14,20 @@ dashboards: write them as a checklist for Herman and do the code parts yourself.
 ## TASK
 1. **Production Supabase** (checklist for Herman, commands for you):
    - Create project `swimclass` in Southeast Asia (Singapore); note URL and keys.
+   - Before linking or pushing, mark it as production: in its SQL editor run
+     `create role swimclass_production nologin;` (`supabase/seed.sql` refuses to run where
+     this role exists).
    - `npx supabase link --project-ref <ref>`, `npx supabase db push` (no seed!).
-   - Insert the settings row with Herman's email and his real open hours and prices.
+   - Update the settings row (the migration creates it) with Herman's email and prices,
+     and add his real open hours (the weekly template is only in the dev seed).
    - Deploy `login`, `admin-accounts`, `mail-queue`; set `MAIL_TOKEN` (new random value)
      and `SITE_URL`.
    - Auth: confirm email on, Site URL and redirect URLs = production URL, custom SMTP
      with Gmail (same as dev), templates.
    - Herman signs up as `herman`; run `supabase/snippets/make-coach.sql`.
+   - Link the CLI back to `swimclass-dev` (`npx supabase link --project-ref <dev ref>`)
+     so everyday `--linked` commands (`db reset --linked` wipes the database) keep
+     targeting dev. `npx supabase projects list` marks the linked project.
 2. **Cloudflare**: production `.env` values (publishable key only), `npm run build`,
    `npx wrangler deploy`. Optional custom domain on the Worker. Check deep links
    (`/coach/students`) load after refresh (SPA fallback).

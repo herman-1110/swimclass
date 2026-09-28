@@ -3,6 +3,106 @@
 Update this file at the end of every Claude Code session. Newest entry on top.
 Keep entries short; link to files instead of pasting code.
 
+## v0.2 · 28 Sep 2026 · Prompt 02: Database schema, security and seed data
+**State**: The data layer is live on `swimclass-dev`: 4 migrations and the seed applied
+with `npx supabase db push --include-seed`; `src/lib/database.types.ts` generated. Typecheck,
+lint, build and the 46 unit tests pass. **The 90 database tests have not run yet**: they
+need `DATABASE_URL` in `.env.local` (DEV_SETUP §4) and are skipped without it. Before
+that, the migrations + seed were dry-run on the dev project in rolled-back transactions,
+and `group_balance` matched the TECH_SPEC §10 table for all 10 groups (as the coach and
+as meiling). Work is committed on branch `02-database-schema` (not pushed).
+**Done**
+- Migrations in `supabase/migrations/`: `…_schema.sql` (enums, all §3 tables with checks,
+  FKs, the listed indexes, `bookings_no_overlap`, the settings row), `…_triggers.sql`
+  (profile on sign-up, group member checks, group never empty, account moves refused,
+  `settings.updated_at`), `…_views.sql` (`app_now()`, `lessons_for()`,
+  `package_settings()`, `group_details`, `booking_ledger`, `group_balance`),
+  `…_rls.sql` (`is_coach()`, `is_approved()`, `my_account_id()`, default privileges
+  revoked, RLS on every table, policies and grants per §6).
+- `supabase/seed.sql` (§10 fixture, weekly open hours; refuses to run on production) and
+  `supabase/snippets/shift-seed.sql` (moves the sample week to next week, dev only).
+- `tests/db/helpers.ts` (pg client, transaction per test rolled back, impersonation,
+  pinned clock, session time zone America/Los_Angeles, pinned Supabase CA, refuses a
+  database that isn't the pristine seed), `balance`, `rls`, `constraints` and
+  `shift-seed` tests. `vite.config.ts` passes `DATABASE_URL` to tests.
+- `src/lib/database.types.ts` generated (`npm run db:types`).
+- Docs: TECH_SPEC §3–§6, §10, §12, §13; DEV_SETUP §3–§4; CLAUDE.md layout; prompts 03,
+  04, 05, 07, 08, 09 and 12 adjusted where this data layer changes what they must do.
+- Two multi-agent reviews (spec, SQL, security, seed, tests, later prompts, completeness;
+  each finding checked by three skeptics, with rolled-back dry runs on the dev project).
+  Fixed: exception notes readable by any signed-in account; seed could reach production
+  (now refuses where the `swimclass_production` role exists, and prompt 12 marks prod
+  before its first push and relinks dev after); test TLS now verifies Supabase's CA; the
+  pristine-seed check now catches edits; shift-seed test clock; a wrong trigger comment
+  and a seed block that could never work; doc gaps listed under Open issues.
+**Next**: run the database tests once `DATABASE_URL` is set (`npm run test`: all
+`tests/db` files must pass, not skip), then `prompts/03-availability-engine.md`.
+**Decisions**
+- `btree_gist` isn't needed: the exclusion constraint is range-only (plain gist).
+- The schema migration inserts the settings row; `coach_email` defaults to `''` (the
+  seed sets `herman@example.com`, prod updates it in prompt 12).
+- `app_now()` ignores `app.now` when `session_user` is `authenticator` (every API
+  request), a second lock besides PostgREST not exposing `set_config`.
+- Bookings must be exactly 1 or 2 hours (`bookings_length`); `lesson_lengths` must be a
+  non-empty subset of {60,120}. Lessons per booking come from `lessons_for()`.
+- Customers can't read `settings`, so the views read package size and credit through
+  `package_settings()`. Views are keyed by `group_id`. `unpaid_since` and
+  `last_lesson_at` are timestamptz (the lesson's start); `unpaid_since` is null when the
+  first unpaid lesson is in the opening balance. `can_still_book` can go negative.
+- Trigger error codes: `invalid_username`, `student_other_account`, `group_full`,
+  `group_empty`. Map them in `src/lib/reasons.ts` when prompts 04/05/09 surface them.
+- Default privileges are revoked for `authenticated` too, not only `anon`/`public`: every
+  new function needs an explicit `grant execute … to authenticated`, including the coach's
+  (he signs in as `authenticated`). TECH_SPEC §6 and prompts 03/04 say so now; prompt 04
+  checks herman can call his functions.
+- RLS as the §6 matrix, with two narrowings recorded in §6: the coach updates only
+  display_name/phone on profiles directly (role and approval through functions), and
+  nobody reads `availability_exceptions.note` directly (it may name a customer); the
+  coach gets notes through coach functions (coach_week in prompt 03).
+- Seed: fixed ids (accounts `a0…`, students `b0…`, groups `c0…`, bookings `d0…`,
+  payments `e0…`), password `swim-test-2026` for everyone (public, dev only), sample
+  payment amounts, prices left unset. Production is marked with the role
+  `swimclass_production` (prompt 12) and the seed refuses to run there.
+- The database tests need the seed exactly as loaded (a fingerprint in
+  `tests/db/helpers.ts`; update it when `seed.sql` changes); after shifting the sample week or
+  adding data on dev, reload with `npx supabase db reset --linked` (DEV_SETUP §3).
+**Open issues**
+- Prompt 09 "Waiting for approval": the coach can't read other accounts' emails (they
+  stay in `auth.users`) and "Remove" has no path. Suggest a coach-only security definer
+  `pending_accounts()` returning profile fields plus `auth.users.email` (never a view over
+  auth.users), and an `admin-accounts` `delete_account` using `auth.admin.deleteUser`.
+- Supabase Auth reports any failure in the profile trigger (`invalid_username`, a taken
+  username, name over 100 or phone over 30 characters) only as "Database error saving new
+  user", so sign-up (prompt 05) and `admin-accounts` must check these before calling Auth.
+  The other trigger codes reach the browser through RPCs (create_group).
+- `book_lesson` must lock the group row before the date locks, or two bookings for one
+  group on different dates can both pass the credit check (TECH_SPEC §5.2, prompt 04).
+- After shift-seed the UI runs at the real time, so screens match the §10 balances only on
+  the shifted Saturday 10:00–18:00 MYT (TECH_SPEC §10; prompts 07–09 updated).
+- `bookings.group_id` has no `on delete` (as §3), so an account with any booking can't
+  be deleted (affects prompt 12's "delete the test account afterwards").
+- Prompt 11: HTML-escape display names in emails (they're free text).
+- Prompts 05/12: the coach bootstrap promotes whoever registered `herman`; sign up as
+  `herman` before opening sign-ups.
+- The dev project is named `swimclass` in Supabase (`supabase/.temp/linked-project.json`),
+  the name prompt 12 plans for production. Rename it to `swimclass-dev`
+  (Project Settings → General) so the two can't be confused.
+- Supabase advisors (`npx supabase db advisors --linked`): the WARNs about `is_coach`,
+  `is_approved`, `my_account_id` and `package_settings` being callable are intended (RLS
+  and the views need them; they return only the caller's own status or the package
+  rules). RLS-without-policies on the three service-role tables is intended.
+  Leaked-password protection is an Auth setting to consider in prompt 05.
+**Manual steps waiting on Herman**
+- Add `DATABASE_URL` to `.env.local` (DEV_SETUP §4), then `npm run test`.
+- Rename the dev project from `swimclass` to `swimclass-dev` (Project Settings → General).
+- Optional: compare `tests/db/supabase-root-2021-ca.crt` with Dashboard → Project Settings →
+  Database → SSL configuration → Download certificate (SHA-256 starts `80:70:25:AD`).
+- Try a sample login later (prompt 05): `meiling` / `swim-test-2026`.
+- Review, then merge and push:
+  `git switch main && git merge --ff-only 02-database-schema && git push`.
+- Still open from v0.1: browser click-through, Cloudflare account, package prices,
+  Google 2-Step Verification.
+
 ## v0.1 · 28 Sep 2026 · Prompt 01: Project setup
 **State**: Clickable skeleton, no features and no database yet. `npm install`, then
 `npm run dev` → http://localhost:5173. Every route in TECH_SPEC §11 shows a placeholder

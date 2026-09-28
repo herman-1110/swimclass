@@ -7,7 +7,8 @@ Coach schedule works (prompt 08). Now the money and people side. Read DESIGN §4
 (`admin-accounts`), and `design/AdminStudents.dc.html`, `design/AdminAddStudents.dc.html`.
 
 ## DIAGNOSE
-1. Confirm `group_balance` returns the TECH_SPEC §10 numbers through the API as herman.
+1. Confirm `group_balance` through the API as herman matches the same view in the SQL
+   editor at that moment (the §10 numbers are tested at the pinned clock).
 2. Confirm `create_group`, `record_payment`, `approve_account` and the `admin-accounts`
    function work and refuse customers.
 3. List the table/filter components you'll build and how the right panel is opened from
@@ -43,7 +44,7 @@ Coach schedule works (prompt 08). Now the money and people side. Read DESIGN §4
    - On success go back to the table with the new row highlighted.
 
 ## VALIDATION
-- Table matches TECH_SPEC §10 for all groups; filters and counts correct (Unpaid 2,
+- Table matches `group_balance` for all groups (TECH_SPEC §10 on the shifted Saturday); filters and counts correct (Unpaid 2,
   Last lesson 2).
 - Recording Hana's payment turns her row Paid, removes her from Needs attention and
   from the coach digest's unpaid list.

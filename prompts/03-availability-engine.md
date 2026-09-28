@@ -31,8 +31,9 @@ block (`startsFor`, `conflictFor`); use it to understand behaviour, not as code 
    Never include names, locations, or other accounts' ids.
 5. `coach_week(p_week_start)`: coach only; full details per booking (display_names,
    type_label, location, status, gap_override, account display name, unpaid flag).
-6. Grants: customers get `week_slots` and `week_busy`; only the coach can run
-   `coach_week` (check inside). Revoke from `anon`/`public`.
+6. Grants (new functions start with none, TECH_SPEC §6): grant `week_slots`, `week_busy`
+   and `coach_week` to `authenticated`; `coach_week` checks `is_coach()` first.
+   `open_windows` and `slot_check` stay internal (no grant). Nothing for `anon`.
 
 ## VALIDATION
 Write `tests/db/availability.test.ts` with `set local app.now = '2026-09-26 12:00+08'`:

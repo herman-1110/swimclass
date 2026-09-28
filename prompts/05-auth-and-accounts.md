@@ -25,7 +25,9 @@ type a username instead, without ever exposing emails to the browser.
 3. Pages (match DESIGN §4 and `design/Login.dc.html`):
    - Log in → calls `login`, then `supabase.auth.setSession`.
    - Sign up: username (live availability check with `username_available`, debounced),
-     name, email, phone, password + confirm; on success show "Check your email to
+     name, email, phone, password + confirm. Check username format, name (1–100) and
+     phone (≤ 30) before calling `signUp`: Auth reports a failed profile trigger only as
+     "Database error saving new user". On success show "Check your email to
      confirm, then wait for your coach to approve your account".
    - Forgot password (email → `resetPasswordForEmail` with redirect to `/reset`) and
      Reset password (`updateUser`).

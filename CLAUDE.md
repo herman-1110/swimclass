@@ -62,7 +62,8 @@ src/
 supabase/
   migrations/   SQL migrations. One change per file. Never edit a migration that has been applied.
   functions/    Edge Functions: login, admin-accounts, mail-queue
-  seed.sql      sample data matching the design (week of Mon 28 Sep 2026)
+  seed.sql      sample data matching the design (week of Mon 28 Sep 2026). Dev only, never prod
+  snippets/     SQL run by hand (shift-seed.sql, make-coach.sql)
 tests/
   db/           database tests (pg + transaction rollback)
   unit/         pure TypeScript tests

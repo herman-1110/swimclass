@@ -44,13 +44,56 @@ The skeleton runs without Supabase. Pages that talk to the database need step 2.
    ```
    It should connect and list no migrations yet.
 
-For the database tests in prompt 02 you will also need the database connection string:
-dashboard → **Connect** → **Session pooler** (the direct connection needs IPv6, which many
-home connections don't have). Keep it ready: prompt 02 sets up the database tests that
-read it as `DATABASE_URL`. Only ever point tests at `swimclass-dev`, never at production.
-
 The free plan pauses a project after a week without requests. If `swimclass-dev` is
 paused, open it in the dashboard and choose **Restore**.
+
+## 3. Load the database
+The tables, views and security rules are migrations in `supabase/migrations/`; the sample
+data is `supabase/seed.sql` (TECH_SPEC §10).
+
+- **First time on `swimclass-dev`** (the project is empty): `npx supabase db push --include-seed`
+- **After pulling new migrations**: `npx supabase db push`
+- **Start again from scratch** (wipes `swimclass-dev`, then applies every migration and the
+  seed): `npx supabase db reset --linked`. Do this before running the database tests if
+  you have shifted the sample week or added data while trying the UI.
+
+`--linked` means whichever project the CLI was last linked to. Before any reset, run
+`npx supabase projects list` and check that the linked project (marked ●) is
+`swimclass-dev`. Never push the seed to production: it refuses to run there once
+production is marked (prompt 12).
+
+Sample accounts (all with the password `swim-test-2026`; the repo is public, so this
+password is too, which is fine only because this is sample data on the dev project):
+`herman` (the coach), `meiling`, `farah`, `weijie`, `priya`, `zulaikha`, `junhao`, `grace`,
+`ethan`, `kai`, `daniel`, `aina`, `nurul`. Their emails are `<username>@example.com`,
+which no one receives.
+
+The sample lessons sit around the week of Mon 28 Sep 2026. To try the UI with them as
+next week, move them forward by whole weeks (running it again in the same week does
+nothing):
+```sh
+npx supabase db query --linked -f supabase/snippets/shift-seed.sql
+```
+(or paste the file into Dashboard → SQL Editor and click Run).
+
+## 4. Database tests
+`npm run test` also runs `tests/db/` when `.env.local` has a `DATABASE_URL`; without it
+those tests are skipped. Get the string from the dashboard → **Connect** → **Session
+pooler** (the direct connection needs IPv6, which many home connections don't have) and
+put your database password in place of `[YOUR-PASSWORD]`:
+```sh
+DATABASE_URL=postgresql://postgres.<project-ref>:<password>@aws-0-ap-southeast-1.pooler.supabase.com:5432/postgres
+```
+If the password contains `@ : / ? #` or `%`, replace those characters with `%40 %3A %2F
+%3F %23 %25`, or reset the password to one made of letters and digits
+(Project Settings → Database). The name has no `VITE_` prefix, so it never reaches the
+browser.
+
+Each test runs in a transaction that is rolled back, so the data stays as loaded. The
+tests expect the seed exactly as loaded: if the sample week was shifted or you added or
+changed data (lessons, groups, open hours, settings), they stop with a message asking you
+to reload it (`npx supabase db reset --linked`).
+Only ever point `DATABASE_URL` at `swimclass-dev`, never at production.
 
 ## Alternative: local Supabase with Docker
 If you install Docker Desktop later, `npx supabase start` runs Supabase on your machine.

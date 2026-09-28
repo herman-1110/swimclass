@@ -13,7 +13,8 @@ Read PRD BR-10, BR-13 to BR-26, BR-31, BR-34, BR-35 and TECH_SPEC §5.2, §5.3, 
 
 ## TASK
 1. `book_lesson(p_group_id, p_starts_at, p_minutes, p_repeat_weeks)`:
-   approved, owns the group, group active; lock the affected dates in sorted order;
+   approved, owns the group, group active; lock the group row, then the affected dates
+   in sorted order;
    `slot_check` each week (all-or-nothing → `repeat_conflict` with `detail.dates`);
    credit check against `can_still_book` (`credit_exceeded`); insert with a shared
    `series_id` and the group's location; queue the confirmation email and, if within
@@ -30,8 +31,11 @@ Read PRD BR-10, BR-13 to BR-26, BR-31, BR-34, BR-35 and TECH_SPEC §5.2, §5.3, 
    `approve_account(...)`, `username_available(...)` as TECH_SPEC §5.3.
 7. Email templates as SQL helper functions returning subject/text/html for each kind
    (booked, cancelled, late_alert). Keep them short and plain; see PRD BR-32 to BR-35.
-8. Grants: customers get `book_lesson`, `cancel_booking`; anon gets only
-   `username_available`; everything else coach-checked inside.
+8. Grants (new functions start with none, TECH_SPEC §6): grant to `authenticated` every
+   RPC the browser calls: `book_lesson`, `cancel_booking` and the coach's `coach_book`,
+   `excuse_booking`, `record_payment`, `add_free_lesson`, `create_group`, `update_group`,
+   `set_group_active`, `approve_account` (each coach-only one checks `is_coach()` first);
+   anon gets only `username_available`; email helpers and internal functions get none.
 
 ## VALIDATION
 `tests/db/booking.test.ts` (clock `app.now = '2026-09-26 12:00+08'` unless stated):
@@ -39,7 +43,10 @@ Read PRD BR-10, BR-13 to BR-26, BR-31, BR-34, BR-35 and TECH_SPEC §5.2, §5.3, 
   shows `overlap_mine` for meiling and `overlap_other` for priya.
 - meiling books "Sofia" Tue 29 Sep 19:30 (fresh transaction) → success; `group_balance`
   shows Package 3 and Unpaid for Sofia.
-- Wei Jie can book one more lesson; a second one fails `credit_exceeded`.
+- Wei Jie can book one more lesson; a second one fails `credit_exceeded`. Two connections
+  booking Wei Jie on two different dates at the same time → exactly one succeeds.
+- herman successfully calls `coach_book`, `record_payment`, `create_group` and
+  `approve_account`.
 - Repeat weekly 3 weeks for a time that clashes in week 2 → `repeat_conflict`, no rows.
 - Cancel Sat 3 Oct 09:00 with `app.now = '2026-10-03 02:59+08'` succeeds; with
   `'2026-10-03 03:01+08'` fails `locked`; the coach can cancel it at 03:01.

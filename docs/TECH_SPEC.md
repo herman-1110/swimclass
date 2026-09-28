@@ -53,8 +53,8 @@ create type exception_kind as enum ('closed', 'open');
 profiles (
   id uuid primary key references auth.users on delete cascade,
   username text not null unique check (username ~ '^[a-z0-9._]{3,30}$'),
-  display_name text not null,
-  phone text,
+  display_name text not null,           -- 1 to 100 characters after trimming
+  phone text,                           -- at most 30 characters
   role app_role not null default 'customer',
   approved boolean not null default false,
   created_at timestamptz not null default now()
@@ -89,7 +89,7 @@ bookings (
   id uuid pk,
   group_id uuid not null references groups,
   starts_at timestamptz not null,
-  ends_at timestamptz not null check (ends_at > starts_at),
+  ends_at timestamptz not null check (ends_at > starts_at),  -- and exactly 1 or 2 hours
   location text not null,              -- copied from the group when booked
   status booking_status not null default 'booked',
   gap_override boolean not null default false,  -- coach only (BR-10, BR-31)
@@ -132,10 +132,10 @@ announcements (
 settings (                               -- exactly one row, id = 1
   id int primary key default 1 check (id = 1),
   business_name text not null default 'Swim Class',
-  coach_email text not null,
+  coach_email text not null default '',  -- '' until set (seed, or prod setup in §12)
   travel_gap_minutes int not null default 60 check (between 0 and 180),
   start_step_minutes int not null default 30 check (in (15, 30, 60)),
-  lesson_lengths int[] not null default '{60,120}',
+  lesson_lengths int[] not null default '{60,120}',  -- non-empty subset of {60,120}
   max_students_per_lesson int not null default 3 check (between 1 and 3),
   cancel_cutoff_hours int not null default 6 check (between 0 and 72),
   booking_window_weeks int not null default 4 check (between 1 and 12),
@@ -169,11 +169,20 @@ login_attempts (id bigint identity pk, username text not null,
                 attempted_at timestamptz not null default now(), ok boolean not null)
 ```
 
-Seed `settings` with the defaults and the weekly template:
+The schema migration inserts the `settings` row with the defaults (coach_email '').
+The seed sets coach_email and adds the weekly template:
 Mon–Fri 17:30–22:00; Sat and Sun 07:00–12:00 and 16:00–22:00.
+
+Triggers: a profile is created for every new `auth.users` row; `group_members` checks
+same account (`student_other_account`) and size (`group_full`); a group always keeps a
+member (`group_empty`, checked at commit); moving a group or student to another account
+is refused; `settings.updated_at` is set on update.
 
 ## 4. Derived views
 All views use `with (security_invoker = true)` so RLS applies to whoever queries them.
+Each has `group_id` as its group key. Customers can't read `settings`, so the views get
+the package size and credit from `package_settings()` (security definer), and lessons
+per booking from `lessons_for(starts_at, ends_at)` (hours).
 
 **`group_details`**: group id, account id, location, active, `size` (member count),
 `type_label` ('1-to-1' / '1-to-2' / '1-to-3'), `display_names` ("Aiman & Sofia",
@@ -182,8 +191,8 @@ All views use `with (security_invoker = true)` so RLS applies to whoever queries
 **`booking_ledger`**: every counted booking (status 'booked') per group in start order
 with `first_index` and `last_index` (cumulative lesson numbers, starting after
 `opening_used_lessons`; a 2-hour lesson takes two numbers), `package_no`
-(= ceil(first_index / lessons_per_package)) and `lesson_in_package`. Used for
-"Package 4, lesson 2 of 4" labels.
+(= ceil(first_index / lessons_per_package)), `lesson_in_package` and `used`
+(ends_at <= now). Used for "Package 4, lesson 2 of 4" labels.
 
 **`group_balance`** (as of `app_now()`):
 - `paid_lessons` = opening_paid_lessons + sum(payments.lessons)
@@ -192,11 +201,14 @@ with `first_index` and `last_index` (cumulative lesson numbers, starting after
 - `package_no` = floor(used_lessons / size) + 1, `used_in_package` = used − (package_no − 1) × size
 - `booked_in_package` = least(booked_lessons, size − used_in_package)
 - `left_in_package` = size − used_in_package − booked_in_package
-- `unpaid` = used + booked > paid; `unpaid_since` = start date of the first lesson past paid_lessons
-- `can_still_book` = paid + unpaid_packages_allowed × size − used − booked (BR-21)
+- `unpaid` = used + booked > paid; `unpaid_since` = start (timestamptz) of the lesson that
+  uses lesson number paid_lessons + 1; null when that lesson is in the opening balance
+- `can_still_book` = paid + unpaid_packages_allowed × size − used − booked (BR-21; negative
+  if the coach booked past the limit)
 - `last_lesson_at` = start of the upcoming booking whose last_index = paid_lessons,
   when used + booked = paid (BR-22)
 - `last_paid_on`, `last_payment_method`
+- (`size` above is `lessons_per_package`, exposed as `package_size`.)
 
 ## 5. Database functions (RPC)
 All are `security definer`, `set search_path = ''`, check the caller with `auth.uid()`
@@ -208,9 +220,12 @@ The frontend maps codes to messages (DESIGN.md §6).
 returns `current_setting('app.now', true)::timestamptz` when that setting exists and
 `now()` otherwise. Only direct database connections (tests, SQL editor) can set
 `app.now`; the API can't, so customers can never fake the time to dodge the cutoff.
+As a second lock, `app_now()` ignores `app.now` when `session_user` is `authenticator`
+(every PostgREST request, including Edge Functions using supabase-js).
 Never add a "now" parameter to a function customers can call.
 
-Helpers: `app_now()`, `is_coach()`, `is_approved()`, `my_account_id()`.
+Helpers: `app_now()`, `is_coach()`, `is_approved()`, `my_account_id()`, and for the
+views `lessons_for()` and `package_settings()`.
 
 ### 5.1 Availability (the engine: one source of truth)
 - `open_windows(p_day date) returns table (starts_at, ends_at)`: weekly rules for that
@@ -242,7 +257,9 @@ Helpers: `app_now()`, `is_coach()`, `is_approved()`, `my_account_id()`.
 ### 5.2 Booking and changes
 - `book_lesson(p_group_id, p_starts_at, p_minutes, p_repeat_weeks int default 1) returns uuid[]`
   - caller approved and owns the group (`not_approved`, `not_your_group`), group active
-  - take `pg_advisory_xact_lock` on each affected MYT date (sorted) to serialise
+  - lock the group first (`select … from groups where id = p_group_id for no key update`)
+    so two bookings for one group on different dates can't both pass the credit check,
+    then take `pg_advisory_xact_lock` on each affected MYT date (sorted) to serialise
     competing bookings, then run `slot_check` for every week (`repeat_conflict` with
     `detail.dates` if any week fails; nothing is inserted)
   - credit: lessons needed <= `can_still_book` (`credit_exceeded`)
@@ -286,17 +303,22 @@ everything else goes through the functions above.
 
 | Table | Customer (approved or not) | Coach |
 |---|---|---|
-| profiles | select/update own row (display_name, phone) | all |
+| profiles | select/update own row (display_name, phone) | select all; update display_name, phone (role and approval only through functions) |
 | students, groups, group_members | select own account's | all (writes via functions) |
 | bookings | select own groups' bookings | all (writes via functions) |
 | payments | select own groups' | all (writes via functions) |
-| availability_rules, availability_exceptions | select | all |
+| availability_rules, availability_exceptions | select (exceptions: not `note`, the coach's private text) | all (exception notes read through coach functions) |
 | announcements | select where removed_at is null | all |
 | settings | none (use `get_public_settings`) | select/update |
 | email_outbox, daily_jobs, login_attempts | none | none (service role only) |
 
-Revoke `execute` from `public` and `anon` on every function, then grant to
-`authenticated` only what customers call; coach checks happen inside each function.
+The RLS migration removes the default privileges, so every new table, view and function
+starts with no access for `public`, `anon` and `authenticated`. Grant `execute` to
+`authenticated` on every RPC the browser calls, whether a customer or the coach calls it
+(the coach signs in as `authenticated` too); coach-only functions check `is_coach()`
+first. Internal helpers (`open_windows`, `slot_check`: its `p_viewer` would let a caller
+see another account's names) and the service-role email functions get no grant; `anon`
+gets only `username_available`.
 
 ## 7. Edge Functions (Deno, `supabase/functions/`)
 - **`login`** (verify_jwt off). POST `{username, password}`. Checks `login_attempts`
@@ -377,7 +399,14 @@ Reminders therefore go out within about 5 minutes after `reminder_time`.
 Clock for tests: `set local app.now = '2026-09-26 12:00+08'` (Sat 26 Sep 2026, noon MYT).
 For clicking around the UI on the dev project, run `supabase/snippets/shift-seed.sql`,
 which moves every fixture date forward by whole weeks so the fixture week is next week.
-Settings: defaults. Weekly template as in §3.
+Settings: defaults. Weekly template as in §3. Every sample account's password is
+`swim-test-2026` (emails `<username>@example.com`); seed rows have fixed ids (accounts
+`a0…`, students `b0…`, groups `c0…`, bookings `d0…`, payments `e0…`). The database tests
+need the seed exactly as loaded (not shifted).
+The UI always runs at the real time (`app_now()` ignores `app.now` for API requests), so
+after shift-seed the screens show the balances below only on the shifted Saturday between
+10:00 and 18:00 MYT. At any other time compare screens with `select * from group_balance`
+run as the coach at that moment; `tests/db/balance.test.ts` checks the table itself.
 
 Accounts, groups (location; opening used/paid; payments) and bookings (MYT):
 | Account | Group | Type | Location | Opening used/paid | Payments | Bookings |
@@ -458,9 +487,12 @@ names; `queue_daily_emails` twice for the same date creates one reminder per acc
   ```
   Build with production env vars, then `npx wrangler deploy`. Optional custom domain
   (for example `swimclass.online`) is added to the Worker in the Cloudflare dashboard.
-- **Supabase prod**: create in Singapore; `supabase link`; `supabase db push`; deploy the
-  three functions; set secrets; configure Auth (§9); insert the settings row with the
-  coach's email; bootstrap the coach.
+- **Supabase prod**: create in Singapore; mark it as production before anything else
+  (`create role swimclass_production nologin;` in its SQL editor: `seed.sql` refuses to run
+  where this role exists); `supabase link`; `supabase db push` (never the seed); deploy the
+  three functions; set secrets; configure Auth (§9); update the settings row (the
+  migration creates it) with the coach's email; add the open hours; bootstrap the coach;
+  link the CLI back to the dev project.
 - **Apps Script**: new project in the coach's Google account, paste `apps-script/Code.gs`,
   set script properties, run `install()` once and approve the permissions.
 - **Backups**: `.github/workflows/backup.yml` weekly (`cron: '0 18 * * 6'`, Sunday
@@ -472,7 +504,8 @@ names; `queue_daily_emails` twice for the same date creates one reminder per acc
 ## 13. Security checklist
 - RLS on every table; views are `security_invoker`; no table grants without a policy.
 - Every function sets `search_path = ''`, checks the caller, validates input.
-- `execute` revoked from `public`/`anon` except `username_available`.
+- `execute` revoked from `public`/`anon` except `username_available`; `authenticated` gets
+  only the RPCs the browser calls.
 - Secret key and `MAIL_TOKEN` only in Edge Function secrets and Apps Script properties.
 - Login rate limit; identical error for unknown username and wrong password.
 - No personal data in URLs; customers never receive other customers' names or contacts.

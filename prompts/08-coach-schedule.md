@@ -44,8 +44,10 @@ and the dialogs "not drawn"), PRD BR-17, BR-18, BR-28 to BR-31, BR-36, TECH_SPEC
 ## VALIDATION
 - Seed week renders like `design/AdminSchedule.dc.html` (Kai's Friday lesson shows
   "Gap override", no travel block between Wei Jie and Kai).
-- Today panel for Sat 26 Sep (pinned clock) lists Ethan 9:00 am (done), Aiman & Sofia
-  5:00 pm, Hana 7:30 pm with "Unpaid, collect today".
+- Today panel for Sat 26 Sep lists Ethan 9:00 am (done), Aiman & Sofia 5:00 pm, Hana
+  7:30 pm with "Unpaid, collect today": a component test fed `coach_week` output taken at
+  the pinned clock (the API always runs at the real time), or by hand on the shifted
+  Saturday.
 - Opening extra time on a date makes those starts appear for customers on that date only;
   blocking time removes them; neither changes the weekly template.
 - Coach adds a booking outside open hours after confirming; overlapping an existing

@@ -41,6 +41,7 @@ Book a lesson works (prompt 06). Now the other customer tabs. Read DESIGN §4
   network tab and add a test on the JSON).
 - Cancel within the cutoff works and the time reappears as free on Book; after the
   cutoff the row shows Locked and the API refuses (`locked`) even if called directly.
-- Packages match the TECH_SPEC §10 table for both of meiling's groups.
+- Packages match `group_balance` for both of meiling's groups (the TECH_SPEC §10 table
+  only on the shifted Saturday 10:00–18:00 MYT; see §10).
 - Screens match the designs at 390 px; keyboard and screen-reader labels checked.
 - HANDOFF.md updated.
