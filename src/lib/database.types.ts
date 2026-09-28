@@ -652,18 +652,59 @@ export type Database = {
     }
     Functions: {
       app_now: { Args: never; Returns: string }
+      coach_week: { Args: { p_week_start: string }; Returns: Json }
       is_approved: { Args: never; Returns: boolean }
       is_coach: { Args: never; Returns: boolean }
+      lesson_travel: {
+        Args: { p_from: string; p_to: string }
+        Returns: {
+          booking_id: string
+          travel_after: number
+          travel_before: number
+        }[]
+      }
       lessons_for: {
         Args: { p_ends_at: string; p_starts_at: string }
         Returns: number
       }
       my_account_id: { Args: never; Returns: string }
+      myt_text: { Args: { p_at: string }; Returns: string }
+      open_windows: {
+        Args: { p_day: string }
+        Returns: {
+          ends_at: string
+          starts_at: string
+        }[]
+      }
       package_settings: {
         Args: never
         Returns: {
           lessons_per_package: number
           unpaid_packages_allowed: number
+        }[]
+      }
+      slot_check: {
+        Args: {
+          p_group_id: string
+          p_minutes: number
+          p_starts_at: string
+          p_viewer: string
+        }
+        Returns: {
+          detail: Json
+          ok: boolean
+          reason: string
+        }[]
+      }
+      week_busy: { Args: { p_week_start: string }; Returns: Json }
+      week_slots: {
+        Args: { p_group_id: string; p_minutes: number; p_week_start: string }
+        Returns: {
+          day: string
+          detail: Json
+          ok: boolean
+          reason: string
+          starts_at: string
         }[]
       }
     }
