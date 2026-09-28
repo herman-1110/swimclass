@@ -19,7 +19,9 @@ All main screens work. Now Herman can change every rule himself. Read DESIGN §4
    add, change or remove ranges for that weekday (validate: end after start, no overlap
    between ranges of the same day, inside 5:00 am–11:00 pm).
 3. **Booking rules**: travel gap (minutes), lesson lengths (1 hour, 2 hours), students
-   per lesson (up to 3/2/1), start times (every 15/30/60 min), cancel or reschedule
+   per lesson (up to 3/2/1), start times (every 15/30/60 min; the
+   design's "On the hour" option must read "Every hour": starts count from the start of
+   each open window, so a 5:30 pm window gives 5:30, 6:30…, BR-8), cancel or reschedule
    (hours), booking window (weeks), approve new accounts.
 4. **Packages & payments**: lessons per package, package prices per type (RM, stored
    as cents), unpaid packages allowed, lesson expiry (never / 3 / 6 months), payment

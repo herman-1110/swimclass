@@ -228,31 +228,76 @@ Helpers: `app_now()`, `is_coach()`, `is_approved()`, `my_account_id()`, and for 
 views `lessons_for()` and `package_settings()`.
 
 ### 5.1 Availability (the engine: one source of truth)
+Built in prompt 03 (`supabase/migrations/…_availability.sql`, tested in
+`tests/db/availability.test.ts`). Days are MYT days: the day of an instant is
+`(ts at time zone 'Asia/Kuala_Lumpur')::date`, a day and time is
+`(day + time) at time zone 'Asia/Kuala_Lumpur'`; nothing depends on the session time zone.
+Times inside the JSON these functions return are MYT text, `"2026-09-29T19:30:00+08:00"`.
+
 - `open_windows(p_day date) returns table (starts_at, ends_at)`: weekly rules for that
-  ISO weekday, plus 'open' exceptions overlapping the day, merged, minus 'closed'
-  exceptions. All in MYT.
+  ISO weekday, plus 'open' exceptions overlapping the day, merged (touching ranges join:
+  an extra 15:00–17:30 and the 17:30–22:00 rule make one 15:00–22:00 window), minus
+  'closed' exceptions (closed wins, so "Open extra time" inside a "Block time" does
+  nothing). Exceptions are cut at MYT midnight, so a window, and therefore a customer's
+  lesson, never crosses midnight. Internal (no grant).
 - `slot_check(p_starts_at, p_minutes, p_group_id, p_viewer uuid) returns table (ok bool, reason text, detail jsonb)`.
   Order of checks, first failure wins:
-  1. `past` (starts_at <= app_now()), `outside_window` (beyond booking_window_weeks)
-  2. `invalid_length` (not in lesson_lengths), `off_step`
+  1. `past` (starts_at <= app_now(); a null start too), `outside_window`: the lesson's
+     MYT day is after the last bookable day, which is the Sunday of the week
+     `booking_window_weeks` after the current MYT week (Herman, prompt 03: on Mon 28 Sep
+     with 4 weeks, customers can book up to Sun 1 Nov; at the test clock, Sat 26 Sep, up
+     to Sun 25 Oct). The UI's week navigation follows the same rule: this week plus
+     `booking_window_weeks` more.
+  2. `invalid_length` (not in lesson_lengths), `off_step` (not a whole number of
+     `start_step_minutes` after the start of the open window it starts in; a start in no
+     window skips this and fails step 3)
   3. `outside_open_hours` (not fully inside one open window)
-  4. overlaps, earliest booking first: `overlap_mine` (a booking of the viewer's account;
-     detail has its times and display_names) or `overlap_other` (detail has times only)
-  5. travel gap, bookings in start order: `gap_after` (starts less than gap after a
-     lesson ends; detail = that lesson's end time) or `gap_before` (ends less than gap
-     before a lesson starts; detail = that lesson's start time). New bookings always
-     need the full gap next to every existing lesson. `gap_override` only records that
-     the coach allowed a tight pair; the coach views skip the travel block between an
-     override booking and the neighbour it was squeezed next to.
+  4. overlaps with booked lessons, earliest first: `overlap_mine` (a booking of the
+     viewer's account; detail `{starts_at, ends_at, names}`, names = that group's
+     display_names) or `overlap_other` (detail `{starts_at, ends_at}` only)
+  5. travel gap, booked lessons in start order: `gap_after` (starts less than gap after a
+     lesson ends; detail `{ends_at}` of that lesson) or `gap_before` (ends less than gap
+     before a lesson starts; detail `{starts_at}` of that lesson). The gap counts across
+     midnight. New bookings always need the full gap next to every existing lesson.
+     `gap_override` only records that the coach allowed a tight pair; travel drawing
+     (`week_busy`, `coach_week`) skips the travel between an override booking and the
+     neighbour it was squeezed next to.
+
+  Otherwise `ok = true` with null reason and detail. Cancelled and excused bookings block
+  nothing. `p_group_id` is the group the lesson is for; no check depends on it. Internal
+  (no grant): `p_viewer` decides whose names appear, so callers pass the signed-in
+  account. It applies the customer rules; the coach's options (outside open hours, skip
+  the gap) need a variant, see §5.2.
 - `week_slots(p_week_start date, p_minutes int, p_group_id uuid) returns table (day date, starts_at timestamptz, ok bool, reason text, detail jsonb)`:
-  every start inside open windows (stepping from each window's start) for 7 days, with
-  `slot_check` applied. Customers may only pass their own group. Used by the Book screen.
-- `week_busy(p_week_start date) returns jsonb`: for the customer Schedule grid:
-  per day `open` windows, `closed` exceptions, and `busy` blocks
-  `{starts_at, ends_at, mine bool, travel_before, travel_after}`. No names, no locations,
-  no group ids unless `mine`.
-- `coach_week(p_week_start date) returns jsonb`: coach only. Same plus names, type,
-  location, status, override, balance flags.
+  every start inside open windows (stepping `start_step_minutes` from each window's start,
+  while start + length fits in the window) for the 7 days from `p_week_start`, in start
+  order, with `slot_check` applied for the caller. Crossed-out times are included (BR-12).
+  Errors: `not_approved` (customer not approved), `not_your_group` (a customer's group
+  that isn't theirs, or doesn't exist), `not_found` (coach, no such group),
+  `invalid_week` (null week), `invalid_length`. The coach may pass any group; as the
+  viewer he gets `overlap_other` for everyone's lessons (names are in `coach_week`).
+  Used by the Book screen.
+- `week_busy(p_week_start date) returns jsonb`: for the customer Schedule grid, approved
+  customers and the coach (`not_approved`, `invalid_week`). An array of 7 days in date
+  order, each `{day, open: [{starts_at, ends_at}], closed: [{starts_at, ends_at}], busy: [...]}`:
+  `open` = open_windows, `closed` = 'closed' exceptions cut to the day (no notes), `busy`
+  = booked lessons starting that day `{starts_at, ends_at, mine, travel_before,
+  travel_after}`, plus `booking_id` and `group_id` only when `mine`. No names, no
+  locations, no other ids. `travel_before`/`travel_after` are minutes: the travel gap,
+  shortened so it never covers the neighbouring lesson (when the gap setting grew), and 0
+  between an override booking and the neighbour closer than the gap (as drawn in
+  `design/Schedule.dc.html`, Fri 2 Oct). The UI draws travel only inside open time.
+- `coach_week(p_week_start date) returns jsonb`: coach only (`not_coach`,
+  `invalid_week`). The same 7 days with `open` and `closed`, plus `exceptions` (every
+  exception overlapping the day, uncut: `{id, kind, starts_at, ends_at, note}`; the only
+  way notes are read) and `lessons` (every booking starting that day, any status:
+  `{booking_id, group_id, account_id, account_name, display_names, type_label, size,
+  location, starts_at, ends_at, lessons, status, gap_override, travel_before,
+  travel_after, used, package_no, lesson_in_package, package_size, unpaid,
+  last_lesson}`; travel and ledger fields are null for cancelled and excused lessons;
+  `unpaid` is the group's flag, `last_lesson` marks the group's last paid lesson).
+- Internal helpers (no grant): `lesson_travel(p_from, p_to)` (the travel minutes above,
+  for booked lessons starting in the range) and `myt_text(timestamptz)`.
 
 ### 5.2 Booking and changes
 - `book_lesson(p_group_id, p_starts_at, p_minutes, p_repeat_weeks int default 1) returns uuid[]`
@@ -261,11 +306,26 @@ views `lessons_for()` and `package_settings()`.
     so two bookings for one group on different dates can't both pass the credit check,
     then take `pg_advisory_xact_lock` on each affected MYT date (sorted) to serialise
     competing bookings, then run `slot_check` for every week (`repeat_conflict` with
-    `detail.dates` if any week fails; nothing is inserted)
+    `detail.dates` if any week fails; nothing is inserted). The affected dates are every
+    MYT date that `[starts_at − travel gap, ends_at + travel gap)` touches, for every
+    week: the gap check crosses midnight (a lesson ending 23:30 blocks 00:00 the next
+    day), so locking only the lesson's own date would let two such bookings race. Take
+    the locks before calling `slot_check`, and pass the caller as `p_viewer`.
+    Repeat weeks: add whole days as dates in MYT (or `make_interval(hours => 168 * k)`),
+    never `interval '7 days'` on a timestamptz, which follows the session's daylight saving.
   - credit: lessons needed <= `can_still_book` (`credit_exceeded`)
   - insert rows with a shared `series_id`; queue emails (§8)
 - `coach_book(p_group_id, p_starts_at, p_minutes, p_repeat_weeks, p_ignore_open_hours bool, p_gap_override bool, p_ignore_credit bool)`:
   coach only; overlaps still impossible; gap only skipped when `p_gap_override`.
+  `slot_check` stops at the first failure, so outside open hours it never reaches the
+  overlap and gap checks: prompt 04 gives it options for the coach (a new migration that
+  drops and recreates it with extra parameters defaulting to the customer rules, e.g.
+  `p_ignore_open_hours`, `p_ignore_gap`, and decides whether the coach is bound by
+  `past` and the booking window) instead of copying its queries. The Add booking
+  dialog's live clash reason (prompt 08) comes from a coach-only RPC over the same
+  check, `coach_slot_check(p_group_id, p_starts_at, p_minutes, p_ignore_open_hours,
+  p_gap_override)`, granted to `authenticated` and checking `is_coach()` first:
+  `slot_check` itself stays without a grant.
 - `cancel_booking(p_booking_id, p_reason text default null)`: owner allowed only
   while `app_now() <= starts_at - cancel_cutoff_hours` (`locked`); coach any time
   (`cancelled_by` records who). Status becomes 'cancelled'; queue emails.
@@ -286,7 +346,9 @@ views `lessons_for()` and `package_settings()`.
   `remove_exception(p_id)`, `update_settings(p jsonb)`: coach only, validated.
 - `post_announcement(p_message, p_send_email)`, `remove_announcement(p_id)`: coach only.
 - `get_public_settings()`: fields customers need (lengths, step, cutoff, window,
-  package size, prices, payment_instructions, business_name).
+  travel gap (for the `{gap}` in DESIGN §6 messages), package size, prices,
+  payment_instructions, business_name).
+- All §5.4 functions are built in prompt 04; prompts 06, 08 and 10 use them.
 
 ### 5.5 Email queue (service role only; called by the `mail-queue` Edge Function)
 - `queue_daily_emails(p_for_date date)`: for tomorrow in MYT: one reminder per account
@@ -317,8 +379,10 @@ starts with no access for `public`, `anon` and `authenticated`. Grant `execute` 
 `authenticated` on every RPC the browser calls, whether a customer or the coach calls it
 (the coach signs in as `authenticated` too); coach-only functions check `is_coach()`
 first. Internal helpers (`open_windows`, `slot_check`: its `p_viewer` would let a caller
-see another account's names) and the service-role email functions get no grant; `anon`
-gets only `username_available`.
+see another account's names; `lesson_travel`, `myt_text`) and the service-role email
+functions get no grant; `anon` gets only `username_available`. `week_slots` and
+`week_busy` also refuse accounts waiting for approval (`not_approved`): anyone can sign
+up, and the coach's busy times show where he is.
 
 ## 7. Edge Functions (Deno, `supabase/functions/`)
 - **`login`** (verify_jwt off). POST `{username, password}`. Checks `login_attempts`

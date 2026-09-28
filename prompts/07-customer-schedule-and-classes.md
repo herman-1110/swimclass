@@ -13,8 +13,12 @@ Book a lesson works (prompt 06). Now the other customer tabs. Read DESIGN §4
 
 ## TASK
 1. **Schedule** (`/schedule`): week navigation (previous/next, can't go past the
-   booking window), legend, grid 7 am–10 pm in 30-minute rows with blocks for closed,
-   travel, booked (others, no names), yours (accent, "You"), free = empty. Day headers
+   booking window: this week plus `booking_window_weeks` more), legend, grid 7 am–10 pm
+   in 30-minute rows (extend it when `week_busy` has open time or lessons outside those
+   hours) with blocks for closed, travel, booked (others, no names), yours (accent,
+   "You"), free = empty. Data: `week_busy` (TECH_SPEC §5.1); closed = time outside
+   `open`; travel = `travel_before`/`travel_after` minutes next to each lesson, drawn only
+   inside open time (as `design/Schedule.dc.html`). Day headers
    link to `/book?day=...`. Text alternative: a visually hidden list per day ("Tue 29
    Sep: free 7:30 pm to 10 pm"), and the note "Other students' lessons show as Booked".
 2. **My classes** (`/classes`):
@@ -36,7 +40,8 @@ Book a lesson works (prompt 06). Now the other customer tabs. Read DESIGN §4
 
 ## VALIDATION
 - Seed week as meiling: Schedule shows her two lessons as "You" (Sat 9:00 am, Sun
-  5:00 pm), everyone else as Booked, travel blocks around every lesson, and closed
+  5:00 pm), everyone else as Booked, travel blocks as in `design/Schedule.dc.html` (only
+  inside open time, none between Wei Jie and Kai on Fri 2 Oct), and closed
   weekday daytimes. The API response contains no other customer's name (check the
   network tab and add a test on the JSON).
 - Cancel within the cutoff works and the time reappears as free on Book; after the

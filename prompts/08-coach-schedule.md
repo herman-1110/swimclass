@@ -20,7 +20,8 @@ and the dialogs "not drawn"), PRD BR-17, BR-18, BR-28 to BR-31, BR-36, TECH_SPEC
    location for 1-to-1, "2 lessons" for 2-hour, "Gap override" note), travel blocks
    before/after each lesson (none on the side of an override partner), closed blocks,
    'open' exceptions shown as normal open time, cancelled lessons hidden (toggle
-   "Show cancelled" optional).
+   "Show cancelled" optional). Data: `coach_week` (TECH_SPEC §5.1: open, closed,
+   exceptions with notes, and lessons with travel minutes, package position and flags).
 3. Right panel:
    - Today: each lesson with time, group, location, "lesson N of 4", and the orange
      "Unpaid, collect today" when the group is unpaid.
@@ -35,10 +36,15 @@ and the dialogs "not drawn"), PRD BR-17, BR-18, BR-28 to BR-31, BR-36, TECH_SPEC
 5. Dialogs:
    - Block time: date (or from/to dates), from/to time, note → `add_exception('closed')`.
      Warn if existing lessons fall inside ("These lessons stay booked: …").
-   - Open extra time: one date, from/to, note → `add_exception('open')`.
+   - Open extra time: one date, from/to, note → `add_exception('open')`. Blocked time
+     wins over extra time, so warn if the range falls inside a block.
+   - Both dialogs offer times in whole start steps from the hour (:00 and :30 with a
+     30-minute step): starts count from each window's start, so 3:10 pm would shift
+     that evening's times (prompt 04).
    - Add booking: group search (by student or account name), date, start, length,
      repeat weeks, toggles "Outside open hours" and "Skip travel gap" (each with a
-     warning), live clash reason from `slot_check` → `coach_book`.
+     warning), live clash reason from `coach_slot_check` (prompt 04; `slot_check` has
+     no grant) → `coach_book`.
    - Exceptions list for the visible week with Remove.
 
 ## VALIDATION

@@ -16,10 +16,13 @@ Customers can log in (prompt 05) and the database can answer every slot question
 ## TASK
 1. Data hooks (TanStack Query): `usePublicSettings`, `useMyGroups` (group_details for
    the account, active only), `useGroupBalance`, `useWeekSlots(weekStart, minutes,
-   groupId)`, `useLatestAnnouncement`.
+   groupId)` (TECH_SPEC §5.1: every start with ok/reason/detail; times inside `detail` are
+   MYT text), `useLatestAnnouncement`. The `{gap}` in gap messages comes from
+   `get_public_settings().travel_gap_minutes`.
 2. Screen layout exactly as DESIGN §4 "Book a lesson", top to bottom, including the
    coach banner, group option rows with type tags, package status and bar, next-package
-   note, day strip with dots and week navigation, 1/2-hour segmented control from
+   note, day strip with dots and week navigation (this week plus `booking_window_weeks`
+   more: the window ends on a Sunday, TECH_SPEC §5.1), 1/2-hour segmented control from
    `lesson_lengths`, "Start time · <day>" with "See the week" link, "Already booked this
    day" line, Morning/Evening chip groups (5 per row), help text, sticky footer.
 3. Default selection: first group; today's week (or next week if today's week has no

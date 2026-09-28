@@ -3,6 +3,79 @@
 Update this file at the end of every Claude Code session. Newest entry on top.
 Keep entries short; link to files instead of pasting code.
 
+## v0.3 · 28 Sep 2026 · Prompt 03: Availability engine
+**State**: The availability engine is live on `swimclass-dev`
+(`supabase/migrations/20260928120000_availability.sql`, applied with `npx supabase db push`);
+`src/lib/database.types.ts` regenerated. Typecheck, lint, format and build pass;
+`npm run test` runs 180 tests (46 unit, 134 database) and they pass twice in a row, leaving
+the seed unchanged. Free start times and reasons match TECH_SPEC §10 exactly. Work is
+committed on branch `03-availability-engine` (not pushed).
+**Done**
+- Migration: `open_windows`, `slot_check`, `lesson_travel`, `myt_text` (internal, no
+  grant); `week_slots`, `week_busy`, `coach_week` (granted to `authenticated`); an index on
+  `availability_exceptions (ends_at)`.
+- `tests/db/availability.test.ts` (44 tests): the §10 tables for 1 and 2 hours, every
+  expected reason with its exact detail, check order, start step, booking window in four
+  session time zones, the Wed 7 Oct open/closed exceptions, midnight, travel minutes
+  (override pairs, neighbours on other days and weeks), `week_busy` privacy, `coach_week`
+  details and notes, permissions and grants. `tests/db/rls.test.ts` grant list updated.
+- Docs: TECH_SPEC §5.1 (behaviour, decisions, JSON shapes), §5.2 (lock every date within
+  the travel gap; the coach needs `slot_check` options and `coach_slot_check`), §5.4 (travel
+  gap in `get_public_settings`), §6; prompts 04 (now also builds the §5.4 functions and
+  `coach_slot_check`, adds a midnight concurrency test), 06, 07, 08 and 10 adjusted.
+- Two reviews: seven angles with three skeptics per finding, then a read-only review of
+  the revised code with two. No wrong answers for real bookings. Fixed: a null week start
+  read as "all time" (now `invalid_week`); `coach_week` recomputing balances for each day;
+  filters that couldn't use indexes; test gaps (check order, step origin, travel across
+  weeks, exact details, case-insensitive privacy search); prompt 08 calling a function
+  with no grant; §5.4 functions no prompt built.
+**Next**: `prompts/04-booking-and-payments.md`.
+**Decisions**
+- Booking window (Herman): customers can book through the Sunday of the week
+  `booking_window_weeks` after the current MYT week (on Mon 28 Sep with 4 weeks: up to Sun
+  1 Nov). `past` = the start time has passed.
+- Open windows are cut at MYT midnight, so a customer's lesson never crosses midnight;
+  closed exceptions win over open ones. Start times step from the start of the window
+  they are in (an exception at 3:10 pm shifts that evening; prompt 08's dialogs offer
+  times on the step).
+- `week_slots` uses the caller as the viewer, so the coach sees `overlap_other` for every
+  lesson (names are in `coach_week`).
+- Errors: `not_approved` (week_slots, week_busy: accounts waiting for approval),
+  `not_your_group` (a customer's missing or other group), `not_found` (coach, no such
+  group), `invalid_week`, `invalid_length`, `not_coach` (coach_week).
+- JSON times are MYT text (`2026-09-29T19:30:00+08:00`); the `week_slots.starts_at` column
+  is a timestamptz (UTC text through the API).
+- Travel is in minutes: the gap, shortened next to a closer neighbour, and 0 between an
+  override lesson and the neighbour it was squeezed next to, in the customer view too (as
+  the design). The UI draws travel only inside open time.
+- `slot_check` keeps the TECH_SPEC signature and first-failure order; prompt 04 adds the
+  coach's options (TECH_SPEC §5.2).
+- Domain: swimclass.online (Herman, noted under v0.2).
+**Open issues**
+- Codes without a DESIGN §6 message yet: `not_your_group`, `not_found`, `not_coach`,
+  `invalid_week`, `invalid_length`, `off_step` (and the v0.2 trigger codes). `week_slots`
+  rows only carry codes that have one; give the rest a generic message in
+  `src/lib/reasons.ts` (prompt 06).
+- Not load-tested with years of data. Before the fixes, the review measured `coach_week`
+  at about 0.4 s with three years of synthetic bookings.
+- `src/lib/database.types.ts` lists internal functions too (generation ignores grants);
+  the browser can't call them.
+- `supabase/.temp/linked-project.json` (CLI cache, not in git) says `swimclass` until the
+  next `npx supabase link`; `npx supabase projects list` shows `swimclass-dev`.
+- During the first review, one agent's test run committed a broken copy of these functions
+  to the dev database (many agents running the migration inside test transactions at
+  once). Herman approved the cleanup, then the real migration was pushed. Review agents
+  now get read-only checks only.
+- Still open from v0.2: prompt 09 pending accounts and "Remove"; Auth reports trigger
+  errors only as "Database error saving new user" (prompt 05); `bookings.group_id` has no
+  `on delete`; HTML-escape names in emails (prompt 11); sign up as `herman` first.
+**Manual steps waiting on Herman**
+- Review, then merge and push:
+  `git switch main && git merge --ff-only 03-availability-engine && git push`.
+- Still open: browser click-through, Cloudflare account, package prices, Google 2-Step
+  Verification; optional CA certificate check (v0.2).
+- Done: the dev project is renamed `swimclass-dev`.
+
 ## v0.2 · 28 Sep 2026 · Prompt 02: Database schema, security and seed data
 **State**: The data layer is live on `swimclass-dev`: 4 migrations and the seed applied
 with `npx supabase db push --include-seed`; `src/lib/database.types.ts` generated. Typecheck,
@@ -36,6 +109,7 @@ committed on branch `02-database-schema` (not pushed).
   and a seed block that could never work; doc gaps listed under Open issues.
 **Next**: `prompts/03-availability-engine.md`.
 **Decisions**
+- Domain: swimclass.online (bought), use it as the production address in prompt 12.
 - `btree_gist` isn't needed: the exclusion constraint is range-only (plain gist).
 - The schema migration inserts the settings row; `coach_email` defaults to `''` (the
   seed sets `herman@example.com`, prod updates it in prompt 12).
