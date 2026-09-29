@@ -1,4 +1,5 @@
 import { Navigate, Outlet } from 'react-router'
+import { ROUTES } from '@/shared/config/routes'
 
 // Route guards (TECH_SPEC §11). Stubs for now: every page is open so the skeleton can
 // be clicked through. Prompt 05 fills them in from the Supabase session and profile:
@@ -20,5 +21,5 @@ export function RequireCoach() {
 }
 
 export function HomeRedirect() {
-  return <Navigate to="/book" replace />
+  return <Navigate to={ROUTES.book} replace />
 }

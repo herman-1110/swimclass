@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { useRouteError } from 'react-router'
 import { DEFAULT_BUSINESS_NAME } from '@/shared/config/business'
+import { ROUTES } from '@/shared/config/routes'
 
 // Last-resort error screen for anything a page didn't handle itself, including a page's
 // code failing to download (a dropped connection, or an old file after a new release).
@@ -28,7 +29,7 @@ export function RouteError() {
         Reload the page
       </button>
       <p className="m-0 self-center">
-        <a href="/" className="inline-flex min-h-11 items-center">
+        <a href={ROUTES.home} className="inline-flex min-h-11 items-center">
           Go to the start
         </a>
       </p>

@@ -1,5 +1,6 @@
 import { Link } from 'react-router'
 import { PlaceholderPage } from '@/shared/ui/PlaceholderPage'
+import { ROUTES } from '@/shared/config/routes'
 
 export function CoachStudentsPage() {
   return (
@@ -10,7 +11,10 @@ export function CoachStudentsPage() {
       variant="coach"
     >
       <p className="m-0">
-        <Link to="/coach/students/new" className="inline-flex min-h-11 items-center font-semibold">
+        <Link
+          to={ROUTES.coachAddStudents}
+          className="inline-flex min-h-11 items-center font-semibold"
+        >
           Add students
         </Link>
       </p>

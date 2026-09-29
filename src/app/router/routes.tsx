@@ -13,12 +13,13 @@ import { PendingPage } from '@/pages/pending'
 import { ResetPasswordPage } from '@/pages/reset-password'
 import { SchedulePage } from '@/pages/schedule'
 import { SignUpPage } from '@/pages/signup'
+import { ROUTES } from '@/shared/config/routes'
 import { HomeRedirect, RequireApproved, RequireCoach, RequireSignedIn } from './guards'
 import { RouteError } from './RouteError'
 import { RouteLoading } from './RouteLoading'
 
 /**
- * Every route in TECH_SPEC §11. Guards run in order: signed in → approved → role.
+ * Every route (ARCHITECTURE §3.5; paths from ROUTES). Guards run in order: signed in → approved → role.
  * Customer pages are bundled up front (phones on 4G); the coach's pages are loaded on
  * demand so customers never download them.
  *
@@ -39,10 +40,10 @@ export function createRoutes(): RouteObject[] {
         {
           Component: AuthLayout,
           children: [
-            { path: 'login', Component: LoginPage },
-            { path: 'signup', Component: SignUpPage },
-            { path: 'forgot', Component: ForgotPasswordPage },
-            { path: 'reset', Component: ResetPasswordPage },
+            { path: ROUTES.login, Component: LoginPage },
+            { path: ROUTES.signup, Component: SignUpPage },
+            { path: ROUTES.forgotPassword, Component: ForgotPasswordPage },
+            { path: ROUTES.resetPassword, Component: ResetPasswordPage },
           ],
         },
 
@@ -52,7 +53,7 @@ export function createRoutes(): RouteObject[] {
             // Signed in, not approved yet: this is the only page they can see
             {
               Component: AuthLayout,
-              children: [{ path: 'pending', Component: PendingPage }],
+              children: [{ path: ROUTES.pending, Component: PendingPage }],
             },
 
             {
@@ -62,47 +63,47 @@ export function createRoutes(): RouteObject[] {
                 {
                   Component: CustomerLayout,
                   children: [
-                    { path: 'book', Component: BookPage },
-                    { path: 'schedule', Component: SchedulePage },
-                    { path: 'classes', Component: MyClassesPage },
-                    { path: 'account', Component: AccountPage },
+                    { path: ROUTES.book, Component: BookPage },
+                    { path: ROUTES.schedule, Component: SchedulePage },
+                    { path: ROUTES.myClasses, Component: MyClassesPage },
+                    { path: ROUTES.account, Component: AccountPage },
                   ],
                 },
 
                 // Coach only
                 {
-                  path: 'coach',
+                  path: ROUTES.coach,
                   Component: RequireCoach,
                   children: [
                     {
                       Component: CoachLayout,
                       children: [
-                        { index: true, element: <Navigate to="/coach/schedule" replace /> },
+                        { index: true, element: <Navigate to={ROUTES.coachSchedule} replace /> },
                         // Use the function form of `lazy`. With the object form
                         // (`lazy: { Component }`) React Router 8 swallows a failed import
                         // (for example an old chunk after a redeploy) and shows a blank
                         // page; the function form sends it to RouteError.
                         {
-                          path: 'schedule',
+                          path: ROUTES.coachSchedule,
                           lazy: async () => ({
                             Component: (await import('@/pages/coach-schedule')).CoachSchedulePage,
                           }),
                         },
                         {
-                          path: 'students',
+                          path: ROUTES.coachStudents,
                           lazy: async () => ({
                             Component: (await import('@/pages/coach-students')).CoachStudentsPage,
                           }),
                         },
                         {
-                          path: 'students/new',
+                          path: ROUTES.coachAddStudents,
                           lazy: async () => ({
                             Component: (await import('@/pages/coach-add-students'))
                               .CoachAddStudentsPage,
                           }),
                         },
                         {
-                          path: 'settings',
+                          path: ROUTES.coachSettings,
                           lazy: async () => ({
                             Component: (await import('@/pages/coach-settings')).CoachSettingsPage,
                           }),

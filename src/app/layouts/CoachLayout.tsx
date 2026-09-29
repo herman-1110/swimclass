@@ -1,18 +1,24 @@
-import { Link, NavLink, Outlet } from 'react-router'
+import { Link, Outlet, useLocation } from 'react-router'
 import { DEFAULT_BUSINESS_NAME } from '@/shared/config/business'
+import { ROUTES } from '@/shared/config/routes'
 
 // Desktop-first (1280 px and up) with a text-only sidebar (design/AdminSchedule.dc.html).
 // Below 768 px the sidebar becomes a bar across the top so the pages keep their width.
 
-const links = [
-  { to: '/coach/schedule', label: 'Schedule' },
-  { to: '/coach/students', label: 'Students & payments' },
-  { to: '/coach/settings', label: 'Settings' },
+// `alsoOn`: other pages that belong to the same section, so its link stays current there.
+const links: { to: string; label: string; alsoOn?: string[] }[] = [
+  { to: ROUTES.coachSchedule, label: 'Schedule' },
+  { to: ROUTES.coachStudents, label: 'Students & payments', alsoOn: [ROUTES.coachAddStudents] },
+  { to: ROUTES.coachSettings, label: 'Settings' },
 ]
 
 const linkBase = 'flex min-h-11 items-center rounded-small px-3 text-sm no-underline hover:text-ink'
 
 export function CoachLayout() {
+  const { pathname } = useLocation()
+  const isCurrent = (link: (typeof links)[number]) =>
+    pathname === link.to || pathname.startsWith(`${link.to}/`) || !!link.alsoOn?.includes(pathname)
+
   return (
     <div className="flex min-h-dvh flex-col bg-white md:flex-row">
       <a
@@ -27,19 +33,18 @@ export function CoachLayout() {
         <div className="px-3 text-[15px] font-semibold text-accent">{DEFAULT_BUSINESS_NAME}</div>
         <nav aria-label="Coach" className="flex flex-wrap gap-0.5 md:flex-col">
           {links.map((link) => (
-            <NavLink
+            <Link
               key={link.to}
               to={link.to}
-              className={({ isActive }) =>
-                `${linkBase} ${isActive ? 'bg-subtle font-semibold text-ink' : 'font-medium text-muted'}`
-              }
+              aria-current={isCurrent(link) ? 'page' : undefined}
+              className={`${linkBase} ${isCurrent(link) ? 'bg-subtle font-semibold text-ink' : 'font-medium text-muted'}`}
             >
               {link.label}
-            </NavLink>
+            </Link>
           ))}
         </nav>
         <div className="flex flex-wrap items-center gap-0.5 md:mt-auto md:flex-col md:items-stretch">
-          <Link to="/book" className={`${linkBase} text-muted`}>
+          <Link to={ROUTES.book} className={`${linkBase} text-muted`}>
             View as customer
           </Link>
           <span className="px-3 text-small text-muted md:pt-2">Signed in as Coach</span>

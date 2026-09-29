@@ -499,7 +499,7 @@ describe.skipIf(!hasDatabase)('booking emails (TECH_SPEC §8, BR-34, BR-35, BR-3
       'Tue 29 Sep, 7:30–8:30 pm at Palm Court',
       '',
       'Free to cancel or reschedule until 1:30 pm, Tue 29 Sep.',
-      'See your lessons: {{site_url}}/classes',
+      'See your lessons: {{site_url}}/my-classes',
       '',
       'Sent by Swim Class. Reply to this email to reach your coach.',
     ].join('\n')
@@ -507,7 +507,7 @@ describe.skipIf(!hasDatabase)('booking emails (TECH_SPEC §8, BR-34, BR-35, BR-3
       '<p>Hi Mei Ling,</p>',
       '<p>Your lesson for Aiman &amp; Sofia is booked:<br>Tue 29 Sep, 7:30–8:30 pm at Palm Court</p>',
       '<p>Free to cancel or reschedule until 1:30 pm, Tue 29 Sep.<br>See your lessons: ' +
-        '<a href="{{site_url}}/classes">{{site_url}}/classes</a></p>',
+        '<a href="{{site_url}}/my-classes">{{site_url}}/my-classes</a></p>',
       '<p>Sent by Swim Class. Reply to this email to reach your coach.</p>',
     ].join('\n')
     // More than 24 hours away: no late alert.

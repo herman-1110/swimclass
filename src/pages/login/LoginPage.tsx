@@ -1,5 +1,6 @@
 import { Link } from 'react-router'
 import { PlaceholderPage } from '@/shared/ui/PlaceholderPage'
+import { ROUTES } from '@/shared/config/routes'
 
 export function LoginPage() {
   return (
@@ -10,10 +11,10 @@ export function LoginPage() {
       variant="auth"
     >
       <p className="m-0 flex flex-col items-start">
-        <Link to="/forgot" className="inline-flex min-h-11 items-center">
+        <Link to={ROUTES.forgotPassword} className="inline-flex min-h-11 items-center">
           Forgot username or password?
         </Link>
-        <Link to="/signup" className="inline-flex min-h-11 items-center">
+        <Link to={ROUTES.signup} className="inline-flex min-h-11 items-center">
           New here? Create an account
         </Link>
       </p>

@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { NavLink, Outlet } from 'react-router'
+import { ROUTES } from '@/shared/config/routes'
 
 // Phone-first (390 px); on wider screens the app sits in a centred 480 px column
 // (DESIGN §5). Tab bar from design/Main.dc.html.
@@ -8,7 +9,7 @@ type Tab = { to: string; label: string; icon: ReactNode }
 
 const tabs: Tab[] = [
   {
-    to: '/book',
+    to: ROUTES.book,
     label: 'Book',
     icon: (
       <TabIcon>
@@ -18,7 +19,7 @@ const tabs: Tab[] = [
     ),
   },
   {
-    to: '/schedule',
+    to: ROUTES.schedule,
     label: 'Schedule',
     icon: (
       <TabIcon>
@@ -28,7 +29,7 @@ const tabs: Tab[] = [
     ),
   },
   {
-    to: '/classes',
+    to: ROUTES.myClasses,
     label: 'My classes',
     icon: (
       <TabIcon>
@@ -38,7 +39,7 @@ const tabs: Tab[] = [
     ),
   },
   {
-    to: '/account',
+    to: ROUTES.account,
     label: 'Account',
     icon: (
       <TabIcon>

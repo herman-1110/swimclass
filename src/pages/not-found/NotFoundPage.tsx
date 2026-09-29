@@ -1,5 +1,6 @@
 import { Link } from 'react-router'
 import { DEFAULT_BUSINESS_NAME } from '@/shared/config/business'
+import { ROUTES } from '@/shared/config/routes'
 
 export function NotFoundPage() {
   return (
@@ -10,7 +11,7 @@ export function NotFoundPage() {
         There's no page at this address. Check the link, or go back to the start.
       </p>
       <p>
-        <Link to="/" className="inline-flex min-h-11 items-center font-semibold">
+        <Link to={ROUTES.home} className="inline-flex min-h-11 items-center font-semibold">
           Go to the start
         </Link>
       </p>

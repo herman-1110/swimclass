@@ -1,5 +1,6 @@
 import { Link } from 'react-router'
 import { PlaceholderPage } from '@/shared/ui/PlaceholderPage'
+import { ROUTES } from '@/shared/config/routes'
 
 export function ForgotPasswordPage() {
   return (
@@ -10,7 +11,7 @@ export function ForgotPasswordPage() {
       variant="auth"
     >
       <p className="m-0">
-        <Link to="/login" className="inline-flex min-h-11 items-center">
+        <Link to={ROUTES.login} className="inline-flex min-h-11 items-center">
           Back to log in
         </Link>
       </p>

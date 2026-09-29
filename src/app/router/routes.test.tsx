@@ -21,20 +21,20 @@ function findPageHeading(name: string) {
   return screen.findByRole('heading', { level: 1, name })
 }
 
-// Every route in TECH_SPEC §11 and the page title it shows
+// Every route (ARCHITECTURE §3.5) and the page title it shows
 const pages = [
   ['/login', 'Welcome back'],
   ['/signup', 'Create an account'],
-  ['/forgot', 'Forgot your password?'],
-  ['/reset', 'Set a new password'],
+  ['/forgot-password', 'Forgot your password?'],
+  ['/reset-password', 'Set a new password'],
   ['/pending', 'Waiting for approval'],
   ['/book', 'Book a lesson'],
   ['/schedule', 'Schedule'],
-  ['/classes', 'My classes'],
+  ['/my-classes', 'My classes'],
   ['/account', 'Account'],
   ['/coach/schedule', 'Schedule'],
   ['/coach/students', 'Students & payments'],
-  ['/coach/students/new', 'Add students'],
+  ['/coach/add-students', 'Add students'],
   ['/coach/settings', 'Settings'],
 ] as const
 
@@ -69,7 +69,7 @@ describe('customer tab bar', () => {
   const tabs = [
     ['Book', '/book', 'Book a lesson'],
     ['Schedule', '/schedule', 'Schedule'],
-    ['My classes', '/classes', 'My classes'],
+    ['My classes', '/my-classes', 'My classes'],
     ['Account', '/account', 'Account'],
   ] as const
 
@@ -134,7 +134,7 @@ describe('coach sidebar', () => {
     await findPageHeading('Students & payments')
     fireEvent.click(screen.getByRole('link', { name: 'Add students' }))
     await findPageHeading('Add students')
-    expect(router.state.location.pathname).toBe('/coach/students/new')
+    expect(router.state.location.pathname).toBe('/coach/add-students')
     const nav = screen.getByRole('navigation', { name: 'Coach' })
     expect(
       within(nav).getByRole('link', { name: 'Students & payments' }).getAttribute('aria-current'),
@@ -170,7 +170,7 @@ describe('sign-in pages', () => {
     await findPageHeading('Welcome back')
     fireEvent.click(screen.getByRole('link', { name: 'Forgot username or password?' }))
     await findPageHeading('Forgot your password?')
-    expect(router.state.location.pathname).toBe('/forgot')
+    expect(router.state.location.pathname).toBe('/forgot-password')
   })
 })
 
@@ -181,7 +181,7 @@ describe('when a page fails to load', () => {
     const routes = createRoutes()
     const findSettings = (list: RouteObject[]): RouteObject | undefined => {
       for (const route of list) {
-        if (route.path === 'settings') return route
+        if (route.path === '/coach/settings') return route
         const found = route.children && findSettings(route.children)
         if (found) return found
       }
