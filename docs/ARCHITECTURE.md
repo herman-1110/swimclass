@@ -137,9 +137,12 @@ src/
 └── shared/
     ├── api/                      supabase.ts (the only client) · queryClient.ts
     │                             rpc.ts (database and Edge Function calls, AppError)
-    │                             database.types.ts (generated)
+    │                             auth.ts (signing in and out) · database.types.ts (generated)
+    │                             backend.ts (Supabase or demo mode) · supabaseBackend.ts
+    │                             demo/ (demo mode: the migrations and seed in PGlite, §3.6)
     ├── config/                   env.ts · routes.ts (every path) · messages.ts (error wording, DESIGN §6)
     │                             business.ts (the business name on signed-out pages)
+    │                             demo.ts (demo mode's clock and sample password)
     ├── lib/                      time/ (Malaysia time) · format/ (RM, plurals) · hooks/ · cn.ts
     └── ui/                       Button, Field, Select, Checkbox, OptionRow, Segmented, Chip,
                                   DayStrip, SegmentBar, Tag, Pill, Table, Tabs, Dialog, SidePanel,
@@ -203,6 +206,18 @@ The page folder is the route with `/` turned into `-`:
 Paths are written once, in `shared/config/routes.ts`; everything else uses those constants.
 
 ### 3.6 Data, state and errors
+- **One door**: `shared/api/rpc.ts` is how the website reaches data: `rpc(fn, args)` for
+  database functions, `readRows(source, { eq, order, … })` for tables and views RLS lets
+  the account read, `updateRows` / `insertRows` / `deleteRows` where RLS allows a direct
+  change, and `callEdge(name, body)` for Edge Functions. `shared/api/auth.ts` signs in
+  and out. All are typed from `database.types.ts`.
+- **Demo mode**: behind that door sits Supabase, or in demo mode the repo's own
+  migrations and seed running in the browser with PGlite (`shared/api/demo/`), the
+  clock stopped at the seed's `FIXTURE_NOW`. Every call runs as the signed-in account
+  with RLS, and answers with the same JSON the Supabase API returns, so the screens use
+  the real business rules without a server. On for `npm run dev` and the tests, off for
+  production builds (which leave it out); `VITE_DEMO=true` or `false` in `.env.local`
+  overrides. Demo mode is never a place for business rules of its own.
 - **Reading data**: TanStack Query hooks in entity `api/` folders. Each entity exports
   its query keys (`slotKeys`, `balanceKeys` …) so a feature can refresh them.
 - **Changing data**: mutation hooks in feature `api/` folders, each listing the entity
@@ -381,6 +396,9 @@ the CLI to it.
 - Two Vitest projects: `unit` (`src/**`, jsdom), run by `npm run test`; and `db`
   (`tests/db/**`, Node), run by `npm run test:db`, which needs `DATABASE_URL`. The `db`
   files run one at a time, since they share the dev database, with 30 s per test.
+- Unit tests run in demo mode, so page and component tests call the real database
+  functions (PGlite, §3.6) signed in as seeded accounts, with no network and no mocks of
+  the data layer.
 - Test names read as sentences: `it('refuses a second unpaid package')`.
 
 ## 7. Naming
@@ -410,7 +428,8 @@ code, the database and the screens say the same thing. One exception: the databa
 - **ESLint** (flat config) fails when:
   - a layer imports from a layer above it, or a slice imports another slice in its layer;
   - code imports a slice's inner files instead of its `index.ts`;
-  - anything outside `src/shared/api/` imports `@supabase/supabase-js`;
+  - anything outside `src/shared/api/` imports `@supabase/supabase-js`, and anything
+    outside `src/shared/api/demo/` imports `@electric-sql/pglite`;
   - imports aren't sorted.
 
   ESLint's built-in `no-restricted-imports`, with one config block per layer folder, is

@@ -16,7 +16,13 @@ prompt 12. The free plan allows 2 projects, which is exactly dev + prod.
 npm install
 npm run dev          # http://localhost:5173
 ```
-The skeleton runs without Supabase. Pages that talk to the database need step 2.
+`npm run dev` starts in **demo mode** (ARCHITECTURE §3.6): the website runs the repo's own
+migrations and seed in the browser (PGlite), with the clock stopped at Sat 26 Sep 2026,
+12:00 pm (the seed's sample week). No Supabase project is needed. Sign in as any seeded
+account (§3) with the password `swim-test-2026`: `herman` is the coach, `meiling` a
+customer. Changes stay in this browser until you reset the demo data. The first visit
+takes a few seconds while the demo database loads. To use the Supabase project instead,
+put `VITE_DEMO=false` in `.env.local` (this needs the `login` Edge Function from prompt 05).
 
 ## 2. Create the `swimclass-dev` Supabase project (before prompt 02)
 1. Sign in at https://supabase.com/dashboard and choose **New project**.

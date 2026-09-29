@@ -75,7 +75,9 @@ docs/  prompts/
 Unit tests sit next to the code they test (`time.ts` and `time.test.ts`).
 
 ## Commands
-- `npm run dev`: Vite dev server on http://localhost:5173 (fixed port: auth redirects use it)
+- `npm run dev`: Vite dev server on http://localhost:5173 (fixed port: auth redirects use it).
+  Runs in demo mode (ARCHITECTURE §3.6): the migrations and seed in the browser, sign in as
+  any seeded account with `swim-test-2026`; `VITE_DEMO=false` in `.env.local` uses Supabase
 - `npm run build`: type-check and build to `dist/`
 - `npm run preview`: serve the built `dist/` locally
 - `npm run test`: unit tests once (Vitest); `npm run test:watch` re-runs them on save
