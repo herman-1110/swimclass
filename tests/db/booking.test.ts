@@ -4,15 +4,16 @@
 // the same moment.
 import pg from 'pg'
 import { describe, expect, it } from 'vitest'
+
 import {
   hasDatabase,
   myt,
   openSession,
   SEED,
-  SESSION_LOCK_TIMEOUT_MS,
-  useTestDb,
   type Session,
+  SESSION_LOCK_TIMEOUT_MS,
   type TestDb,
+  useTestDb,
 } from './helpers'
 
 const LOCK_NOT_AVAILABLE = '55P03'

@@ -2,7 +2,8 @@
 // create_group, update_group, set_group_active, approve_account and username_available
 // against the seed, with the clock at Sat 26 Sep 2026 12:00 MYT.
 import { describe, expect, it } from 'vitest'
-import { hasDatabase, SEED, useTestDb, type TestDb } from './helpers'
+
+import { hasDatabase, SEED, type TestDb, useTestDb } from './helpers'
 
 const PERMISSION_DENIED = '42501'
 const MISSING_GROUP = 'c0000000-0000-4000-8000-0000000000ff'

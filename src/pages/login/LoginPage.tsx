@@ -1,6 +1,7 @@
 import { Link } from 'react-router'
-import { PlaceholderPage } from '@/shared/ui/PlaceholderPage'
+
 import { ROUTES } from '@/shared/config/routes'
+import { PlaceholderPage } from '@/shared/ui/PlaceholderPage'
 
 export function LoginPage() {
   return (

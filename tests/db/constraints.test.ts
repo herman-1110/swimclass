@@ -1,6 +1,7 @@
 // Table constraints and triggers: no overlapping lessons (BR-14), group membership
 // rules (BR-6), the profile trigger (TECH_SPEC §9), the settings row and app_now().
 import { describe, expect, it } from 'vitest'
+
 import { FIXTURE_NOW, hasDatabase, myt, SEED, useTestDb } from './helpers'
 
 // Priya's lesson on Tue 29 Sep is 17:30–18:30 MYT.

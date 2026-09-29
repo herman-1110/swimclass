@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { NavLink, Outlet } from 'react-router'
+
 import { ROUTES } from '@/shared/config/routes'
 
 // Phone-first (390 px); on wider screens the app sits in a centred 480 px column

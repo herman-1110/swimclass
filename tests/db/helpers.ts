@@ -5,6 +5,7 @@
 // supabase/seed.sql loaded, never at production. Without it the database tests are
 // skipped (see docs/DEV_SETUP.md).
 import { readFileSync } from 'node:fs'
+
 import pg from 'pg'
 import { afterAll, afterEach, beforeAll, beforeEach } from 'vitest'
 

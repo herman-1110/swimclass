@@ -3,7 +3,8 @@
 // add_free_lesson against the seed, with the clock at Sat 26 Sep 2026 12:00 MYT unless a
 // test says otherwise.
 import { describe, expect, it } from 'vitest'
-import { hasDatabase, myt, SEED, useTestDb, type TestDb } from './helpers'
+
+import { hasDatabase, myt, SEED, type TestDb, useTestDb } from './helpers'
 
 type Email = {
   to_email: string

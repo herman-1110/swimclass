@@ -1,4 +1,5 @@
 import { Navigate, type RouteObject } from 'react-router'
+
 import { AuthLayout } from '@/app/layouts/AuthLayout'
 import { CoachLayout } from '@/app/layouts/CoachLayout'
 import { CustomerLayout } from '@/app/layouts/CustomerLayout'
@@ -14,6 +15,7 @@ import { ResetPasswordPage } from '@/pages/reset-password'
 import { SchedulePage } from '@/pages/schedule'
 import { SignUpPage } from '@/pages/signup'
 import { ROUTES } from '@/shared/config/routes'
+
 import { HomeRedirect, RequireApproved, RequireCoach, RequireSignedIn } from './guards'
 import { RouteError } from './RouteError'
 import { RouteLoading } from './RouteLoading'

@@ -1,4 +1,5 @@
 import { Navigate, Outlet } from 'react-router'
+
 import { ROUTES } from '@/shared/config/routes'
 
 // Route guards (TECH_SPEC §11). Stubs for now: every page is open so the skeleton can

@@ -1,5 +1,6 @@
 // Row Level Security and grants: the TECH_SPEC §6 matrix and the §13 checklist.
 import { describe, expect, it } from 'vitest'
+
 import { hasDatabase, SEED, useTestDb } from './helpers'
 
 const PERMISSION_DENIED = '42501'

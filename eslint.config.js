@@ -1,10 +1,73 @@
 import js from '@eslint/js'
+import { defineConfig, globalIgnores } from 'eslint/config'
 import prettier from 'eslint-config-prettier/flat'
 import reactHooks from 'eslint-plugin-react-hooks'
 import reactRefresh from 'eslint-plugin-react-refresh'
-import { defineConfig, globalIgnores } from 'eslint/config'
+import simpleImportSort from 'eslint-plugin-simple-import-sort'
 import globals from 'globals'
 import tseslint from 'typescript-eslint'
+
+// The layer rules of docs/ARCHITECTURE.md §3.1 and §8, with ESLint's own
+// no-restricted-imports. A later block replaces an earlier block's options for the same
+// files, so each block below carries every restriction its files need. Never switch
+// these off; move the code instead.
+//
+//   app → pages → features → entities → shared   (each imports only to its right)
+
+const SUPABASE = {
+  name: '@supabase/supabase-js',
+  message:
+    'Only src/shared/api talks to Supabase (ARCHITECTURE §3.1, rule 5). Use the client from @/shared/api/supabase.',
+}
+
+/** Imports of layers a layer may not use: the ones to its left, and its own slices. */
+const notFrom = (layers) => ({
+  regex: `^@/(${layers.join('|')})(/|$)`,
+  message:
+    'A layer imports only from the layers to its right, and a slice never imports another slice of its own layer (ARCHITECTURE §3.1, rules 1 and 2). Combine them in the layer above.',
+})
+
+/** A slice's inner files instead of its front door (index.ts). */
+const FRONT_DOOR = {
+  regex: '^@/(pages|features|entities)/[^/]+/',
+  message:
+    "Import a slice through its index.ts: @/entities/slot, not @/entities/slot/ui/… (ARCHITECTURE §3.1, rule 3). Add what you need to the slice's index.ts.",
+}
+
+/** Relative imports that leave app/ or shared/ for another layer. */
+const RELATIVE_TO_LAYER = {
+  regex: '^(\\.\\./)+(app|pages|features|entities|shared)(/|$)',
+  message: 'Reach another layer with @/…, not a relative path (ARCHITECTURE §3.1, rule 3).',
+}
+
+/** Relative imports that leave a slice: from a file at the slice's top, any ../ does. */
+const LEAVE_SLICE_FROM_TOP = {
+  regex: '^\\.\\./',
+  message:
+    'Inside a slice use ./ imports; reach anything else with @/… (ARCHITECTURE §3.1, rules 3 and 4).',
+}
+
+/** From a file in a slice's segment (api/, model/, ui/), ../../ leaves the slice. */
+const LEAVE_SLICE_FROM_SEGMENT = { ...LEAVE_SLICE_FROM_TOP, regex: '^\\.\\./\\.\\./' }
+
+const restrict = ({ patterns = [], supabase = true }) => ({
+  'no-restricted-imports': [
+    'error',
+    { paths: supabase ? [SUPABASE] : [], patterns: patterns.map((p) => ({ ...p })) },
+  ],
+})
+
+/** The blocks for one slice layer: files at a slice's top, then files in its segments. */
+const sliceLayer = (layer, patterns) => [
+  {
+    files: [`src/${layer}/*/*.{ts,tsx}`],
+    rules: restrict({ patterns: [...patterns, LEAVE_SLICE_FROM_TOP] }),
+  },
+  {
+    files: [`src/${layer}/*/*/**/*.{ts,tsx}`],
+    rules: restrict({ patterns: [...patterns, LEAVE_SLICE_FROM_SEGMENT] }),
+  },
+]
 
 export default defineConfig([
   globalIgnores([
@@ -27,12 +90,17 @@ export default defineConfig([
       reactHooks.configs.flat.recommended,
       reactRefresh.configs.vite,
     ],
+    plugins: { 'simple-import-sort': simpleImportSort },
     languageOptions: {
       globals: globals.browser,
       parserOptions: {
         projectService: true,
         tsconfigRootDir: import.meta.dirname,
       },
+    },
+    rules: {
+      'simple-import-sort/imports': 'error',
+      'simple-import-sort/exports': 'error',
     },
   },
   {
@@ -42,8 +110,39 @@ export default defineConfig([
   {
     files: ['**/*.js'],
     extends: [js.configs.recommended],
+    plugins: { 'simple-import-sort': simpleImportSort },
     languageOptions: { globals: globals.node },
+    rules: {
+      'simple-import-sort/imports': 'error',
+      'simple-import-sort/exports': 'error',
+    },
   },
+
+  // The layers, most general first. Anything in src/ (and the tests) may not use
+  // Supabase directly.
+  { files: ['src/**/*.{ts,tsx}', 'tests/**/*.{ts,tsx}'], rules: restrict({}) },
+  {
+    files: ['src/app/**/*.{ts,tsx}'],
+    rules: restrict({ patterns: [FRONT_DOOR, RELATIVE_TO_LAYER] }),
+  },
+  ...sliceLayer('pages', [notFrom(['app', 'pages']), FRONT_DOOR]),
+  ...sliceLayer('features', [notFrom(['app', 'pages', 'features']), FRONT_DOOR]),
+  ...sliceLayer('entities', [notFrom(['app', 'pages', 'features', 'entities'])]),
+  {
+    files: ['src/shared/**/*.{ts,tsx}'],
+    ignores: ['src/shared/api/**'],
+    rules: restrict({
+      patterns: [notFrom(['app', 'pages', 'features', 'entities']), RELATIVE_TO_LAYER],
+    }),
+  },
+  {
+    files: ['src/shared/api/**/*.{ts,tsx}'],
+    rules: restrict({
+      patterns: [notFrom(['app', 'pages', 'features', 'entities']), RELATIVE_TO_LAYER],
+      supabase: false,
+    }),
+  },
+
   // Last: turn off rules that would fight Prettier's formatting
   prettier,
 ])

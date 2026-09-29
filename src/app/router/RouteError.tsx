@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { useRouteError } from 'react-router'
+
 import { DEFAULT_BUSINESS_NAME } from '@/shared/config/business'
 import { ROUTES } from '@/shared/config/routes'
 

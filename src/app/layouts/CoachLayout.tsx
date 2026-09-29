@@ -1,4 +1,5 @@
 import { Link, Outlet, useLocation } from 'react-router'
+
 import { DEFAULT_BUSINESS_NAME } from '@/shared/config/business'
 import { ROUTES } from '@/shared/config/routes'
 

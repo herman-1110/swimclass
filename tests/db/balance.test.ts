@@ -1,5 +1,6 @@
 // group_balance, booking_ledger and group_details against the seed (TECH_SPEC §4, §10).
 import { describe, expect, it } from 'vitest'
+
 import { hasDatabase, myt, SEED, useTestDb } from './helpers'
 
 type Expected = {
