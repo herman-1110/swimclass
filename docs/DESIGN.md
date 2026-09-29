@@ -1,7 +1,8 @@
 # Swim Class Booking: Design
 
-Version 1.0 · 27 Sep 2026 · Approved screens: `design/` (and the canvas:
-https://claude.ai/artifact/JMw6rX6wvskLtiwtLefZZ6).
+Version 1.2 · 29 Sep 2026 · Approved screens: `design/`, each drawn at phone and
+computer width (and the canvas: https://claude.ai/artifact/JMw6rX6wvskLtiwtLefZZ6).
+Every screen is responsive: §5 says how each one changes with the screen width.
 
 ## 1. Look
 Quiet and minimal so the schedule and the numbers stand out: white background, one
@@ -10,7 +11,7 @@ things that need attention (unpaid, clashes, last lesson). Tables are the except
 they sit in a light frame with a tinted header and alternating rows so they scan easily.
 
 ## 2. Tokens
-Put these in `src/index.css` as CSS variables and expose them to Tailwind v4 via `@theme`.
+Put these in `src/app/styles/index.css` as CSS variables and expose them to Tailwind v4 via `@theme`.
 
 | Token | Value | Use |
 |---|---|---|
@@ -38,50 +39,70 @@ Put these in `src/index.css` as CSS variables and expose them to Tailwind v4 via
 | --tag | #F1F1EE / text #3F4A52 | 1-to-1 / 1-to-2 / 1-to-3 tags |
 
 - Font: Figtree 400, 500, 600 (self-host with `@fontsource/figtree`). No second typeface.
-- Type scale: page title 24 px (phone) / 26 px (desktop) 600; section label 13 px 500 muted;
-  body 14–15 px; small 12 px; table header 12 px 600.
+- Type scale: page title 24 px (customer) / 26 px (coach) / 28 px (log in) 600; section
+  label 13 px 500 muted; body 14–15 px; small 12 px; table header 12 px 600. Sizes stay the same at
+  every width; only the layout changes.
 - Radius: 10 px buttons and inputs, 8 px small controls, 12 px frames, 6 px calendar blocks,
   999 px pills.
-- Spacing: 8 px grid; phone side padding 20 px; desktop page padding 32–40 px.
+- Spacing: 8 px grid; page side padding 20 px on phones, 32 px from 768 px, 40–48 px
+  from 1024 px.
 
 ## 3. Components
+Where they live (ARCHITECTURE §3): generic pieces with no business words are in
+`src/shared/ui/` (Button, Segmented, OptionRow, DayStrip, Chip, SegmentBar, Tag, Pill,
+Table, Tabs, Dialog, SidePanel, WeekGrid). Business versions sit in their entity and use
+them: `PackageSummary` (entity `balance`) uses SegmentBar, `TimeChipGrid` (entity `slot`)
+uses Chip, `GroupPicker` (entity `group`) uses OptionRow. The tab bar and sidebar live in
+`src/app/layouts/`.
 - **Button**: primary (accent fill, white text, 46–52 px tall); quiet (text only, accent
   or ink); disabled (#ECECE9 fill, muted text). Label says the action.
-- **Segmented control**: track `--subtle`, selected segment white with `--line` border.
+- **Segmented control** (`Segmented`): track `--subtle`, selected segment white with `--line` border.
   Used for 1 hour / 2 hours and lesson type.
-- **Option row** (radio): 48 px, border `--field`; selected border accent and
+- **Option row** (`OptionRow`, a radio): 48 px, border `--field`; selected border accent and
   `--accent-soft` background; name left, type tag right.
-- **Day strip**: 7 buttons; weekday small, date in a 36 px circle (accent when selected);
+- **Day strip** (`DayStrip`): 7 buttons; weekday small, date in a 36 px circle (accent when selected);
   a 4 px accent dot means free times exist. `aria-label` like "Tue 29 Sep, 4 free start times".
-- **Time chip**: 44 px, 5 per row on phones. Free: white, `--field` border. Selected:
+- **Time chip** (`Chip`): 44 px, 5 per row on phones. Free: white, `--field` border. Selected:
   accent fill. Clashing: `--subtle` fill, muted text, line-through. Clashing and
   selected: `--warn-tint` fill, `--warn` border and text.
-- **Package bar**: 4 segments (lessons per package), 4 px tall (6 px in tables):
+- **Package bar** (`SegmentBar`): 4 segments (lessons per package), 4 px tall (6 px in tables):
   used accent, booked `--seg-booked`, free `--seg-free`. Always paired with text
   ("0 used · 2 booked · 2 left to book").
-- **Tag**: small neutral pill for 1-to-1 / 1-to-2 / 1-to-3. **Status pill**: Paid
+- **Tag** (`Tag`): small neutral pill for 1-to-1 / 1-to-2 / 1-to-3. **Status pill** (`Pill`): Paid
   (`--accent-tint` / accent), Unpaid (`--warn-tint` / `--warn`).
 - **Table**: 1 px `--frame` border, radius 12, header `--table-head`, zebra rows,
-  row divider `--line-row`, selected row `--accent-soft`.
-- **Dialog / side panel**: white, radius 12, focus trapped, Esc closes.
-- **Tab bar (customer)**: Book, Schedule, My classes, Account; icons 22 px stroke 1.6;
-  active in accent.
-- **Sidebar (coach)**: text-only links: Schedule, Students & payments, Settings;
-  "View as customer" at the bottom.
+  row divider `--line-row`, selected row `--accent-soft`. Where a table would be too
+  cramped on a phone it becomes a list of cards with the same fields (§5).
+- **Dialog** (`Dialog`): white, radius 12, focus trapped, Esc closes. On phones it
+  opens full screen.
+- **Side panel** (`SidePanel`), used for Record payment: from 1280 px it is a normal
+  340 px column beside the content (no Close button). Below 1280 px it opens on demand
+  as a modal: a 380 px drawer from the right (768–1279 px) or full screen (phones),
+  with focus trapped, Esc and Close to shut it.
+- **Navigation** (`src/app/layouts/`): below 1024 px a bottom tab bar, fixed to the
+  bottom (4 items, icons 22 px stroke 1.6 with the label under, 52 px tall, active in
+  accent, plus the phone's safe-area inset). From 1024 px a 220 px sidebar instead:
+  business name at the top, text links (current one on `--subtle`), "Signed in as …"
+  at the bottom.
+  - Customer: Book, Schedule, My classes, Account.
+  - Coach: Schedule, Students & payments ("Students" in the tab bar), Settings, and
+    View as customer ("Customer view" in the tab bar; at the bottom of the sidebar).
 
 ## 4. Screens
-File names refer to `design/`.
+File names refer to `design/`. Each screen has two drawings of the same design: phone
+(390 px wide) and computer (1280 px for customer screens, 1440 px for coach screens),
+written below as phone / computer. What changes in between is in §5.
 
-### Customer (phone, 390 px)
-**Log in** (`Login.dc.html`): name of the business, "Welcome back", username,
-password, Log in, "Forgot username or password?", "New here? Create an account",
-note that the coach approves new accounts.
+### Customer screens
+**Log in** (`Login.dc.html` / `LoginDesktop.dc.html`): name of the business, "Welcome
+back", username, password, Log in, "Forgot username or password?", "New here? Create an
+account", note that the coach approves new accounts.
 
 **Sign up / Forgot / Reset / Waiting for approval** (not drawn): same style as Log in.
 Sign up checks the username as they type ("That username is taken").
 
-**Book a lesson** (`Main.dc.html`, the interactive reference; its script block is the
-reference algorithm for slots and messages):
+**Book a lesson** (`Main.dc.html` / `MainDesktop.dc.html`, the interactive reference;
+their script block is the reference algorithm for slots and messages):
 1. Greeting and title; coach banner (latest pinned announcement) in `--subtle`.
 2. "Who's this lesson for?": option rows for the account's active groups, each with
    its type tag. Help text: "Your coach sets up who books together."
@@ -93,69 +114,115 @@ reference algorithm for slots and messages):
 6. "Start time · Tue 29 Sep" and "See the week" link. "Already booked this day: …" when
    the account has a lesson that day. Morning and Evening groups of time chips showing
    every start time; clashing ones crossed out. Help text under the chips.
-7. Sticky footer: summary ("Tue 29 Sep · 7:30–8:30 pm" / "1-to-2 for Aiman & Sofia ·
+7. Booking summary (a sticky footer on phones, a sticky card in the right column from
+   768 px): summary ("Tue 29 Sep · 7:30–8:30 pm" / "1-to-2 for Aiman & Sofia ·
    uses 1 lesson from Package 4, 1 left to book after this"), "Repeat weekly: also book
-   Tue 6 Oct" checkbox when balance allows, primary button "Book 7:30 pm for Aiman &
-   Sofia", note "Free to cancel or reschedule up to 6 hours before."
+   Tue 6 Oct" checkbox when balance and booking window allow, primary button "Book
+   7:30 pm for Aiman & Sofia", note "Free to cancel or reschedule up to 6 hours before."
    Tapping a crossed-out time shows "7:00 pm isn't available" with the reason in
    orange and disables the button ("Pick a free time").
 8. After booking: success state with the lesson(s), and the chips refresh.
 
-**Schedule** (`Schedule.dc.html`): "Your coach's timetable", week navigation, legend
-(Free, Booked, Travel, Yours, Closed), grid 7 am–10 pm in 30-minute rows. Other lessons
-are "Booked" without names. Tapping a day header opens Book on that day.
+**Schedule** (`Schedule.dc.html` / `ScheduleDesktop.dc.html`): "Your coach's
+timetable", week navigation, legend (Free, Booked, Travel, Yours, Closed), grid
+7 am–10 pm in 30-minute rows. Other lessons are "Booked" without names. Tapping a day
+header opens Book on that day.
 
-**My classes** (`MyClasses.dc.html`): Upcoming list (date/time, group and type,
-"lesson 2 of 4", location; Cancel with the deadline text, or "Locked" with the reason).
-Cancel asks for confirmation. Packages list per group (tag, bar, paid date and method,
-next-package note with payment instructions). "Past lessons and receipts" link.
+**My classes** (`MyClasses.dc.html` / `MyClassesDesktop.dc.html`): Upcoming list
+(date/time, group and type, "lesson 2 of 4", location; Cancel with the deadline text,
+or "Locked" with the reason). Cancel asks for confirmation. Packages list per group
+(tag, bar, paid date and method, next-package note with payment instructions). "Past
+lessons and receipts" link.
 
 **Account** (not drawn): name, phone, email, change password, log out.
 
-### Coach (desktop, 1280 px and up)
-**Schedule** (`AdminSchedule.dc.html`): title and actions (Block time, Open extra time,
-Add booking); week navigation and legend; week grid 7 am–10 pm (56 px per hour) with
-lesson blocks (name(s), time, type and location), travel blocks, closed blocks, and a
-"Gap override" note where used. Right panel: Today (time, group, location, lesson
-number, unpaid warning), Needs attention (unpaid with "Record payment", last lesson,
-accounts waiting for approval), Message all customers (textarea, "Pin as a banner until
-I remove it", "Send to all customers"). Clicking a lesson opens details: group,
-package position, balance, Cancel lesson (lesson goes back to the package, customer is
-emailed), Mark as excused.
+### Coach screens
+The coach uses the same screens on a computer and on a phone (for example at the pool).
+
+**Schedule** (`AdminSchedule.dc.html` computer / `AdminSchedulePhone.dc.html` phone):
+title and actions (Block time, Open extra time, Add booking); week navigation and
+legend; week grid 7 am–10 pm (56 px per hour) with lesson blocks (name(s), time, type
+and location), travel blocks, closed blocks, and a "Gap override" note where used. On
+phones the week grid becomes a day view: a day strip with the number of lessons under
+each date, then the chosen day as a list of blocks (time on the left; lesson, travel,
+free and closed blocks in the grid's colours). Side column: Today (time, group,
+location, lesson number, unpaid warning), Needs attention (unpaid with "Record
+payment", last lesson, accounts waiting for approval), Message all customers (textarea,
+"Pin as a banner until I remove it", "Send to all customers"). Clicking a lesson opens
+details: group, package position, balance, Cancel lesson (lesson goes back to the
+package, customer is emailed), Mark as excused.
 
 Not drawn: **Block time** dialog (date or date range, from/to time, note);
 **Open extra time** dialog (date, from/to, note); **Add booking** dialog (group
 search, date, start, length, repeat weeks, "Outside open hours" and "Skip travel gap"
 toggles with a warning, and the clash reason if any).
 
-**Students & payments** (`AdminStudents.dc.html`): title, search, "Add students";
-three figures (Unpaid, On last lesson, Students · packages); filter tabs (All, Unpaid,
-Last lesson, Paid, Waiting for approval); table, one row per group package: Students
-(names, account, location), Type, Package (number, bar, counts), Status (pill plus
-note), Last paid (date, method), Action (Record payment for unpaid, History otherwise).
-Right panel: Record payment (package, amount prefilled from the type's price, paid by,
-date, note, Save payment), Add a free lesson, Excuse a missed lesson.
+**Students & payments** (`AdminStudents.dc.html` / `AdminStudentsPhone.dc.html`):
+title, search, "Add students"; three figures (Unpaid, On last lesson, Students ·
+packages); filter tabs (All, Unpaid, Last lesson, Paid, Waiting for approval); table,
+one row per group package: Students (names, account, location), Type, Package
+(number, bar, counts), Status (pill plus note), Last paid (date, method), Action
+(Record payment for unpaid, History otherwise). On phones each row is a card with the
+same fields and the action button. Record payment panel (`SidePanel`): package, amount
+prefilled from the type's price, paid by, date, note, Save payment, Add a free lesson,
+Excuse a missed lesson.
 
-**Add students** (`AdminAddStudents.dc.html`): account (existing or "Create a new
-account…" which opens name, username, email, phone), lesson type segmented control,
-1–3 student name fields (or pick existing students of that account), pool location,
-"First package already paid", advanced "Starting balance" (lessons already used /
-paid), preview of what the customer will see, "Add 3 students".
+**Add students** (`AdminAddStudents.dc.html` / `AdminAddStudentsPhone.dc.html`):
+account (existing or "Create a new account…" which opens name, username, email,
+phone), lesson type segmented control, 1–3 student name fields (or pick existing
+students of that account), pool location, "First package already paid", "Set a
+starting balance" (lessons already used / paid), preview of what the customer will
+see, "Add 3 students".
 
-**Settings** (`AdminSettings.dc.html`): open hours table (day, time-range chips, Edit),
-booking rules (travel gap, lesson lengths, students per lesson, start times, cancel
-cutoff, booking window, approve new accounts), packages & payments (lessons per
-package, price per type, unpaid packages allowed, lesson expiry, payment
-instructions), reminders & emails (customer reminder time, coach digest time,
-late-change alert, booking confirmations). "Save changes" at the top.
+**Settings** (`AdminSettings.dc.html` / `AdminSettingsPhone.dc.html`): open hours table
+(day, time-range chips, Edit), booking rules (travel gap, lesson lengths, students per
+lesson, start times, cancel cutoff, booking window, approve new accounts), packages &
+payments (lessons per package, price per type, unpaid packages allowed, lesson expiry,
+payment instructions, online payments shown as "Not connected" for later), reminders
+& emails (customer reminder time, coach digest time, late-change alert, booking
+confirmations, your email). "Save changes" at the top; on phones a Save bar sits
+above the tab bar.
 
 ## 5. Responsive and accessibility
-- Customer screens: 360–430 px phones first; on wider screens centre a 480 px column.
-- Coach screens: 1280 px+; at tablet widths the right panel moves below the grid.
+Every screen, customer and coach, works at any width from 360 px (small phone) to
+1920 px (large monitor): no sideways scrolling, no text cut off, every control
+reachable. It is one website with one set of routes; the layout follows the window
+width, never the device type. Build mobile-first: the plain classes are the phone
+layout, and Tailwind's `md:`, `lg:` and `xl:` prefixes add the wider layouts.
+
+| Width | Tailwind | What changes |
+|---|---|---|
+| under 768 px | (none) | Phone: one column, bottom tab bar, 20 px side padding |
+| 768–1023 px | `md:` | Tablet: side columns appear where a screen has one; tables replace cards |
+| 1024–1279 px | `lg:` | Small computer: the sidebar replaces the bottom tab bar |
+| 1280 px and up | `xl:` | Computer: coach side panels sit beside the content |
+
+Wide screens don't stretch the content: Book, Schedule and My classes stop at 1100 px;
+Settings in one column stops at 760 px; Add students' form stops at 600 px.
+
+| Screen | Phone (under 768 px) | Tablet (768–1279 px) | Computer (1280 px and up) |
+|---|---|---|---|
+| Log in, sign up, forgot, reset, waiting | Full-screen form; "New here?" pinned to the bottom | Centred 420 px card on `--subtle` | Same as tablet |
+| Book | One column in the order of §4; booking summary is a sticky footer above the tab bar | Two columns: choices on the left; package card and booking summary stacked on the right (280–340 px), the summary sticky | Same; package card beside the group picker |
+| Schedule (customer) | 7-day grid with narrow columns, 16 px per half hour; weekday over date | 22 px per half hour; weekday and date on one line | Same as tablet |
+| My classes | Upcoming, Packages, Past in one column | Upcoming on the left; Packages in a card on the right (280–380 px) | Same as tablet |
+| Coach schedule | Day view (§4); Today, Needs attention and Message below it | Week grid; Today and Needs attention side by side below it; Message full width | Week grid with a 320 px side column: Today, Needs attention, Message |
+| Students & payments | Cards, action-needed first, "Show all"; filter tabs scroll sideways; Record payment opens full screen | Table; Record payment opens as a 380 px drawer | Table with Record payment always beside it (340 px) |
+| Add students | Form, then the customer preview, then the buttons (Add fills the width) | Same order, form up to 600 px; from 1024 px as on a computer | Form and preview side by side |
+| Settings | One column; setting rows wrap their control under the label when narrow; prices in a row of three; Save bar pinned above the tab bar | One column (up to 760 px); Save changes in the header | Two columns of sections |
+
+Test every screen at 360, 390, 768, 1024, 1280 and 1440 px (browser dev tools, device
+toolbar), and on a real phone before going live.
+
+- Sticky and fixed bars (tab bar, booking summary, Save bar) must never cover the last
+  content: pad the page by their height, and add `env(safe-area-inset-bottom)` for
+  phones with a home bar.
+- Nothing depends on hover; everything works by tap and by keyboard.
 - WCAG AA contrast (tokens above pass on their intended backgrounds).
 - Every input has a label; icon-only buttons have `aria-label`; the week grids have a
   text alternative (the Book screen lists the same times).
-- 44 px touch targets; visible focus ring (2 px accent outline, 2 px offset).
+- 44 px touch targets at every width; visible focus ring (2 px accent outline, 2 px
+  offset).
 - Respect `prefers-reduced-motion`; motion only for dialogs opening and state changes.
 
 ## 6. Copy
@@ -193,5 +260,12 @@ design tool. Ignore those; build the screens as normal React components.
 `Main.dc.html` contains a working JavaScript version of the slot and clash logic. Use it
 to understand the behaviour, but the real logic lives in SQL (TECH_SPEC §5.1).
 
-For pictures, open the canvas link above and save a screenshot of each screen into
-`design/screens/` (same names, `.png`). Claude Code can look at them.
+Each pair of files (for example `Main.dc.html` and `MainDesktop.dc.html`) is one
+design: the markup is the same (apart from the links between drawings) and only the
+drawing width differs. The layout rules
+are in each file's `<style>` block as `@container (min-width: …)` rules, so a drawing
+reacts to its own width. In the app, write the same rules with Tailwind's `md:`, `lg:`
+and `xl:` prefixes, which react to the window width; the breakpoints are identical.
+
+`design/screens/` has a picture of every drawing (same names, `.png`) for Claude Code
+to look at. If a design changes on the canvas, save a new screenshot over the old one.

@@ -1,0 +1,409 @@
+# Swim Class Booking: Architecture
+
+Version 1.0 · 29 Sep 2026 · Where every file goes and the rules that keep the code tidy.
+Claude Code checks this before creating a file. If something needs a folder that isn't
+planned here, update this document in the same commit.
+
+## 1. The idea
+
+Clean architecture here means three things:
+
+1. **The business rules live in one place: the database.** Booking, the travel gap,
+   lesson counting, payments and permissions are Postgres functions, constraints and
+   RLS policies. Nothing else re-implements them.
+2. **Every part has one job,** and every kind of file has one obvious home.
+3. **Dependencies point inward.** The website calls the database; the database never
+   knows the website exists. Inside the website, higher layers use lower layers, never
+   the other way round.
+
+| Ring | What it holds | Where |
+|---|---|---|
+| Core: the business rules | tables and constraints, views, functions (RPC), RLS | `supabase/migrations/` |
+| Adapters: talk to the core | Edge Functions; the website's data layer | `supabase/functions/`, `src/shared/api/`, the `api/` folders in `src/entities/` and `src/features/` |
+| Delivery: what people touch | screens and components; the Gmail mailer | `src/`, `apps-script/` |
+
+So every screen could be rebuilt without touching a rule, and a rule (the travel gap,
+say) can change without touching a screen.
+
+## 2. Repository layout
+
+```
+swimclass/
+├── .github/workflows/   ci.yml (checks on every push) · backup.yml (weekly database backup)
+├── apps-script/         Gmail mailer: Code.gs, README.md
+├── design/              approved screens (reference only, never imported) · screens/ (PNGs)
+├── docs/                PRD, TECH_SPEC, DESIGN, ARCHITECTURE, HANDOFF
+├── prompts/             build steps 01–12
+├── public/              served as-is: favicon, icons/, manifest.webmanifest, robots.txt
+├── src/                 the website (§3)
+├── supabase/            the backend (§4)
+├── tests/db/            database tests (§6)
+├── CLAUDE.md            Claude Code's brief
+├── README.md            how to run, deploy and find things
+└── config files only:   package.json, package-lock.json, tsconfig.json, vite.config.ts,
+                         eslint.config.js, .prettierrc, .editorconfig, .nvmrc,
+                         wrangler.jsonc, index.html, .env.example, .gitignore
+```
+
+Nothing else at the top level. Scratch files, exports and personal notes stay out of the repo.
+
+## 3. The website (`src/`)
+
+### 3.1 Five layers
+The website uses Feature-Sliced Design, trimmed to five layers. Each layer may import
+only from the layers to its right:
+
+```
+app  →  pages  →  features  →  entities  →  shared
+```
+
+| Layer | Its job | Example |
+|---|---|---|
+| `app/` | Starts the app: providers, router, route guards, layouts, global styles | `app/router/routes.tsx` |
+| `pages/` | One folder per screen. Reads the URL, arranges entities and features. Pieces only that screen uses live in its own `ui/` folder | `pages/book/` |
+| `features/` | Things a person *does*: a form or button plus the change it makes | `features/book-lesson/` |
+| `entities/` | Business things: how to read them (query hooks) and show them (display components) | `entities/slot/` |
+| `shared/` | Knows nothing about swimming: the Supabase client, generic UI, time helpers, config | `shared/ui/Button.tsx` |
+
+Rules:
+1. **Import downward only.** A feature may use entities and shared; an entity may use
+   only shared; shared uses nothing above it.
+2. **No sideways imports.** Slices in the same layer never import each other: a feature
+   never imports another feature, an entity never imports another entity. Where two need
+   to meet, the layer above combines them (usually the page).
+3. **Use the front door.** Each slice (a folder in `pages/`, `features/` or `entities/`)
+   has an `index.ts` listing what it offers. Other code imports `@/entities/slot`, never
+   `@/entities/slot/ui/TimeChipGrid`. `app/` and `shared/` have no slices; import their
+   files directly (`@/shared/ui/Button`, `@/shared/lib/time`).
+4. **Inside a slice, use relative imports** (`./ui/TimeChipGrid`).
+5. **Only `shared/api` touches Supabase.** It creates the one client; the `api/` folders
+   of entities and features use it. Components never call Supabase directly.
+6. **No business rules in the browser.** The browser shows what the database decided.
+   It may preview (which times look free, how many weeks can repeat), but the database
+   has the final say. Shared has one business-flavoured file on purpose:
+   `shared/config/messages.ts` keeps all error wording in one place so it's easy to edit.
+
+### 3.2 The full plan
+
+```
+src/
+├── main.tsx                      starts the app
+├── app/
+│   ├── App.tsx                   providers + router
+│   ├── providers/                QueryProvider.tsx · SessionProvider.tsx · ErrorBoundary.tsx
+│   ├── router/                   routes.tsx (every route, lazy-loaded) · guards.tsx
+│   ├── layouts/                  AuthLayout.tsx · CustomerLayout.tsx · CoachLayout.tsx (each: bottom
+│   │                             tab bar under 1024 px, sidebar from 1024 px; DESIGN §5)
+│   └── styles/                   index.css (tokens, Tailwind theme, font, focus ring)
+├── pages/                        one folder per route (§3.5)
+│   ├── login/  signup/  forgot-password/  reset-password/  pending/
+│   ├── book/  schedule/  my-classes/  account/
+│   ├── coach-schedule/  coach-students/  coach-add-students/  coach-settings/
+│   └── not-found/
+├── features/
+│   ├── add-booking/              coach: Add booking dialog → coach_book
+│   ├── add-students/             coach: new group, new account if needed → create_group
+│   ├── approve-account/          coach: approve a sign-up → approve_account
+│   ├── book-lesson/              customer: summary, repeat weekly, Book → book_lesson
+│   ├── cancel-lesson/            both: confirm dialog → cancel_booking
+│   ├── change-password/          both
+│   ├── edit-group/               coach: location, starting balances, active → update_group
+│   ├── excuse-lesson/            coach → excuse_booking
+│   ├── log-in/                   username + password → login Edge Function
+│   ├── log-out/                  both
+│   ├── post-announcement/        coach: message all customers → post_announcement
+│   ├── record-payment/           coach: payment panel, free lesson → record_payment
+│   ├── reset-password/           forgot and reset forms
+│   ├── set-time-exception/       coach: Block time / Open extra time → add_exception
+│   ├── sign-up/                  sign-up form with username check
+│   ├── update-profile/           name and phone
+│   └── update-settings/          coach: settings and weekly hours → update_settings, set_open_hours
+├── entities/
+│   ├── account/                  session, profile, role; accounts list (coach)
+│   ├── announcement/             the pinned coach message · CoachBanner
+│   ├── balance/                  packages: used, booked, left, paid · PackageSummary
+│   ├── booking/                  lessons: upcoming, past, "lesson 2 of 4" · LessonRow
+│   ├── email-log/                what the mailer sent (coach)
+│   ├── group/                    student groups: names, 1-to-1/2/3, location · GroupPicker
+│   ├── open-hours/               weekly hours and one-off exceptions
+│   ├── payment/                  payment history
+│   ├── schedule/                 week views: customer (no names) and coach; the coach's day view (phones)
+│   ├── settings/                 public settings; full settings (coach)
+│   └── slot/                     start times for a week, and why a time isn't free · TimeChipGrid
+└── shared/
+    ├── api/                      supabase.ts (the only client) · queryClient.ts
+    │                             rpc.ts (database and Edge Function calls, AppError)
+    │                             database.types.ts (generated)
+    ├── config/                   env.ts · routes.ts (every path) · messages.ts (error wording, DESIGN §6)
+    ├── lib/                      time/ (Malaysia time) · format/ (RM, plurals) · hooks/ · cn.ts
+    └── ui/                       Button, Field, Select, Checkbox, OptionRow, Segmented, Chip,
+                                  DayStrip, SegmentBar, Tag, Pill, Table, Tabs, Dialog, SidePanel,
+                                  WeekGrid, Skeleton, EmptyState, Banner, icons/
+```
+
+Folders appear when their first file is written; don't create empty ones.
+
+### 3.3 Inside a slice
+Every entity and feature uses the same segments; create only the ones it needs:
+
+```
+entities/slot/
+├── index.ts            the front door: what other layers may use
+├── api/                reading data: query hooks and their keys (useWeekSlots.ts, keys.ts)
+├── model/              types and pure logic (types.ts, splitByPartOfDay.ts and its test)
+└── ui/                 display components (TimeChipGrid.tsx)
+```
+
+A feature looks the same, with its change (mutation) in `api/`:
+
+```
+features/book-lesson/
+├── index.ts                      export { BookingSummary } from './ui/BookingSummary';
+├── api/useBookLesson.ts          calls book_lesson, then refreshes slot, balance, booking and schedule data
+├── model/repeatWeeks.ts          how many weeks the balance allows, and the checkbox label
+├── model/repeatWeeks.test.ts
+└── ui/BookingSummary.tsx         summary, repeat weekly, Book button, success panel
+                                  (sticky footer on phones, side card from 768 px)
+```
+
+Pages are simpler: `index.ts`, the page component (`BookPage.tsx`), and `ui/` for pieces
+only that page uses.
+
+### 3.4 Example: how the Book screen fits together
+
+```
+pages/book/BookPage.tsx       reads ?group, ?day, ?length, ?time from the URL and lays out the screen
+├── entities/announcement     CoachBanner
+├── entities/group            useMyGroups · GroupPicker ("Who's this lesson for?")
+├── entities/balance          useGroupBalance · PackageSummary (bar and counts)
+├── entities/slot             useWeekSlots · TimeChipGrid (free and crossed-out times)
+├── shared/ui                 DayStrip · Segmented (1 hour / 2 hours)
+└── features/book-lesson      BookingSummary → book_lesson → refresh the data above
+```
+
+Each piece does one thing, and the page is the only place they meet.
+
+### 3.5 Routes
+The page folder is the route with `/` turned into `-`:
+
+| Route | Page folder | Who |
+|---|---|---|
+| `/login`, `/signup`, `/forgot-password`, `/reset-password` | `login/`, `signup/`, `forgot-password/`, `reset-password/` | anyone |
+| `/pending` | `pending/` | signed in, not approved yet |
+| `/book`, `/schedule`, `/my-classes`, `/account` | `book/`, `schedule/`, `my-classes/`, `account/` | customers (the coach can look) |
+| `/coach/schedule`, `/coach/students`, `/coach/add-students`, `/coach/settings` | `coach-schedule/`, `coach-students/`, `coach-add-students/`, `coach-settings/` | coach |
+| anything else | `not-found/` | anyone |
+
+Paths are written once, in `shared/config/routes.ts`; everything else uses those constants.
+
+### 3.6 Data, state and errors
+- **Reading data**: TanStack Query hooks in entity `api/` folders. Each entity exports
+  its query keys (`slotKeys`, `balanceKeys` …) so a feature can refresh them.
+- **Changing data**: mutation hooks in feature `api/` folders, each listing the entity
+  keys it refreshes afterwards.
+- **Screen state**: component state. Anything worth keeping on refresh or sharing as a
+  link goes in the URL (the Book screen's group, day, length and time).
+- **No global store** (no Redux or Zustand): server data sits in the query cache, the
+  session in `SessionProvider`.
+- **Errors**: `shared/api/rpc.ts` turns every failure into `AppError { code, detail }`;
+  `shared/config/messages.ts` turns a code into words. Screens never show raw errors.
+- **Time**: always through `shared/lib/time` (Malaysia time). Never the device's time
+  zone for business dates.
+- **Types**: `shared/api/database.types.ts` is generated by `npm run db:types` and never
+  edited by hand. Entities export friendlier types built from it (`Slot`, `GroupBalance`).
+
+### 3.7 Components
+- One component per file, named after it. Named exports only; pages are lazy-loaded with
+  `lazy(() => import('@/pages/book').then((m) => ({ default: m.BookPage })))`.
+- Props typed beside the component: `type ButtonProps = { … }`.
+- Styling with Tailwind classes and the DESIGN §2 tokens. Inline `style` only for
+  computed positions, such as blocks on the week grid.
+- **Responsive**: write the phone layout first, then add the wider layouts with `md:`,
+  `lg:` and `xl:` (DESIGN §5). Change layout with CSS, not JavaScript screen checks.
+  Where a phone shows a different piece (the coach's day view instead of the week grid,
+  cards instead of the students table), render both and hide one (`md:hidden`,
+  `hidden md:block`); they read the same query, so nothing is fetched twice.
+  `shared/lib/hooks/useMediaQuery.ts` is only for behaviour CSS can't change, such as
+  whether `SidePanel` is a modal (below 1280 px) or a plain column.
+- Aim for under about 150 lines per component and 120 per page; when one grows, split it
+  into more files in the same `ui/` folder.
+
+## 4. The backend (`supabase/`)
+
+### 4.1 Folders
+
+```
+supabase/
+├── config.toml                Supabase CLI settings
+├── migrations/                every database change, in order (§4.3)
+├── functions/                 Edge Functions (Deno)
+│   ├── _shared/               cors.ts · admin-client.ts (secret key) · http.ts (JSON replies, errors)
+│   ├── admin-accounts/index.ts
+│   ├── login/index.ts
+│   └── mail-queue/index.ts
+├── scripts/                   SQL run by hand in the SQL editor: make-coach.sql · shift-seed.sql
+├── seed.sql                   sample data, dev project only
+└── README.md                  database map (below)
+```
+
+The database map in `supabase/README.md` has four tables (tables, views, `public`
+functions, `private` functions), each listing the name, the migration that defines it
+now, and one line on what it's for.
+
+### 4.2 Two schemas: `public` is the API, `private` is the engine room
+Supabase's Data API only exposes the schemas listed in its settings (`public` by
+default), so:
+
+- **`public`** holds the tables, the views, and the functions the website and Edge
+  Functions call. That is the whole API, listed in the table below.
+- **`private`** (never exposed) holds helpers nobody can call over the API: the clock,
+  permission helpers, the availability engine, email builders and trigger functions.
+  RLS policies and views call them with the schema written out (`private.is_coach()`),
+  which works without exposing the schema. Revoke the default `execute` from `public` on
+  everything in `private`; give `authenticated` `usage` on the schema and `execute` only
+  on the helpers that policies and views use (`app_now`, `is_coach`, `is_approved`,
+  `my_account_id`).
+
+| Called by | Functions in `public` |
+|---|---|
+| anyone, signed out | `username_available` |
+| signed-in customers and the coach | `get_public_settings`, `week_slots`, `check_slot`, `week_busy`, `book_lesson`, `cancel_booking` |
+| the coach only (checked inside) | `coach_week`, `coach_book`, `excuse_booking`, `record_payment`, `add_free_lesson`, `create_group`, `update_group`, `set_group_active`, `approve_account`, `set_open_hours`, `add_exception`, `remove_exception`, `update_settings`, `post_announcement`, `remove_announcement`, `email_log` |
+| the service role (mail-queue) | `claim_outbox`, `ack_outbox` |
+
+`private` holds `app_now`, `is_coach`, `is_approved`, `my_account_id`, `open_windows`,
+`slot_check`, `enqueue_email`, the email builders, `queue_reminders`, `queue_digest`,
+`queue_daily_emails_if_due` and the trigger functions.
+
+### 4.3 Migrations
+- Every change is a new file made with `npx supabase migration new <name>`. Never edit a
+  migration that has been applied; fix forward with a new one.
+- Names say what changed: `create_…`, `add_…`, `update_…`, `fix_…`. One topic per file.
+- In the same commit, update `supabase/README.md` so the current definition of any
+  function can be found without reading every migration.
+
+Planned files, in order:
+
+| Migration | Prompt | Contents |
+|---|---|---|
+| `create_core_tables` | 02 | enums, tables, constraints, indexes, the settings row, weekly hours |
+| `create_private_helpers` | 02 | `private` schema, `app_now`, `is_coach`, `is_approved`, `my_account_id` |
+| `add_triggers` | 02 | profile on sign-up, group member checks |
+| `create_views` | 02 | `group_details`, `booking_ledger`, `group_balance` |
+| `enable_rls` | 02 | RLS, policies, grants |
+| `add_availability` | 03 | `open_windows`, `slot_check`; `week_slots`, `check_slot`, `week_busy`, `coach_week` |
+| `add_email_templates` | 04 | `enqueue_email`; builders for booked, cancelled, late alert and broadcast emails |
+| `add_booking` | 04 | `book_lesson`, `coach_book`, `cancel_booking`, `excuse_booking` |
+| `add_groups_and_payments` | 04 | `create_group`, `update_group`, `set_group_active`, `approve_account`, `username_available`, `record_payment`, `add_free_lesson` |
+| `add_admin_functions` | 04 | open hours, exceptions, settings, announcements, `get_public_settings` |
+| `add_mail_queue` | 11 | reminders, digest, `claim_outbox`, `ack_outbox`, `email_log` |
+
+### 4.4 SQL style
+- snake_case everywhere; tables plural (`bookings`); functions start with a verb
+  (`book_lesson`); parameters `p_…`; local variables `v_…`; constraints and indexes
+  start with their table name (`bookings_no_overlap`, `bookings_starts_at_idx`).
+- API functions are `security definer` with `set search_path = ''` and fully qualified
+  names (`public.bookings`, `private.app_now()`).
+- Inside a function, in this order: check the caller, validate the input, do the work,
+  queue emails.
+- Errors are codes (`raise exception using message = 'credit_exceeded'`), never sentences.
+  The wording lives in `src/shared/config/messages.ts`.
+- Every function starts with a header comment, and its first line also goes into
+  `comment on function` so the Supabase dashboard shows it:
+
+```sql
+-- book_lesson: book one lesson, or the same time for several weeks, for a group.
+-- Who: approved customers, for their own groups.
+-- Rules: BR-8 to BR-14, BR-21.
+-- Errors: not_approved, not_your_group, repeat_conflict, credit_exceeded, any slot_check reason.
+create or replace function public.book_lesson(...)
+```
+
+### 4.5 Edge Functions
+- One kebab-case folder per function with an `index.ts`. Shared code goes in `_shared/`
+  (folders starting with `_` aren't deployed as functions).
+- They are thin doorways: check who's calling, call Auth or one database function, reply.
+  No business rules in them.
+
+### 4.6 Environments
+The Supabase CLI stays linked to the **dev** project for good. Production is only touched
+in prompt 12, with the connection string or project id written into each command
+(`--db-url`, `--project-ref`). Never run `db reset` against production, and never link
+the CLI to it.
+
+## 5. Other folders
+- `apps-script/`: `Code.gs` (pasted into Google Apps Script by hand) and `README.md` with
+  the setup steps. Same rule as Edge Functions: it only fetches, sends and acknowledges.
+- `tests/db/`: one file per area (`balance`, `rls`, `constraints`, `availability`,
+  `booking`, `groups`, `admin`, `emails`), plus `helpers.ts` (connect, act as a user, pin
+  the clock, roll back) and `fixture.ts` (usernames, dates and ids from `seed.sql`, so
+  tests don't repeat magic values).
+- `design/`, `docs/`, `prompts/`: planning material. Code never imports from them.
+- `public/`: only files served exactly as they are.
+- `.github/workflows/`: `ci.yml` and `backup.yml`.
+
+## 6. Tests
+- **Unit tests sit next to the code**: `formatTime.ts` and `formatTime.test.ts` in the
+  same folder; component tests likewise (`TimeChipGrid.test.tsx`).
+- **Database tests** live in `tests/db/` and run against the dev project inside a
+  transaction that is rolled back, so they leave nothing behind.
+- Two Vitest projects: `unit` (`src/**`, jsdom), run by `npm run test`; and `db`
+  (`tests/db/**`, Node), run by `npm run test:db`, which needs `DATABASE_URL`.
+- Test names read as sentences: `it('refuses a second unpaid package')`.
+
+## 7. Naming
+
+| Thing | Style | Example |
+|---|---|---|
+| Folders | kebab-case | `my-classes/`, `book-lesson/` |
+| Components | PascalCase, one per file | `TimeChipGrid.tsx` |
+| Pages | `<Name>Page` | `BookPage.tsx`, `CoachSchedulePage.tsx` |
+| Hooks | `use` + camelCase | `useWeekSlots.ts` |
+| Other TypeScript files | camelCase | `formatTime.ts`, `repeatWeeks.ts` |
+| Tests | same name + `.test` | `repeatWeeks.test.ts` |
+| Types | PascalCase, no `I` prefix | `Slot`, `GroupBalance` |
+| Constants | UPPER_SNAKE, only for fixed values | `MYT_TIME_ZONE` |
+| Query keys | `<entity>Keys` | `slotKeys.week(…)` |
+| Database | snake_case; tables plural; functions verb first | `bookings`, `book_lesson` |
+| Migrations | `<timestamp>_<verb>_<topic>.sql` | `…_add_booking.sql` |
+| Edge Functions | kebab-case folder | `mail-queue/` |
+| Environment variables | UPPER_SNAKE; `VITE_` only if the browser may see it | `VITE_SUPABASE_URL` |
+| Commits | `type(scope): summary` | `feat(book): repeat weekly` · `fix(db): gap before 2-hour lessons` |
+
+Use the PRD's words everywhere (group, package, lesson, travel gap, open hours) so the
+code, the database and the screens say the same thing. One exception: the database says
+`booking` where the screens say "lesson".
+
+## 8. How the rules are enforced
+- **ESLint** (flat config) fails when:
+  - a layer imports from a layer above it, or a slice imports another slice in its layer;
+  - code imports a slice's inner files instead of its `index.ts`;
+  - anything outside `src/shared/api/` imports `@supabase/supabase-js`;
+  - imports aren't sorted.
+
+  ESLint's built-in `no-restricted-imports`, with one config block per layer folder, is
+  enough. A later block replaces an earlier block's options for the same files, so each
+  layer gets one combined rule. Never switch these rules off; move the code instead.
+- **TypeScript strict**, and one path alias: `@/` means `src/`.
+- **CI** (`.github/workflows/ci.yml`) runs lint, typecheck, unit tests and the build on
+  every push, so a broken rule shows up on GitHub straight away.
+- **Before a prompt is done**: new files are where this document says, lint passes, and
+  `supabase/README.md` is up to date.
+
+## 9. Where does it go?
+
+| I'm adding… | It goes in |
+|---|---|
+| a new screen | `src/pages/<route>/`, plus its path in `shared/config/routes.ts` and its route in `app/router/routes.tsx` |
+| a button or form that changes data | `src/features/<verb-noun>/` |
+| a way to read or show a business thing | `src/entities/<thing>/` |
+| a generic piece of UI with no business words | `src/shared/ui/` |
+| a piece only one screen uses | that page's `ui/` folder |
+| a business rule or permission | the database: a new migration, never the website |
+| a date or time helper | `src/shared/lib/time/` |
+| error wording | `src/shared/config/messages.ts` |
+| a server step that needs a secret | `supabase/functions/<name>/` |
+| a database test | `tests/db/<area>.test.ts` |
+| a unit test | next to the file, `<file>.test.ts` |
+| SQL someone runs once by hand | `supabase/scripts/` |
+| a decision or change of plan | `docs/HANDOFF.md`, and the doc it changes |
