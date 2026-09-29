@@ -150,12 +150,20 @@ location, lesson number, unpaid warning), Needs attention (unpaid with "Record
 payment", last lesson, accounts waiting for approval), Message all customers (textarea,
 "Pin as a banner until I remove it", "Send to all customers"). Clicking a lesson opens
 details: group, package position, balance, Cancel lesson (lesson goes back to the
-package, customer is emailed), Mark as excused.
+package, customer is emailed; an optional reason, up to 500 characters, goes into the
+email), Mark as excused (only once the lesson has started; a future lesson is cancelled
+instead).
 
 Not drawn: **Block time** dialog (date or date range, from/to time, note);
 **Open extra time** dialog (date, from/to, note); **Add booking** dialog (group
-search, date, start, length, repeat weeks, "Outside open hours" and "Skip travel gap"
-toggles with a warning, and the clash reason if any).
+search over active groups, date, start, length, repeat weeks, "Outside open hours" and
+"Skip travel gap" toggles with a warning, and the clash reason if any). The coach may
+pick a past date (the lesson counts as used) or one beyond the booking window, and
+"Outside open hours" also allows a start between the usual start times. The clash
+reason covers the first week only; with repeat weeks, any week that can't be booked is
+listed with its reason and nothing is booked. When the group is past its credit, the
+dialog says "This group can book 1 more lesson before paying" and offers "Book anyway".
+No email goes to the customer.
 
 **Students & payments** (`AdminStudents.dc.html` / `AdminStudentsPhone.dc.html`):
 title, search, "Add students"; three figures (Unpaid, On last lesson, Students ·
@@ -242,14 +250,54 @@ Reason codes (from the database) → messages. `{gap}` is formatted from setting
 | past | This time has already started. |
 | credit_exceeded | Pay for the current package before booking more lessons. |
 | repeat_conflict | These weeks clash: {dates}. Nothing was booked. Try another time or turn off repeat. |
+| group_inactive | Your coach has paused bookings for this group. Message your coach. |
 | locked | It's less than {cutoff} hours before the lesson, so it can't be cancelled. |
+| not_booked | This lesson is no longer booked. Refresh to see the latest. |
 | not_approved | Your coach hasn't approved your account yet. |
 | invalid_login | Wrong username or password. |
 | too_many_attempts | Too many tries. Wait 15 minutes and try again. |
 | (network) | Couldn't reach the server. Check your connection and try again. |
+| not_your_group, not_your_booking, invalid_repeat, invalid_length, invalid_reason, not_found (and any code not listed) | Something went wrong. Refresh the page and try again. |
 
 Empty states: no groups yet → "Your coach hasn't set up your lessons yet. Message your
 coach to get started." No times this day → "This day is fully booked. Try another day."
+
+Coach screens (Add booking, lesson details, Students & payments, Add students, Settings,
+Message all customers) use this table first, then the table above. Braces come from the
+error's detail (TECH_SPEC §5), formatted as above, plus `{gap}`: `{index}` counts from 1,
+`{weekday}` is a day name (1 = Monday), `{can_still_book}` shows 0 if negative, and
+counts read naturally ("1 more lesson"). In either table, a code without the detail its
+message needs gets the generic message.
+| Code | Message |
+|---|---|
+| outside_open_hours | It's outside your open hours. Turn on "Outside open hours" to book it anyway. |
+| off_step | It starts between your usual start times. Turn on "Outside open hours" to book it anyway. |
+| gap_after | It starts too soon after the lesson that ends at {time}. You need {gap} to travel between lessons. Turn on "Skip travel gap" to book it anyway. |
+| gap_before | It ends too close to the {time} lesson. You need {gap} to travel between lessons. Turn on "Skip travel gap" to book it anyway. |
+| credit_exceeded | This group can book {can_still_book} more lessons before paying. Record a payment first, or choose "Book anyway". |
+| not_started | This lesson hasn't started yet. Cancel it instead. |
+| not_booked | This lesson is already {status}. Refresh to see the latest. |
+| invalid_reason | The reason is too long. Shorten it to 500 characters. |
+| price_not_set | No price is set for this lesson type. Type the amount, or set the price in Settings. |
+| invalid_lessons | A payment needs at least 1 lesson. Change the number of lessons. |
+| invalid_amount | The amount can't be negative. Enter RM 0 or more. |
+| invalid_method | Choose how they paid: Cash, Transfer or FPX. |
+| invalid_date | The payment date is in the future. Pick today or an earlier date. |
+| invalid_note | The note is too long. Shorten it to 500 characters. |
+| duplicate_group | These students already have an active group. Use that group, or deactivate it first. ("That group" links to {group_id}.) |
+| has_upcoming_lessons | This group has {count} upcoming lessons. Cancel them first, then deactivate it. Each cancellation emails the customer. |
+| group_full | A lesson can have up to {max} students. Remove one, or change "Students per lesson" in Settings. |
+| invalid_students | Student {index} is already in the list or can't be found. Pick another student or type a new name. |
+| invalid_name | Type a name for student {index} (up to 100 characters). |
+| student_other_account | Student {index} belongs to another account. Pick one of this account's students or type a new name. |
+| invalid_location | Type the pool location (up to 100 characters). |
+| invalid_opening | Lessons already used and paid can't be negative. Enter 0 or more. |
+| invalid_range | The end time must be after the start time. Change it and try again. |
+| invalid_rules | Open hours range {index} is incomplete. Check each day's hours and save again. |
+| overlapping_rules | Two ranges on {weekday} overlap. Change one and save again. |
+| invalid_setting | {field} has a value that isn't allowed. Check it and save again. ({field} is shown as the form's label, such as "Travel gap".) |
+| invalid_message | The message must be 1 to 1000 characters. Change it and send again. |
+| not_coach, not_found, invalid_settings, unknown_setting, invalid_kind, invalid_active, not_customer, group_inactive | Something went wrong. Refresh the page and try again. |
 
 ## 7. Using the reference files
 The files in `design/` come from the design canvas. They are plain HTML with inline
