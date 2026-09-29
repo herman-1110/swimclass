@@ -1,9 +1,11 @@
 import { createClient } from '@supabase/supabase-js'
 
+import { env } from '@/shared/config/env'
+
 import type { Database } from './database.types'
 
-const url = import.meta.env.VITE_SUPABASE_URL
-const publishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY
+const url = env.supabaseUrl
+const publishableKey = env.supabasePublishableKey
 
 if (!url || !publishableKey) {
   throw new Error(

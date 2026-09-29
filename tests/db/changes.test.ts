@@ -4,7 +4,8 @@
 // test says otherwise.
 import { describe, expect, it } from 'vitest'
 
-import { hasDatabase, myt, SEED, type TestDb, useTestDb } from './helpers'
+import { SEED } from './fixture'
+import { hasDatabase, myt, type TestDb, useTestDb } from './helpers'
 
 type Email = {
   to_email: string

@@ -9,15 +9,14 @@ import { readFileSync } from 'node:fs'
 import pg from 'pg'
 import { afterAll, afterEach, beforeAll, beforeEach } from 'vitest'
 
+import { FIXTURE_NOW } from './fixture'
+
 export const DATABASE_URL = process.env.DATABASE_URL
 export const hasDatabase = Boolean(DATABASE_URL)
 
 if (!hasDatabase) {
   console.warn('DATABASE_URL is not set, so the database tests are skipped (docs/DEV_SETUP.md).')
 }
-
-/** Sat 26 Sep 2026, 12:00 MYT: the clock the seed's expected results assume (TECH_SPEC §10). */
-export const FIXTURE_NOW = '2026-09-26 12:00+08'
 
 // `date` values stay 'YYYY-MM-DD' strings: pg would otherwise turn them into midnight
 // in the device's time zone. Counts (bigint) become numbers. timestamptz stays a Date,
@@ -278,43 +277,6 @@ function actingOn(c: () => pg.Client): TestDb {
 
   return db
 }
-
-/** Fixed ids from supabase/seed.sql. */
-export const SEED = {
-  groups: {
-    aimanSofia: 'c0000000-0000-4000-8000-000000000001',
-    sofia: 'c0000000-0000-4000-8000-000000000002',
-    hana: 'c0000000-0000-4000-8000-000000000003',
-    weiJie: 'c0000000-0000-4000-8000-000000000004',
-    priya: 'c0000000-0000-4000-8000-000000000005',
-    adamAlyaAmir: 'c0000000-0000-4000-8000-000000000006',
-    junHao: 'c0000000-0000-4000-8000-000000000007',
-    chloe: 'c0000000-0000-4000-8000-000000000008',
-    ethan: 'c0000000-0000-4000-8000-000000000009',
-    kai: 'c0000000-0000-4000-8000-000000000010',
-    daniel: 'c0000000-0000-4000-8000-000000000011',
-    aina: 'c0000000-0000-4000-8000-000000000012',
-    nurul: 'c0000000-0000-4000-8000-000000000013',
-  },
-  students: {
-    aiman: 'b0000000-0000-4000-8000-000000000001',
-    sofia: 'b0000000-0000-4000-8000-000000000002',
-    hana: 'b0000000-0000-4000-8000-000000000003',
-    adam: 'b0000000-0000-4000-8000-000000000006',
-  },
-  bookings: {
-    aimanSofiaSat26: 'd0000000-0000-4000-8000-000000000001',
-    aimanSofiaSat3: 'd0000000-0000-4000-8000-000000000002',
-    sofiaSun4: 'd0000000-0000-4000-8000-000000000003',
-    weiJieFri18: 'd0000000-0000-4000-8000-000000000006',
-    weiJieFri25: 'd0000000-0000-4000-8000-000000000007',
-    weiJieFri2: 'd0000000-0000-4000-8000-000000000008',
-    priyaTue29: 'd0000000-0000-4000-8000-000000000009',
-    junHaoMon28: 'd0000000-0000-4000-8000-000000000013',
-    chloeSun4: 'd0000000-0000-4000-8000-000000000014',
-    ethanSat26: 'd0000000-0000-4000-8000-000000000015',
-  },
-} as const
 
 /** An instant written in MYT, e.g. myt('2026-10-04 17:00'). */
 export function myt(dateTime: string): Date {

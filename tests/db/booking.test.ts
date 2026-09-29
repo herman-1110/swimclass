@@ -5,11 +5,11 @@
 import pg from 'pg'
 import { describe, expect, it } from 'vitest'
 
+import { SEED } from './fixture'
 import {
   hasDatabase,
   myt,
   openSession,
-  SEED,
   type Session,
   SESSION_LOCK_TIMEOUT_MS,
   type TestDb,

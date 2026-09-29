@@ -1,0 +1,25 @@
+# Checks on every push (ARCHITECTURE §8): lint (including the layer rules), typecheck,
+# unit tests and the build, so a broken rule shows up on GitHub straight away.
+# The database tests need the dev database (DATABASE_URL), so they run on Herman's
+# machine with `npm run test:db` instead.
+name: CI
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run test
+      - run: npm run build

@@ -6,7 +6,8 @@ import { describe, expect, it } from 'vitest'
 
 import { mytDateKey, mytWeekStart } from '@/shared/lib/time'
 
-import { hasDatabase, SEED, useTestDb } from './helpers'
+import { SEED } from './fixture'
+import { hasDatabase, useTestDb } from './helpers'
 
 const SNIPPET = readFileSync(
   new URL('../../supabase/scripts/shift-seed.sql', import.meta.url),

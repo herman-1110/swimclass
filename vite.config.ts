@@ -17,11 +17,6 @@ export default defineConfig(({ mode }) => ({
     strictPort: true,
   },
   test: {
-    include: ['src/**/*.test.{ts,tsx}', 'tests/**/*.test.ts'],
-    // The database tests share one dev database: one file at a time, so files never
-    // wait for each other's locks. A test gets 30 s (queries go to Singapore and back).
-    fileParallelism: false,
-    testTimeout: 30_000,
     env: {
       // Run tests in a time zone far from Malaysia (with daylight saving) so any code
       // that accidentally uses the device's time zone fails (CLAUDE.md rule 2).
@@ -30,5 +25,30 @@ export default defineConfig(({ mode }) => ({
       // reaches the browser bundle.
       ...loadEnv(mode, process.cwd(), 'DATABASE_'),
     },
+    // Two projects (ARCHITECTURE §6): `npm run test` runs unit, `npm run test:db` runs db.
+    projects: [
+      {
+        extends: true,
+        test: {
+          name: 'unit',
+          // Unit tests sit next to their code.
+          include: ['src/**/*.test.{ts,tsx}'],
+          environment: 'jsdom',
+        },
+      },
+      {
+        extends: true,
+        test: {
+          name: 'db',
+          include: ['tests/db/**/*.test.ts'],
+          environment: 'node',
+          // The database tests share one dev database: one file at a time, so files
+          // never wait for each other's locks. A test gets 30 s (queries go to
+          // Singapore and back).
+          fileParallelism: false,
+          testTimeout: 30_000,
+        },
+      },
+    ],
   },
 }))
