@@ -20,21 +20,24 @@ working skeleton that later prompts build on.
 2. Add dependencies: react-router, @tanstack/react-query, @supabase/supabase-js,
    date-fns, @date-fns/tz, @fontsource/figtree, tailwindcss v4 (+ its Vite plugin).
    Dev: vitest, @testing-library/react, jsdom, pg + @types/pg, eslint, prettier.
-3. Create the folder layout from CLAUDE.md (`src/app`, `src/features/...`,
-   `src/components`, `src/lib`, `supabase/`, `tests/db`, `tests/unit`, `apps-script/`).
-4. `src/index.css`: all DESIGN §2 tokens as CSS variables, Tailwind `@theme` mapping,
+3. Create the folder layout from ARCHITECTURE §2 and §3 (`src/app`, `src/pages`,
+   `src/shared`, `supabase/`, `tests/db`, `apps-script/`); unit tests sit next to their code.
+4. `src/app/styles/index.css`: all DESIGN §2 tokens as CSS variables, Tailwind `@theme` mapping,
    Figtree as the only font, focus ring style, `prefers-reduced-motion` handling.
 5. Router with placeholder pages for every route in TECH_SPEC §11, a customer layout
    (bottom tab bar: Book, Schedule, My classes, Account) and a coach layout (sidebar:
-   Schedule, Students & payments, Settings, View as customer). Guards can be stubs.
-6. `src/lib/supabase.ts` reading `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY`;
+   Schedule, Students & payments, Settings, View as customer); each is a bottom tab bar
+   below 1024 px and a sidebar from 1024 px (DESIGN §3). Guards can be stubs.
+6. `src/shared/api/supabase.ts` reading `VITE_SUPABASE_URL` and
+   `VITE_SUPABASE_PUBLISHABLE_KEY` (through `src/shared/config/env.ts`);
    `.env.example` with both; `.env*` (except example) in `.gitignore`.
-7. `src/lib/time.ts`: MYT helpers (`TZDate` in `Asia/Kuala_Lumpur`), formatters for
-   "7:30 pm", "Sat 3 Oct", and ranges ("9:00–10:00 am", "11:00 am–12:00 pm").
-   Unit tests for them in `tests/unit/time.test.ts`.
+7. `src/shared/lib/time/time.ts`: MYT helpers (`TZDate` in `Asia/Kuala_Lumpur`),
+   formatters for "7:30 pm", "Sat 3 Oct", and ranges ("9:00–10:00 am",
+   "11:00 am–12:00 pm"). Unit tests for them in `src/shared/lib/time/time.test.ts`.
 8. `npx supabase init`. If Docker is available, `npx supabase start`. If not, write the
    steps Herman must do to create `swimclass-dev` (region Singapore) and link it.
-9. npm scripts: dev, build, preview, test, lint, typecheck, db:types.
+9. npm scripts: dev, build, preview, test (unit), test:db (database), lint, typecheck,
+   db:types.
 10. `wrangler.jsonc` exactly as TECH_SPEC §12. Don't deploy.
 11. Update CLAUDE.md "Commands" if anything differs, and write HANDOFF v0.1.
 

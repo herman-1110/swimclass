@@ -4,14 +4,17 @@
 Coach schedule works (prompt 08). Now the money and people side. Read DESIGN §4
 (Students & payments, Add students) and §6 (messages), PRD BR-2, BR-3, BR-6, BR-18 to
 BR-26, TECH_SPEC §5.2 (`record_payment`, `add_free_lesson`, `excuse_booking`), §5.3, §7
-(`admin-accounts`), and `design/AdminStudents.dc.html`, `design/AdminAddStudents.dc.html`.
+(`admin-accounts`), DESIGN §5 (responsive), and `design/AdminStudents.dc.html`,
+`design/AdminAddStudents.dc.html` and their `…Phone.dc.html` pairs.
 
 ## DIAGNOSE
 1. Confirm `group_balance` through the API as herman matches the same view in the SQL
    editor at that moment (the §10 numbers are tested at the pinned clock).
 2. Confirm `create_group`, `record_payment`, `approve_account` and the `admin-accounts`
    function work and refuse customers. `pending_accounts` and `delete_account` don't
-   exist yet: TASK 1 builds them.
+   exist yet: TASK 1 builds them. Run `npm run test:db` first: real calls change the
+   dev database, and afterwards the database tests stop until Herman reloads it
+   (`npx supabase db reset --linked`, DEV_SETUP §4).
 3. List the table/filter components you'll build and how the right panel is opened from
    other screens (for example `/coach/students?pay=<group_id>` from Needs attention).
 
@@ -53,7 +56,7 @@ BR-26, TECH_SPEC §5.2 (`record_payment`, `add_free_lesson`, `excuse_booking`), 
      confirmed, and created_at for customers with `approved = false`; and an
      `admin-accounts` action `delete_account {account_id}` (`auth.admin.deleteUser`),
      only for unapproved accounts with no groups.
-2. **Add students** (`/coach/students/new`), matching the design:
+2. **Add students** (`/coach/add-students`), matching the design:
    - Account: pick an existing account or "Create a new account…" (name, username with
      availability check through `username_available`, email, phone → `admin-accounts
      create_account`, invite email).
@@ -75,15 +78,17 @@ BR-26, TECH_SPEC §5.2 (`record_payment`, `add_free_lesson`, `excuse_booking`), 
 ## VALIDATION
 - Table matches `group_balance` for all groups (TECH_SPEC §10 on the shifted Saturday); filters and counts correct (Unpaid 2,
   Last lesson 2).
-- Recording Hana's payment turns her row Paid, removes her from Needs attention and
-  from the coach digest's unpaid list.
+- Recording Hana's payment turns her row Paid and removes her from Needs attention.
 - Creating a 1-to-3 group for zulaikha's account with three new names makes it appear
   in her Book screen's "Who's this lesson for?" with the 1-to-3 tag.
 - Duplicate group (same students, active) is refused with a clear message.
 - A new customer created by the coach receives an invite and can log in already
-  approved; a self sign-up appears under Waiting for approval.
+  approved (until prompt 11 sets up SMTP, invite one of Herman's own addresses: only
+  team members receive auth emails); a self sign-up appears under Waiting for approval.
 - herman sees a self sign-up's email under Waiting for approval; customers calling
   `pending_accounts` or `delete_account` are refused, and `delete_account` refuses
   approved accounts and accounts with groups.
-- Screens match the designs at 1440 px and remain usable at 1024 px.
+- Screens match the designs at 1440 px and the `…Phone` drawings at 390 px, with no
+  sideways scrolling at DESIGN §5's widths: Record payment sits beside the table from
+  1280 px, opens as a drawer at 768–1279 px and full screen on phones.
 - HANDOFF.md updated.

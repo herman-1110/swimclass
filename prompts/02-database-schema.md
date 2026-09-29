@@ -32,13 +32,13 @@ prompts 03–04; this prompt is tables, constraints, views, security, seed and t
 5. `supabase/seed.sql`: the §10 fixture: the coach (`herman`), all customer accounts
    (create auth users with known test passwords), students, groups with opening
    balances, payments, bookings, weekly open hours. Dates in MYT.
-   Also `supabase/snippets/shift-seed.sql`: moves every fixture booking, payment and
+   Also `supabase/scripts/shift-seed.sql`: moves every fixture booking, payment and
    exception forward by whole weeks so the fixture week becomes next week (for trying
    the UI on the dev project; tests keep the original dates).
 6. `tests/db/helpers.ts`: open a `pg` client from `DATABASE_URL`, begin a transaction,
    impersonate a user (`set local role authenticated; set local request.jwt.claims = ...`),
    pin the clock (`set local app.now = ...`), and roll back after each test.
-7. `npm run db:types` to generate `src/lib/database.types.ts`.
+7. `npm run db:types` to generate `src/shared/api/database.types.ts`.
 
 ## VALIDATION
 - Migrations apply from scratch (`npx supabase db reset` locally, or to the dev project).

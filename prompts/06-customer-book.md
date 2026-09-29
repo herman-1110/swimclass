@@ -3,14 +3,18 @@
 ## CONTEXT
 Customers can log in (prompt 05) and the database can answer every slot question
 (prompts 03–04). Build the main customer screen. Read DESIGN §3 (components), §4
-(Book a lesson), §6 (messages), PRD BR-7 to BR-13, BR-21, BR-22, and look at
-`design/Main.dc.html` (and `design/screens/Main.png` if Herman added screenshots).
+(Book a lesson), §5 (responsive), §6 (messages), PRD BR-7 to BR-13, BR-21, BR-22,
+ARCHITECTURE §3.4 (how the Book screen's files fit together), and look at
+`design/Main.dc.html` and `design/MainDesktop.dc.html` (and `design/screens/` if Herman
+added screenshots).
 
 ## DIAGNOSE
 1. Confirm you can log in as `meiling` locally and that `week_slots`, `group_details`,
    `group_balance` and `get_public_settings` return data for her.
-2. List the shared components that already exist; plan which to create
-   (Segmented, OptionRow, DayStrip, TimeChip, PackageBar, Tag, StickyFooter).
+2. List the components that already exist; plan which to create and where (DESIGN §3,
+   ARCHITECTURE §3): `shared/ui` Segmented, OptionRow, DayStrip, Chip, SegmentBar, Tag;
+   entities `group` (GroupPicker), `balance` (PackageSummary), `slot` (TimeChipGrid);
+   feature `book-lesson` (BookingSummary).
 3. Confirm how today's MYT date and the current week start will be computed.
 
 ## TASK
@@ -47,8 +51,8 @@ Customers can log in (prompt 05) and the database can answer every slot question
    weeks, any clash gives `repeat_conflict` {`dates`, `clashes`}. Other codes:
    `credit_exceeded` {`needed`, `can_still_book`}, `group_inactive`, `invalid_repeat`
    (1–52 weeks), `invalid_length`, `not_your_group`, `not_approved`. Map each code to its
-   DESIGN §6 message (a generic one for codes it doesn't list); `repeat_conflict` lists
-   the dates.
+   DESIGN §6 message in `src/shared/config/messages.ts` (a generic one for codes it
+   doesn't list); `repeat_conflict` lists the dates.
 7. Empty states from DESIGN §6. Loading skeletons that keep layout stable.
 8. Deep link support: `/book?day=2026-09-29&group=<id>` (used by the Schedule screen).
 9. Accessibility: option rows are a radio group with a legend; chips are buttons with
@@ -56,7 +60,7 @@ Customers can log in (prompt 05) and the database can answer every slot question
    announced politely (`aria-live="polite"`).
 
 ## VALIDATION
-With the seed moved to next week (`supabase/snippets/shift-seed.sql`, see TECH_SPEC §10),
+With the seed moved to next week (`supabase/scripts/shift-seed.sql`, see TECH_SPEC §10),
 the dates below shift by the same number of weeks; the times and messages stay the same:
 - Tue 29 Sep, 1 hour: free chips 7:30, 8:00, 8:30, 9:00 pm; 5:30–7:00 pm crossed out;
   tapping 7:00 pm shows "It starts too soon after the lesson that ends at 6:30 pm. Your
@@ -66,7 +70,8 @@ the dates below shift by the same number of weeks; the times and messages stay t
   lesson uses Package 3, not paid yet.
 - Booking 7:30 pm for Aiman & Sofia succeeds; the chip becomes crossed out with
   "overlaps Aiman & Sofia's lesson".
-- Screen matches `design/Main.dc.html` at 390 px (spacing, colours, type sizes);
-  keyboard-only booking works; Lighthouse accessibility score ≥ 95.
+- Screen matches `design/Main.dc.html` at 390 px and `design/MainDesktop.dc.html` at
+  1280 px (spacing, colours, type sizes), with no sideways scrolling at DESIGN §5's
+  widths; keyboard-only booking works; Lighthouse accessibility score ≥ 95.
 - Unit tests: reason-code messages, repeat-weeks label, week-start calculation.
 - HANDOFF.md updated.

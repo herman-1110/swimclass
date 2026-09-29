@@ -2,14 +2,18 @@
 
 ## CONTEXT
 Book a lesson works (prompt 06). Now the other customer tabs. Read DESIGN §4
-(Schedule, My classes, Account), PRD BR-15, BR-16, BR-22, BR-26, BR-27, and look at
-`design/Schedule.dc.html` and `design/MyClasses.dc.html`.
+(Schedule, My classes, Account) and §5 (responsive), PRD BR-15, BR-16, BR-22, BR-26,
+BR-27, and look at `design/Schedule.dc.html`, `design/MyClasses.dc.html` and their
+`…Desktop.dc.html` pairs.
 
 ## DIAGNOSE
 1. Confirm `week_busy`, `cancel_booking`, `group_balance` and `booking_ledger` work for
-   `meiling` through the API (not just in tests).
-2. Check which shared components from prompt 06 can be reused (PackageBar, Tag,
-   Dialog). List the new ones needed (WeekGrid, LessonRow, ConfirmDialog).
+   `meiling` through the API (not just in tests). Run `npm run test:db` first: a real
+   `cancel_booking` call changes the dev database, and afterwards the database tests
+   stop until Herman reloads it (`npx supabase db reset --linked`, DEV_SETUP §4).
+2. Check which components from prompt 06 can be reused (SegmentBar and PackageSummary,
+   Tag, Dialog). List the new ones needed and where they go (ARCHITECTURE §3): WeekGrid
+   in `shared/ui`, LessonRow in entity `booking`, the `cancel-lesson` feature.
 
 ## TASK
 1. **Schedule** (`/schedule`): week navigation (previous/next, can't go past the
@@ -21,7 +25,7 @@ Book a lesson works (prompt 06). Now the other customer tabs. Read DESIGN §4
    inside open time (as `design/Schedule.dc.html`). Day headers
    link to `/book?day=...`. Text alternative: a visually hidden list per day ("Tue 29
    Sep: free 7:30 pm to 10 pm"), and the note "Other students' lessons show as Booked".
-2. **My classes** (`/classes`):
+2. **My classes** (`/my-classes`):
    - Upcoming list from the account's bookings (status booked, ends after now), sorted.
      Each row: day and time, group names and type, "lesson N of 4" from
      `booking_ledger`, location. Right side: "Cancel" if before the cutoff (with
@@ -54,5 +58,6 @@ Book a lesson works (prompt 06). Now the other customer tabs. Read DESIGN §4
   cutoff the row shows Locked and the API refuses (`locked`) even if called directly.
 - Packages match `group_balance` for both of meiling's groups (the TECH_SPEC §10 table
   only on the shifted Saturday 10:00–18:00 MYT; see §10).
-- Screens match the designs at 390 px; keyboard and screen-reader labels checked.
+- Screens match the designs at 390 px and 1280 px (the `…Desktop` drawings), with no
+  sideways scrolling at DESIGN §5's widths; keyboard and screen-reader labels checked.
 - HANDOFF.md updated.

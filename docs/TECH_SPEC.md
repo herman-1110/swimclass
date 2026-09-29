@@ -94,7 +94,8 @@ bookings (
                                        -- moves upcoming lessons to the group's new location
   status booking_status not null default 'booked',
   gap_override boolean not null default false,  -- coach only (BR-10, BR-31)
-  series_id uuid,                      -- shared by repeat-weekly bookings
+  series_id uuid,                      -- one per book_lesson/coach_book call (a single
+                                       -- lesson too), shared by its weeks; null in the seed
   created_by uuid references profiles,
   created_at timestamptz not null default now(),
   cancelled_at timestamptz, cancelled_by uuid references profiles, cancel_reason text,
@@ -144,7 +145,7 @@ settings (                               -- exactly one row, id = 1
   unpaid_packages_allowed int not null default 1 check (between 0 and 2),
   price_1to1_cents int, price_1to2_cents int, price_1to3_cents int,
   payment_instructions text,             -- shown to customers (bank / DuitNow)
-  lesson_expiry_months int,              -- null = never (BR-24)
+  lesson_expiry_months int,              -- null = never (BR-24); nothing applies it yet
   reminder_time time not null default '20:00',  -- before '24:00' (prompt 04)
   digest_time time not null default '20:00',    -- before '24:00' (prompt 04)
   booking_confirmations boolean not null default true,
@@ -362,7 +363,8 @@ Built in prompt 04 (`supabase/migrations/…_coach_slot_check.sql`, `…_booking
   `invalid_amount` (negative), `invalid_method`, `invalid_date` (in the future),
   `invalid_note` (over 500 characters).
 - `add_free_lesson(p_group_id, p_note text default null) returns uuid`: coach only;
-  payment of 1 lesson, RM 0, method 'free', dated today (MYT).
+  payment of 1 lesson, RM 0, method 'free', dated today (MYT). Errors: `not_found`,
+  `invalid_note` (over 500 characters).
 
 ### 5.3 Students, groups and accounts
 Built in prompt 04 (`…_groups_accounts.sql`, tested in `tests/db/groups.test.ts`).
@@ -372,7 +374,8 @@ Built in prompt 04 (`…_groups_accounts.sql`, tested in `tests/db/groups.test.t
   student). 1..max_students_per_lesson items. Refuse an exact duplicate of an active group
   (`duplicate_group` {`group_id`}). A first package paid is a payment of
   `lessons_per_package` lessons dated today; a null amount is the type's price. Errors
-  also `invalid_students`, `invalid_name`, `student_other_account` (each {`index`}),
+  also `invalid_students`, `invalid_name`, `student_other_account` (each {`index`};
+  `invalid_students` has none when the list is empty or not an array),
   `group_full` {`max`}, `invalid_location` (1 to 100 characters), `invalid_opening`
   (negative), `invalid_method`, `invalid_amount`, `price_not_set`.
 - `update_group(p_group_id, p_location text default null, p_opening_used int default null, p_opening_paid int default null)`:
@@ -389,12 +392,13 @@ Built in prompt 04 (`…_groups_accounts.sql`, tested in `tests/db/groups.test.t
   trigger; returns only true/false (false for an invalid username).
 
 ### 5.4 Open hours, settings, announcements
-Built in prompt 04 (`…_settings.sql`, tested in `tests/db/settings.test.ts`); prompts 06,
+Built in prompt 04 (`…_settings.sql`, tested in `tests/db/admin.test.ts`); prompts 06,
 08 and 10 use them. All coach only (`not_coach`) except `get_public_settings`.
 - `set_open_hours(p_rules jsonb)`: replaces the whole weekly template with
   `[{"weekday": 1-7, "opens_at": "17:30", "closes_at": "22:00"}, …]` (ISO weekdays; an
-  empty list closes every day; a range may end at "24:00"). Malformed items:
-  `invalid_rules` {`index`}; a range must end after it starts (`invalid_range`
+  empty list closes every day; a range may end at "24:00"). Not an array:
+  `invalid_rules` with no detail; malformed items: `invalid_rules` {`index`}; a range
+  must end after it starts (`invalid_range`
   {`index`}); ranges of one day must not overlap (touching ones join;
   `overlapping_rules` {`weekday`}). Existing lessons stay booked.
 - `add_exception(p_kind, p_starts_at, p_ends_at, p_note text default null) returns uuid`
@@ -414,15 +418,22 @@ Built in prompt 04 (`…_settings.sql`, tested in `tests/db/settings.test.ts`); 
   DESIGN §6 messages), `cancel_cutoff_hours`, `booking_window_weeks`,
   `lessons_per_package`, the three prices and `payment_instructions`. For every signed-in
   account, approved or not; not for anon, so signed-out pages use the default business
-  name (`src/lib/business.ts`).
+  name (`src/shared/config/business.ts`).
 
-### 5.5 Email queue (service role only; called by the `mail-queue` Edge Function)
-- `queue_daily_emails(p_for_date date)`: for tomorrow in MYT: one reminder per account
-  (dedupe `reminder:<account>:<date>`) and one coach digest (`digest:<date>`). Records
-  `daily_jobs('daily', date)`; running it twice changes nothing.
+### 5.5 Email queue (service role only, called by the `mail-queue` Edge Function; `email_log` is the coach's)
+- `queue_daily_emails(p_for_date date)`: `p_for_date` is tomorrow in MYT. Queues each
+  daily job that is due and hasn't run for that date: the reminders once the MYT time is
+  past `reminder_time` (BR-32: one per account, dedupe `reminder:<account>:<date>`;
+  records `daily_jobs('reminder', date)`), and the coach digest once it is past
+  `digest_time` (BR-33: `digest:<date>`; records `daily_jobs('digest', date)`). The
+  function decides what is due, so running it again changes nothing.
 - `claim_outbox(p_limit int) returns setof email_outbox`: marks unsent rows whose
   claim is empty or older than 15 minutes, oldest first.
 - `ack_outbox(p_id, p_ok, p_error)`.
+- `email_log(p_limit int default 50)`: coach only (granted to `authenticated`, checks
+  `is_coach()`), for the Email log in Settings (prompt 11): the latest outbox rows'
+  `created_at`, `to_email`, `kind`, `sent_at`, `attempts` and `last_error`, newest
+  first. The coach never gets a grant on `email_outbox` itself.
 
 ## 6. Row Level Security and grants
 Enable RLS on every table. Grant table privileges only to `authenticated` where a
@@ -438,7 +449,7 @@ everything else goes through the functions above.
 | availability_rules, availability_exceptions | select (exceptions: not `note`, the coach's private text) | all (exception notes read through coach functions) |
 | announcements | select where removed_at is null | all |
 | settings | none (use `get_public_settings`) | select/update |
-| email_outbox, daily_jobs, login_attempts | none | none (service role only) |
+| email_outbox, daily_jobs, login_attempts | none | none (service role only; the Email log reads the outbox through `email_log`) |
 
 The RLS migration removes the default privileges, so every new table, view and function
 starts with no access for `public`, `anon` and `authenticated`. Grant `execute` to
@@ -463,9 +474,9 @@ up, and the coach's busy times show where he is.
   display_name, email, phone}` → `auth.admin.inviteUserByEmail` with metadata, sets
   `approved = true`. `send_password_reset {account_id}`.
 - **`mail-queue`** (verify_jwt off; requires header `x-mail-token` equal to `MAIL_TOKEN`,
-  compared in constant time). POST `{action: "claim", limit}`: if the MYT time is past
-  `reminder_time` and `daily_jobs` has no row for today, call `queue_daily_emails`
-  for tomorrow; then return `claim_outbox(limit)`, with every `{{site_url}}` in each
+  compared in constant time). POST `{action: "claim", limit}`: call `queue_daily_emails`
+  with tomorrow's date in MYT (it queues only what is due, §5.5); then return
+  `claim_outbox(limit)`, with every `{{site_url}}` in each
   row's `subject`, `body_text` and `body_html` replaced by `SITE_URL` (all occurrences:
   an HTML link has it twice; `SITE_URL` is the bare origin, no trailing slash). POST
   `{action: "ack", results: [{id, ok, error}]}` → `ack_outbox` for each.
@@ -483,9 +494,10 @@ Rows are added to `email_outbox` by the functions (not by the browser):
 | coach digest | coach_email | `digest:<date>` | always |
 | broadcast | each approved customer whose address is confirmed or was entered by the coach (invited) | `broadcast:<announcement_id>:<account_id>` | send_email |
 
-Emails are short plain text plus the same text as simple HTML, sender name =
-`business_name`, times formatted like "Sat 3 Oct, 9:00–10:00 am", and links written as
-`{{site_url}}/classes` (also `/book`, `/coach/schedule`, or the bare site), which
+Emails are short plain text plus the same text as simple HTML, sender name = the Apps
+Script `SENDER_NAME` property (set to the business name), times formatted like
+"Sat 3 Oct, 9:00–10:00 am", and links written as `{{site_url}}/my-classes` (also
+`/book`, `/coach/schedule`, or the bare site; paths may contain `-`), which
 mail-queue fills in (§7). Names, locations, reasons and messages are free text: they are
 HTML-escaped in `body_html`, and `{{` in them becomes `{ {`, so only the templates' own
 links carry the placeholder. Built in prompt 04 (`…_emails.sql`): the templates
@@ -521,7 +533,8 @@ function install() {           // run once by hand
   ScriptApp.newTrigger('poll').timeBased().everyMinutes(5).create();
 }
 ```
-Reminders therefore go out within about 5 minutes after `reminder_time`.
+Reminders therefore go out within about 5 minutes after `reminder_time`, and the digest
+after `digest_time`.
 
 ## 9. Auth setup
 - Supabase Auth: email + password provider on, "Confirm email" on, sign-ups on.
@@ -539,7 +552,7 @@ Reminders therefore go out within about 5 minutes after `reminder_time`.
 
 ## 10. Test fixture (seed.sql) and expected results
 Clock for tests: `set local app.now = '2026-09-26 12:00+08'` (Sat 26 Sep 2026, noon MYT).
-For clicking around the UI on the dev project, run `supabase/snippets/shift-seed.sql`,
+For clicking around the UI on the dev project, run `supabase/scripts/shift-seed.sql`,
 which moves every fixture date forward by whole weeks so the fixture week is next week.
 Settings: defaults. Weekly template as in §3. Every sample account's password is
 `swim-test-2026` (emails `<username>@example.com`); seed rows have fixed ids (accounts
@@ -615,17 +628,20 @@ Wed 7 Oct 15:00–17:30 merges with the 17:30 rule and adds 1-hour starts at 3:0
 names; `queue_daily_emails` twice for the same date creates one reminder per account.
 
 ## 11. Frontend
-- Routes: `/login`, `/signup`, `/forgot`, `/reset`, `/pending`, `/book`, `/schedule`,
-  `/classes`, `/account`, `/coach/schedule`, `/coach/students`, `/coach/students/new`,
-  `/coach/settings`. Customers land on `/book`, the coach on `/coach/schedule`.
+- Routes (ARCHITECTURE §3.5; written once in `src/shared/config/routes.ts`): `/login`,
+  `/signup`, `/forgot-password`, `/reset-password`, `/pending`, `/book`, `/schedule`,
+  `/my-classes`, `/account`, `/coach/schedule`, `/coach/students`,
+  `/coach/add-students`, `/coach/settings`. Customers land on `/book`, the coach on
+  `/coach/schedule`.
 - Guards: signed in → approved → role. Unapproved customers see `/pending` only.
 - Data: TanStack Query; one query per RPC; invalidate `week_slots`, `week_busy`,
   `group_balance` after booking or cancelling. Realtime is not needed.
 - Time: `date-fns` with `@date-fns/tz` (`TZDate`, `Asia/Kuala_Lumpur`) or `Intl.DateTimeFormat`
   with `timeZone`. Never use the device's local time zone for business dates.
 - Formatting: "7:30 pm", "Sat 3 Oct", ranges "9:00–10:00 am" / "11:00 am–12:00 pm".
-- Reason codes → messages in one module (`src/lib/reasons.ts`), unit tested.
-- Types: `supabase gen types typescript` into `src/lib/database.types.ts`.
+- Reason codes → messages in one module (`src/shared/config/messages.ts`), unit tested.
+- Types: `npm run db:types` (`supabase gen types typescript`) into
+  `src/shared/api/database.types.ts`.
 - PWA: a web manifest and icons so "Add to Home Screen" works; no offline caching of API data.
 
 ## 12. Deployment and operations

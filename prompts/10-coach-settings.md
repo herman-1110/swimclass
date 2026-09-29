@@ -3,7 +3,8 @@
 ## CONTEXT
 All main screens work. Now Herman can change every rule himself. Read DESIGN §4
 (Settings), PRD §7 (settings and defaults), BR-29, TECH_SPEC §3 (`settings`,
-`availability_rules`), §5.4, and `design/AdminSettings.dc.html`.
+`availability_rules`), §5.4, DESIGN §5 (responsive), and `design/AdminSettings.dc.html`
+and `design/AdminSettingsPhone.dc.html`.
 
 ## DIAGNOSE
 1. Confirm `update_settings` and `set_open_hours` exist and validate input; list any
@@ -14,7 +15,8 @@ All main screens work. Now Herman can change every rule himself. Read DESIGN §4
 ## TASK
 1. Page layout as the design: two columns of framed sections with "Save changes" at
    the top right (disabled until something changes; warn when leaving with unsaved
-   changes).
+   changes). Below 1280 px one column up to 760 px; on phones a Save bar pinned above
+   the tab bar (DESIGN §5).
 2. **Open hours** table: Day, Hours (range chips), Edit. Edit opens a small dialog to
    add, change or remove ranges for that weekday (validate: end after start, no overlap
    between ranges of the same day, inside 5:00 am–11:00 pm). The database checks the
@@ -50,12 +52,18 @@ All main screens work. Now Herman can change every rule himself. Read DESIGN §4
 
 ## VALIDATION
 - Changing the travel gap to 30 minutes on the dev project immediately changes the
-  free times on Book (Tue 29 Sep, 1 hour: 7:00 pm becomes free); set it back to 60.
+  free times on Book (with the seed shifted, TECH_SPEC §10: on the shifted Tuesday,
+  1 hour, 7:00 pm becomes free); set it back to 60.
 - Changing Saturday hours to start at 8:00 am removes the 7:00 am start that Saturday.
 - Invalid input (end before start, gap 500) is refused by the database, not only by
   the form.
 - A customer can't call `update_settings` (test).
-- `tests/db/settings.test.ts` (prompt 04) already checks the database side of these four;
-  check them through the page too.
+- `tests/db/admin.test.ts` (prompt 04) already checks the database side of these four;
+  check them through the page too. Trying settings on the dev project changes the
+  seed, so Herman reloads it (`npx supabase db reset --linked`) before the next
+  `npm run test:db` (DEV_SETUP §4).
+- The page matches `design/AdminSettings.dc.html` at 1440 px and
+  `design/AdminSettingsPhone.dc.html` at 390 px, with no sideways scrolling at
+  DESIGN §5's widths.
 - Grep shows no hard-coded business numbers left in SQL or TypeScript.
 - HANDOFF.md updated.

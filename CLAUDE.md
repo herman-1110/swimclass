@@ -50,36 +50,40 @@ changing anything and stop to report if a prerequisite is missing.
    reminder time). Read them from the `settings` table; never hard-code them.
 
 ## Repo layout
+`docs/ARCHITECTURE.md` says where every file goes and which layer may import which
+(ESLint enforces it). Check it before creating a file. In short:
 ```
 src/
-  app/          router, layouts, route guards
-  features/
-    auth/       login, sign-up, forgot and reset password, waiting-for-approval
-    customer/   book, schedule, my-classes, account
-    coach/      schedule, students, add-students, settings
-  components/   shared UI (Button, Field, Segmented, TimeChip, Tag, Table, ProgressBar, Dialog)
-  lib/          supabase client, MYT time helpers, formatting, reason messages, database.types.ts
+  app/          providers, router and route guards, layouts (tab bar, sidebar), styles
+  pages/        one folder per route (book/, coach-schedule/ …), each with an index.ts
+  features/     things a person does: a form or button and the change it makes
+  entities/     business things: query hooks and display components
+  shared/       api/ (the one Supabase client, database.types.ts), config/ (env, routes,
+                messages, business name), lib/ (Malaysia time helpers), ui/ (generic UI)
 supabase/
   migrations/   SQL migrations. One change per file. Never edit a migration that has been applied.
   functions/    Edge Functions: login, admin-accounts, mail-queue
   seed.sql      sample data matching the design (week of Mon 28 Sep 2026). Dev only, never prod
-  snippets/     SQL run by hand (shift-seed.sql, make-coach.sql)
+  scripts/      SQL run by hand (shift-seed.sql; make-coach.sql from prompt 05)
+  README.md     database map: where each table, view and function is defined now
 tests/
   db/           database tests (pg + transaction rollback)
-  unit/         pure TypeScript tests
 apps-script/    Code.gs for the Gmail mailer (pasted into Google Apps Script by hand)
-design/         approved screen references (HTML). Reference only, never import.
+design/         approved screens (HTML), phone and computer drawings. Reference only, never import.
 docs/  prompts/
 ```
+Unit tests sit next to the code they test (`time.ts` and `time.test.ts`).
 
 ## Commands
 - `npm run dev`: Vite dev server on http://localhost:5173 (fixed port: auth redirects use it)
 - `npm run build`: type-check and build to `dist/`
 - `npm run preview`: serve the built `dist/` locally
-- `npm run test`: Vitest once (unit and database tests); `npm run test:watch` re-runs on save
+- `npm run test`: unit tests once (Vitest); `npm run test:watch` re-runs them on save
+- `npm run test:db`: database tests against `swimclass-dev` (needs `DATABASE_URL` in
+  `.env.local`, DEV_SETUP §4); run it whenever a migration or the seed changes
 - `npm run lint` / `npm run typecheck`
 - `npm run format` / `npm run format:check`: Prettier
-- `npm run db:types`: regenerate `src/lib/database.types.ts` from the linked Supabase project
+- `npm run db:types`: regenerate `src/shared/api/database.types.ts` from the linked Supabase project
   (`npm run db:types:local` when Supabase runs locally in Docker)
 - `npx supabase db reset` (local) or `npx supabase db push` (linked project)
 - `npx supabase functions deploy <name>`
@@ -97,7 +101,8 @@ Keep this list current when you add scripts.
 - If the docs are unclear or disagree with the code, stop and ask. Do not guess.
 - Database functions: `security definer`, `set search_path = ''`, fully qualified
   names, explicit permission checks at the top, and `revoke execute ... from public`
-  on anything that is not meant for every user.
+  on anything that is not meant for every user. Update `supabase/README.md` (the
+  database map) in the same commit as the migration.
 - End each session by updating `docs/HANDOFF.md`: bump the version, record what is
   done, what is next, decisions made and open issues.
 
@@ -105,7 +110,8 @@ Keep this list current when you add scripts.
 - Match `design/` and the tokens in `docs/DESIGN.md`. Minimal look: white background,
   Figtree, one accent (#0B5E7A), orange (#9A3412) only for things that need attention.
 - Customer screens are mobile-first (390 px wide). Coach screens are desktop-first
-  (1280 px and up) but must still work on a tablet.
+  (1280 px and up). Every screen works at any width from 360 px to 1920 px, with the
+  layouts in DESIGN §5.
 - Real buttons, links and labels. 44 px minimum touch targets. Visible focus.
   Sentence case. Buttons say what they do ("Book 7:30 pm for Aiman & Sofia",
   "Save payment"). Error messages say what happened and what to do next.

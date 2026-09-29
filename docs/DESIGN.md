@@ -125,7 +125,8 @@ their script block is the reference algorithm for slots and messages):
 
 **Schedule** (`Schedule.dc.html` / `ScheduleDesktop.dc.html`): "Your coach's
 timetable", week navigation, legend (Free, Booked, Travel, Yours, Closed), grid
-7 am–10 pm in 30-minute rows. Other lessons are "Booked" without names. Tapping a day
+7 am–10 pm in 30-minute rows (longer when the week's open hours or lessons fall
+outside it). Other lessons are "Booked" without names. Tapping a day
 header opens Book on that day.
 
 **My classes** (`MyClasses.dc.html` / `MyClassesDesktop.dc.html`): Upcoming list
@@ -141,7 +142,8 @@ The coach uses the same screens on a computer and on a phone (for example at the
 
 **Schedule** (`AdminSchedule.dc.html` computer / `AdminSchedulePhone.dc.html` phone):
 title and actions (Block time, Open extra time, Add booking); week navigation and
-legend; week grid 7 am–10 pm (56 px per hour) with lesson blocks (name(s), time, type
+legend; week grid 7 am–10 pm (56 px per hour; longer when the week's open hours or
+lessons fall outside it) with lesson blocks (name(s), time, type
 and location), travel blocks, closed blocks, and a "Gap override" note where used. On
 phones the week grid becomes a day view: a day strip with the number of lessons under
 each date, then the chosen day as a list of blocks (time on the left; lesson, travel,
@@ -185,7 +187,8 @@ see, "Add 3 students".
 **Settings** (`AdminSettings.dc.html` / `AdminSettingsPhone.dc.html`): open hours table
 (day, time-range chips, Edit), booking rules (travel gap, lesson lengths, students per
 lesson, start times, cancel cutoff, booking window, approve new accounts), packages &
-payments (lessons per package, price per type, unpaid packages allowed, lesson expiry,
+payments (lessons per package, price per type, unpaid packages allowed, lesson expiry
+(shown disabled: nothing applies it yet),
 payment instructions, online payments shown as "Not connected" for later), reminders
 & emails (customer reminder time, coach digest time, late-change alert, booking
 confirmations, your email). "Save changes" at the top; on phones a Save bar sits

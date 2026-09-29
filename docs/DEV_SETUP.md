@@ -72,13 +72,14 @@ The sample lessons sit around the week of Mon 28 Sep 2026. To try the UI with th
 next week, move them forward by whole weeks (running it again in the same week does
 nothing):
 ```sh
-npx supabase db query --linked -f supabase/snippets/shift-seed.sql
+npx supabase db query --linked -f supabase/scripts/shift-seed.sql
 ```
 (or paste the file into Dashboard → SQL Editor and click Run).
 
 ## 4. Database tests
-`npm run test` also runs `tests/db/` when `.env.local` has a `DATABASE_URL`; without it
-those tests are skipped. Get the string from the dashboard → **Connect** → **Session
+`npm run test:db` runs `tests/db/` against the dev database (`npm run test` runs only the
+unit tests). It needs a `DATABASE_URL` in `.env.local`; without it the database tests are
+skipped. Get the string from the dashboard → **Connect** → **Session
 pooler** (the direct connection needs IPv6, which many home connections don't have) and
 put your database password in place of `[YOUR-PASSWORD]`:
 ```sh
@@ -90,7 +91,7 @@ If the password contains `@ : / ? #` or `%`, replace those characters with `%40 
 browser.
 
 Test files run one at a time, as they share the dev database. A full run takes about
-3 minutes, and a test that takes over 30 s fails as timed out.
+2 minutes, and a test that takes over 30 s fails as timed out.
 
 Each test runs in a transaction that is rolled back, so the data stays as loaded. A test
 run never changes the dev database, even if a test times out: outside each test's own
@@ -99,10 +100,12 @@ at the same moment open two extra connections, which never commit either. The em
 read only the outbox rows they add, so emails queued while trying the UI need no reload.
 
 The tests expect the seed exactly as loaded: if the sample week was shifted or you added or
-changed data (lessons, groups, payments, open hours, any setting, or the sample accounts'
-names, phones, roles and approval), they stop with a message asking you to reload it
-(`npx supabase db reset --linked`). So after trying prices or the business name in the
-Settings screen, reload before you run the tests. Extra sign-ups are still fine.
+changed data (lessons, students, groups, payments, open hours, blocked or extra time,
+messages to customers, any setting, or the sample accounts' names, phones, roles and
+approval), they stop with a message asking you to reload it
+(`npx supabase db reset --linked`). So after trying the Settings screen, Block time, Open
+extra time or Message all customers, reload before you run the tests. Extra sign-ups are
+still fine.
 Only ever point `DATABASE_URL` at `swimclass-dev`, never at production.
 
 ## Alternative: local Supabase with Docker

@@ -40,8 +40,9 @@ swimclass/
 ├── tests/db/            database tests (§6)
 ├── CLAUDE.md            Claude Code's brief
 ├── README.md            how to run, deploy and find things
-└── config files only:   package.json, package-lock.json, tsconfig.json, vite.config.ts,
-                         eslint.config.js, .prettierrc, .editorconfig, .nvmrc,
+└── config files only:   package.json, package-lock.json, .npmrc, tsconfig.json (with
+                         tsconfig.app/.node/.test.json), vite.config.ts, eslint.config.js,
+                         .prettierrc, .prettierignore, .editorconfig, .gitattributes, .nvmrc,
                          wrangler.jsonc, index.html, .env.example, .gitignore
 ```
 
@@ -91,9 +92,12 @@ src/
 ├── app/
 │   ├── App.tsx                   providers + router
 │   ├── providers/                QueryProvider.tsx · SessionProvider.tsx · ErrorBoundary.tsx
-│   ├── router/                   routes.tsx (every route, lazy-loaded) · guards.tsx
-│   ├── layouts/                  AuthLayout.tsx · CustomerLayout.tsx · CoachLayout.tsx (each: bottom
-│   │                             tab bar under 1024 px, sidebar from 1024 px; DESIGN §5)
+│   ├── router/                   routes.tsx (every route; the coach's pages lazy-loaded, §3.7)
+│   │                             guards.tsx · router.ts · RouteError.tsx · RouteLoading.tsx
+│   ├── layouts/                  AuthLayout.tsx (a card from 768 px) · CustomerLayout.tsx ·
+│   │                             CoachLayout.tsx (bottom tab bar under 1024 px, sidebar from
+│   │                             1024 px; DESIGN §5), built from TabBar.tsx · Sidebar.tsx ·
+│   │                             SkipLink.tsx · navigation.ts (NavItem, useIsCurrent)
 │   └── styles/                   index.css (tokens, Tailwind theme, font, focus ring)
 ├── pages/                        one folder per route (§3.5)
 │   ├── login/  signup/  forgot-password/  reset-password/  pending/
@@ -135,10 +139,12 @@ src/
     │                             rpc.ts (database and Edge Function calls, AppError)
     │                             database.types.ts (generated)
     ├── config/                   env.ts · routes.ts (every path) · messages.ts (error wording, DESIGN §6)
+    │                             business.ts (the business name on signed-out pages)
     ├── lib/                      time/ (Malaysia time) · format/ (RM, plurals) · hooks/ · cn.ts
     └── ui/                       Button, Field, Select, Checkbox, OptionRow, Segmented, Chip,
                                   DayStrip, SegmentBar, Tag, Pill, Table, Tabs, Dialog, SidePanel,
                                   WeekGrid, Skeleton, EmptyState, Banner, icons/
+                                  PlaceholderPage (until every screen is built; then delete it)
 ```
 
 Folders appear when their first file is written; don't create empty ones.
@@ -213,8 +219,14 @@ Paths are written once, in `shared/config/routes.ts`; everything else uses those
   edited by hand. Entities export friendlier types built from it (`Slot`, `GroupBalance`).
 
 ### 3.7 Components
-- One component per file, named after it. Named exports only; pages are lazy-loaded with
-  `lazy(() => import('@/pages/book').then((m) => ({ default: m.BookPage })))`.
+- One component per file, named after it. Named exports only.
+- The sign-in and customer pages are in the main bundle, so a phone on 4G doesn't wait
+  for a second download. The coach's pages are lazy-loaded with the function form of
+  React Router's `lazy`:
+  `lazy: async () => ({ Component: (await import('@/pages/coach-settings')).CoachSettingsPage })`.
+  Never the object form (`lazy: { Component }`): React Router 8 swallows its failed
+  download (an old file after a new release) and shows a blank page instead of the
+  error screen.
 - Props typed beside the component: `type ButtonProps = { … }`.
 - Styling with Tailwind classes and the DESIGN §2 tokens. Inline `style` only for
   computed positions, such as blocks on the week grid.
@@ -241,75 +253,93 @@ supabase/
 │   ├── admin-accounts/index.ts
 │   ├── login/index.ts
 │   └── mail-queue/index.ts
-├── scripts/                   SQL run by hand in the SQL editor: make-coach.sql · shift-seed.sql
+├── scripts/                   SQL run by hand: shift-seed.sql · make-coach.sql (prompt 05)
 ├── seed.sql                   sample data, dev project only
 └── README.md                  database map (below)
 ```
 
-The database map in `supabase/README.md` has four tables (tables, views, `public`
-functions, `private` functions), each listing the name, the migration that defines it
-now, and one line on what it's for.
+The database map in `supabase/README.md` lists the migrations, tables, views, API
+functions and internal functions, each with the migration that defines it now and one
+line on what it's for.
 
-### 4.2 Two schemas: `public` is the API, `private` is the engine room
-Supabase's Data API only exposes the schemas listed in its settings (`public` by
-default), so:
+### 4.2 One schema: grants decide what the API may call
+Supabase's Data API exposes the `public` schema, and everything is in it: the tables,
+the views and every function. What a caller may run is decided by grants
+(`20260928100300_rls` removes the default rights, so a new function can't be called
+until a migration grants it):
 
-- **`public`** holds the tables, the views, and the functions the website and Edge
-  Functions call. That is the whole API, listed in the table below.
-- **`private`** (never exposed) holds helpers nobody can call over the API: the clock,
-  permission helpers, the availability engine, email builders and trigger functions.
-  RLS policies and views call them with the schema written out (`private.is_coach()`),
-  which works without exposing the schema. Revoke the default `execute` from `public` on
-  everything in `private`; give `authenticated` `usage` on the schema and `execute` only
-  on the helpers that policies and views use (`app_now`, `is_coach`, `is_approved`,
-  `my_account_id`).
+- **API functions** are granted to `authenticated` (`username_available` also to
+  `anon`) and check the caller inside. That is the whole API, in the table below.
+- **Internal functions** have no grant, so only other functions can run them: the
+  availability engine (`open_windows`, `slot_check`), the email builders and
+  `queue_email`, the booking steps (`place_bookings`, `lock_booking_dates`) and the
+  trigger functions.
+- **Helpers that RLS policies and the views run** with the caller's rights are granted
+  to `authenticated`: `is_coach`, `is_approved`, `my_account_id`, `app_now`,
+  `lessons_for`, `package_settings`. They only answer about the caller or read settings.
+- `tests/db/rls.test.ts` lists every function `anon` and `authenticated` may run, so a
+  grant that isn't in its list fails the tests. Add each new API function there.
 
-| Called by | Functions in `public` |
+Moving the internal functions into a `private` schema that the API never exposes is a
+possible later step; for now the missing grants do that job.
+
+| Called by | API functions |
 |---|---|
 | anyone, signed out | `username_available` |
-| signed-in customers and the coach | `get_public_settings`, `week_slots`, `check_slot`, `week_busy`, `book_lesson`, `cancel_booking` |
-| the coach only (checked inside) | `coach_week`, `coach_book`, `excuse_booking`, `record_payment`, `add_free_lesson`, `create_group`, `update_group`, `set_group_active`, `approve_account`, `set_open_hours`, `add_exception`, `remove_exception`, `update_settings`, `post_announcement`, `remove_announcement`, `email_log` |
-| the service role (mail-queue) | `claim_outbox`, `ack_outbox` |
-
-`private` holds `app_now`, `is_coach`, `is_approved`, `my_account_id`, `open_windows`,
-`slot_check`, `enqueue_email`, the email builders, `queue_reminders`, `queue_digest`,
-`queue_daily_emails_if_due` and the trigger functions.
+| every signed-in account | `get_public_settings` |
+| approved customers (their own groups) and the coach | `week_slots`, `week_busy`, `cancel_booking` |
+| approved customers | `book_lesson` |
+| the coach only (checked inside) | `coach_week`, `coach_slot_check`, `coach_book`, `excuse_booking`, `record_payment`, `add_free_lesson`, `create_group`, `update_group`, `set_group_active`, `approve_account`, `set_open_hours`, `add_exception`, `remove_exception`, `update_settings`, `post_announcement`, `remove_announcement`; later `pending_accounts` (prompt 09) and `email_log` (prompt 11) |
+| the service role (mail-queue, prompt 11) | `claim_outbox`, `ack_outbox` |
 
 ### 4.3 Migrations
-- Every change is a new file made with `npx supabase migration new <name>`. Never edit a
-  migration that has been applied; fix forward with a new one.
-- Names say what changed: `create_…`, `add_…`, `update_…`, `fix_…`. One topic per file.
+- Every change is a new file in `supabase/migrations/`. Never edit a migration that has
+  been applied; fix forward with a new one.
+- The file name is `<timestamp>_<verb>_<topic>.sql`, and the timestamp must sort after
+  every migration already applied. `npx supabase migration new <name>` uses the current
+  UTC time, but the prompt 04 files have hand-picked times on 29 Sep 2026 (up to
+  `20260929110200`), so a file made with it that day needs a later time by hand.
+- Names say what changed: `add_…`, `update_…`, `fix_…`. One topic per file. (The files
+  from prompts 02 to 04 are named after their topic only.)
 - In the same commit, update `supabase/README.md` so the current definition of any
   function can be found without reading every migration.
 
-Planned files, in order:
+The files so far:
 
 | Migration | Prompt | Contents |
 |---|---|---|
-| `create_core_tables` | 02 | enums, tables, constraints, indexes, the settings row, weekly hours |
-| `create_private_helpers` | 02 | `private` schema, `app_now`, `is_coach`, `is_approved`, `my_account_id` |
-| `add_triggers` | 02 | profile on sign-up, group member checks |
-| `create_views` | 02 | `group_details`, `booking_ledger`, `group_balance` |
-| `enable_rls` | 02 | RLS, policies, grants |
-| `add_availability` | 03 | `open_windows`, `slot_check`; `week_slots`, `check_slot`, `week_busy`, `coach_week` |
-| `add_email_templates` | 04 | `enqueue_email`; builders for booked, cancelled, late alert and broadcast emails |
-| `add_booking` | 04 | `book_lesson`, `coach_book`, `cancel_booking`, `excuse_booking` |
-| `add_groups_and_payments` | 04 | `create_group`, `update_group`, `set_group_active`, `approve_account`, `username_available`, `record_payment`, `add_free_lesson` |
-| `add_admin_functions` | 04 | open hours, exceptions, settings, announcements, `get_public_settings` |
-| `add_mail_queue` | 11 | reminders, digest, `claim_outbox`, `ack_outbox`, `email_log` |
+| `20260928100000_schema` | 02 | enums, tables, constraints, indexes, the settings row, weekly hours |
+| `20260928100100_triggers` | 02 | profile on sign-up, group member checks, `settings.updated_at` |
+| `20260928100200_views` | 02 | `app_now`, `lessons_for`, `package_settings`; `group_details`, `booking_ledger`, `group_balance` |
+| `20260928100300_rls` | 02 | RLS, policies, grants; `is_coach`, `is_approved`, `my_account_id` |
+| `20260928120000_availability` | 03 | `open_windows`, `slot_check`, `lesson_travel`; `week_slots`, `week_busy`, `coach_week` |
+| `20260929100000_coach_slot_check` | 04 | `slot_check` with the coach's options; `coach_slot_check` |
+| `20260929100100_emails` | 04 | time text, `email_text`, `email_html`, `account_email`, `queue_email`; the booked, cancelled, late alert and broadcast emails and who gets them |
+| `20260929100200_booking` | 04 | `book_lesson`, `coach_book`, `cancel_booking`, `excuse_booking`, `record_payment`, `add_free_lesson` |
+| `20260929100300_groups_accounts` | 04 | `create_group`, `update_group`, `set_group_active`, `approve_account`, `username_available` |
+| `20260929100400_settings` | 04 | `get_public_settings`, open hours, exceptions, `update_settings`, announcements |
+| `20260929110000_update_email_links` | 04 | confirmation links to `/my-classes` |
+| `20260929110100_fix_email_link_pattern` | 04 | links in `email_html` may contain `-` |
+| `20260929110200_fix_email_text` | 04 | `email_text` also breaks up `{{` inside `{{{` |
+
+Still to come: `pending_accounts` (prompt 09) and the mail queue: reminders, digest,
+`claim_outbox`, `ack_outbox`, `email_log` (prompt 11).
 
 ### 4.4 SQL style
 - snake_case everywhere; tables plural (`bookings`); functions start with a verb
   (`book_lesson`); parameters `p_…`; local variables `v_…`; constraints and indexes
   start with their table name (`bookings_no_overlap`, `bookings_starts_at_idx`).
 - API functions are `security definer` with `set search_path = ''` and fully qualified
-  names (`public.bookings`, `private.app_now()`).
+  names (`public.bookings`, `public.app_now()`).
 - Inside a function, in this order: check the caller, validate the input, do the work,
   queue emails.
-- Errors are codes (`raise exception using message = 'credit_exceeded'`), never sentences.
-  The wording lives in `src/shared/config/messages.ts`.
+- Errors are codes, never sentences: `raise exception using errcode = 'P0001', message =
+  'credit_exceeded', detail = <jsonb>::text` (the detail only when the message needs
+  one). The wording lives in `src/shared/config/messages.ts`.
 - Every function starts with a header comment, and its first line also goes into
-  `comment on function` so the Supabase dashboard shows it:
+  `comment on function` so the Supabase dashboard shows it. The functions from prompts
+  02 to 04 have the header comment only; add `comment on function` to every function
+  created or replaced from now on:
 
 ```sql
 -- book_lesson: book one lesson, or the same time for several weeks, for a group.
@@ -334,10 +364,11 @@ the CLI to it.
 ## 5. Other folders
 - `apps-script/`: `Code.gs` (pasted into Google Apps Script by hand) and `README.md` with
   the setup steps. Same rule as Edge Functions: it only fetches, sends and acknowledges.
-- `tests/db/`: one file per area (`balance`, `rls`, `constraints`, `availability`,
-  `booking`, `groups`, `admin`, `emails`), plus `helpers.ts` (connect, act as a user, pin
-  the clock, roll back) and `fixture.ts` (usernames, dates and ids from `seed.sql`, so
-  tests don't repeat magic values).
+- `tests/db/`: one file per area (`admin`, `availability`, `balance`, `booking`,
+  `changes`, `constraints`, `groups`, `rls`, `shift-seed`; `emails` comes in prompt 11),
+  plus `helpers.ts` (connect, act as a user, pin the clock, roll back), `fixture.ts`
+  (the clock and the fixed ids `seed.sql` uses, so tests don't repeat magic values) and
+  `supabase-root-2021-ca.crt` (checks the database's TLS certificate).
 - `design/`, `docs/`, `prompts/`: planning material. Code never imports from them.
 - `public/`: only files served exactly as they are.
 - `.github/workflows/`: `ci.yml` and `backup.yml`.
@@ -348,7 +379,8 @@ the CLI to it.
 - **Database tests** live in `tests/db/` and run against the dev project inside a
   transaction that is rolled back, so they leave nothing behind.
 - Two Vitest projects: `unit` (`src/**`, jsdom), run by `npm run test`; and `db`
-  (`tests/db/**`, Node), run by `npm run test:db`, which needs `DATABASE_URL`.
+  (`tests/db/**`, Node), run by `npm run test:db`, which needs `DATABASE_URL`. The `db`
+  files run one at a time, since they share the dev database, with 30 s per test.
 - Test names read as sentences: `it('refuses a second unpaid package')`.
 
 ## 7. Naming

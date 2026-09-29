@@ -8,10 +8,13 @@ Everything Claude Code needs to build the booking site, in build order.
 | `CLAUDE.md` | Project brief Claude Code loads at the start of every session |
 | `docs/PRD.md` | What we're building and every business rule (BR-1 … BR-37) |
 | `docs/TECH_SPEC.md` | Architecture, database, security, emails, tests, deployment |
-| `docs/DESIGN.md` | Design tokens, components, every screen, wording |
+| `docs/DESIGN.md` | Design tokens, components, every screen at every width, wording |
+| `docs/ARCHITECTURE.md` | Where every file goes and which part may use which (ESLint checks it) |
+| `docs/DEV_SETUP.md` | Setting up the dev environment (the `swimclass-dev` project, no Docker) |
 | `docs/HANDOFF.md` | Session-to-session notes (Claude Code updates it) |
 | `prompts/01…12` | One build phase each, in CONTEXT → DIAGNOSE → TASK → VALIDATION |
-| `design/` | The approved screens as reference HTML (+ `screens/` for your screenshots) |
+| `design/` | The approved screens as reference HTML, phone and computer (+ `screens/` for your screenshots) |
+| `supabase/README.md` | Database map: where each table, view and function is defined now |
 
 ## How to start
 1. Create an empty GitHub repo (private) and clone it.
@@ -32,6 +35,12 @@ Everything Claude Code needs to build the booking site, in build order.
 | Prompt 12 | Supabase project `swimclass` (prod), Cloudflare account, Apps Script project, GitHub secret for backups |
 | Any time | Your package prices and payment instructions (bank / DuitNow) for Settings |
 | Optional | A domain such as swimclass.online (the site works without one) |
+
+## Everyday commands
+`npm run dev` (the site on http://localhost:5173), `npm run test` (unit tests),
+`npm run test:db` (database tests on `swimclass-dev`), `npm run lint`,
+`npm run typecheck`, `npm run build`. The full list is in `CLAUDE.md`. GitHub runs lint,
+typecheck, unit tests and the build on every push (`.github/workflows/ci.yml`).
 
 ## Build order at a glance
 01 Setup → 02 Database → 03 Availability engine → 04 Booking & payments →

@@ -32,20 +32,24 @@ type a username instead, without ever exposing emails to the browser.
      name (1–100) and phone (≤ 30) before calling `signUp`: Auth reports a failed profile
      trigger only as "Database error saving new user". On success show "Check your email
      to confirm, then wait for your coach to approve your account".
-   - Forgot password (email → `resetPasswordForEmail` with redirect to `/reset`) and
+   - Forgot password (email → `resetPasswordForEmail` with redirect to `/reset-password`,
+     `ROUTES.resetPassword`) and
      Reset password (`updateUser`).
    - Waiting for approval (`/pending`) with a log-out button.
    - Log in, Sign up, Forgot and Reset show `DEFAULT_BUSINESS_NAME` from
-     `src/lib/business.ts` as the business name: they are signed-out pages, and
+     `src/shared/config/business.ts` as the business name: they are signed-out pages, and
      `get_public_settings` is for signed-in accounts only (approved or not), not anon.
      Other pages, `/pending` included, read `business_name` from it.
 4. Guards: signed out → `/login`; signed in but not approved → `/pending`; customers
    can't open `/coach/*`. The coach can open the customer pages from "View as
    customer" to check the layout; the coach has no groups there, so Book shows the
    empty state and booking is disabled.
+   The session goes in `app/providers/SessionProvider.tsx` (ARCHITECTURE §3.2). The
+   customer sidebar's "Signed in as …" line (DESIGN §3) waits for it: pass the
+   profile's display name to `Sidebar` as `signedInAs` in `CustomerLayout`.
 5. Account page: display name and phone (update own profile), email shown read-only,
    change password, log out.
-6. Coach bootstrap: a SQL snippet in `supabase/snippets/make-coach.sql` and a line in
+6. Coach bootstrap: a SQL script in `supabase/scripts/make-coach.sql` and a line in
    HANDOFF telling Herman to run it once.
 
 ## VALIDATION
@@ -53,8 +57,8 @@ type a username instead, without ever exposing emails to the browser.
   username show the same message; the 11th failed try within 15 minutes shows the
   "too many tries" message even with the right password.
 - A new sign-up lands on `/pending` and can't book (RPC returns `not_approved`); after
-  `approve_account` (coach only: call it signed in as herman; the Approve button comes in
-  prompt 09) they reach `/book`.
+  `approve_account` (coach only: call it signed in as herman; the Approve buttons come in
+  prompts 08 and 09) they reach `/book`.
 - A customer calling `admin-accounts` gets 403.
 - Browser network tab: no email addresses of other users, no secret keys.
 - Unit tests for the message mapping of auth errors.

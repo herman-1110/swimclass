@@ -6,7 +6,8 @@ students in. Read TECH_SPEC §2, §9, §12, §13, §14 and PRD §8. Many steps h
 dashboards: write them as a checklist for Herman and do the code parts yourself.
 
 ## DIAGNOSE
-1. Run the full test suite and a production build; stop if anything fails.
+1. Run the full test suite (`npm run test` and `npm run test:db`) and a production
+   build; stop if anything fails.
 2. Run the TECH_SPEC §13 security checklist against the code and report each item.
 3. Ask Herman which domain he wants now: none (free Cloudflare address) or a domain he
    has bought (for example `swimclass.online`). Don't block on it; domain can come later.
@@ -25,7 +26,7 @@ dashboards: write them as a checklist for Herman and do the code parts yourself.
      `https://swimclass.online`: `mail-queue` puts it in front of the email links' paths).
    - Auth: confirm email on, Site URL and redirect URLs = production URL, custom SMTP
      with Gmail (same as dev), templates.
-   - Herman signs up as `herman`; run `supabase/snippets/make-coach.sql`.
+   - Herman signs up as `herman`; run `supabase/scripts/make-coach.sql`.
    - Link the CLI back to `swimclass-dev` (`npx supabase link --project-ref <dev ref>`)
      so everyday `--linked` commands (`db reset --linked` wipes the database) keep
      targeting dev. `npx supabase projects list` marks the linked project.
@@ -48,9 +49,11 @@ dashboards: write them as a checklist for Herman and do the code parts yourself.
    tight pairs, Outside open hours for times outside them or off the start step, Book
    anyway for groups past their credit. Add booking emails nobody, so then send a
    broadcast with the link.
-7. **Smoke test** on production with a test customer: sign up → approve → book →
-   confirmation email → cancel → cancellation email → evening reminder next day.
-   Delete the test account afterwards.
+7. **Smoke test** on production with a test customer: sign up → approve → book two
+   lessons, one of them tomorrow → confirmation email → cancel the other →
+   cancellation email → evening reminder for tomorrow's lesson. Afterwards cancel its
+   remaining lessons and deactivate its group: an account with groups can't be deleted
+   (`delete_account` is only for unapproved accounts with no groups).
 8. Final HANDOFF v1.0: how to run, deploy, restore a backup, rotate keys, and the list
    of free-tier limits to watch (TECH_SPEC §14).
 
