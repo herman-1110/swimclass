@@ -20,6 +20,12 @@ const SUPABASE = {
     'Only src/shared/api talks to Supabase (ARCHITECTURE §3.1, rule 5). Use the client from @/shared/api/supabase.',
 }
 
+const PGLITE = {
+  name: '@electric-sql/pglite',
+  message:
+    'Only src/shared/api/demo runs the demo database (ARCHITECTURE §3.6). Call it through @/shared/api/rpc.',
+}
+
 /** Imports of layers a layer may not use: the ones to its left, and its own slices. */
 const notFrom = (layers) => ({
   regex: `^@/(${layers.join('|')})(/|$)`,
@@ -50,10 +56,13 @@ const LEAVE_SLICE_FROM_TOP = {
 /** From a file in a slice's segment (api/, model/, ui/), ../../ leaves the slice. */
 const LEAVE_SLICE_FROM_SEGMENT = { ...LEAVE_SLICE_FROM_TOP, regex: '^\\.\\./\\.\\./' }
 
-const restrict = ({ patterns = [], supabase = true }) => ({
+const restrict = ({ patterns = [], supabase = true, pglite = true }) => ({
   'no-restricted-imports': [
     'error',
-    { paths: supabase ? [SUPABASE] : [], patterns: patterns.map((p) => ({ ...p })) },
+    {
+      paths: [...(supabase ? [SUPABASE] : []), ...(pglite ? [PGLITE] : [])],
+      patterns: patterns.map((p) => ({ ...p })),
+    },
   ],
 })
 
@@ -140,6 +149,14 @@ export default defineConfig([
     rules: restrict({
       patterns: [notFrom(['app', 'pages', 'features', 'entities']), RELATIVE_TO_LAYER],
       supabase: false,
+    }),
+  },
+  // Demo mode's database stands in for Supabase, so it never talks to Supabase itself.
+  {
+    files: ['src/shared/api/demo/**/*.{ts,tsx}'],
+    rules: restrict({
+      patterns: [notFrom(['app', 'pages', 'features', 'entities']), RELATIVE_TO_LAYER],
+      pglite: false,
     }),
   },
 

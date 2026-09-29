@@ -8,10 +8,21 @@ declare global {
     readonly VITE_SUPABASE_URL?: string
     /** Supabase publishable key (sb_publishable_...). Never the secret key. */
     readonly VITE_SUPABASE_PUBLISHABLE_KEY?: string
+    /**
+     * 'true' in demo mode. vite.config.ts always sets it: from VITE_DEMO in .env.local
+     * when that is set, otherwise on for `npm run dev` and tests, off for production builds.
+     */
+    readonly VITE_DEMO: string
   }
 }
 
 export const env = {
   supabaseUrl: import.meta.env.VITE_SUPABASE_URL,
   supabasePublishableKey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+  /**
+   * Demo mode: the site runs the repo's own migrations and seed in the browser
+   * (`shared/api/demo`) instead of talking to Supabase, with the clock stopped at
+   * DEMO_NOW (`shared/config/demo`).
+   */
+  demo: import.meta.env.VITE_DEMO === 'true',
 }

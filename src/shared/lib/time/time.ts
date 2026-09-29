@@ -1,6 +1,9 @@
 import { TZDate } from '@date-fns/tz'
 import { format, startOfWeek } from 'date-fns'
 
+import { DEMO_NOW } from '@/shared/config/demo'
+import { env } from '@/shared/config/env'
+
 /**
  * Malaysia time. All business dates and all display use this zone (CLAUDE.md rule 2),
  * never the device's own time zone. MYT is UTC+8 all year (no daylight saving).
@@ -44,10 +47,10 @@ export function toMyt(instant: Instant): TZDate {
 
 /**
  * The current moment in MYT, for display only. Business rules use the database clock
- * (`app_now()`), never the browser's.
+ * (`app_now()`), never the browser's. In demo mode both stand still at DEMO_NOW.
  */
 export function nowMyt(): TZDate {
-  return TZDate.tz(MYT)
+  return env.demo ? toMyt(DEMO_NOW) : TZDate.tz(MYT)
 }
 
 /** The MYT calendar date of a moment: 2026-09-30T17:00Z → "2026-10-01". */
