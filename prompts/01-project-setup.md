@@ -47,5 +47,6 @@ working skeleton that later prompts build on.
   Figtree is loaded; focus ring visible when tabbing.
 - Time helper tests cover: 19:30 → "7:30 pm"; a range crossing noon; a UTC instant
   that is a different calendar day in MYT.
-- No secrets committed (`git grep -i "sb_secret"` finds nothing).
+- No secrets committed (`git grep -E "sb_secret_[A-Za-z0-9_-]{8,}"` finds nothing; the docs
+  mention the `sb_secret_...` prefix only to warn about it).
 - HANDOFF.md updated, including the manual steps Herman still has to do.

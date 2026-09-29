@@ -47,13 +47,14 @@ passes (below).
   first left nothing behind. `npx wrangler deploy --dry-run`: 21 files, fine.
 - A fresh checkout with no `.env.local` (a git worktree) passes CI's steps: `npm ci`, lint,
   typecheck, test, build.
-- No secret key in the repo, its history or `dist/`. `git grep sb_secret` finds only the
-  four doc lines that warn about the key's prefix.
+- No secret key in the repo, its history or `dist/` (`git grep -E
+  "sb_secret_[A-Za-z0-9_-]{8,}"`; the plain `sb_secret` finds only the four doc lines that
+  warn about the prefix, so prompt 01's check now uses the pattern).
 - In Chrome on `npm run dev`: every route shows its page; Figtree 400 and 600 load; Tab
   shows the 2 px accent ring; the skip link appears and moves focus to the page; the tab
   bar (390 px), the sidebar and View as customer (1280 px) work. At 360, 390, 768, 1024,
   1280 and 1440 px on all 14 routes: no sideways scrolling, one navigation visible, every
-  link at least 44 px.
+  visible link at least 44 px.
 - Not done by Claude: prompt 02's "migrations apply from scratch" needs
   `npx supabase db reset --linked` (manual step below).
 **Next**: after merging, `prompts/05-auth-and-accounts.md`.
@@ -77,6 +78,10 @@ passes (below).
 - Doc version numbers stay as Herman set them; this entry lists the changes.
 **Open issues**
 - The customer sidebar has no "Signed in as …" yet: it needs the session (prompt 05 says so).
+- CI sets no `VITE_SUPABASE_URL` or `VITE_SUPABASE_PUBLISHABLE_KEY`, and
+  `src/shared/api/supabase.ts` throws on import without them. CI passes now only because
+  nothing imports the client yet. When prompt 05 wires it into a page (so the unit tests
+  load it), give `ci.yml` placeholder values or mock the client in the tests.
 - In the drawings, the coach schedule's 320 px column and Record payment's 340 px panel run
   to the page edge, but `CoachLayout`'s `<main>` pads its content (prompt 08 notes it).
 - Maximum widths (Book, Schedule, My classes 1100 px; Settings 760 px; Add students' form
