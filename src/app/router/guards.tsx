@@ -1,26 +1,59 @@
-import { Navigate, Outlet } from 'react-router'
+import { Navigate, Outlet, useLocation } from 'react-router'
 
+import { useMyProfile, useSession } from '@/entities/account'
 import { ROUTES } from '@/shared/config/routes'
 
-// Route guards (TECH_SPEC §11). Stubs for now: every page is open so the skeleton can
-// be clicked through. Prompt 05 fills them in from the Supabase session and profile:
-//   RequireSignedIn  signed out → /login
-//   RequireApproved  signed in, not approved → /pending (the only page they may see)
-//   RequireCoach     customers can't open /coach/*
-//   HomeRedirect     customers land on /book, the coach on /coach/schedule
+import { RouteLoading } from './RouteLoading'
 
+// Route guards (TECH_SPEC §11), in this order: signed in → approved → role.
+// The database enforces every permission itself (CLAUDE.md rule 1); these only send
+// people to the page they can use.
+
+/** Signed out → /login, remembering where they were going. */
 export function RequireSignedIn() {
+  const session = useSession()
+  const location = useLocation()
+  if (session.status === 'loading') return <RouteLoading />
+  if (session.status === 'signed-out') {
+    return (
+      <Navigate
+        to={ROUTES.login}
+        replace
+        state={{ from: `${location.pathname}${location.search}` }}
+      />
+    )
+  }
   return <Outlet />
 }
 
+/** Signed in but not approved yet → /pending, the only page they may see. */
 export function RequireApproved() {
+  const profile = useMyProfile()
+  if (profile.isPending) return <RouteLoading />
+  if (profile.isError) throw profile.error
+  if (!profile.data?.approved) return <Navigate to={ROUTES.pending} replace />
   return <Outlet />
 }
 
+/** Customers can't open /coach/*; they go to their own start page. */
 export function RequireCoach() {
+  const profile = useMyProfile()
+  if (profile.isPending) return <RouteLoading />
+  if (profile.isError) throw profile.error
+  if (profile.data?.role !== 'coach') return <Navigate to={ROUTES.book} replace />
   return <Outlet />
 }
 
+/** Customers land on /book, the coach on /coach/schedule, anyone signed out on /login. */
 export function HomeRedirect() {
-  return <Navigate to={ROUTES.book} replace />
+  const session = useSession()
+  const profile = useMyProfile()
+  if (session.status === 'loading') return <RouteLoading />
+  if (session.status === 'signed-out') return <Navigate to={ROUTES.login} replace />
+  if (profile.isPending) return <RouteLoading />
+  if (profile.isError) throw profile.error
+  if (!profile.data?.approved) return <Navigate to={ROUTES.pending} replace />
+  return (
+    <Navigate to={profile.data.role === 'coach' ? ROUTES.coachSchedule : ROUTES.book} replace />
+  )
 }

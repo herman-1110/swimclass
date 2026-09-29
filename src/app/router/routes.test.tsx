@@ -1,19 +1,42 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { createMemoryRouter, type RouteObject, RouterProvider } from 'react-router'
-import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
+
+import { SessionProvider } from '@/app/providers/SessionProvider'
+import { logIn, logOut } from '@/shared/api/auth'
+import { DEMO_PASSWORD } from '@/shared/config/demo'
 
 import { createRoutes } from './routes'
 
-beforeAll(() => {
+// Tests run in demo mode: the real migrations and seed in PGlite (src/shared/api/demo),
+// signed in as a seeded account where a page needs one.
+
+beforeAll(async () => {
   // jsdom has no scrolling; ScrollRestoration calls this on every navigation.
   vi.spyOn(window, 'scrollTo').mockImplementation(() => {})
-})
+  // The first call starts the demo database.
+  await logOut()
+}, 60_000)
 
 afterEach(cleanup)
 
-function renderAt(path: string) {
-  const router = createMemoryRouter(createRoutes(), { initialEntries: [path] })
-  render(<RouterProvider router={router} />)
+/** meiling is a customer, herman the coach; null signs out. */
+async function signIn(username: 'meiling' | 'herman' | null) {
+  if (username) await logIn(username, DEMO_PASSWORD)
+  else await logOut()
+}
+
+function renderAt(path: string, routes = createRoutes()) {
+  const router = createMemoryRouter(routes, { initialEntries: [path] })
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  render(
+    <QueryClientProvider client={queryClient}>
+      <SessionProvider>
+        <RouterProvider router={router} />
+      </SessionProvider>
+    </QueryClientProvider>,
+  )
   return router
 }
 
@@ -21,44 +44,67 @@ function findPageHeading(name: string) {
   return screen.findByRole('heading', { level: 1, name })
 }
 
-// Every route (ARCHITECTURE §3.5) and the page title it shows
+// Every route (ARCHITECTURE §3.5), who opens it in the test, and the page title it shows
 const pages = [
-  ['/login', 'Welcome back'],
-  ['/signup', 'Create an account'],
-  ['/forgot-password', 'Forgot your password?'],
-  ['/reset-password', 'Set a new password'],
-  ['/pending', 'Waiting for approval'],
-  ['/book', 'Book a lesson'],
-  ['/schedule', 'Schedule'],
-  ['/my-classes', 'My classes'],
-  ['/account', 'Account'],
-  ['/coach/schedule', 'Schedule'],
-  ['/coach/students', 'Students & payments'],
-  ['/coach/add-students', 'Add students'],
-  ['/coach/settings', 'Settings'],
+  ['/login', null, 'Welcome back'],
+  ['/signup', null, 'Create an account'],
+  ['/forgot-password', null, 'Forgot your password?'],
+  ['/reset-password', null, 'Set a new password'],
+  ['/pending', 'meiling', 'Waiting for approval'],
+  ['/book', 'meiling', 'Book a lesson'],
+  ['/schedule', 'meiling', 'Schedule'],
+  ['/my-classes', 'meiling', 'My classes'],
+  ['/account', 'meiling', 'Account'],
+  ['/coach/schedule', 'herman', 'Schedule'],
+  ['/coach/students', 'herman', 'Students & payments'],
+  ['/coach/add-students', 'herman', 'Add students'],
+  ['/coach/settings', 'herman', 'Settings'],
 ] as const
 
 describe('routes', () => {
-  it.each(pages)('%s shows its placeholder page', async (path, heading) => {
+  it.each(pages)('%s (as %s) shows its page', async (path, username, heading) => {
+    await signIn(username)
     const router = renderAt(path)
     await findPageHeading(heading)
     expect(router.state.location.pathname).toBe(path)
     await waitFor(() => expect(document.title).toBe(`${heading} · Swim Class`))
   })
 
-  it('sends / to the Book page for now', async () => {
+  it.each([
+    [null, '/login', 'Welcome back'],
+    ['meiling', '/book', 'Book a lesson'],
+    ['herman', '/coach/schedule', 'Schedule'],
+  ] as const)('sends / (as %s) to %s', async (username, path, heading) => {
+    await signIn(username)
     const router = renderAt('/')
-    await findPageHeading('Book a lesson')
-    expect(router.state.location.pathname).toBe('/book')
+    await findPageHeading(heading)
+    expect(router.state.location.pathname).toBe(path)
   })
 
   it('sends /coach to the coach schedule', async () => {
+    await signIn('herman')
     const router = renderAt('/coach')
     await findPageHeading('Schedule')
     expect(router.state.location.pathname).toBe('/coach/schedule')
   })
 
+  it('sends a signed-out visitor to Log in', async () => {
+    await signIn(null)
+    const router = renderAt('/my-classes')
+    await findPageHeading('Welcome back')
+    expect(router.state.location.pathname).toBe('/login')
+    expect(router.state.location.state).toEqual({ from: '/my-classes' })
+  })
+
+  it('keeps customers out of the coach pages', async () => {
+    await signIn('meiling')
+    const router = renderAt('/coach/students')
+    await findPageHeading('Book a lesson')
+    expect(router.state.location.pathname).toBe('/book')
+  })
+
   it('shows "Page not found" with a way back for unknown addresses', async () => {
+    await signIn(null)
     renderAt('/no-such-page')
     await findPageHeading('Page not found')
     expect(screen.getByRole('link', { name: 'Go to the start' }).getAttribute('href')).toBe('/')
@@ -94,6 +140,8 @@ function currentLinks(nav: HTMLElement) {
 }
 
 describe('customer navigation', () => {
+  beforeEach(() => signIn('meiling'))
+
   const tabs = [
     ['Book', '/book', 'Book a lesson'],
     ['Schedule', '/schedule', 'Schedule'],
@@ -134,6 +182,7 @@ describe('customer navigation', () => {
   })
 
   it('is not shown on the coach pages', async () => {
+    await signIn('herman')
     renderAt('/coach/schedule')
     await findPageHeading('Schedule')
     expect(screen.queryAllByRole('navigation', { name: 'Main' })).toHaveLength(0)
@@ -141,6 +190,8 @@ describe('customer navigation', () => {
 })
 
 describe('coach navigation', () => {
+  beforeEach(() => signIn('herman'))
+
   it('has the sections in the sidebar, and shorter labels and Customer view in the tab bar', async () => {
     renderAt('/coach/schedule')
     await findPageHeading('Schedule')
@@ -210,6 +261,7 @@ describe('coach navigation', () => {
 
 describe('sign-in pages', () => {
   it('link to each other', async () => {
+    await signIn(null)
     const router = renderAt('/login')
     await findPageHeading('Welcome back')
     fireEvent.click(screen.getByRole('link', { name: 'New here? Create an account' }))
@@ -245,9 +297,9 @@ describe('when a page fails to load', () => {
     ['opened directly', '/coach/settings'],
     ['opened from the sidebar', '/coach/schedule'],
   ])('shows the error screen when %s', async (_, startAt) => {
+    await signIn('herman')
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
-    const router = createMemoryRouter(routesWithBrokenSettings(), { initialEntries: [startAt] })
-    render(<RouterProvider router={router} />)
+    renderAt(startAt, routesWithBrokenSettings())
     if (startAt !== '/coach/settings') {
       await findPageHeading('Schedule')
       fireEvent.click(within(sidebarNav('Coach')).getByRole('link', { name: 'Settings' }))
