@@ -90,7 +90,8 @@ bookings (
   group_id uuid not null references groups,
   starts_at timestamptz not null,
   ends_at timestamptz not null check (ends_at > starts_at),  -- and exactly 1 or 2 hours
-  location text not null,              -- copied from the group when booked
+  location text not null,              -- copied from the group when booked; update_group
+                                       -- moves upcoming lessons to the group's new location
   status booking_status not null default 'booked',
   gap_override boolean not null default false,  -- coach only (BR-10, BR-31)
   series_id uuid,                      -- shared by repeat-weekly bookings
@@ -144,8 +145,8 @@ settings (                               -- exactly one row, id = 1
   price_1to1_cents int, price_1to2_cents int, price_1to3_cents int,
   payment_instructions text,             -- shown to customers (bank / DuitNow)
   lesson_expiry_months int,              -- null = never (BR-24)
-  reminder_time time not null default '20:00',
-  digest_time time not null default '20:00',
+  reminder_time time not null default '20:00',  -- before '24:00' (prompt 04)
+  digest_time time not null default '20:00',    -- before '24:00' (prompt 04)
   booking_confirmations boolean not null default true,
   late_change_alert boolean not null default true,
   require_approval boolean not null default true,
@@ -214,7 +215,8 @@ with `first_index` and `last_index` (cumulative lesson numbers, starting after
 All are `security definer`, `set search_path = ''`, check the caller with `auth.uid()`
 first, and raise errors as `raise exception using errcode = 'P0001', message = '<code>'`
 where `<code>` is one of the reason codes below, plus a `detail` JSON when useful.
-The frontend maps codes to messages (DESIGN.md §6).
+Through supabase-js the code is `error.message` and the detail is JSON text in
+`error.details`. The frontend maps codes to messages (DESIGN.md §6).
 
 **Clock**: every function and view that needs the current time calls `app_now()`, which
 returns `current_setting('app.now', true)::timestamptz` when that setting exists and
@@ -240,7 +242,8 @@ Times inside the JSON these functions return are MYT text, `"2026-09-29T19:30:00
   'closed' exceptions (closed wins, so "Open extra time" inside a "Block time" does
   nothing). Exceptions are cut at MYT midnight, so a window, and therefore a customer's
   lesson, never crosses midnight. Internal (no grant).
-- `slot_check(p_starts_at, p_minutes, p_group_id, p_viewer uuid) returns table (ok bool, reason text, detail jsonb)`.
+- `slot_check(p_starts_at, p_minutes, p_group_id, p_viewer uuid, p_ignore_open_hours bool default false, p_allow_past bool default false, p_ignore_window bool default false) returns table (ok bool, reason text, detail jsonb)`.
+  The defaults are the customer rules; the options are the coach's (prompt 04, §5.2).
   Order of checks, first failure wins:
   1. `past` (starts_at <= app_now(); a null start too), `outside_window`: the lesson's
      MYT day is after the last bookable day, which is the Sunday of the week
@@ -266,8 +269,11 @@ Times inside the JSON these functions return are MYT text, `"2026-09-29T19:30:00
   Otherwise `ok = true` with null reason and detail. Cancelled and excused bookings block
   nothing. `p_group_id` is the group the lesson is for; no check depends on it. Internal
   (no grant): `p_viewer` decides whose names appear, so callers pass the signed-in
-  account. It applies the customer rules; the coach's options (outside open hours, skip
-  the gap) need a variant, see §5.2.
+  account. `p_ignore_open_hours` skips `off_step` and `outside_open_hours` (the start must
+  still be a whole minute, else `off_step`); `p_allow_past` and `p_ignore_window` skip
+  `past` (a null start still fails) and `outside_window`. There is no gap option: the gap
+  is the last check, so the coach's callers accept a `gap_after`/`gap_before` result when
+  he skips the gap (§5.2).
 - `week_slots(p_week_start date, p_minutes int, p_group_id uuid) returns table (day date, starts_at timestamptz, ok bool, reason text, detail jsonb)`:
   every start inside open windows (stepping `start_step_minutes` from each window's start,
   while start + length fits in the window) for the 7 days from `p_week_start`, in start
@@ -300,55 +306,115 @@ Times inside the JSON these functions return are MYT text, `"2026-09-29T19:30:00
   for booked lessons starting in the range) and `myt_text(timestamptz)`.
 
 ### 5.2 Booking and changes
+Built in prompt 04 (`supabase/migrations/…_coach_slot_check.sql`, `…_booking.sql`, tested in
+`tests/db/booking.test.ts` and `changes.test.ts`).
 - `book_lesson(p_group_id, p_starts_at, p_minutes, p_repeat_weeks int default 1) returns uuid[]`
+  (the new booking ids, in start order):
   - caller approved and owns the group (`not_approved`, `not_your_group`), group active
+    (`group_inactive`), 1 to 52 weeks (`invalid_repeat`), a length in `lesson_lengths`
+    (`invalid_length`)
   - lock the group first (`select … from groups where id = p_group_id for no key update`)
     so two bookings for one group on different dates can't both pass the credit check,
-    then take `pg_advisory_xact_lock` on each affected MYT date (sorted) to serialise
-    competing bookings, then run `slot_check` for every week (`repeat_conflict` with
-    `detail.dates` if any week fails; nothing is inserted). The affected dates are every
-    MYT date that `[starts_at − travel gap, ends_at + travel gap)` touches, for every
-    week: the gap check crosses midnight (a lesson ending 23:30 blocks 00:00 the next
-    day), so locking only the lesson's own date would let two such bookings race. Take
-    the locks before calling `slot_check`, and pass the caller as `p_viewer`.
-    Repeat weeks: add whole days as dates in MYT (or `make_interval(hours => 168 * k)`),
-    never `interval '7 days'` on a timestamptz, which follows the session's daylight saving.
-  - credit: lessons needed <= `can_still_book` (`credit_exceeded`)
-  - insert rows with a shared `series_id`; queue emails (§8)
-- `coach_book(p_group_id, p_starts_at, p_minutes, p_repeat_weeks, p_ignore_open_hours bool, p_gap_override bool, p_ignore_credit bool)`:
-  coach only; overlaps still impossible; gap only skipped when `p_gap_override`.
-  `slot_check` stops at the first failure, so outside open hours it never reaches the
-  overlap and gap checks: prompt 04 gives it options for the coach (a new migration that
-  drops and recreates it with extra parameters defaulting to the customer rules, e.g.
-  `p_ignore_open_hours`, `p_ignore_gap`, and decides whether the coach is bound by
-  `past` and the booking window) instead of copying its queries. The Add booking
-  dialog's live clash reason (prompt 08) comes from a coach-only RPC over the same
-  check, `coach_slot_check(p_group_id, p_starts_at, p_minutes, p_ignore_open_hours,
-  p_gap_override)`, granted to `authenticated` and checking `is_coach()` first:
-  `slot_check` itself stays without a grant.
-- `cancel_booking(p_booking_id, p_reason text default null)`: owner allowed only
-  while `app_now() <= starts_at - cancel_cutoff_hours` (`locked`); coach any time
-  (`cancelled_by` records who). Status becomes 'cancelled'; queue emails.
-- `excuse_booking(p_booking_id)`: coach only; status 'excused'.
-- `record_payment(p_group_id, p_lessons, p_amount_cents, p_method, p_paid_on, p_note)`: coach only.
-- `add_free_lesson(p_group_id, p_note)`: coach only; payment of 1 lesson, RM 0, method 'free'.
+    then take `pg_advisory_xact_lock(20260929, <days since 2000-01-01>)` on each affected
+    MYT date (sorted) to serialise competing bookings, then run `slot_check` for every
+    week with the caller as `p_viewer`. The affected dates are every MYT date that
+    `[starts_at − travel gap, ends_at + travel gap]` touches, for every week: the gap
+    check crosses midnight (a lesson ending 23:30 blocks 00:00 the next day), so locking
+    only the lesson's own date would let two such bookings race. The booking functions
+    are volatile, so each statement after the locks sees every booking committed before.
+    Repeat weeks: `make_interval(hours => 168 * k)`, never `interval '7 days'` on a
+    timestamptz, which follows the session's daylight saving.
+  - a single week that fails raises `slot_check`'s reason with its detail, as `week_slots`
+    shows it; with several weeks, any failure raises `repeat_conflict` {`dates`: the
+    failing MYT dates, `clashes`: [{`date`, `reason`, `detail`}]} and nothing is inserted
+  - then credit: lessons needed <= `can_still_book` (`credit_exceeded` {`needed`,
+    `can_still_book`})
+  - insert rows with a shared `series_id` and the group's location; queue emails (§8)
+- `coach_book(p_group_id, p_starts_at, p_minutes, p_repeat_weeks int default 1, p_ignore_open_hours bool default false, p_gap_override bool default false, p_ignore_credit bool default false) returns uuid[]`:
+  coach only (`not_coach`, `not_found`, then `book_lesson`'s errors from `group_inactive`
+  on). The same locks and checks, with `slot_check`'s coach options: he may book in the
+  past (the lesson counts as used) and beyond the booking window (Herman, prompt 04);
+  with `p_ignore_open_hours` outside open hours at any whole minute; with
+  `p_gap_override` a week that fails only the travel gap is booked with `gap_override`
+  (weeks that don't need it aren't marked); with `p_ignore_credit` past the credit limit
+  (`can_still_book` goes negative). Overlaps are always refused, and lesson lengths bind
+  him too. No emails (§8).
+- `coach_slot_check(p_group_id, p_starts_at, p_minutes, p_ignore_open_hours bool default false, p_gap_override bool default false) returns table (ok bool, reason text, detail jsonb)`:
+  the Add booking dialog's live clash reason (prompt 08). Coach only (`not_coach`,
+  `not_found`), granted to `authenticated`; `slot_check` itself stays without a grant.
+  `slot_check` with the coach's options and the coach as viewer (overlaps show times
+  only); with `p_gap_override` a gap result counts as ok. It checks one start: not the
+  later repeat weeks, and not credit (`coach_book` reports those).
+- `cancel_booking(p_booking_id, p_reason text default null)`: the approved owner only
+  while `app_now() <= starts_at - cancel_cutoff_hours` (`locked` {`cutoff_at`}); the coach
+  any time, a lesson that has happened too. Status becomes 'cancelled'; `cancelled_at`
+  (`app_now()`), `cancelled_by` and the reason (trimmed, up to 500 characters:
+  `invalid_reason`) are recorded; queue emails (§8). Errors also `not_approved`,
+  `not_your_booking` (a customer's booking that isn't theirs, or doesn't exist),
+  `not_found` (the coach), `not_booked` {`status`}.
+- `excuse_booking(p_booking_id)`: coach only; a booked lesson that has started (a future
+  one is cancelled instead: `not_started`); status 'excused', so it no longer counts.
+  Errors also `not_found`, `not_booked` {`status`}.
+- `record_payment(p_group_id, p_lessons, p_amount_cents, p_method, p_paid_on date default null, p_note text default null) returns uuid`:
+  coach only. A null amount is the type's package price × `p_lessons` /
+  `lessons_per_package`, rounded to the cent (`price_not_set` while that price is empty);
+  a null date is today in MYT. Errors: `not_found`, `invalid_lessons` (under 1),
+  `invalid_amount` (negative), `invalid_method`, `invalid_date` (in the future),
+  `invalid_note` (over 500 characters).
+- `add_free_lesson(p_group_id, p_note text default null) returns uuid`: coach only;
+  payment of 1 lesson, RM 0, method 'free', dated today (MYT).
 
 ### 5.3 Students, groups and accounts
-- `create_group(p_account_id, p_students jsonb, p_location, p_first_package_paid bool, p_amount_cents int, p_method, p_opening_used int default 0, p_opening_paid int default 0) returns uuid`:
-  coach only. `p_students` items are `{"student_id": ...}` (existing) or `{"name": ...}` (new).
-  1..max_students_per_lesson items. Refuse an exact duplicate of an active group.
-- `update_group(...)`, `set_group_active(p_group_id, p_active)`: coach only.
-- `approve_account(p_account_id)`, `username_available(p_username) returns boolean`
-  (callable by anon; returns only true/false).
+Built in prompt 04 (`…_groups_accounts.sql`, tested in `tests/db/groups.test.ts`).
+- `create_group(p_account_id, p_students jsonb, p_location, p_first_package_paid bool default false, p_amount_cents int default null, p_method default null, p_opening_used int default 0, p_opening_paid int default 0) returns uuid`:
+  coach only, for a customer account (`not_found`, `not_customer`). `p_students` items are
+  `{"student_id": ...}` (a student of that account) or `{"name": ...}` (always a new
+  student). 1..max_students_per_lesson items. Refuse an exact duplicate of an active group
+  (`duplicate_group` {`group_id`}). A first package paid is a payment of
+  `lessons_per_package` lessons dated today; a null amount is the type's price. Errors
+  also `invalid_students`, `invalid_name`, `student_other_account` (each {`index`}),
+  `group_full` {`max`}, `invalid_location` (1 to 100 characters), `invalid_opening`
+  (negative), `invalid_method`, `invalid_amount`, `price_not_set`.
+- `update_group(p_group_id, p_location text default null, p_opening_used int default null, p_opening_paid int default null)`:
+  coach only; null keeps a value. A new location also moves the group's upcoming booked
+  lessons (past ones keep theirs). Errors: `not_found`, `invalid_location`,
+  `invalid_opening`.
+- `set_group_active(p_group_id, p_active)`: coach only. A group with upcoming booked
+  lessons can't be deactivated (`has_upcoming_lessons` {`count`}: cancel them first);
+  reactivating is refused while an active group has the same students
+  (`duplicate_group` {`group_id`}). Errors also `invalid_active`, `not_found`.
+- `approve_account(p_account_id)`: coach only (`not_found`).
+- `username_available(p_username) returns boolean`: for anon (sign-up) and signed-in
+  accounts (the coach's new-account form). Lowercased and trimmed like the profile
+  trigger; returns only true/false (false for an invalid username).
 
 ### 5.4 Open hours, settings, announcements
-- `set_open_hours(p_rules jsonb)` (replace all weekly rules), `add_exception(...)`,
-  `remove_exception(p_id)`, `update_settings(p jsonb)`: coach only, validated.
-- `post_announcement(p_message, p_send_email)`, `remove_announcement(p_id)`: coach only.
-- `get_public_settings()`: fields customers need (lengths, step, cutoff, window,
-  travel gap (for the `{gap}` in DESIGN §6 messages), package size, prices,
-  payment_instructions, business_name).
-- All §5.4 functions are built in prompt 04; prompts 06, 08 and 10 use them.
+Built in prompt 04 (`…_settings.sql`, tested in `tests/db/settings.test.ts`); prompts 06,
+08 and 10 use them. All coach only (`not_coach`) except `get_public_settings`.
+- `set_open_hours(p_rules jsonb)`: replaces the whole weekly template with
+  `[{"weekday": 1-7, "opens_at": "17:30", "closes_at": "22:00"}, …]` (ISO weekdays; an
+  empty list closes every day; a range may end at "24:00"). Malformed items:
+  `invalid_rules` {`index`}; a range must end after it starts (`invalid_range`
+  {`index`}); ranges of one day must not overlap (touching ones join;
+  `overlapping_rules` {`weekday`}). Existing lessons stay booked.
+- `add_exception(p_kind, p_starts_at, p_ends_at, p_note text default null) returns uuid`
+  (`invalid_kind`, `invalid_range`, `invalid_note` over 500 characters) and
+  `remove_exception(p_id)` (`not_found`).
+- `update_settings(p_settings jsonb) returns settings` (the saved row): any of the
+  settable columns (not `id` or `updated_at`: `unknown_setting` {`keys`}), each as its
+  JSON type (times as "20:00"); null empties the optional ones; text is trimmed. The
+  table's checks validate the values (`invalid_setting` {`field`}), including
+  `reminder_time` and `digest_time` before 24:00; `payment_instructions` up to 2000
+  characters. Not a JSON object: `invalid_settings`.
+- `post_announcement(p_message, p_send_email bool default true, p_pinned bool default true) returns uuid`
+  (`invalid_message`: 1 to 1000 characters after trimming) and `remove_announcement(p_id)`
+  (`not_found`; removing it again changes nothing). Emails already queued still go out.
+- `get_public_settings()`: one row of the fields customers need: `business_name`,
+  `lesson_lengths`, `start_step_minutes`, `travel_gap_minutes` (for the `{gap}` in
+  DESIGN §6 messages), `cancel_cutoff_hours`, `booking_window_weeks`,
+  `lessons_per_package`, the three prices and `payment_instructions`. For every signed-in
+  account, approved or not; not for anon, so signed-out pages use the default business
+  name (`src/lib/business.ts`).
 
 ### 5.5 Email queue (service role only; called by the `mail-queue` Edge Function)
 - `queue_daily_emails(p_for_date date)`: for tomorrow in MYT: one reminder per account
@@ -379,8 +445,11 @@ starts with no access for `public`, `anon` and `authenticated`. Grant `execute` 
 `authenticated` on every RPC the browser calls, whether a customer or the coach calls it
 (the coach signs in as `authenticated` too); coach-only functions check `is_coach()`
 first. Internal helpers (`open_windows`, `slot_check`: its `p_viewer` would let a caller
-see another account's names; `lesson_travel`, `myt_text`) and the service-role email
-functions get no grant; `anon` gets only `username_available`. `week_slots` and
+see another account's names; `lesson_travel`, `myt_text`; prompt 04's
+`lock_booking_dates`, `place_bookings`, `package_price_cents`, the email formatting,
+template and queueing functions and `account_email`, which reads `auth.users`) and the
+service-role email functions get no grant; `anon` gets only `username_available` (which
+signed-in accounts get too). `week_slots` and
 `week_busy` also refuse accounts waiting for approval (`not_approved`): anyone can sign
 up, and the coach's busy times show where he is.
 
@@ -396,8 +465,10 @@ up, and the coach's busy times show where he is.
 - **`mail-queue`** (verify_jwt off; requires header `x-mail-token` equal to `MAIL_TOKEN`,
   compared in constant time). POST `{action: "claim", limit}`: if the MYT time is past
   `reminder_time` and `daily_jobs` has no row for today, call `queue_daily_emails`
-  for tomorrow; then return `claim_outbox(limit)`. POST `{action: "ack", results:
-  [{id, ok, error}]}` → `ack_outbox` for each.
+  for tomorrow; then return `claim_outbox(limit)`, with every `{{site_url}}` in each
+  row's `subject`, `body_text` and `body_html` replaced by `SITE_URL` (all occurrences:
+  an HTML link has it twice; `SITE_URL` is the bare origin, no trailing slash). POST
+  `{action: "ack", results: [{id, ok, error}]}` → `ack_outbox` for each.
 - CORS on `login` and `admin-accounts`: allow only `SITE_URL` (and localhost in dev).
 
 ## 8. Email pipeline
@@ -405,15 +476,22 @@ Rows are added to `email_outbox` by the functions (not by the browser):
 
 | Event | To | dedupe_key | Setting |
 |---|---|---|---|
-| customer books (per series) | account email | `booked:<series_id>` | booking_confirmations |
-| booking or cancellation starting within 24 h | coach_email | `late:<booking_id>:<event>` | late_change_alert |
+| customer books (per series; `coach_book` sends nothing) | account email | `booked:<series_id>` | booking_confirmations |
+| a customer books or cancels a lesson starting within 24 h (not the coach's own changes) | coach_email (skipped while '') | `late:<booking_id>:<event>` (`booked`, `cancelled`) | late_change_alert |
 | cancelled (by customer or coach) | account email | `cancelled:<booking_id>` | always |
 | evening reminder | account email | `reminder:<account_id>:<date>` | always |
 | coach digest | coach_email | `digest:<date>` | always |
-| broadcast | each approved customer | `broadcast:<announcement_id>:<account_id>` | send_email |
+| broadcast | each approved customer whose address is confirmed or was entered by the coach (invited) | `broadcast:<announcement_id>:<account_id>` | send_email |
 
-Emails are short plain text plus simple HTML, sender name = `business_name`,
-times formatted like "Sat 3 Oct, 9:00–10:00 am", and a link to the site.
+Emails are short plain text plus the same text as simple HTML, sender name =
+`business_name`, times formatted like "Sat 3 Oct, 9:00–10:00 am", and links written as
+`{{site_url}}/classes` (also `/book`, `/coach/schedule`, or the bare site), which
+mail-queue fills in (§7). Names, locations, reasons and messages are free text: they are
+HTML-escaped in `body_html`, and `{{` in them becomes `{ {`, so only the templates' own
+links carry the placeholder. Built in prompt 04 (`…_emails.sql`): the templates
+`email_booked`, `email_cancelled`, `email_late_alert`, `email_broadcast`, and helpers
+prompt 11 reuses for the reminder and digest (`myt_when_text` and its parts,
+`email_text`, `email_html`, `queue_email`, `account_email`).
 
 **Apps Script (`apps-script/Code.gs`)**
 ```js
@@ -521,9 +599,16 @@ Sat 10:00 am `gap_after` (ends 10:00 am); Sun 5:00 pm `overlap_mine` (Sofia);
 Mon 26 Oct 5:30 pm `outside_window`.
 
 Other required tests: booking Sofia (1-to-1) Tue 7:30 pm succeeds and makes the group
-Unpaid (Package 3); Wei Jie can book 1 more lesson but not 2 (`credit_exceeded`);
+Unpaid: `group_balance` still says Package 2 (7 of its 8 paid lessons used, none left to
+book in it), unpaid since Sun 4 Oct; in `booking_ledger` the new lesson takes the last
+place in Package 2 and Sunday's becomes Package 3 lesson 1 (numbers follow lesson order,
+BR-23), so the UI's "New bookings start Package 3" is `package_no + 1` when
+`left_in_package` is 0; Wei Jie can book 1 more lesson but not 2 (`credit_exceeded`);
 cancelling Sat 3 Oct 9:00 am works at 02:59 and fails `locked` at 03:01 that day;
-two concurrent `book_lesson` calls for the same slot → exactly one succeeds;
+two concurrent `book_lesson` calls for the same slot → exactly one succeeds (tested with
+two connections that never commit: the second waits for the first's lock and gives up
+after a lock timeout; the refusal it would get after a commit is tested in one
+transaction);
 repeat weekly with a clash inserts nothing and returns the dates; an 'open' exception on
 Wed 7 Oct 15:00–17:30 merges with the 17:30 rule and adds 1-hour starts at 3:00, 3:30, 4:00,
 4:30 and 5:00 pm on that day only; a 'closed' exception over them removes them again; RLS: meiling cannot select other accounts' bookings, and `week_busy` contains no
@@ -563,7 +648,9 @@ names; `queue_daily_emails` twice for the same date creates one reminder per acc
   2 am MYT) runs `supabase db dump --db-url "$SUPABASE_DB_URL"` and uploads the file as
   an artifact kept 90 days. `SUPABASE_DB_URL` is a GitHub secret.
 - **Go-live data**: add each current customer's groups with starting balances (BR-25),
-  then enter upcoming lessons with `coach_book`.
+  then enter upcoming lessons with Add booking (`coach_book`): in the past or beyond the
+  booking window if needed, Skip travel gap for tight pairs, Outside open hours for times
+  outside them or off the start step, Book anyway for groups past their credit.
 
 ## 13. Security checklist
 - RLS on every table; views are `security_invoker`; no table grants without a policy.

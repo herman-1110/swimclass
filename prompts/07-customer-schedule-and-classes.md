@@ -25,9 +25,15 @@ Book a lesson works (prompt 06). Now the other customer tabs. Read DESIGN §4
    - Upcoming list from the account's bookings (status booked, ends after now), sorted.
      Each row: day and time, group names and type, "lesson N of 4" from
      `booking_ledger`, location. Right side: "Cancel" if before the cutoff (with
-     "Free to cancel until 3:00 am, Sat 3 Oct") or "Locked" with the reason.
+     "Free to cancel until 3:00 am, Sat 3 Oct": the start minus `cancel_cutoff_hours`
+     from `get_public_settings`) or "Locked" with the reason (DESIGN §6 `locked`, whose
+     `{cutoff}` is the same setting).
    - Cancel opens a confirm dialog ("Cancel Sat 3 Oct, 9:00–10:00 am for Aiman & Sofia?
-     The lesson goes back to your package.") → `cancel_booking` → refresh.
+     The lesson goes back to your package.") → `cancel_booking(p_booking_id)` (`p_reason`
+     is optional) → refresh. The server decides, whatever the screen shows. Errors:
+     `locked` {`cutoff_at`} (the deadline as MYT text) once the cutoff has passed,
+     `not_booked` {`status`} (for example the coach already cancelled it: refresh),
+     `not_your_booking`.
    - Packages: one block per active group: names + type tag, paid date and method,
      bar, "Package 2 · 3 used · 1 booked · fully booked". When the package is used up or
      unpaid, show the orange note and `payment_instructions` ("Pay RM [price] by bank

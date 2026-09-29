@@ -14,8 +14,9 @@ Customers can log in (prompt 05) and the database can answer every slot question
 3. Confirm how today's MYT date and the current week start will be computed.
 
 ## TASK
-1. Data hooks (TanStack Query): `usePublicSettings`, `useMyGroups` (group_details for
-   the account, active only), `useGroupBalance`, `useWeekSlots(weekStart, minutes,
+1. Data hooks (TanStack Query): `usePublicSettings` (`get_public_settings` returns one
+   row, TECH_SPEC §5.4: `.single()` gives it as an object), `useMyGroups` (group_details
+   for the account, active only), `useGroupBalance`, `useWeekSlots(weekStart, minutes,
    groupId)` (TECH_SPEC §5.1: every start with ok/reason/detail; times inside `detail` are
    MYT text), `useLatestAnnouncement`. The `{gap}` in gap messages comes from
    `get_public_settings().travel_gap_minutes`.
@@ -29,12 +30,25 @@ Customers can log in (prompt 05) and the database can answer every slot question
    future open time); first day with free times; no time picked.
 4. Tapping a free chip selects it; tapping a crossed-out chip shows "<time> isn't
    available" and the reason (DESIGN §6) in the footer, and disables Book.
-5. Repeat weekly: show the checkbox only if the balance plus credit allows more than one
-   week; label "Repeat weekly: also book Tue 6 Oct" for two weeks, "Repeat weekly for
-   N weeks" otherwise. Server has the final say.
-6. Book → `book_lesson`; on success show a confirmation panel (dates booked, package
-   effect, "Add to calendar" link as an .ics download is optional) and refetch slots and
-   balance. On error map the code to the DESIGN §6 message; `repeat_conflict` lists dates.
+5. Repeat weekly: the number of weeks N is the smaller of what balance plus credit allows
+   (`group_balance.can_still_book` divided by the lessons per booking, 1 or 2, rounded
+   down) and how many weekly dates, starting with the chosen day, fall on or before the
+   last bookable day (the Sunday `booking_window_weeks` after this MYT week, TECH_SPEC
+   §5.1; a week past it clashes with `outside_window`, so the whole booking fails). N
+   changes with the group, day and length. Show the checkbox only if N > 1; label "Repeat
+   weekly: also book Tue 6 Oct" for two weeks, "Repeat weekly for N weeks" otherwise.
+   Server has the final say.
+6. Book → `book_lesson` (returns the new booking ids in start order); on success show a
+   confirmation panel (dates booked, package effect, "Add to calendar" link as an .ics
+   download is optional) and refetch slots and balance. Errors (TECH_SPEC §5.2):
+   `error.message` is the code and `error.details` the detail as JSON text (null when
+   there is none). A one-week booking that fails gives `slot_check`'s reason and detail,
+   as `week_slots` shows them (the same message as a crossed-out chip); with several
+   weeks, any clash gives `repeat_conflict` {`dates`, `clashes`}. Other codes:
+   `credit_exceeded` {`needed`, `can_still_book`}, `group_inactive`, `invalid_repeat`
+   (1–52 weeks), `invalid_length`, `not_your_group`, `not_approved`. Map each code to its
+   DESIGN §6 message (a generic one for codes it doesn't list); `repeat_conflict` lists
+   the dates.
 7. Empty states from DESIGN §6. Loading skeletons that keep layout stable.
 8. Deep link support: `/book?day=2026-09-29&group=<id>` (used by the Schedule screen).
 9. Accessibility: option rows are a radio group with a legend; chips are buttons with

@@ -89,10 +89,20 @@ If the password contains `@ : / ? #` or `%`, replace those characters with `%40 
 (Project Settings → Database). The name has no `VITE_` prefix, so it never reaches the
 browser.
 
-Each test runs in a transaction that is rolled back, so the data stays as loaded. The
-tests expect the seed exactly as loaded: if the sample week was shifted or you added or
-changed data (lessons, groups, open hours, settings), they stop with a message asking you
-to reload it (`npx supabase db reset --linked`).
+Test files run one at a time, as they share the dev database. A full run takes about
+3 minutes, and a test that takes over 30 s fails as timed out.
+
+Each test runs in a transaction that is rolled back, so the data stays as loaded. A test
+run never changes the dev database, even if a test times out: outside each test's own
+transaction the connection is read-only, so nothing can commit. The tests of two bookings
+at the same moment open two extra connections, which never commit either. The email tests
+read only the outbox rows they add, so emails queued while trying the UI need no reload.
+
+The tests expect the seed exactly as loaded: if the sample week was shifted or you added or
+changed data (lessons, groups, payments, open hours, any setting, or the sample accounts'
+names, phones, roles and approval), they stop with a message asking you to reload it
+(`npx supabase db reset --linked`). So after trying prices or the business name in the
+Settings screen, reload before you run the tests. Extra sign-ups are still fine.
 Only ever point `DATABASE_URL` at `swimclass-dev`, never at production.
 
 ## Alternative: local Supabase with Docker

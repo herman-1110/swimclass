@@ -140,7 +140,8 @@ Every rule has an ID so code, tests and prompts can refer to it.
 - **BR-30** "Block time" closes a range on specific dates; "Open extra time" opens a
   range on one date only. Neither changes the template.
 - **BR-31** The coach can add a booking for any group at any time, including outside
-  open hours and with a gap override, after confirming a warning. Overlaps are still
+  open hours, with a gap override, in the past (it counts as used), beyond the booking
+  window and past the group's credit, after confirming a warning. Overlaps are still
   impossible.
 
 ### Notifications (all email, sent from the coach's Gmail)

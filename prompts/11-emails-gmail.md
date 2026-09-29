@@ -1,10 +1,17 @@
 # Prompt 11: Emails through Gmail (outbox, mail-queue, Apps Script, Auth SMTP)
 
 ## CONTEXT
-Outbox rows are already created by the booking functions (prompt 04). Now they have
-to be sent, and the evening reminders and coach digest have to be built. Everything
-goes out from Herman's Gmail. Read PRD BR-32 to BR-37, TECH_SPEC §7 (`mail-queue`),
-§8 (pipeline and Apps Script), §9 (Auth SMTP) and §14 (limits).
+Outbox rows are already created by prompt 04's functions (booking, cancelling, broadcasts)
+with the templates in `supabase/migrations/…_emails.sql` (`email_booked`,
+`email_cancelled`, `email_late_alert`, `email_broadcast`, footer included). Now they have
+to be sent, and the evening reminders and coach digest have to be built with that file's
+helpers: `myt_when_text` (and its parts `myt_day_text`, `myt_time_text`,
+`myt_range_text`), `email_text` (wrap all free text in it: names, locations, the business
+name), `email_html` (escapes the text and makes the site links clickable), `queue_email`,
+`account_email`. Links are written as `{{site_url}}/classes` (also `/book`,
+`/coach/schedule` or the bare `{{site_url}}`), which `mail-queue` fills in. Everything
+goes out from Herman's Gmail. Read PRD BR-32 to BR-37, TECH_SPEC §7 (`mail-queue`), §8
+(pipeline and Apps Script), §9 (Auth SMTP) and §14 (limits).
 
 ## DIAGNOSE
 1. List the outbox rows the seed and tests produce and their `dedupe_key`s.
@@ -16,21 +23,28 @@ goes out from Herman's Gmail. Read PRD BR-32 to BR-37, TECH_SPEC §7 (`mail-queu
 1. `queue_daily_emails(p_for_date)` (TECH_SPEC §5.5):
    - Customer reminder, one per account: subject "Swim lesson tomorrow, Sat 3 Oct";
      body lists each lesson (time, students, location), the cancellation rule
-     (already locked by then) and a link to My classes.
+     (already locked by then) and a link to My classes (`{{site_url}}/classes`).
    - Coach digest: subject like "Tomorrow: 3 lessons, first at 9:00 am"; lessons in order
      with location and travel gap to the next one, unpaid groups ("collect RM [price]"),
      last-lesson groups, accounts waiting for approval.
    - Record `daily_jobs`; running twice must not duplicate anything.
 2. `claim_outbox`, `ack_outbox` (retry up to 5 attempts, then leave `last_error`).
 3. Edge Function `mail-queue` per TECH_SPEC §7 (token check, due check in MYT, claim,
-   ack). Return `{ emails: [...] }` for claim.
+   ack). Return `{ emails: [...] }` for claim. Before returning the claimed rows, replace
+   every `{{site_url}}` in `subject`, `body_text` and `body_html` (may be null) with
+   `SITE_URL`: `replaceAll`, since an HTML link has it twice; `SITE_URL` is the bare
+   origin, no trailing slash.
 4. `apps-script/Code.gs` from TECH_SPEC §8 plus `apps-script/README.md` with click-by-
    click setup: new Apps Script project, paste code, Project Settings → Script
    Properties (`MAIL_QUEUE_URL`, `MAIL_TOKEN`, `SENDER_NAME`), run `install()`, approve
    permissions, check Executions log. Include how to stop it (delete the trigger).
 5. Email templates: plain text + minimal HTML (no images, no tracking), times in MYT,
    sender name from settings, a footer "Sent by <business name>. Reply to this email to
-   reach your coach." Replies go to Herman's Gmail naturally.
+   reach your coach." Replies go to Herman's Gmail naturally. The booked, cancelled,
+   late-alert and broadcast templates exist (prompt 04; the coach's late alert ends
+   "Sent by <business name>." only); the reminder and digest are new. Coach bookings
+   send nothing, late alerts are only for customers' changes, and broadcasts reach only
+   approved customers whose address is confirmed or was entered by the coach (invited).
 6. Supabase Auth custom SMTP (dev project first): `smtp.gmail.com`, port 587, Herman's
    Gmail and App Password, sender name; raise the Auth email rate limit; customise the
    confirm, invite and reset email templates to the same plain style. Write the exact
@@ -45,6 +59,8 @@ goes out from Herman's Gmail. Read PRD BR-32 to BR-37, TECH_SPEC §7 (`mail-queu
 - Calling `mail-queue` without the token returns 401; with it, claim returns rows and
   marks them claimed; ack marks them sent; unacknowledged claims are re-claimable after
   15 minutes.
+- No claimed row contains `{{site_url}}`; a unit test replaces both placeholders in an
+  HTML link (`<a href="{{site_url}}/classes">{{site_url}}/classes</a>`).
 - End to end on the dev project: book a lesson inside 24 h as a test customer whose
   email is Herman's own → within 5 minutes Herman receives the confirmation and the
   late-change alert from his Gmail.

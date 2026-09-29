@@ -21,7 +21,8 @@ dashboards: write them as a checklist for Herman and do the code parts yourself.
    - Update the settings row (the migration creates it) with Herman's email and prices,
      and add his real open hours (the weekly template is only in the dev seed).
    - Deploy `login`, `admin-accounts`, `mail-queue`; set `MAIL_TOKEN` (new random value)
-     and `SITE_URL`.
+     and `SITE_URL` (the bare production origin, no trailing slash, like
+     `https://swimclass.online`: `mail-queue` puts it in front of the email links' paths).
    - Auth: confirm email on, Site URL and redirect URLs = production URL, custom SMTP
      with Gmail (same as dev), templates.
    - Herman signs up as `herman`; run `supabase/snippets/make-coach.sql`.
@@ -42,7 +43,11 @@ dashboards: write them as a checklist for Herman and do the code parts yourself.
    Write a restore note in HANDOFF.
 6. **Go-live data**: a short guide for Herman: add each customer account (invite),
    add their groups with starting balances, then add upcoming lessons with Add booking
-   (gap override where he already does tight pairs). Then send a broadcast with the link.
+   (`coach_book`): in the past or beyond the booking window if needed (a past lesson
+   counts as used, so don't count it in the starting balance too), Skip travel gap for
+   tight pairs, Outside open hours for times outside them or off the start step, Book
+   anyway for groups past their credit. Add booking emails nobody, so then send a
+   broadcast with the link.
 7. **Smoke test** on production with a test customer: sign up → approve → book →
    confirmation email → cancel → cancellation email → evening reminder next day.
    Delete the test account afterwards.

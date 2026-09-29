@@ -3,6 +3,107 @@
 Update this file at the end of every Claude Code session. Newest entry on top.
 Keep entries short; link to files instead of pasting code.
 
+## v0.4 · 29 Sep 2026 · Prompt 04: Booking, cancelling, packages and payments
+**State**: Everything that changes data is live on `swimclass-dev`: five migrations
+(`supabase/migrations/20260929100000_coach_slot_check.sql` to `…100400_settings.sql`,
+applied with `npx supabase db push`); `src/lib/database.types.ts` regenerated. Typecheck,
+lint, format and build pass; `npm run test` runs 275 tests (46 unit, 229 database) and they
+pass twice in a row, leaving the seed unchanged. Work is committed on branch
+`04-booking-and-payments` (not pushed).
+**Done**
+- `…_coach_slot_check.sql`: `slot_check` recreated with the coach's options
+  (`p_ignore_open_hours`, `p_allow_past`, `p_ignore_window`; defaults are the customer
+  rules) and `coach_slot_check` for the Add booking dialog.
+- `…_emails.sql`: MYT text helpers (`myt_when_text` "Sat 3 Oct, 9:00–10:00 am" and its
+  parts), `email_text`, `email_html`, `account_email`, `queue_email`; templates
+  `email_booked`, `email_cancelled`, `email_late_alert`, `email_broadcast`; the queueing
+  functions behind them. Names are HTML-escaped (the v0.2 open issue, for these emails).
+- `…_booking.sql`: `book_lesson`, `coach_book`, `cancel_booking`, `excuse_booking`,
+  `record_payment`, `add_free_lesson`; internal `place_bookings`, `lock_booking_dates`,
+  `package_price_cents`.
+- `…_groups_accounts.sql`: `create_group`, `update_group`, `set_group_active`,
+  `approve_account`, `username_available` (the one function anon may call).
+- `…_settings.sql`: `get_public_settings`, `set_open_hours`, `add_exception`,
+  `remove_exception`, `update_settings`, `post_announcement`, `remove_announcement`; checks
+  that `reminder_time` and `digest_time` are before 24:00.
+- Tests: `tests/db/booking.test.ts` (booking, the coach's options, emails, three race
+  tests, the clock), `changes.test.ts` (cancel, excuse, payments), `groups.test.ts`,
+  `settings.test.ts`; grant lists in `rls.test.ts` and `availability.test.ts`.
+- Test harness (`tests/db/helpers.ts`, `vite.config.ts`): `openSession()` for race tests;
+  connections are read-only outside each test's `begin read write`, so a test that times out
+  can't commit; the fingerprint covers every setting and the seeded accounts (new
+  `SEED_FINGERPRINT`); test files run one at a time, 30 s per test.
+- Docs: TECH_SPEC §3, §5–§8, §10, §12; PRD BR-31; DESIGN §4 and §6 (messages for the new
+  codes, and a coach table); DEV_SETUP §4; prompts 05–12; the comment in
+  `src/lib/business.ts`.
+- Review: eight read-only reviewers (41 findings, merged to 31), each finding checked by
+  three skeptics; 19 confirmed and fixed. Code: customer text could carry the `{{site_url}}`
+  placeholder into the coach's emails (now neutralised, and only the templates' paths become
+  links); reactivating a group could race `create_group`; '24:00' reminder times; a series
+  confirmation that promised free cancellation of a first lesson already locked; messages
+  of only newlines; broadcasts to unconfirmed addresses. Tests: a timed-out test could
+  commit; files waited on each other's locks; outbox and approved-customer assumptions;
+  fingerprint gaps; a race assertion that could never fail. Docs: everything listed above.
+**Next**: `prompts/05-auth-and-accounts.md`.
+**Decisions**
+- Herman: the coach may book in the past (it counts as used) and beyond the booking window.
+- Herman: the race tests never commit. The loser waits for the winner's lock and gives up
+  after a 3 s lock timeout; the refusal it would get after a commit (`overlap_other`,
+  `credit_exceeded`, `gap_after`/`gap_before` across midnight) is tested in one
+  transaction. So prompt 04's "the other fails gap_after or gap_before" is proven in two
+  parts.
+- Locks: the group row first, then `pg_advisory_xact_lock(20260929, days since
+  2000-01-01)` for every MYT date `[start − gap, end + gap]` touches, sorted; the booking
+  functions are volatile, so they see everything committed while they waited.
+- `slot_check` has no gap option: the gap is the last check, so the coach's callers accept a
+  gap result when he skips the gap, and only the weeks that need it get `gap_override`.
+  Outside open hours he may start at any whole minute. Lesson lengths bind him too.
+- Errors: one week fails with `slot_check`'s reason and detail; several with
+  `repeat_conflict` {dates, clashes}; `credit_exceeded` {needed, can_still_book}; all codes
+  are in TECH_SPEC §5.2–§5.4 and DESIGN §6.
+- Emails: `coach_book` sends nothing; late alerts only for customers' changes (a start
+  within 24 h, inclusive); cancellation emails always; broadcasts to approved customers
+  whose address is confirmed or was invited; links use `{{site_url}}`, which mail-queue
+  must replace in all three fields (prompt 11); coach emails wait while `coach_email` is ''.
+- `excuse_booking` only once a lesson has started; `set_group_active` won't deactivate a
+  group with upcoming lessons; `update_group` moves upcoming lessons to a new location;
+  `record_payment`: a null amount is the price pro rata, a null date is today (MYT), no
+  future dates.
+- Names that differ from TECH_SPEC: `update_settings(p_settings)` (was `p`),
+  `post_announcement(…, p_pinned)` for the design's "Pin as a banner" checkbox.
+  `get_public_settings` is for every signed-in account, not anon, so signed-out pages use
+  `DEFAULT_BUSINESS_NAME`.
+- Packages: `group_balance` counts packages by lessons used, `booking_ledger` by lesson
+  order, so after booking Sofia on Tue 29 Sep the balance says Package 2 (none left) while
+  Sunday's lesson becomes Package 3 lesson 1 (TECH_SPEC §10 reworded).
+**Open issues**
+- `lesson_expiry_months` is stored, but nothing applies it (BR-24 is off by default and no
+  rule is written). Prompt 10 shows it disabled unless Herman defines how expiry works.
+- Lesson lengths bind the coach too: with lessons set to 1 hour only, he can't add a 2-hour
+  lesson. Ask Herman if he wants that.
+- Nothing limits how often a customer books and cancels; a script could fill the outbox
+  (Gmail sends 100 a day). Not in the spec; add a limit if it ever matters.
+- Accounts waiting for approval can read `payment_instructions` through
+  `get_public_settings`. Fine for bank details meant for customers; restrict if Herman
+  prefers.
+- Prompt 09 must still build `pending_accounts()` and an admin-accounts `delete_account`
+  for the Waiting for approval tab (the prompt now says so).
+- Customer codes without their own message use DESIGN §6's generic row (`reasons.ts`,
+  prompt 06).
+- The first full test run once reported "Failed to start forks worker" for
+  `tests/unit/routes.test.tsx` (that file didn't run); the second run was clean. If it
+  happens again, run again.
+- Still open from v0.2/v0.3: sign up as `herman` first; Auth reports trigger errors only
+  as "Database error saving new user" (prompt 05); `bookings.group_id` has no `on delete`;
+  `database.types.ts` lists internal functions too.
+**Manual steps waiting on Herman**
+- Review, then merge and push:
+  `git switch main && git merge --ff-only 04-booking-and-payments && git push`.
+- Done: prompt 03 merged; new nameservers set for swimclass.online at the registrar
+  (propagating on 29 Sep).
+- Still open: browser click-through, Cloudflare setup once the nameservers are live,
+  package prices, Google 2-Step Verification; optional CA certificate check (v0.2).
+
 ## v0.3 · 28 Sep 2026 · Prompt 03: Availability engine
 **State**: The availability engine is live on `swimclass-dev`
 (`supabase/migrations/20260928120000_availability.sql`, applied with `npx supabase db push`);

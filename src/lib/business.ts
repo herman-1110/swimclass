@@ -1,6 +1,7 @@
 /**
- * The business name shown until the real one is loaded from
- * `get_public_settings().business_name` (TECH_SPEC §5.4). Same as the settings default
- * (TECH_SPEC §3). Later prompts read the setting instead of this constant.
+ * The business name on signed-out pages (login, sign-up, forgot, reset). They always use
+ * this constant, because `get_public_settings()` needs a signed-in account
+ * (TECH_SPEC §5.4). Signed-in pages read `get_public_settings().business_name` instead;
+ * later prompts switch them over. Same as the settings default (TECH_SPEC §3).
  */
 export const DEFAULT_BUSINESS_NAME = 'Swim Class'
