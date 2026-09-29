@@ -1,6 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest'
 
 import { logIn, logOut } from '../auth'
+import { demoAccounts, demoMailbox } from '../backend'
 import { AppError, readRows, rpc, updateRows } from '../rpc'
 
 // Demo mode end to end: the real migrations and seed in PGlite behind rpc.ts and
@@ -32,6 +33,17 @@ describe('signed out (anon)', () => {
 
   it('is refused anything else, as a generic error', async () => {
     expect((await failure(rpc('get_public_settings'))).code).toBe('unknown')
+  })
+
+  it("lists demo mode's accounts to sign in as, the coach first", async () => {
+    const accounts = await demoAccounts()
+    expect(accounts[0]).toEqual({
+      username: 'herman',
+      displayName: 'Herman',
+      role: 'coach',
+      approved: true,
+    })
+    expect(accounts.map((a) => a.username)).toContain('meiling')
   })
 
   it('logs in with a username and the sample password only', async () => {
@@ -107,6 +119,12 @@ describe('signed in as meiling', () => {
     })
     const at730 = slots.find((s) => s.starts_at === '2026-09-29T11:30:00+00:00')
     expect(at730).toMatchObject({ ok: false, reason: 'overlap_mine' })
+  })
+
+  it("shows the booking's confirmation email in demo mode's mailbox, with the site's links", async () => {
+    const [latest] = await demoMailbox()
+    expect(latest).toMatchObject({ kind: 'booked', to: 'meiling@example.com' })
+    expect(latest?.text).not.toContain('{{site_url}}')
   })
 
   it('updates its own profile directly, as RLS allows', async () => {

@@ -66,3 +66,36 @@ export async function resetDemoData(): Promise<void> {
   const demo = await import('./demo')
   await demo.resetDemoData()
 }
+
+/** A seeded (or demo-created) account to sign in as, for demo mode's tools. */
+export type DemoAccount = {
+  username: string
+  displayName: string
+  role: 'coach' | 'customer'
+  approved: boolean
+}
+
+/** An email the site would have sent (the outbox), newest first. */
+export type DemoEmail = {
+  id: number
+  to: string
+  subject: string
+  text: string
+  html: string | null
+  kind: string
+  createdAt: string
+}
+
+/** Demo mode only: every account in the demo database, the coach first. */
+export async function demoAccounts(): Promise<DemoAccount[]> {
+  if (import.meta.env.VITE_DEMO !== 'true') return []
+  const demo = await import('./demo')
+  return demo.demoAccounts()
+}
+
+/** Demo mode only: the emails the site would have sent so far, newest first. */
+export async function demoMailbox(): Promise<DemoEmail[]> {
+  if (import.meta.env.VITE_DEMO !== 'true') return []
+  const demo = await import('./demo')
+  return demo.demoMailbox()
+}

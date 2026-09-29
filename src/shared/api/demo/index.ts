@@ -29,6 +29,7 @@ import {
 // API runs a request.
 
 export { resetDemoData }
+export { demoAccounts, demoMailbox } from './tools'
 
 async function asCaller<T>(work: (tx: Transaction) => Promise<T>): Promise<T> {
   const db = await demoDb()
