@@ -292,12 +292,13 @@ describe.skipIf(!hasDatabase)('cancellation emails (BR-17, BR-34, BR-35)', () =>
   it('shows a reason with {{site_url}} in it as plain text, not as a link to the site', async () => {
     await db.setNow('2026-10-02 20:00+08')
     await db.as('meiling')
-    await cancel(db, SEED.bookings.aimanSofiaSat3, 'Pay here {{site_url}}@evil.example/fpx')
+    await cancel(db, SEED.bookings.aimanSofiaSat3, 'Pay here {{{site_url}}@evil.example/fpx')
     const alert = (await outbox(db)).find((e) => e.kind === 'late_alert')
-    expect(alert?.body_text).toContain('Reason: Pay here { {site_url}}@evil.example/fpx')
+    expect(alert?.body_text).toContain('Reason: Pay here { { {site_url}}@evil.example/fpx')
     // Only the template's own link to the schedule.
     expect(alert?.body_html.split('<a ').length).toBe(2)
     expect(alert?.body_html).toContain('<a href="{{site_url}}/coach/schedule">')
+    expect(alert?.body_text.replace(/\{\{site_url\}\}(\/[a-z/-]*)?/g, '')).not.toContain('{{')
   })
 
   it('writes both halves of a range that spans noon', async () => {

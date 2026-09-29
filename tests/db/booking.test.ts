@@ -627,17 +627,19 @@ describe.skipIf(!hasDatabase)('booking emails (TECH_SPEC §8, BR-34, BR-35, BR-3
 
   it('never lets free text carry the {{site_url}} placeholder (only the templates’ links do)', async () => {
     await db.query(
-      `update public.profiles set display_name = 'Mei {{site_url}}@evil.example' where username = 'meiling'`,
+      `update public.profiles set display_name = 'Mei {{{site_url}}@evil.example' where username = 'meiling'`,
     )
     await db.as('meiling')
     await book(db, SEED.groups.aimanSofia, '2026-09-27 09:00+08')
     const [confirmation, alert] = await outbox(db)
-    expect(confirmation?.body_text).toContain('Hi Mei { {site_url}}@evil.example,')
-    expect(alert?.body_text).toContain('Mei { {site_url}}@evil.example booked a lesson')
+    expect(confirmation?.body_text).toContain('Hi Mei { { {site_url}}@evil.example,')
+    expect(alert?.body_text).toContain('Mei { { {site_url}}@evil.example booked a lesson')
     // One link each: the template's own.
     for (const email of [confirmation, alert]) {
       expect(email?.body_html.split('<a ').length).toBe(2)
       expect(email?.body_html).not.toContain('{{site_url}}@')
+      expect(email?.body_text.replace(/\{\{site_url\}\}(\/[a-z/-]*)?/g, '')).not.toContain('{{')
+      expect(email?.body_html.replace(/\{\{site_url\}\}(\/[a-z/-]*)?/g, '')).not.toContain('{{')
     }
   })
 
