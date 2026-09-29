@@ -4,7 +4,8 @@ Update this file at the end of every Claude Code session. Newest entry on top.
 Keep entries short; link to files instead of pasting code.
 
 ## v0.6 · 30 Sep 2026 · Frontend first: demo mode, the data door, the session (paused)
-**State**: Branch `frontend-first` on top of `main` (7 commits, not pushed). Herman asked
+**State**: Merged into `main` and pushed on 30 Sep: a fast-forward from `frontend-first`
+(8 commits, with this entry), and GitHub CI passed. Herman asked
 to build the whole frontend from the designs first and wire it up later. The groundwork is
 in: demo mode, the data door, the session and guards, icons and base styles. Every page is
 still a placeholder. The parallel build (waves 1–3) stopped at the usage limit before any
@@ -124,8 +125,8 @@ matches GitHub and its first CI run passed.
   mode: sign in as `herman` or `meiling` with `swim-test-2026`.
 - Link the Supabase CLI on this machine: `npx supabase login`, then
   `npx supabase link --project-ref uhrgtttvzqjrdtdzyzkr`.
-- Say whether frontend first, with demo mode and the PGlite dev dependency, is OK. Review
-  the branch before it is merged.
+- Say whether frontend first, with demo mode and the PGlite dev dependency, is OK. (The
+  branch is already merged into `main`, at Herman's request.)
 - Still open from v0.5:
   - `npx supabase db reset --linked`, then `npm run test:db`;
   - the browser click-through;
