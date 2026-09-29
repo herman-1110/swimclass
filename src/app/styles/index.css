@@ -85,9 +85,24 @@
     color: var(--ink);
     font-family: var(--font-sans);
     font-size: var(--text-body);
-    line-height: 1.5;
+    /* The drawings set no line height, so text is Figtree's own (1.2); elements that
+       need more say so (leading-*), as the drawings do. */
+    line-height: normal;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Everything tappable shows a pointer, as in the drawings (Tailwind's reset drops it). */
+  button:not(:disabled),
+  [role='button']:not([aria-disabled='true']) {
+    cursor: pointer;
+  }
+
+  /* Placeholders in --muted, which reads at 5.5:1 on white (the reset's fades to 3.2:1). */
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--muted);
+    opacity: 1;
   }
 
   a {
