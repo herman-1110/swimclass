@@ -3,6 +3,137 @@
 Update this file at the end of every Claude Code session. Newest entry on top.
 Keep entries short; link to files instead of pasting code.
 
+## v0.6 · 30 Sep 2026 · Frontend first: demo mode, the data door, the session (paused)
+**State**: Branch `frontend-first` on top of `main` (7 commits, not pushed). Herman asked
+to build the whole frontend from the designs first and wire it up later. The groundwork is
+in: demo mode, the data door, the session and guards, icons and base styles. Every page is
+still a placeholder. The parallel build (waves 1–3) stopped at the usage limit before any
+builder wrote a file; its worktrees are ready. v0.5's merge and push is done: `main`
+matches GitHub and its first CI run passed.
+**Done**
+- This machine is a fresh clone. Its Node 20.14 (installed into `D:\DOWNLOAD`) is too old:
+  `npm install` stops with EBADENGINE. The session used a portable Node 24.21.0, and
+  `node_modules` is installed with it.
+- `.env.local` checked without printing secrets: URL, publishable key and `DATABASE_URL`
+  for `swimclass-dev` (project `uhrgtttvzqjrdtdzyzkr`). The Auth API accepts the key. A
+  read-only connection saw 13/13 migrations, the seed fingerprint of `tests/db/helpers.ts`
+  and no production marker.
+- Demo mode (ARCHITECTURE §3.6): `src/shared/api/demo/` runs `supabase/migrations` and
+  `seed.sql` in the browser with PGlite 0.5.8 (new devDependency) behind a small Supabase
+  shim (`demo/shim.sql`: API roles, `auth.users`, `auth.uid()`, md5 passwords), with the
+  clock at `DEMO_NOW` (`src/shared/config/demo.ts`, = FIXTURE_NOW).
+  - Every call runs as the signed-in account with RLS and answers with PostgREST's JSON.
+  - It keeps its data in IndexedDB. `resetDemoData`, `demoAccounts` and `demoMailbox`
+    (the outbox) are ready for the planned demo panel.
+  - On for dev and tests, off for production builds (`VITE_DEMO` in `vite.config.ts`).
+- The data door: `src/shared/api/rpc.ts` (`rpc`, `readRows`, `insertRows`, `updateRows`,
+  `deleteRows`, `callEdge`, `AppError`, `toAppError`) and `auth.ts`. `backend.ts` picks
+  Supabase (`supabaseBackend.ts`) or the demo. `queryClient` retries only network failures.
+- The session: `entities/account` (`useSession`, `useUserId`, `useMyProfile`, `accountKeys`)
+  and `app/providers/SessionProvider.tsx`, which clears the query cache when the account
+  changes. The guards in `app/router/guards.tsx` are real now: signed in → approved →
+  coach, and `/` by role.
+- Groundwork for the screens:
+  - `src/shared/ui/icons/` (the 10 drawn glyphs and a Close cross) and
+    `src/shared/lib/cn.ts`;
+  - base styles: line height `normal` as drawn, pointer cursor, `--muted` placeholders;
+  - an `index.ts` with `<entity>Keys` for every entity.
+- Docs: ARCHITECTURE §3.2, §3.6, §6, §8; DEV_SETUP §1; CLAUDE.md Commands.
+- The plan, outside the repo in `D:\DOWNLOAD\Swimming\frontend-plan\` (its README says what
+  each file is):
+  - 11 implementation specs: every screen group, the UI kit, the data contracts and the
+    conventions;
+  - the drawings rendered at six widths;
+  - the builder brief, the wave scripts and the tools.
+**VALIDATION**
+- typecheck, lint, format and build pass. `npm run test`: 70 unit tests pass (51 before;
+  the rest cover demo mode, the guards, icons and `cn`). The production `dist/` has no demo
+  code.
+- Demo mode in Chrome (Vite dev server): the first load takes about 5 s, later ones about
+  1.3 s, and changes survive a reload. What it shows matches `Main.dc.html`:
+  - Tue 29 Sep's chips for Aiman & Sofia;
+  - Mei Ling's Package 4.
+
+  Booking really books, and a clash comes back as `overlap_mine` with its detail.
+- `tests/db` through a PGlite socket bridge: 152 of 229 pass. The rest fail in the
+  bridge, which mishandles errors inside a transaction and gives the race tests only one
+  connection. Demo mode calls PGlite directly, so this isn't a demo-mode fault.
+- `npm run test:db` was not run against `swimclass-dev` this session.
+**Next**: carry on with the build plan (`frontend-plan/README.md`):
+1. Wave 1, 4 builders (`frontend-plan/wave1.js`): the UI kit's controls and composite
+   pieces, messages and format, and the app shell with the demo panel. The worktrees
+   `D:\DOWNLOAD\Swimming\worktrees\w1-*` (branches `fe/w1-*`, at 82095bc) are ready.
+   Merge each into `frontend-first`.
+2. Wave 2, 4 builders (`frontend-plan/wave2.js`): every entity, and the features
+   cancel-lesson, excuse-lesson and approve-account.
+3. Wave 3, 6 builders (script to write): one per screen group, each checked against the
+   drawings at six widths:
+   - sign-in pages and Account;
+   - Book;
+   - Schedule and My classes;
+   - coach Schedule;
+   - Students & payments and Add students;
+   - Settings.
+4. Review and fix, then this file. After that comes the wiring: prompt 05's Edge
+   Functions, then `VITE_DEMO=false` against `swimclass-dev`.
+**Decisions**
+- Herman (30 Sep): frontend first. Every screen is built from the designs before prompts
+  05–11 wire them up. The screens call the real database functions through demo mode,
+  so the wiring left is mainly auth, the Edge Functions and turning demo mode off.
+- Demo mode runs the real migrations in PGlite instead of mock data, so no business rule
+  is copied into the browser (CLAUDE.md rule 1). PGlite is dev-only; production builds
+  leave it out. **Herman to confirm**, since CLAUDE.md asks before changing the stack.
+- Body text uses line height `normal` (Figtree 1.2), as the drawings do. Elements that
+  need more set their own.
+- For the build, given to the builders but not built yet:
+  - entity types keep the database's snake_case names;
+  - one query per function or view per scope, with narrower hooks selecting from it;
+  - typographic apostrophes (’) in copy;
+  - "Signed in as <display name>" for the coach too;
+  - the business name comes from settings on signed-in pages;
+  - money reads "RM 240" or "RM 240.50";
+  - the coach layout's `<main>` loses its padding and each coach page pads itself as
+    drawn, because the side columns must reach the page edge (this replaces v0.5's
+    "coach page padding is unchanged");
+  - open questions get the specs' recommended defaults.
+**Open issues**
+- The specs hold about 100 questions for Herman (§10 of each file in
+  `frontend-plan/specs/`). The ones that matter most:
+  - Business name: "Swim Class" (settings and code) or "Swim Class Booking" (the drawings)?
+  - Minimum password length (8 proposed).
+  - Is a phone number required at sign-up?
+  - What does "Pay RM [price]" show when no price is set?
+  - Add students' defaults (1-to-1 with no account chosen is proposed).
+  - Does log out end the session on this device only, or on every device?
+  - Should the coach get a "Back to coach view" link and a Log out?
+- `pending_accounts()` and `email_log()` are planned but not in the migrations. Until then,
+  Waiting for approval can't show emails and the email log can't load (prompts 09, 11).
+- Demo mode differs from Supabase in these ways:
+  - rows it creates get the real `created_at`, while `app_now()` stays on 26 Sep;
+  - sign-up confirms the email at once;
+  - forgot password sends nothing;
+  - the log-in pause is counted in memory;
+  - there is no 1000-row cap.
+- `supabaseBackend.ts` stays untested until prompt 05. TECH_SPEC §7 should settle the
+  `login` reply (the tokens) and its error body (`{ "error": "<code>" }`).
+- v0.5's CI issue is settled: nothing imports the Supabase client up front, and the unit
+  tests run in demo mode.
+**Manual steps waiting on Herman**
+- Install Node 24 LTS (nodejs.org, the .msi). It should replace the Node 20.14 in
+  `D:\DOWNLOAD`; check `node --version` in a new terminal. Then `npm run dev` runs in demo
+  mode: sign in as `herman` or `meiling` with `swim-test-2026`.
+- Link the Supabase CLI on this machine: `npx supabase login`, then
+  `npx supabase link --project-ref uhrgtttvzqjrdtdzyzkr`.
+- Say whether frontend first, with demo mode and the PGlite dev dependency, is OK. Review
+  the branch before it is merged.
+- Still open from v0.5:
+  - `npx supabase db reset --linked`, then `npm run test:db`;
+  - the browser click-through;
+  - Cloudflare;
+  - package prices;
+  - Google 2-Step Verification;
+  - the optional CA certificate check.
+
 ## v0.5 · 29 Sep 2026 · Restructure to ARCHITECTURE v1.0 and DESIGN v1.2
 **State**: Branch `architecture`, on top of `04-booking-and-payments` (not pushed). The code
 sits where `docs/ARCHITECTURE.md` says, with its lint rules, CI and DESIGN v1.2's
