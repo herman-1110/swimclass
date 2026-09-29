@@ -651,8 +651,127 @@ export type Database = {
       }
     }
     Functions: {
+      account_email: { Args: { p_account_id: string }; Returns: string }
+      add_exception: {
+        Args: {
+          p_ends_at: string
+          p_kind: Database["public"]["Enums"]["exception_kind"]
+          p_note?: string
+          p_starts_at: string
+        }
+        Returns: string
+      }
+      add_free_lesson: {
+        Args: { p_group_id: string; p_note?: string }
+        Returns: string
+      }
       app_now: { Args: never; Returns: string }
+      approve_account: { Args: { p_account_id: string }; Returns: undefined }
+      book_lesson: {
+        Args: {
+          p_group_id: string
+          p_minutes: number
+          p_repeat_weeks?: number
+          p_starts_at: string
+        }
+        Returns: string[]
+      }
+      cancel_booking: {
+        Args: { p_booking_id: string; p_reason?: string }
+        Returns: undefined
+      }
+      coach_book: {
+        Args: {
+          p_gap_override?: boolean
+          p_group_id: string
+          p_ignore_credit?: boolean
+          p_ignore_open_hours?: boolean
+          p_minutes: number
+          p_repeat_weeks?: number
+          p_starts_at: string
+        }
+        Returns: string[]
+      }
+      coach_slot_check: {
+        Args: {
+          p_gap_override?: boolean
+          p_group_id: string
+          p_ignore_open_hours?: boolean
+          p_minutes: number
+          p_starts_at: string
+        }
+        Returns: {
+          detail: Json
+          ok: boolean
+          reason: string
+        }[]
+      }
       coach_week: { Args: { p_week_start: string }; Returns: Json }
+      create_group: {
+        Args: {
+          p_account_id: string
+          p_amount_cents?: number
+          p_first_package_paid?: boolean
+          p_location: string
+          p_method?: Database["public"]["Enums"]["payment_method"]
+          p_opening_paid?: number
+          p_opening_used?: number
+          p_students: Json
+        }
+        Returns: string
+      }
+      email_booked: {
+        Args: { p_series_id: string }
+        Returns: {
+          body_html: string
+          body_text: string
+          subject: string
+        }[]
+      }
+      email_broadcast: {
+        Args: { p_account_id: string; p_announcement_id: string }
+        Returns: {
+          body_html: string
+          body_text: string
+          subject: string
+        }[]
+      }
+      email_cancelled: {
+        Args: { p_booking_id: string }
+        Returns: {
+          body_html: string
+          body_text: string
+          subject: string
+        }[]
+      }
+      email_html: { Args: { p_text: string }; Returns: string }
+      email_late_alert: {
+        Args: { p_booking_id: string; p_event: string }
+        Returns: {
+          body_html: string
+          body_text: string
+          subject: string
+        }[]
+      }
+      email_text: { Args: { p_text: string }; Returns: string }
+      excuse_booking: { Args: { p_booking_id: string }; Returns: undefined }
+      get_public_settings: {
+        Args: never
+        Returns: {
+          booking_window_weeks: number
+          business_name: string
+          cancel_cutoff_hours: number
+          lesson_lengths: number[]
+          lessons_per_package: number
+          payment_instructions: string
+          price_1to1_cents: number
+          price_1to2_cents: number
+          price_1to3_cents: number
+          start_step_minutes: number
+          travel_gap_minutes: number
+        }[]
+      }
+      html_escape: { Args: { p_text: string }; Returns: string }
       is_approved: { Args: never; Returns: boolean }
       is_coach: { Args: never; Returns: boolean }
       lesson_travel: {
@@ -667,14 +786,32 @@ export type Database = {
         Args: { p_ends_at: string; p_starts_at: string }
         Returns: number
       }
+      lock_booking_dates: {
+        Args: { p_minutes: number; p_starts: string[] }
+        Returns: undefined
+      }
       my_account_id: { Args: never; Returns: string }
+      myt_day_text: { Args: { p_at: string }; Returns: string }
+      myt_range_text: {
+        Args: { p_ends_at: string; p_starts_at: string }
+        Returns: string
+      }
       myt_text: { Args: { p_at: string }; Returns: string }
+      myt_time_text: { Args: { p_at: string }; Returns: string }
+      myt_when_text: {
+        Args: { p_ends_at: string; p_starts_at: string }
+        Returns: string
+      }
       open_windows: {
         Args: { p_day: string }
         Returns: {
           ends_at: string
           starts_at: string
         }[]
+      }
+      package_price_cents: {
+        Args: { p_group_id: string; p_lessons: number }
+        Returns: number
       }
       package_settings: {
         Args: never
@@ -683,9 +820,67 @@ export type Database = {
           unpaid_packages_allowed: number
         }[]
       }
+      place_bookings: {
+        Args: {
+          p_by_coach: boolean
+          p_gap_override: boolean
+          p_group_id: string
+          p_ignore_credit: boolean
+          p_ignore_open_hours: boolean
+          p_minutes: number
+          p_repeat_weeks: number
+          p_starts_at: string
+        }
+        Returns: string[]
+      }
+      post_announcement: {
+        Args: { p_message: string; p_pinned?: boolean; p_send_email?: boolean }
+        Returns: string
+      }
+      queue_booked_emails: { Args: { p_series_id: string }; Returns: undefined }
+      queue_broadcast_emails: {
+        Args: { p_announcement_id: string }
+        Returns: undefined
+      }
+      queue_cancelled_emails: {
+        Args: { p_booking_id: string; p_by_customer: boolean }
+        Returns: undefined
+      }
+      queue_email: {
+        Args: {
+          p_body_html: string
+          p_body_text: string
+          p_dedupe_key: string
+          p_kind: string
+          p_subject: string
+          p_to: string
+        }
+        Returns: boolean
+      }
+      record_payment: {
+        Args: {
+          p_amount_cents: number
+          p_group_id: string
+          p_lessons: number
+          p_method: Database["public"]["Enums"]["payment_method"]
+          p_note?: string
+          p_paid_on?: string
+        }
+        Returns: string
+      }
+      remove_announcement: { Args: { p_id: string }; Returns: undefined }
+      remove_exception: { Args: { p_id: string }; Returns: undefined }
+      set_group_active: {
+        Args: { p_active: boolean; p_group_id: string }
+        Returns: undefined
+      }
+      set_open_hours: { Args: { p_rules: Json }; Returns: undefined }
       slot_check: {
         Args: {
+          p_allow_past?: boolean
           p_group_id: string
+          p_ignore_open_hours?: boolean
+          p_ignore_window?: boolean
           p_minutes: number
           p_starts_at: string
           p_viewer: string
@@ -696,6 +891,49 @@ export type Database = {
           reason: string
         }[]
       }
+      update_group: {
+        Args: {
+          p_group_id: string
+          p_location?: string
+          p_opening_paid?: number
+          p_opening_used?: number
+        }
+        Returns: undefined
+      }
+      update_settings: {
+        Args: { p_settings: Json }
+        Returns: {
+          booking_confirmations: boolean
+          booking_window_weeks: number
+          business_name: string
+          cancel_cutoff_hours: number
+          coach_email: string
+          digest_time: string
+          id: number
+          late_change_alert: boolean
+          lesson_expiry_months: number | null
+          lesson_lengths: number[]
+          lessons_per_package: number
+          max_students_per_lesson: number
+          payment_instructions: string | null
+          price_1to1_cents: number | null
+          price_1to2_cents: number | null
+          price_1to3_cents: number | null
+          reminder_time: string
+          require_approval: boolean
+          start_step_minutes: number
+          travel_gap_minutes: number
+          unpaid_packages_allowed: number
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "settings"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      username_available: { Args: { p_username: string }; Returns: boolean }
       week_busy: { Args: { p_week_start: string }; Returns: Json }
       week_slots: {
         Args: { p_group_id: string; p_minutes: number; p_week_start: string }
