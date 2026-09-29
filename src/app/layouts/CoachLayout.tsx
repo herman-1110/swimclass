@@ -1,56 +1,76 @@
-import { Link, Outlet, useLocation } from 'react-router'
+import { Outlet } from 'react-router'
 
-import { DEFAULT_BUSINESS_NAME } from '@/shared/config/business'
 import { ROUTES } from '@/shared/config/routes'
 
-// Desktop-first (1280 px and up) with a text-only sidebar (design/AdminSchedule.dc.html).
-// Below 768 px the sidebar becomes a bar across the top so the pages keep their width.
+import type { NavItem } from './navigation'
+import { Sidebar } from './Sidebar'
+import { SkipLink } from './SkipLink'
+import { TabBar, TabIcon } from './TabBar'
 
-// `alsoOn`: other pages that belong to the same section, so its link stays current there.
-const links: { to: string; label: string; alsoOn?: string[] }[] = [
-  { to: ROUTES.coachSchedule, label: 'Schedule' },
-  { to: ROUTES.coachStudents, label: 'Students & payments', alsoOn: [ROUTES.coachAddStudents] },
-  { to: ROUTES.coachSettings, label: 'Settings' },
+// Desktop first (1280 px and up, design/AdminSchedule.dc.html), but it works on a phone
+// too (AdminSchedulePhone.dc.html): a 220 px sidebar from 1024 px, a bottom tab bar
+// below it (DESIGN §3, §5).
+
+const sections: NavItem[] = [
+  {
+    to: ROUTES.coachSchedule,
+    label: 'Schedule',
+    icon: (
+      <TabIcon>
+        <rect x="3" y="5" width="18" height="16" rx="2" />
+        <path d="M3 10h18M8 3v4M16 3v4" />
+      </TabIcon>
+    ),
+  },
+  {
+    to: ROUTES.coachStudents,
+    label: 'Students & payments',
+    tabLabel: 'Students',
+    // Add students belongs to this section.
+    alsoOn: [ROUTES.coachAddStudents],
+    icon: (
+      <TabIcon>
+        <circle cx="9" cy="8" r="3.5" />
+        <path d="M2.5 20a6.5 6.5 0 0 1 13 0" />
+        <path d="M16 4.5a3.5 3.5 0 0 1 0 7" />
+        <path d="M18 14a6.5 6.5 0 0 1 3.5 6" />
+      </TabIcon>
+    ),
+  },
+  {
+    to: ROUTES.coachSettings,
+    label: 'Settings',
+    icon: (
+      <TabIcon>
+        <path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1" />
+        <circle cx="15" cy="6" r="2" />
+        <circle cx="9" cy="12" r="2" />
+        <circle cx="17" cy="18" r="2" />
+      </TabIcon>
+    ),
+  },
 ]
 
-const linkBase = 'flex min-h-11 items-center rounded-small px-3 text-sm no-underline hover:text-ink'
+// The customer pages: at the bottom of the sidebar, the last tab in the tab bar.
+const customerView: NavItem = {
+  to: ROUTES.book,
+  label: 'View as customer',
+  tabLabel: 'Customer view',
+  icon: (
+    <TabIcon>
+      <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" />
+      <circle cx="12" cy="12" r="3" />
+    </TabIcon>
+  ),
+}
+
+const tabs = [...sections, customerView]
 
 export function CoachLayout() {
-  const { pathname } = useLocation()
-  const isCurrent = (link: (typeof links)[number]) =>
-    pathname === link.to || pathname.startsWith(`${link.to}/`) || !!link.alsoOn?.includes(pathname)
-
   return (
-    <div className="flex min-h-dvh flex-col bg-white md:flex-row">
-      <a
-        href="#main"
-        // Styles only apply on focus: focus:not-sr-only resets padding, so plain px/py
-        // classes would lose to it.
-        className="sr-only font-semibold focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-10 focus:inline-flex focus:min-h-11 focus:items-center focus:rounded-small focus:border focus:border-field focus:bg-white focus:px-4"
-      >
-        Skip to main content
-      </a>
-      <aside className="flex shrink-0 flex-col gap-4 border-b border-line px-3.5 py-4 md:w-[220px] md:gap-8 md:border-r md:border-b-0 md:pt-7 md:pb-6">
-        <div className="px-3 text-[15px] font-semibold text-accent">{DEFAULT_BUSINESS_NAME}</div>
-        <nav aria-label="Coach" className="flex flex-wrap gap-0.5 md:flex-col">
-          {links.map((link) => (
-            <Link
-              key={link.to}
-              to={link.to}
-              aria-current={isCurrent(link) ? 'page' : undefined}
-              className={`${linkBase} ${isCurrent(link) ? 'bg-subtle font-semibold text-ink' : 'font-medium text-muted'}`}
-            >
-              {link.label}
-            </Link>
-          ))}
-        </nav>
-        <div className="flex flex-wrap items-center gap-0.5 md:mt-auto md:flex-col md:items-stretch">
-          <Link to={ROUTES.book} className={`${linkBase} text-muted`}>
-            View as customer
-          </Link>
-          <span className="px-3 text-small text-muted md:pt-2">Signed in as Coach</span>
-        </div>
-      </aside>
+    <div className="flex min-h-dvh flex-col bg-white lg:flex-row">
+      <SkipLink />
+      <Sidebar label="Coach" items={sections} bottomItems={[customerView]} signedInAs="Coach" />
       <main
         id="main"
         tabIndex={-1}
@@ -58,6 +78,7 @@ export function CoachLayout() {
       >
         <Outlet />
       </main>
+      <TabBar label="Coach" items={tabs} />
     </div>
   )
 }

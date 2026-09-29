@@ -65,7 +65,35 @@ describe('routes', () => {
   })
 })
 
-describe('customer tab bar', () => {
+// Each layout has two navigations with the same name: the tab bar (below 1024 px) and the
+// sidebar (from 1024 px). CSS shows one at a time; jsdom has no CSS, so tests see both.
+function sidebarNav(name: string) {
+  const sidebar = screen.getByRole('complementary', { name: `${name} navigation` })
+  return within(sidebar).getByRole('navigation', { name })
+}
+
+function tabBar(name: string) {
+  const [nav, ...others] = screen
+    .getAllByRole('navigation', { name })
+    .filter((element) => !element.closest('aside'))
+  if (!nav || others.length > 0) throw new Error(`Expected one "${name}" tab bar`)
+  return nav
+}
+
+function linkTexts(nav: HTMLElement) {
+  return within(nav)
+    .getAllByRole('link')
+    .map((link) => link.textContent)
+}
+
+function currentLinks(nav: HTMLElement) {
+  return within(nav)
+    .getAllByRole('link')
+    .filter((link) => link.getAttribute('aria-current') === 'page')
+    .map((link) => link.textContent)
+}
+
+describe('customer navigation', () => {
   const tabs = [
     ['Book', '/book', 'Book a lesson'],
     ['Schedule', '/schedule', 'Schedule'],
@@ -73,59 +101,78 @@ describe('customer tab bar', () => {
     ['Account', '/account', 'Account'],
   ] as const
 
-  it('has the four tabs in order and marks the current one', async () => {
-    renderAt('/book')
-    await findPageHeading('Book a lesson')
-    const nav = screen.getByRole('navigation', { name: 'Main' })
-    const links = within(nav).getAllByRole('link')
-    expect(links.map((link) => link.textContent)).toEqual(tabs.map(([label]) => label))
-    expect(within(nav).getByRole('link', { name: 'Book' }).getAttribute('aria-current')).toBe(
-      'page',
-    )
+  it('has the four links in order in the tab bar and the sidebar, and marks the current one', async () => {
+    renderAt('/schedule')
+    await findPageHeading('Schedule')
+    for (const nav of [tabBar('Main'), sidebarNav('Main')]) {
+      expect(linkTexts(nav)).toEqual(tabs.map(([label]) => label))
+      expect(currentLinks(nav)).toEqual(['Schedule'])
+    }
   })
 
-  it('opens each page from its tab', async () => {
+  it.each([
+    ['tab bar', () => tabBar('Main')],
+    ['sidebar', () => sidebarNav('Main')],
+  ])('opens each page from the %s', async (_, getNav) => {
     const router = renderAt('/book')
     await findPageHeading('Book a lesson')
     for (const [label, path, heading] of [...tabs.slice(1), tabs[0]]) {
-      const nav = screen.getByRole('navigation', { name: 'Main' })
-      fireEvent.click(within(nav).getByRole('link', { name: label }))
+      fireEvent.click(within(getNav()).getByRole('link', { name: label }))
       await findPageHeading(heading)
       expect(router.state.location.pathname).toBe(path)
-      expect(
-        within(screen.getByRole('navigation', { name: 'Main' }))
-          .getByRole('link', { name: label })
-          .getAttribute('aria-current'),
-      ).toBe('page')
+      expect(currentLinks(getNav())).toEqual([label])
     }
+  })
+
+  it('has a skip link to the main content', async () => {
+    renderAt('/my-classes')
+    await findPageHeading('My classes')
+    expect(screen.getByRole('link', { name: 'Skip to main content' }).getAttribute('href')).toBe(
+      '#main',
+    )
+    expect(screen.getByRole('main').id).toBe('main')
   })
 
   it('is not shown on the coach pages', async () => {
     renderAt('/coach/schedule')
     await findPageHeading('Schedule')
-    expect(screen.queryByRole('navigation', { name: 'Main' })).toBeNull()
+    expect(screen.queryAllByRole('navigation', { name: 'Main' })).toHaveLength(0)
   })
 })
 
-describe('coach sidebar', () => {
-  it('opens each coach page from its link', async () => {
+describe('coach navigation', () => {
+  it('has the sections in the sidebar, and shorter labels and Customer view in the tab bar', async () => {
+    renderAt('/coach/schedule')
+    await findPageHeading('Schedule')
+    expect(linkTexts(sidebarNav('Coach'))).toEqual(['Schedule', 'Students & payments', 'Settings'])
+    expect(linkTexts(tabBar('Coach'))).toEqual([
+      'Schedule',
+      'Students',
+      'Settings',
+      'Customer view',
+    ])
+    expect(currentLinks(sidebarNav('Coach'))).toEqual(['Schedule'])
+    expect(currentLinks(tabBar('Coach'))).toEqual(['Schedule'])
+    const sidebar = screen.getByRole('complementary', { name: 'Coach navigation' })
+    expect(within(sidebar).getByText('Signed in as Coach')).toBeTruthy()
+  })
+
+  it.each([
+    ['sidebar', () => sidebarNav('Coach'), 'Students & payments'],
+    ['tab bar', () => tabBar('Coach'), 'Students'],
+  ])('opens each coach page from the %s', async (_, getNav, studentsLabel) => {
     const router = renderAt('/coach/schedule')
     await findPageHeading('Schedule')
     const links = [
-      ['Students & payments', '/coach/students', 'Students & payments'],
+      [studentsLabel, '/coach/students', 'Students & payments'],
       ['Settings', '/coach/settings', 'Settings'],
       ['Schedule', '/coach/schedule', 'Schedule'],
     ] as const
     for (const [label, path, heading] of links) {
-      const nav = screen.getByRole('navigation', { name: 'Coach' })
-      fireEvent.click(within(nav).getByRole('link', { name: label }))
+      fireEvent.click(within(getNav()).getByRole('link', { name: label }))
       await findPageHeading(heading)
       expect(router.state.location.pathname).toBe(path)
-      expect(
-        within(screen.getByRole('navigation', { name: 'Coach' }))
-          .getByRole('link', { name: label })
-          .getAttribute('aria-current'),
-      ).toBe('page')
+      expect(currentLinks(getNav())).toEqual([label])
     }
   })
 
@@ -135,20 +182,21 @@ describe('coach sidebar', () => {
     fireEvent.click(screen.getByRole('link', { name: 'Add students' }))
     await findPageHeading('Add students')
     expect(router.state.location.pathname).toBe('/coach/add-students')
-    const nav = screen.getByRole('navigation', { name: 'Coach' })
-    expect(
-      within(nav).getByRole('link', { name: 'Students & payments' }).getAttribute('aria-current'),
-    ).toBe('page')
+    expect(currentLinks(sidebarNav('Coach'))).toEqual(['Students & payments'])
+    expect(currentLinks(tabBar('Coach'))).toEqual(['Students'])
   })
 
-  it('"View as customer" opens the Book page with the tab bar', async () => {
-    const router = renderAt('/coach/schedule')
-    await findPageHeading('Schedule')
-    fireEvent.click(screen.getByRole('link', { name: 'View as customer' }))
-    await findPageHeading('Book a lesson')
-    expect(router.state.location.pathname).toBe('/book')
-    expect(screen.getByRole('navigation', { name: 'Main' })).toBeTruthy()
-  })
+  it.each(['View as customer', 'Customer view'])(
+    '"%s" opens the Book page with the customer navigation',
+    async (label) => {
+      const router = renderAt('/coach/schedule')
+      await findPageHeading('Schedule')
+      fireEvent.click(screen.getByRole('link', { name: label }))
+      await findPageHeading('Book a lesson')
+      expect(router.state.location.pathname).toBe('/book')
+      expect(currentLinks(tabBar('Main'))).toEqual(['Book'])
+    },
+  )
 
   it('has a skip link to the main content', async () => {
     renderAt('/coach/settings')
@@ -202,8 +250,7 @@ describe('when a page fails to load', () => {
     render(<RouterProvider router={router} />)
     if (startAt !== '/coach/settings') {
       await findPageHeading('Schedule')
-      const nav = screen.getByRole('navigation', { name: 'Coach' })
-      fireEvent.click(within(nav).getByRole('link', { name: 'Settings' }))
+      fireEvent.click(within(sidebarNav('Coach')).getByRole('link', { name: 'Settings' }))
     }
     await findPageHeading('Something went wrong')
     expect(screen.getByRole('button', { name: 'Reload the page' })).toBeTruthy()

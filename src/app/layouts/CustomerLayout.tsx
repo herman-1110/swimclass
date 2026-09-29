@@ -1,14 +1,17 @@
-import type { ReactNode } from 'react'
-import { NavLink, Outlet } from 'react-router'
+import { Outlet } from 'react-router'
 
 import { ROUTES } from '@/shared/config/routes'
 
-// Phone-first (390 px); on wider screens the app sits in a centred 480 px column
-// (DESIGN §5). Tab bar from design/Main.dc.html.
+import type { NavItem } from './navigation'
+import { Sidebar } from './Sidebar'
+import { SkipLink } from './SkipLink'
+import { TabBar, TabIcon } from './TabBar'
 
-type Tab = { to: string; label: string; icon: ReactNode }
+// Phone first (design/Main.dc.html, MainDesktop.dc.html): a bottom tab bar below 1024 px,
+// a 220 px sidebar from 1024 px (DESIGN §3, §5). Each page sets its own maximum width
+// (Book, Schedule and My classes stop at 1100 px).
 
-const tabs: Tab[] = [
+const items: NavItem[] = [
   {
     to: ROUTES.book,
     label: 'Book',
@@ -53,49 +56,19 @@ const tabs: Tab[] = [
 
 export function CustomerLayout() {
   return (
-    <div className="mx-auto flex min-h-dvh w-full max-w-[480px] flex-col bg-white">
-      <main className="flex flex-1 flex-col gap-6 px-5 pt-7 pb-5">
+    <div className="flex min-h-dvh flex-col bg-white lg:flex-row">
+      <SkipLink />
+      {/* "Signed in as …" needs the signed-in person's name: prompt 05 adds it. */}
+      <Sidebar label="Main" items={items} />
+      <main
+        id="main"
+        tabIndex={-1}
+        // Side padding 20 px on phones, 32 px from 768 px, 48 px from 1024 px (DESIGN §2).
+        className="flex min-w-0 flex-1 flex-col gap-6 px-5 pt-7 pb-5 md:p-8 lg:px-12 lg:py-10"
+      >
         <Outlet />
       </main>
-      <nav
-        aria-label="Main"
-        className="sticky bottom-0 grid grid-cols-4 border-t border-line bg-white px-2 pt-1 pb-[max(16px,env(safe-area-inset-bottom))]"
-      >
-        {tabs.map((tab) => (
-          <NavLink
-            key={tab.to}
-            to={tab.to}
-            className={({ isActive }) =>
-              `flex min-h-[52px] flex-col items-center justify-center gap-[3px] rounded-small text-[11px] no-underline ${
-                isActive
-                  ? 'font-semibold text-accent hover:text-accent'
-                  : 'font-medium text-muted hover:text-ink'
-              }`
-            }
-          >
-            {tab.icon}
-            <span>{tab.label}</span>
-          </NavLink>
-        ))}
-      </nav>
+      <TabBar label="Main" items={items} />
     </div>
-  )
-}
-
-function TabIcon({ children }: { children: ReactNode }) {
-  return (
-    <svg
-      width="22"
-      height="22"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.6"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      {children}
-    </svg>
   )
 }
