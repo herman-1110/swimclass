@@ -3,6 +3,110 @@
 Update this file at the end of every Claude Code session. Newest entry on top.
 Keep entries short; link to files instead of pasting code.
 
+## v0.5 · 29 Sep 2026 · Restructure to ARCHITECTURE v1.0 and DESIGN v1.2
+**State**: Branch `architecture`, on top of `04-booking-and-payments` (not pushed). The code
+sits where `docs/ARCHITECTURE.md` says, with its lint rules, CI and DESIGN v1.2's
+responsive layouts, and no behaviour change beyond those. The docs match the code. Three
+small email migrations are pushed to `swimclass-dev` (13 in all; `npx supabase migration
+list --linked` shows the dev database in step with the repo). Prompts 01–04's VALIDATION
+passes (below).
+**Done**
+- Moves (renames only): `src/lib/*` → `src/shared/{api,config,lib/time}`; each page →
+  `src/pages/<route>/` with an `index.ts`; `src/app/{router,layouts,providers,styles}`;
+  `PlaceholderPage` → `src/shared/ui/`; unit tests next to their code;
+  `tests/db/settings.test.ts` → `admin.test.ts`; `supabase/snippets/` → `supabase/scripts/`.
+- The `@/` alias; `ROUTES` in `src/shared/config/routes.ts` with ARCHITECTURE §3.5's paths;
+  `src/shared/config/env.ts`; `app/providers/QueryProvider.tsx`; `npm run db:types` writes
+  `src/shared/api/database.types.ts`.
+- `eslint.config.js`: ARCHITECTURE §3.1's layer rules (downward imports only, no sideways
+  imports, front doors, only `shared/api` imports Supabase, no relative paths into another
+  layer) and sorted imports. Each rule was proven with throwaway files.
+- CI: `.github/workflows/ci.yml` runs lint, typecheck, unit tests and the build on every
+  push; `.nvmrc`, `.editorconfig`. Two Vitest projects: `npm run test` (unit) and
+  `npm run test:db` (database, one file at a time). `tests/db/fixture.ts` holds the seed's
+  clock and ids.
+- Layouts (DESIGN §3, §5): customer and coach pages have a bottom tab bar below 1024 px and
+  a 220 px sidebar from 1024 px (`src/app/layouts/`: `TabBar`, `Sidebar`, `SkipLink`,
+  `navigation.ts`). The coach's tab bar says "Students" and ends with "Customer view".
+  Customer page padding is 20/32/48 px, and the customer layout has a skip link too.
+  Sign-in pages are a centred 420 px card on `--subtle` from 768 px.
+- `design/`: synced from the canvas (version 1790670143-1c97): 8 drawings updated, the 8
+  `…Desktop`/`…Phone` drawings added. DESIGN v1.2 already describes their content.
+- Migrations: `…110000_update_email_links` (the confirmation links to `/my-classes`),
+  `…110100_fix_email_link_pattern` (links may contain `-`: a test caught `/my-classes` cut
+  at the hyphen), `…110200_fix_email_text` (security: `{{{site_url}}@evil.example` in a
+  name or reason survived the old single pass and became a link in the coach's email). The
+  times are hand-picked: the CLI's UTC time today sorts before prompt 04's files.
+- Docs: `supabase/README.md` (new database map); ARCHITECTURE §2, §3.2, §3.7, §4, §5;
+  CLAUDE.md; TECH_SPEC §3, §5, §6, §7, §8, §10, §11; PRD BR-31; DESIGN §4; DEV_SETUP; README;
+  prompts 01–12 (paths, routes, commands, drawings). All 25 findings of prompt 04's doc
+  checks are fixed (two by the migrations above).
+**VALIDATION (prompts 01–04)**
+- typecheck, lint, format and build pass. `npm run test`: 51 unit tests pass.
+  `npm run test:db`: 229 pass, twice (94 s, 90 s); the second run's seed check proves the
+  first left nothing behind. `npx wrangler deploy --dry-run`: 21 files, fine.
+- A fresh checkout with no `.env.local` (a git worktree) passes CI's steps: `npm ci`, lint,
+  typecheck, test, build.
+- No secret key in the repo, its history or `dist/`. `git grep sb_secret` finds only the
+  four doc lines that warn about the key's prefix.
+- In Chrome on `npm run dev`: every route shows its page; Figtree 400 and 600 load; Tab
+  shows the 2 px accent ring; the skip link appears and moves focus to the page; the tab
+  bar (390 px), the sidebar and View as customer (1280 px) work. At 360, 390, 768, 1024,
+  1280 and 1440 px on all 14 routes: no sideways scrolling, one navigation visible, every
+  link at least 44 px.
+- Not done by Claude: prompt 02's "migrations apply from scratch" needs
+  `npx supabase db reset --linked` (manual step below).
+**Next**: after merging, `prompts/05-auth-and-accounts.md`.
+**Decisions**
+- Herman: ARCHITECTURE's routes (`/forgot-password`, `/reset-password`, `/my-classes`,
+  `/coach/add-students`); TECH_SPEC §11 and the prompts follow them.
+- Herman: ARCHITECTURE §4 now describes the database as built: everything in `public`,
+  grants decide what the API may call, no `private` schema for now; `comment on function`
+  for new functions only.
+- Docs corrected to match the code, not the other way round: the sign-in and customer
+  pages stay in the main bundle, and only the coach's pages are lazy-loaded (prompt 01's
+  choice, for phones on 4G), with the function form of `lazy`.
+- The tab bar and the sidebar carry the same name ("Main", "Coach"), as in the drawings;
+  CSS shows one. Tests tell them apart by the sidebar's `aside`.
+- Coach page padding is unchanged: the drawings vary it per page.
+- Daily emails (a doc-check finding): reminders at `reminder_time`, the digest at
+  `digest_time` (PRD BR-33), each recorded in `daily_jobs` for tomorrow's date;
+  `queue_daily_emails` decides what is due and `mail-queue` only calls it (TECH_SPEC §5.5,
+  §7). The Email log reads through a coach-only `email_log()`; the sender name is the Apps
+  Script's `SENDER_NAME` (prompt 11).
+- Doc version numbers stay as Herman set them; this entry lists the changes.
+**Open issues**
+- The customer sidebar has no "Signed in as …" yet: it needs the session (prompt 05 says so).
+- In the drawings, the coach schedule's 320 px column and Record payment's 340 px panel run
+  to the page edge, but `CoachLayout`'s `<main>` pads its content (prompt 08 notes it).
+- Maximum widths (Book, Schedule, My classes 1100 px; Settings 760 px; Add students' form
+  600 px) belong to each page; none are built yet.
+- `get_public_settings` prices and `payment_instructions` may be null, though the generated
+  types say `number` and `string`. Prompt 07's "Pay RM [price]" needs Herman to say what
+  shows when no price is set.
+- `npm audit`: 3 moderate findings in `wrangler` → `miniflare` → `undici` (dev tools only,
+  there before this work). Prompt 12's security check will want them gone: update wrangler
+  when a fix ships.
+- `design/screens/` is still empty.
+- Still open from v0.4: lesson expiry applies nothing; lesson lengths bind the coach; no
+  limit on booking and cancelling churn; waiting accounts can read payment instructions;
+  prompt 09 builds `pending_accounts` and `delete_account`; sign up as `herman` first;
+  "Database error saving new user"; `bookings.group_id` has no `on delete`;
+  `database.types.ts` lists internal functions. The "Failed to start forks worker" run
+  didn't happen again.
+**Manual steps waiting on Herman**
+- Review, then merge and push both branches (`architecture` sits on top of 04):
+  `git switch main && git merge --ff-only 04-booking-and-payments && git merge --ff-only architecture && git push`.
+  Then check the first CI run under the repo's Actions tab.
+- To prove every migration applies from scratch (prompt 02): `npx supabase db reset --linked`
+  (check `npx supabase projects list` shows `swimclass-dev` linked), then `npm run test:db`.
+- Your `npm run dev` restarted once around 6 pm: I started a second dev server for checks,
+  it clashed on the port and broke yours (a blank page), and touching `vite.config.ts`
+  (no change) made yours rebuild. If a tab looks stale, reload it.
+- Optional: a PNG of each of the 16 drawings in `design/screens/`.
+- Still open: browser click-through, Cloudflare once the nameservers are live, package
+  prices, Google 2-Step Verification; optional CA certificate check (v0.2).
+
 ## v0.4 · 29 Sep 2026 · Prompt 04: Booking, cancelling, packages and payments
 **State**: Everything that changes data is live on `swimclass-dev`: five migrations
 (`supabase/migrations/20260929100000_coach_slot_check.sql` to `…100400_settings.sql`,
