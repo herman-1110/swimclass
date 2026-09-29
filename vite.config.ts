@@ -14,6 +14,10 @@ export default defineConfig(({ mode }) => ({
   },
   test: {
     include: ['tests/**/*.test.{ts,tsx}'],
+    // The database tests share one dev database: one file at a time, so files never
+    // wait for each other's locks. A test gets 30 s (queries go to Singapore and back).
+    fileParallelism: false,
+    testTimeout: 30_000,
     env: {
       // Run tests in a time zone far from Malaysia (with daylight saving) so any code
       // that accidentally uses the device's time zone fails (CLAUDE.md rule 2).

@@ -339,36 +339,80 @@ describe.skipIf(!hasDatabase)('security checklist (TECH_SPEC §13)', () => {
     ])
   })
 
-  it('lets anon execute no function', async () => {
-    // Prompt 04 adds username_available here, and only that.
+  it('lets anon execute only username_available (sign-up’s live check)', async () => {
     const { rows } = await db.query<{ name: string }>(
       `select p.oid::regprocedure::text as name from pg_proc p
        where p.pronamespace = 'public'::regnamespace
          and has_function_privilege('anon', p.oid, 'execute')`,
     )
-    expect(rows).toEqual([])
+    expect(rows.map((r) => r.name)).toEqual(['username_available(text)'])
   })
 
   it('lets signed-in users execute only the functions meant for them', async () => {
     // New functions start with no grants (TECH_SPEC §6). Later prompts add every RPC the
     // browser calls, from customers or the coach; update this list deliberately when they do.
+    // Sorted here, not in SQL, so the database's collation doesn't matter.
     const { rows } = await db.query<{ name: string }>(
       `select p.oid::regprocedure::text as name from pg_proc p
        where p.pronamespace = 'public'::regnamespace
-         and has_function_privilege('authenticated', p.oid, 'execute')
-       order by 1`,
+         and has_function_privilege('authenticated', p.oid, 'execute')`,
     )
-    expect(rows.map((r) => r.name)).toEqual([
+    expect(rows.map((r) => r.name).sort()).toEqual([
+      // Prompt 04; the coach's functions check is_coach() first.
+      'add_exception(exception_kind,timestamp with time zone,timestamp with time zone,text)',
+      'add_free_lesson(uuid,text)',
       'app_now()',
+      'approve_account(uuid)',
+      'book_lesson(uuid,timestamp with time zone,integer,integer)',
+      'cancel_booking(uuid,text)',
+      'coach_book(uuid,timestamp with time zone,integer,integer,boolean,boolean,boolean)',
+      'coach_slot_check(uuid,timestamp with time zone,integer,boolean,boolean)',
       'coach_week(date)', // prompt 03; checks is_coach() first
+      'create_group(uuid,jsonb,text,boolean,integer,payment_method,integer,integer)',
+      'excuse_booking(uuid)',
+      'get_public_settings()',
       'is_approved()',
       'is_coach()',
       'lessons_for(timestamp with time zone,timestamp with time zone)',
       'my_account_id()',
       'package_settings()',
+      'post_announcement(text,boolean,boolean)',
+      'record_payment(uuid,integer,integer,payment_method,date,text)',
+      'remove_announcement(uuid)',
+      'remove_exception(uuid)',
+      'set_group_active(uuid,boolean)',
+      'set_open_hours(jsonb)',
+      'update_group(uuid,text,integer,integer)',
+      'update_settings(jsonb)',
+      'username_available(text)',
       'week_busy(date)', // prompt 03
       'week_slots(date,integer,uuid)', // prompt 03
     ])
+  })
+
+  it('makes customers’ calls to the coach’s functions fail with not_coach', async () => {
+    await db.as('meiling')
+    const calls = [
+      `select public.coach_book('${SEED.groups.hana}', '2026-09-29 19:30+08', 60)`,
+      `select * from public.coach_slot_check('${SEED.groups.hana}', '2026-09-29 19:30+08', 60)`,
+      `select public.excuse_booking('${SEED.bookings.weiJieFri25}')`,
+      `select public.record_payment('${SEED.groups.hana}', 4, 24000, 'cash')`,
+      `select public.add_free_lesson('${SEED.groups.hana}')`,
+      `select public.create_group('${SEED.groups.hana}', '[{"name": "X"}]', 'Pool')`,
+      `select public.update_group('${SEED.groups.hana}', 'Pool')`,
+      `select public.set_group_active('${SEED.groups.hana}', false)`,
+      `select public.approve_account('${SEED.groups.hana}')`,
+      `select public.set_open_hours('[]')`,
+      `select public.add_exception('closed', '2026-10-06 17:30+08', '2026-10-06 19:00+08')`,
+      `select public.remove_exception('${SEED.groups.hana}')`,
+      `select public.update_settings('{"travel_gap_minutes": 0}')`,
+      `select public.post_announcement('Free lessons for all')`,
+      `select public.remove_announcement('${SEED.groups.hana}')`,
+    ]
+    for (const sql of calls) {
+      const error = await db.expectFailure(sql)
+      expect(error.message, sql).toBe('not_coach')
+    }
   })
 
   it('sets an empty search_path on every function', async () => {

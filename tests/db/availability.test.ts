@@ -1156,13 +1156,15 @@ describe.skipIf(!hasDatabase)('who may call the availability functions', () => {
     expect(slots.message).toBe('not_approved')
   })
 
-  it('grants: week_slots, week_busy and coach_week to authenticated; nothing else, nothing for anon', async () => {
+  it('grants: week_slots, week_busy, coach_week and coach_slot_check to authenticated; nothing else, nothing for anon', async () => {
     const functions: [string, boolean][] = [
       ['public.week_slots(date, int, uuid)', true],
       ['public.week_busy(date)', true],
       ['public.coach_week(date)', true],
+      // Prompt 04: slot_check gained the coach's options; coach_slot_check checks is_coach().
+      ['public.coach_slot_check(uuid, timestamptz, int, boolean, boolean)', true],
       ['public.open_windows(date)', false],
-      ['public.slot_check(timestamptz, int, uuid, uuid)', false],
+      ['public.slot_check(timestamptz, int, uuid, uuid, boolean, boolean, boolean)', false],
       ['public.lesson_travel(timestamptz, timestamptz)', false],
       ['public.myt_text(timestamptz)', false],
     ]

@@ -34,12 +34,14 @@ const SUPABASE_CA = readFileSync(new URL('./supabase-root-2021-ca.crt', import.m
 
 // The tests expect the seed exactly as loaded: not shifted by shift-seed.sql, nothing
 // added, edited or cancelled. SEED_STATE fingerprints what the tests depend on (students,
-// groups, members, bookings, payments, open hours, the main settings; no exceptions or
-// announcements), independent of the session's time zone and date style. Extra sign-ups
-// are fine: they have no groups or lessons.
+// groups, members, bookings, payments, open hours, every setting, the seeded accounts'
+// names, phones, roles and approval; no exceptions or announcements), independent of the
+// session's time zone and date style. Extra sign-ups are fine: they have no groups or
+// lessons, and the tests that email every approved customer read that list from the
+// database. The outbox isn't fingerprinted: tests read only the rows they added.
 // When seed.sql changes, reload the dev database and copy the new fingerprint from the
 // error message into SEED_FINGERPRINT.
-const SEED_FINGERPRINT = '40cb1fc7e7dad8677a2ad7f8505921db'
+const SEED_FINGERPRINT = '3de5174d89dc7791f1f9d8e5032c39e9'
 const SEED_STATE = `
   select
     exists (select 1 from public.profiles where username = 'meiling') as seeded,
@@ -61,13 +63,15 @@ const SEED_STATE = `
       (select string_agg(concat_ws(',', weekday, to_char(opens_at, 'HH24:MI'),
                                    to_char(closes_at, 'HH24:MI')), ';' order by weekday, opens_at)
        from public.availability_rules),
-      (select concat_ws(',', travel_gap_minutes, start_step_minutes,
-                        array_to_string(lesson_lengths, ' '), max_students_per_lesson,
-                        cancel_cutoff_hours, booking_window_weeks, lessons_per_package,
-                        unpaid_packages_allowed, require_approval, coach_email)
-       from public.settings),
+      -- Every setting (jsonb keeps nulls in place and prints times the same way whatever
+      -- the session's settings); updated_at changes on every save.
+      (select (to_jsonb(s) - 'updated_at')::text from public.settings s),
       (select count(*) from public.availability_exceptions),
-      (select count(*) from public.announcements)
+      (select count(*) from public.announcements),
+      (select string_agg(concat_ws(',', id, username, display_name, coalesce(phone, '-'), role,
+                                   approved), ';' order by id)
+       from public.profiles
+       where id::text like 'a0000000-0000-4000-8000-%')
     )) as fingerprint`
 
 /** Opens a connection to the test database and checks that it holds the seed as loaded. */
@@ -94,6 +98,12 @@ export async function connect(): Promise<pg.Client> {
     await client.end()
     throw new Error(problem)
   }
+  // Nothing may ever commit on the shared dev database. Tests write only inside their
+  // own `begin read write` transaction (see `begin`), which is always rolled back. A
+  // statement that runs outside one (for example the rest of a test body that carries on
+  // after the test timed out and its transaction was rolled back) is read-only, so a
+  // write fails instead of committing.
+  await client.query('set default_transaction_read_only = on')
   return client
 }
 
@@ -125,12 +135,10 @@ export type TestDb = {
  */
 export function useTestDb(): TestDb {
   let client: pg.Client | undefined
-  const ids = new Map<string, string>()
-
-  const c = () => {
+  const db = actingOn(() => {
     if (!client) throw new Error('Not connected')
     return client
-  }
+  })
 
   beforeAll(async () => {
     client = await connect()
@@ -141,14 +149,74 @@ export function useTestDb(): TestDb {
   })
 
   beforeEach(async () => {
-    await c().query('begin')
-    await c().query(`set local timezone = 'America/Los_Angeles'`)
-    await db.setNow(FIXTURE_NOW)
+    await begin(db)
   }, SLOW)
 
   afterEach(async () => {
-    await c().query('rollback')
+    await db.query('rollback')
   }, SLOW)
+
+  return db
+}
+
+/**
+ * Starts a test transaction (the only place writes are allowed, see `connect`): the time
+ * zone far from Malaysia, the clock at FIXTURE_NOW.
+ */
+async function begin(db: TestDb) {
+  await db.query('begin read write')
+  await db.query(`set local timezone = 'America/Los_Angeles'`)
+  await db.setNow(FIXTURE_NOW)
+}
+
+/** How long a concurrency-test session waits for another session's lock. */
+export const SESSION_LOCK_TIMEOUT_MS = 3_000
+
+export type Session = TestDb & {
+  /** The server process id, to find this session's locks in pg_locks. */
+  pid: number
+  /** Rolls the session's transaction back and disconnects. */
+  close(): Promise<void>
+}
+
+/**
+ * A second connection for concurrency tests, like a second browser: its own
+ * transaction, set up like a test's (clock, time zone, acting as the owner until `as`).
+ * It never commits: close() rolls it back, so the dev database keeps the seed. As
+ * neither of two racing sessions commits, the one that has to wait for the other's lock
+ * gives up after SESSION_LOCK_TIMEOUT_MS (lock_timeout) instead of waiting for a commit
+ * that never comes. Always close() it, in a `finally`.
+ */
+export async function openSession(): Promise<Session> {
+  const client = await connect()
+  const db = actingOn(() => client)
+  try {
+    await begin(db)
+    await db.query(`set local lock_timeout = '${SESSION_LOCK_TIMEOUT_MS}ms'`)
+    await db.query(`set local statement_timeout = '20s'`)
+    const { rows } = await db.query<{ pid: number }>('select pg_backend_pid() as pid')
+    const pid = rows[0]?.pid
+    if (!pid) throw new Error('No backend process id')
+    return {
+      ...db,
+      pid,
+      async close() {
+        try {
+          await client.query('rollback')
+        } finally {
+          await client.end()
+        }
+      },
+    }
+  } catch (error) {
+    await client.end()
+    throw error
+  }
+}
+
+/** The TestDb methods on one connection. */
+function actingOn(c: () => pg.Client): TestDb {
+  const ids = new Map<string, string>()
 
   const db: TestDb = {
     query: (sql, params) => c().query(sql, params && [...params]),
