@@ -1,4 +1,4 @@
-import { PlaceholderPage } from '../../../components/PlaceholderPage'
+import { PlaceholderPage } from '@/shared/ui/PlaceholderPage'
 
 export function MyClassesPage() {
   return (

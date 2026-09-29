@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { useRouteError } from 'react-router'
-import { DEFAULT_BUSINESS_NAME } from '../lib/business'
+import { DEFAULT_BUSINESS_NAME } from '@/shared/config/business'
 
 // Last-resort error screen for anything a page didn't handle itself, including a page's
 // code failing to download (a dropped connection, or an old file after a new release).

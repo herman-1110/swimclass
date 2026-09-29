@@ -1,6 +1,6 @@
-import { PlaceholderPage } from '../../../components/PlaceholderPage'
+import { PlaceholderPage } from '@/shared/ui/PlaceholderPage'
 
-export function WaitingForApprovalPage() {
+export function PendingPage() {
   return (
     <PlaceholderPage
       title="Waiting for approval"

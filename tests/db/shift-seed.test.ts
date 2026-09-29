@@ -1,12 +1,12 @@
-// supabase/snippets/shift-seed.sql, run inside the test transaction (rolled back, so
+// supabase/scripts/shift-seed.sql, run inside the test transaction (rolled back, so
 // the seed keeps its dates).
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
-import { mytDateKey, mytWeekStart } from '../../src/lib/time'
+import { mytDateKey, mytWeekStart } from '@/shared/lib/time'
 import { hasDatabase, SEED, useTestDb } from './helpers'
 
 const SNIPPET = readFileSync(
-  new URL('../../supabase/snippets/shift-seed.sql', import.meta.url),
+  new URL('../../supabase/scripts/shift-seed.sql', import.meta.url),
   'utf8',
 )
 const DAY = 24 * 60 * 60 * 1000

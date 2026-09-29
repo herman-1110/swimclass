@@ -1,0 +1,1 @@
+export { MyClassesPage } from './MyClassesPage'

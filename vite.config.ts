@@ -1,11 +1,14 @@
 /// <reference types="vitest/config" />
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
+import { fileURLToPath } from 'node:url'
 import { defineConfig, loadEnv } from 'vite'
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => ({
   plugins: [react(), tailwindcss()],
+  // One path alias: @/ means src/ (ARCHITECTURE §8).
+  resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },
   server: {
     // Supabase Auth redirect URLs allow http://localhost:5173 (TECH_SPEC §9),
     // so fail loudly instead of silently moving to another port.
@@ -13,7 +16,7 @@ export default defineConfig(({ mode }) => ({
     strictPort: true,
   },
   test: {
-    include: ['tests/**/*.test.{ts,tsx}'],
+    include: ['src/**/*.test.{ts,tsx}', 'tests/**/*.test.ts'],
     // The database tests share one dev database: one file at a time, so files never
     // wait for each other's locks. A test gets 30 s (queries go to Singapore and back).
     fileParallelism: false,

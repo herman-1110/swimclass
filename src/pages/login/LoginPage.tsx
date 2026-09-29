@@ -1,5 +1,5 @@
 import { Link } from 'react-router'
-import { PlaceholderPage } from '../../../components/PlaceholderPage'
+import { PlaceholderPage } from '@/shared/ui/PlaceholderPage'
 
 export function LoginPage() {
   return (

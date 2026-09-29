@@ -2,7 +2,7 @@
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider, type RouteObject } from 'react-router'
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
-import { createRoutes } from '../../src/app/routes'
+import { createRoutes } from './routes'
 
 beforeAll(() => {
   // jsdom has no scrolling; ScrollRestoration calls this on every navigation.

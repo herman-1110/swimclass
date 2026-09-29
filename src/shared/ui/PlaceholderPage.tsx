@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { DEFAULT_BUSINESS_NAME } from '../lib/business'
+import { DEFAULT_BUSINESS_NAME } from '@/shared/config/business'
 
 // Temporary page body used until each screen is built. Delete once no page uses it.
 

@@ -1,0 +1,1 @@
+export { CoachSettingsPage } from './CoachSettingsPage'

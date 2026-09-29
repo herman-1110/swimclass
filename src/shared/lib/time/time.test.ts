@@ -9,7 +9,7 @@ import {
   mytWeekStart,
   nowMyt,
   toMyt,
-} from '../../src/lib/time'
+} from './time'
 
 describe('test setup', () => {
   it('runs with a device time zone that is not Malaysia', () => {

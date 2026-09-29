@@ -1,5 +1,5 @@
 import { Link, NavLink, Outlet } from 'react-router'
-import { DEFAULT_BUSINESS_NAME } from '../../lib/business'
+import { DEFAULT_BUSINESS_NAME } from '@/shared/config/business'
 
 // Desktop-first (1280 px and up) with a text-only sidebar (design/AdminSchedule.dc.html).
 // Below 768 px the sidebar becomes a bar across the top so the pages keep their width.

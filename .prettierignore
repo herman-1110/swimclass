@@ -11,7 +11,7 @@ prompts
 design
 
 # Generated or copied verbatim
-src/lib/database.types.ts
+src/shared/api/database.types.ts
 wrangler.jsonc
 supabase/.temp
 supabase/.branches

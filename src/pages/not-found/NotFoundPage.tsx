@@ -1,5 +1,5 @@
 import { Link } from 'react-router'
-import { DEFAULT_BUSINESS_NAME } from '../lib/business'
+import { DEFAULT_BUSINESS_NAME } from '@/shared/config/business'
 
 export function NotFoundPage() {
   return (

@@ -1,19 +1,19 @@
 import { Navigate, type RouteObject } from 'react-router'
-import { ForgotPasswordPage } from '../features/auth/forgot-password/ForgotPasswordPage'
-import { LoginPage } from '../features/auth/login/LoginPage'
-import { ResetPasswordPage } from '../features/auth/reset-password/ResetPasswordPage'
-import { SignUpPage } from '../features/auth/sign-up/SignUpPage'
-import { WaitingForApprovalPage } from '../features/auth/waiting-for-approval/WaitingForApprovalPage'
-import { AccountPage } from '../features/customer/account/AccountPage'
-import { BookPage } from '../features/customer/book/BookPage'
-import { MyClassesPage } from '../features/customer/my-classes/MyClassesPage'
-import { SchedulePage } from '../features/customer/schedule/SchedulePage'
+import { AuthLayout } from '@/app/layouts/AuthLayout'
+import { CoachLayout } from '@/app/layouts/CoachLayout'
+import { CustomerLayout } from '@/app/layouts/CustomerLayout'
+import { RootLayout } from '@/app/layouts/RootLayout'
+import { AccountPage } from '@/pages/account'
+import { BookPage } from '@/pages/book'
+import { ForgotPasswordPage } from '@/pages/forgot-password'
+import { LoginPage } from '@/pages/login'
+import { MyClassesPage } from '@/pages/my-classes'
+import { NotFoundPage } from '@/pages/not-found'
+import { PendingPage } from '@/pages/pending'
+import { ResetPasswordPage } from '@/pages/reset-password'
+import { SchedulePage } from '@/pages/schedule'
+import { SignUpPage } from '@/pages/signup'
 import { HomeRedirect, RequireApproved, RequireCoach, RequireSignedIn } from './guards'
-import { AuthLayout } from './layouts/AuthLayout'
-import { CoachLayout } from './layouts/CoachLayout'
-import { CustomerLayout } from './layouts/CustomerLayout'
-import { NotFoundPage } from './NotFoundPage'
-import { RootLayout } from './RootLayout'
 import { RouteError } from './RouteError'
 import { RouteLoading } from './RouteLoading'
 
@@ -52,7 +52,7 @@ export function createRoutes(): RouteObject[] {
             // Signed in, not approved yet: this is the only page they can see
             {
               Component: AuthLayout,
-              children: [{ path: 'pending', Component: WaitingForApprovalPage }],
+              children: [{ path: 'pending', Component: PendingPage }],
             },
 
             {
@@ -85,31 +85,26 @@ export function createRoutes(): RouteObject[] {
                         {
                           path: 'schedule',
                           lazy: async () => ({
-                            Component: (
-                              await import('../features/coach/schedule/CoachSchedulePage')
-                            ).CoachSchedulePage,
+                            Component: (await import('@/pages/coach-schedule')).CoachSchedulePage,
                           }),
                         },
                         {
                           path: 'students',
                           lazy: async () => ({
-                            Component: (await import('../features/coach/students/StudentsPage'))
-                              .StudentsPage,
+                            Component: (await import('@/pages/coach-students')).CoachStudentsPage,
                           }),
                         },
                         {
                           path: 'students/new',
                           lazy: async () => ({
-                            Component: (
-                              await import('../features/coach/add-students/AddStudentsPage')
-                            ).AddStudentsPage,
+                            Component: (await import('@/pages/coach-add-students'))
+                              .CoachAddStudentsPage,
                           }),
                         },
                         {
                           path: 'settings',
                           lazy: async () => ({
-                            Component: (await import('../features/coach/settings/SettingsPage'))
-                              .SettingsPage,
+                            Component: (await import('@/pages/coach-settings')).CoachSettingsPage,
                           }),
                         },
                       ],

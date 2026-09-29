@@ -16,6 +16,9 @@
     "noEmit": true,
     "jsx": "react-jsx",
 
+    /* One path alias: @/ means src/ (ARCHITECTURE §8) */
+    "paths": { "@/*": ["./src/*"] },
+
     /* Type checking */
     "strict": true,
     "noUnusedLocals": true,

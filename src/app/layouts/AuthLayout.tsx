@@ -1,5 +1,5 @@
 import { Outlet } from 'react-router'
-import { DEFAULT_BUSINESS_NAME } from '../../lib/business'
+import { DEFAULT_BUSINESS_NAME } from '@/shared/config/business'
 
 // Log in, sign up, forgot and reset password, waiting for approval: one phone column
 // with the business name on top (design/Login.dc.html).

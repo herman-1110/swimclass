@@ -16,8 +16,8 @@
     "typecheck": "tsc -b",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "db:types": "supabase gen types typescript --linked --schema public > src/lib/database.types.ts",
-    "db:types:local": "supabase gen types typescript --local --schema public > src/lib/database.types.ts"
+    "db:types": "supabase gen types typescript --linked --schema public > src/shared/api/database.types.ts",
+    "db:types:local": "supabase gen types typescript --local --schema public > src/shared/api/database.types.ts"
   },
   "dependencies": {
     "@date-fns/tz": "1.5.0",

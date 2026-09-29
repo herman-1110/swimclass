@@ -1,6 +1,6 @@
-import { PlaceholderPage } from '../../../components/PlaceholderPage'
+import { PlaceholderPage } from '@/shared/ui/PlaceholderPage'
 
-export function SettingsPage() {
+export function CoachSettingsPage() {
   return (
     <PlaceholderPage
       title="Settings"
