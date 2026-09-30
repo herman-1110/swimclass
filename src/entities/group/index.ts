@@ -1,5 +1,5 @@
 export { groupKeys } from './api/keys'
-export { useAccountGroups } from './api/useAccountGroups'
+export { useCoachAccountGroups } from './api/useCoachAccountGroups'
 export { useCoachGroup } from './api/useCoachGroup'
 export { useCoachGroups } from './api/useCoachGroups'
 export { useGroupLocations } from './api/useGroupLocations'

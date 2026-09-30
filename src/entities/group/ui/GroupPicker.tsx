@@ -26,23 +26,29 @@ type GroupPickerProps = {
   emptyText?: string
   /**
    * grid (default, Book): a column on phones, rows side by side from 768 px wherever
-   * 200 px fits. list: always one column (a list in a dialog).
+   * 200 px fits. list: always one column. scroll: one column that shows about five and a
+   * half rows and scrolls the rest (Add booking's list of every active group).
    */
-  layout?: 'grid' | 'list'
+  layout?: 'grid' | 'list' | 'scroll'
+  /** Layout only: grid placement or margins (Book puts it in its "group" area). */
+  className?: string
 }
 
 // design/Main.dc.html:70-84 (.groups :30, :38): rows 8 px apart, from 768 px a grid of
 // columns at least 200 px wide. The legend sits 8 px above the rows and the help 8 px below.
+// scroll (not drawn; coach-schedule §7.4 "max-height about 5 rows with scrolling"): a half
+// row shows there is more; 4 px of padding keeps the rows' focus ring inside the box.
 const layouts = {
   grid: 'flex flex-col gap-2 md:grid md:grid-cols-[repeat(auto-fill,minmax(200px,1fr))]',
   list: 'flex flex-col gap-2',
+  scroll: '-m-1 flex max-h-[312px] flex-col gap-2 overflow-y-auto p-1',
 }
 
 /**
  * "Who’s this lesson for?" (DESIGN §3, §4 Book): one radio row per group with its type
  * tag, in a fieldset whose legend names the group, so arrow keys move the choice (UI kit
- * spec §3.9). Book uses it as it is; Add booking passes its own legend, name, second line
- * and empty text.
+ * spec §3.9). Book uses it as it is; Add booking passes its own legend, name, second line,
+ * empty text and the scroll layout.
  */
 export function GroupPicker({
   groups,
@@ -55,11 +61,23 @@ export function GroupPicker({
   secondary,
   emptyText,
   layout = 'grid',
+  className,
 }: GroupPickerProps) {
   return (
-    <Fieldset legend={legend} hideLegend={hideLegend} spacing="loose" help={help}>
+    <Fieldset
+      legend={legend}
+      hideLegend={hideLegend}
+      spacing="loose"
+      help={help}
+      className={className}
+    >
       {groups.length === 0 ? (
-        emptyText && <p className="text-sm leading-normal text-muted">{emptyText}</p>
+        emptyText && (
+          // A polite status: a search that empties the list is read out.
+          <p role="status" className="text-sm leading-normal text-muted">
+            {emptyText}
+          </p>
+        )
       ) : (
         <div className={layouts[layout]}>
           {groups.map((group) => (

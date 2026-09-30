@@ -23,4 +23,9 @@ describe('CoachBanner', () => {
     expect(message.textContent).toBe('Pool closed Friday.\nLessons move to Saturday.')
     expect(message.className).toContain('whitespace-pre-line')
   })
+
+  it('takes a layout class for the page’s spacing', () => {
+    const { container } = render(<CoachBanner message="Pool closed Friday." className="mt-5.5" />)
+    expect(container.firstElementChild?.className).toContain('mt-5.5')
+  })
 })

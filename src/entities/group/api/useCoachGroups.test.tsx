@@ -7,7 +7,7 @@ import { getSession, logIn, logOut } from '@/shared/api/auth'
 import { DEMO_PASSWORD } from '@/shared/config/demo'
 
 import { groupKeys } from './keys'
-import { useAccountGroups } from './useAccountGroups'
+import { useCoachAccountGroups } from './useCoachAccountGroups'
 import { useCoachGroup } from './useCoachGroup'
 import { useCoachGroups } from './useCoachGroups'
 import { useGroupLocations } from './useGroupLocations'
@@ -67,8 +67,8 @@ describe('useCoachGroups', () => {
       hana: useCoachGroup(HANA),
       missing: useCoachGroup('c0000000-0000-4000-8000-000000000099'),
       none: useCoachGroup(null),
-      meiling: useAccountGroups(MEILING),
-      nobody: useAccountGroups(null),
+      meiling: useCoachAccountGroups(MEILING),
+      nobody: useCoachAccountGroups(null),
       locations: useGroupLocations(),
     }))
     await waitFor(() => expect(result.current.locations.isSuccess).toBe(true))

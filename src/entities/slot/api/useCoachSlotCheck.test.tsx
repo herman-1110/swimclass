@@ -14,6 +14,8 @@ import { useCoachSlotCheck } from './useCoachSlotCheck'
 // expected answers are data-contracts §3.11's, captured as herman.
 
 const AIMAN_AND_SOFIA = 'c0000000-0000-4000-8000-000000000001'
+// Each answer comes 300 ms after the input settles: room to spare when many tests run at once.
+const settle = { timeout: 3000 }
 
 beforeAll(async () => {
   // Load the demo database here (about 4 s in jsdom), not inside the first test's 5 s.
@@ -45,7 +47,7 @@ describe('useCoachSlotCheck', () => {
   it('says a free start is ok', async () => {
     await logIn('herman', DEMO_PASSWORD)
     const { result } = renderCheck(tuesdayAt('19:30'))
-    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    await waitFor(() => expect(result.current.isSuccess).toBe(true), settle)
     expect(result.current.data).toEqual({ ok: true, reason: null, detail: null })
     expect(result.current.isChecking).toBe(false)
   })
@@ -53,7 +55,7 @@ describe('useCoachSlotCheck', () => {
   it('gives the reason and its detail, and follows the dialog’s two switches', async () => {
     await logIn('herman', DEMO_PASSWORD)
     const { result, rerender } = renderCheck(tuesdayAt('19:00'))
-    await waitFor(() => expect(result.current.data?.ok).toBe(false))
+    await waitFor(() => expect(result.current.data?.ok).toBe(false), settle)
     expect(result.current.data).toEqual({
       ok: false,
       reason: 'gap_after',
@@ -61,26 +63,26 @@ describe('useCoachSlotCheck', () => {
     })
 
     rerender({ args: tuesdayAt('19:00', { p_gap_override: true }) })
-    await waitFor(() => expect(result.current.data?.ok).toBe(true))
+    await waitFor(() => expect(result.current.data?.ok).toBe(true), settle)
 
     rerender({ args: tuesdayAt('15:00') })
-    await waitFor(() => expect(result.current.data?.reason).toBe('outside_open_hours'))
+    await waitFor(() => expect(result.current.data?.reason).toBe('outside_open_hours'), settle)
 
     rerender({ args: tuesdayAt('15:00', { p_ignore_open_hours: true }) })
-    await waitFor(() => expect(result.current.data?.ok).toBe(true))
+    await waitFor(() => expect(result.current.data?.ok).toBe(true), settle)
   })
 
   it('waits for the input to settle, saying it is checking meanwhile', async () => {
     await logIn('herman', DEMO_PASSWORD)
     const { result, rerender } = renderCheck(tuesdayAt('19:30'))
-    await waitFor(() => expect(result.current.data?.ok).toBe(true))
+    await waitFor(() => expect(result.current.data?.ok).toBe(true), settle)
 
     rerender({ args: tuesdayAt('17:30') })
     // Straight after the change: still the old answer, marked as being checked.
     expect(result.current.isChecking).toBe(true)
     expect(result.current.data?.ok).toBe(true)
 
-    await waitFor(() => expect(result.current.isChecking).toBe(false))
+    await waitFor(() => expect(result.current.isChecking).toBe(false), settle)
     expect(result.current.data).toMatchObject({ ok: false, reason: 'overlap_other' })
   })
 
@@ -91,7 +93,7 @@ describe('useCoachSlotCheck', () => {
     expect(result.current.isChecking).toBe(false)
 
     rerender({ args: tuesdayAt('19:30') })
-    await waitFor(() => expect(result.current.data?.ok).toBe(true))
+    await waitFor(() => expect(result.current.data?.ok).toBe(true), settle)
     rerender({ args: null })
     expect(result.current.data).toBeUndefined()
     expect(result.current.isChecking).toBe(false)
@@ -100,7 +102,7 @@ describe('useCoachSlotCheck', () => {
   it('fails with not_coach for a customer', async () => {
     await logIn('meiling', DEMO_PASSWORD)
     const { result } = renderCheck(tuesdayAt('19:30'))
-    await waitFor(() => expect(result.current.isError).toBe(true))
+    await waitFor(() => expect(result.current.isError).toBe(true), settle)
     expect(result.current.error).toMatchObject({ name: 'AppError', code: 'not_coach' })
   })
 })

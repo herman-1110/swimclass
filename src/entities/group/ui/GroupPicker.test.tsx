@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { useState } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
@@ -109,6 +109,28 @@ describe('GroupPicker', () => {
     expect(row.name).toBe('add-booking-group')
   })
 
+  it('scrolls a long list in its own box, keeping every row in the one radio group', () => {
+    const many = Array.from({ length: 8 }, (_, index): Group => ({
+      ...sofia,
+      group_id: `c0000000-0000-4000-8000-0000000001${index}0`,
+      display_names: `Student ${index + 1}`,
+    }))
+    render(
+      <GroupPicker
+        groups={many}
+        value={null}
+        onChange={() => {}}
+        legend="Group"
+        help={null}
+        layout="scroll"
+      />,
+    )
+    const group = screen.getByRole('group', { name: 'Group' })
+    expect(within(group).getAllByRole('radio')).toHaveLength(8)
+    const box = radio('Student 1 1-to-1').closest('label')?.parentElement
+    expect(box?.className).toContain('overflow-y-auto')
+  })
+
   it('shows the empty text in place of the rows', () => {
     render(
       <GroupPicker
@@ -120,7 +142,7 @@ describe('GroupPicker', () => {
         emptyText="No active group matches “zz”."
       />,
     )
-    expect(screen.getByText('No active group matches “zz”.')).toBeTruthy()
+    expect(screen.getByRole('status').textContent).toBe('No active group matches “zz”.')
     expect(screen.queryAllByRole('radio')).toHaveLength(0)
   })
 })
