@@ -12,8 +12,15 @@ type SegmentedProps = {
   /** "Lesson type"; Book's "Lesson length" is hidden. */
   legend: string
   hideLegend?: boolean
+  /** The fieldset's id (default useId()); the help and error get `${id}-help` and `${id}-error`. */
+  id?: string
   /** 12 px muted line under the track ("Up to 3 students from the same account per lesson."). */
   help?: ReactNode
+  /**
+   * Wording from messages.ts, under the track (Add students' group_full). Linked to the
+   * group with aria-describedby; the radios get aria-invalid.
+   */
+  error?: string
   options: readonly SegmentedOption[]
   value: string
   onChange: (value: string) => void
@@ -41,7 +48,9 @@ export function Segmented({
   name,
   legend,
   hideLegend,
+  id,
   help,
+  error,
   options,
   value,
   onChange,
@@ -49,7 +58,14 @@ export function Segmented({
   className,
 }: SegmentedProps) {
   return (
-    <Fieldset legend={legend} hideLegend={hideLegend} help={help} className={className}>
+    <Fieldset
+      id={id}
+      legend={legend}
+      hideLegend={hideLegend}
+      help={help}
+      error={error}
+      className={className}
+    >
       <div
         className={cn(
           'flex gap-0.5 rounded-control bg-subtle p-0.75',
@@ -66,6 +82,7 @@ export function Segmented({
               value={option.value}
               checked={option.value === value}
               disabled={option.disabled}
+              aria-invalid={error ? true : undefined}
               onChange={() => onChange(option.value)}
               className="sr-only"
             />

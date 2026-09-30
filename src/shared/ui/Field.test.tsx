@@ -94,13 +94,30 @@ describe('Field', () => {
     ).toBe('true')
   })
 
-  it('describes a prefixed input with its prefix, inside one box', () => {
+  it('names a prefixed input with its prefix, inside one box', () => {
     render(<Field id="pay-amount" label="Amount" prefix="RM" inputMode="decimal" />)
-    const input = screen.getByRole('textbox', { name: 'Amount' })
-    expect(describedBy(input)).toEqual(['pay-amount-prefix'])
-    expect(document.getElementById('pay-amount-prefix')?.textContent).toBe('RM')
+    const input = screen.getByRole('textbox', { name: 'Amount (RM)' })
+    // The visible label stays "Amount"; "(RM)" is for screen readers only.
+    expect(screen.getByText('(RM)').className).toBe('sr-only')
+    // The drawn "RM" is hidden from screen readers, so it isn't read twice.
+    const prefix = document.getElementById('pay-amount-prefix')
+    expect(prefix?.textContent).toBe('RM')
+    expect(prefix?.getAttribute('aria-hidden')).toBe('true')
+    expect(input.hasAttribute('aria-describedby')).toBe(false)
     expect(input.getAttribute('inputmode')).toBe('decimal')
     expect(input.parentElement?.className).toContain('focus-within:outline-accent')
+  })
+
+  it('describes a prefixed input with its prefix when something else names it', () => {
+    render(
+      <>
+        <span id="price-label">1-to-1 price</span>
+        <Field id="price-1" aria-labelledby="price-label" prefix="RM" />
+      </>,
+    )
+    const input = screen.getByRole('textbox', { name: '1-to-1 price' })
+    expect(describedBy(input)).toEqual(['price-1-prefix'])
+    expect(document.getElementById('price-1-prefix')?.hasAttribute('aria-hidden')).toBe(false)
   })
 
   it('is a search box with a label only screen readers get', () => {

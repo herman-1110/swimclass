@@ -83,6 +83,48 @@ describe('Segmented', () => {
     expect(onChange).toHaveBeenLastCalledWith('1')
   })
 
+  it('shows an error linked to the group, and marks the radios invalid', () => {
+    const { rerender } = render(
+      <Segmented
+        id="add-type"
+        name="add-type"
+        legend="Lesson type"
+        help="Up to 3 students from the same account per lesson."
+        error={
+          'A lesson can have up to 2 students. Remove one, or change "Students per lesson" in Settings.'
+        }
+        options={types}
+        value="3"
+        onChange={() => {}}
+      />,
+    )
+    const group = screen.getByRole('group', { name: 'Lesson type' })
+    expect(group.id).toBe('add-type')
+    expect(group.getAttribute('aria-describedby')).toBe('add-type-help add-type-error')
+    expect(document.getElementById('add-type-error')?.textContent).toBe(
+      'A lesson can have up to 2 students. Remove one, or change "Students per lesson" in Settings.',
+    )
+    expect(screen.getAllByRole('radio').map((r) => r.getAttribute('aria-invalid'))).toEqual([
+      'true',
+      'true',
+      'true',
+    ])
+
+    // Once the error goes, so do the link and the invalid state.
+    rerender(
+      <Segmented
+        id="add-type"
+        name="add-type"
+        legend="Lesson type"
+        options={types}
+        value="2"
+        onChange={() => {}}
+      />,
+    )
+    expect(group.hasAttribute('aria-describedby')).toBe(false)
+    expect(screen.getAllByRole('radio').some((r) => r.hasAttribute('aria-invalid'))).toBe(false)
+  })
+
   it('keeps a hidden legend as the name (Book’s lesson length)', () => {
     render(
       <Segmented

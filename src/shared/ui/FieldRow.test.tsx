@@ -5,6 +5,7 @@ import { Checkbox } from './Checkbox'
 import { Field } from './Field'
 import { FieldList } from './FieldList'
 import { FieldRow } from './FieldRow'
+import { Select } from './Select'
 
 afterEach(cleanup)
 
@@ -91,13 +92,67 @@ describe('FieldRow', () => {
         }
       />,
     )
-    expect(document.getElementById('set-window-note')?.textContent).toBe(
-      'Customers who already booked further ahead keep their lessons.',
-    )
-    expect(document.getElementById('set-window-error')?.textContent).toBe(
+    const note = document.getElementById('set-window-note')
+    const error = document.getElementById('set-window-error')
+    expect(note?.textContent).toBe('Customers who already booked further ahead keep their lessons.')
+    expect(error?.textContent).toBe(
       'Booking window has a value that isn’t allowed. Check it and save again.',
     )
     const input = screen.getByRole('textbox', { name: 'Booking window' })
     expect(input.getAttribute('aria-invalid')).toBe('true')
+    // The messages sit under the label and control's line, which keeps its drawn
+    // no-wrap from 768 px, so the control stays beside the label.
+    const line = screen.getByText('Booking window').parentElement?.parentElement
+    expect(line?.contains(input)).toBe(true)
+    expect(line?.className).toContain('md:flex-nowrap')
+    expect(line?.contains(note ?? null)).toBe(false)
+    expect(line?.contains(error ?? null)).toBe(false)
+  })
+
+  it('shows a two-line help in the one described element', () => {
+    render(
+      <FieldRow
+        label="Unused lessons expire"
+        htmlFor="set-expiry"
+        help={
+          <>
+            Counted from when a package is paid
+            <br />
+            Not available yet
+          </>
+        }
+        control={
+          <Select
+            id="set-expiry"
+            size="row"
+            options={[{ value: '0', label: 'Never' }]}
+            aria-describedby="set-expiry-help"
+            disabled
+          />
+        }
+      />,
+    )
+    const select = screen.getByRole('combobox', { name: 'Unused lessons expire' })
+    const help = document.getElementById('set-expiry-help')
+    expect(select.getAttribute('aria-describedby')).toBe('set-expiry-help')
+    expect(help?.firstChild?.textContent).toBe('Counted from when a package is paid')
+    expect(help?.querySelectorAll('br')).toHaveLength(1)
+    expect(help?.lastChild?.textContent).toBe('Not available yet')
+  })
+
+  it('describes a group by a help that is not plain text', () => {
+    render(
+      <FieldRow
+        label="Lesson lengths"
+        help={<>What customers can choose</>}
+        group
+        controlLayout="options"
+        control={<Checkbox look="inline" label="1 hour" />}
+      />,
+    )
+    const group = screen.getByRole('group', { name: 'Lesson lengths' })
+    expect(document.getElementById(group.getAttribute('aria-describedby') ?? '')?.textContent).toBe(
+      'What customers can choose',
+    )
   })
 })

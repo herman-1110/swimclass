@@ -94,6 +94,20 @@ describe('Fieldset', () => {
     expect(radio('A').checked).toBe(true)
   })
 
+  it('leaves arrow keys with Alt, Ctrl or Meta to the browser, and moves with Shift', () => {
+    render(<Radios />)
+    radio('A').focus()
+    // fireEvent returns false when the handler cancelled the event.
+    for (const modifier of ['altKey', 'ctrlKey', 'metaKey']) {
+      expect(fireEvent.keyDown(radio('A'), { key: 'ArrowRight', [modifier]: true })).toBe(true)
+      expect(fireEvent.keyDown(radio('A'), { key: 'ArrowLeft', [modifier]: true })).toBe(true)
+      expect(radio('A').checked).toBe(true)
+      expect(document.activeElement).toBe(radio('A'))
+    }
+    expect(fireEvent.keyDown(radio('A'), { key: 'ArrowRight', shiftKey: true })).toBe(false)
+    expect(radio('B').checked).toBe(true)
+  })
+
   it('lets a handler of its own stop the move', () => {
     function Stopped() {
       const [value, setValue] = useState('a')

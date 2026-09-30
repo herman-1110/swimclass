@@ -26,7 +26,11 @@ type FieldProps = Omit<ComponentPropsWithRef<'input'>, 'size' | 'prefix' | 'widt
   size?: FieldSize
   /** inline: an 80 px label column beside the input (Add students' student names). */
   layout?: 'stacked' | 'inline'
-  /** Text inside the box before the input: "RM". */
+  /**
+   * Text inside the box before the input: "RM". With a label it joins the input's name,
+   * visually hidden ("Amount (RM)"), and the drawn one is hidden from screen readers;
+   * without a label it describes the input.
+   */
   prefix?: string
   /** Text after the input: "min", "hours", "weeks", "lessons", "package". */
   unit?: string
@@ -80,8 +84,8 @@ const prefixBoxStates =
  * A labelled single-line input (UI kit spec §3.3), with optional help, status and error
  * text, a prefix ("RM"), a unit ("min") and an inline label. Also the search box
  * (type="search", hideLabel). The id defaults to useId(); pass one to match a drawing
- * (login-username). Help, status and error get `${id}-help`, `${id}-status` and
- * `${id}-error`, listed in aria-describedby after any the caller passes.
+ * (login-username). The unit, help, status and error get `${id}-unit`, `${id}-help`,
+ * `${id}-status` and `${id}-error`, listed in aria-describedby after any the caller passes.
  */
 export function Field({
   label,
@@ -112,10 +116,12 @@ export function Field({
     status: `${id}-status`,
     error: `${id}-error`,
   }
+  // "Amount (RM)" (coach-students §7): the prefix is part of the name when there is a label.
+  const prefixInName = Boolean(prefix) && Boolean(label)
   const describedBy =
     cn(
       describedByProp,
-      prefix && ids.prefix,
+      prefix && !prefixInName ? ids.prefix : null,
       unit && ids.unit,
       help ? ids.help : null,
       status ? ids.status : null,
@@ -123,6 +129,14 @@ export function Field({
     ) || undefined
   const invalid = Boolean(error) || ariaInvalid === true || ariaInvalid === 'true'
   const end = align === 'end' && 'text-right'
+  // The space sits outside the hidden text, so every name computation keeps it.
+  const labelText = prefixInName ? (
+    <>
+      {label} <span className="sr-only">({prefix})</span>
+    </>
+  ) : (
+    label
+  )
 
   const input = (
     <input
@@ -148,7 +162,11 @@ export function Field({
     <div
       className={cn('flex items-center gap-2', box, boxSizes[size], widths[width], prefixBoxStates)}
     >
-      <span id={ids.prefix} className={cn('shrink-0 leading-[normal] text-muted', textSizes[size])}>
+      <span
+        id={ids.prefix}
+        aria-hidden={prefixInName || undefined}
+        className={cn('shrink-0 leading-[normal] text-muted', textSizes[size])}
+      >
         {prefix}
       </span>
       {input}
@@ -213,7 +231,7 @@ export function Field({
                   )
             }
           >
-            {label}
+            {labelText}
           </label>
         )}
         <div className="flex min-w-0 flex-1 flex-col gap-1">
@@ -237,7 +255,7 @@ export function Field({
                 : 'text-label font-medium text-muted'
           }
         >
-          {label}
+          {labelText}
         </label>
       )}
       {control}

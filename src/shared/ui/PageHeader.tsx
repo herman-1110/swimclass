@@ -16,7 +16,10 @@ type PageHeaderProps = {
   description?: ReactNode
   /** Buttons, search or week navigation: under the title on phones, at the right from 768 px. */
   actions?: ReactNode
-  /** How the actions line up with the title from 768 px. Default: center (coach), end (customer). */
+  /**
+   * How the actions line up with the title from 768 px. Default: center (coach), end
+   * (customer). A coach header aligned to the start (Settings) keeps 16 px between them.
+   */
   align?: PageHeaderAlign
   /** An id for the h1, so a form or section can be named by it (aria-labelledby). */
   titleId?: string
@@ -89,8 +92,10 @@ export function PageHeader({
     <div
       className={cn(
         'flex flex-col md:flex-row md:justify-between',
-        // 14 px between the title and the week navigation (customer), 12 px (coach).
+        // 14 px between the title and the week navigation (customer), 12 px (coach); the
+        // top-aligned Settings header has 16 px (AdminSettings.dc.html:25).
         size === 'customer' ? 'gap-3.5' : 'gap-3',
+        size === 'coach' && align === 'start' && 'md:gap-4',
         alignments[align],
       )}
     >

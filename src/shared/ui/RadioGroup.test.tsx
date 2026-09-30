@@ -41,6 +41,7 @@ describe('RadioGroup', () => {
     ])
     expect(radio('Cash').checked).toBe(true)
     expect(radio('Transfer').checked).toBe(false)
+    expect(radio('Cash').hasAttribute('aria-invalid')).toBe(false)
   })
 
   it('chooses by click and by arrow keys', () => {
@@ -72,6 +73,9 @@ describe('RadioGroup', () => {
     expect(document.getElementById(errorId)?.textContent).toBe(
       'Choose how they paid: Cash, Transfer or FPX.',
     )
+    expect(
+      screen.getAllByRole('radio').every((r) => r.getAttribute('aria-invalid') === 'true'),
+    ).toBe(true)
   })
 
   it('can disable one option or the whole group', () => {

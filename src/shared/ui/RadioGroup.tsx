@@ -15,7 +15,10 @@ type RadioGroupProps = {
   value: string
   onChange: (value: string) => void
   help?: ReactNode
-  /** Wording from messages.ts ("Choose how they paid: Cash, Transfer or FPX."). */
+  /**
+   * Wording from messages.ts ("Choose how they paid: Cash, Transfer or FPX."). Linked to
+   * the group with aria-describedby; the radios get aria-invalid.
+   */
   error?: string
   disabled?: boolean
   required?: boolean
@@ -62,6 +65,7 @@ export function RadioGroup({
               checked={option.value === value}
               disabled={option.disabled}
               required={required}
+              aria-invalid={error ? true : undefined}
               onChange={() => onChange(option.value)}
               className="size-4.5 shrink-0 cursor-pointer accent-accent disabled:cursor-default"
             />

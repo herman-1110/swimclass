@@ -7,8 +7,11 @@ type FieldRowControl = 'auto' | 'options' | 'full' | 'email' | 'prices'
 type FieldRowProps = {
   /** "Travel gap". */
   label: string
-  /** "Blocked before and after every lesson". */
-  help?: string
+  /**
+   * "Blocked before and after every lesson". A second line goes after a <br />:
+   * <>Counted from when a package is paid<br />Not available yet</>.
+   */
+  help?: ReactNode
   /**
    * The control's id: the label becomes its <label>. The help, note and error then get
    * the ids `${htmlFor}-help`, `${htmlFor}-note` and `${htmlFor}-error`; list the ones
@@ -37,9 +40,12 @@ type FieldRowProps = {
   error?: string
 }
 
-// UI kit spec §3.21, AdminSettings.dc.html:31-50, 62-72.
+// UI kit spec §3.21, AdminSettings.dc.html:31-50, 62-72. The row is a column: the drawn
+// line (label and control, centred in the 54 px row) and, under it, the proposed note and
+// error. The line wraps as drawn whether or not a message shows.
 const row =
-  'flex min-h-13.5 flex-wrap items-center justify-between gap-x-4 gap-y-2.5 border-t border-line-row px-3.5 first:border-t-0 md:px-4'
+  'flex min-h-13.5 flex-col justify-center gap-2.5 border-t border-line-row px-3.5 first:border-t-0 md:px-4'
+const line = 'flex flex-wrap items-center justify-between gap-x-4 gap-y-2.5'
 
 const controls: Record<FieldRowControl, string> = {
   auto: 'flex shrink-0 items-center gap-2',
@@ -72,7 +78,6 @@ export function FieldRow({
     note: `${base}-note`,
     error: `${base}-error`,
   }
-  const hasMessage = Boolean(note) || Boolean(error)
 
   return (
     <div
@@ -83,48 +88,53 @@ export function FieldRow({
           : layout === 'stack'
             ? 'py-2.5 md:py-3'
             : 'py-2.5 md:py-1.25',
-        // From 768 px the row stays on one line, unless the control or a message must go under it.
-        layout === 'inline' && !hasMessage && 'md:flex-nowrap',
       )}
     >
-      <div className="flex min-w-0 flex-[1_1_160px] flex-col gap-px md:flex-[1_1_auto]">
-        {htmlFor ? (
-          <label id={ids.label} htmlFor={htmlFor} className="text-sm leading-[normal] font-medium">
-            {label}
-          </label>
-        ) : (
-          <span id={ids.label} className="text-sm leading-[normal] font-medium">
-            {label}
-          </span>
-        )}
-        {help && (
-          <span id={ids.help} className="text-small leading-[1.4] text-muted">
-            {help}
-          </span>
-        )}
-      </div>
-      <div
-        className={controls[controlLayout]}
-        role={group ? 'group' : undefined}
-        aria-labelledby={group ? ids.label : undefined}
-        aria-describedby={
-          group
-            ? cn(help && ids.help, note ? ids.note : null, error && ids.error) || undefined
-            : undefined
-        }
-      >
-        {control}
+      {/* From 768 px the control stays beside the label (the text wraps instead); stack rows wrap. */}
+      <div className={cn(line, layout === 'inline' && 'md:flex-nowrap')}>
+        <div className="flex min-w-0 flex-[1_1_160px] flex-col gap-px md:flex-[1_1_auto]">
+          {htmlFor ? (
+            <label
+              id={ids.label}
+              htmlFor={htmlFor}
+              className="text-sm leading-[normal] font-medium"
+            >
+              {label}
+            </label>
+          ) : (
+            <span id={ids.label} className="text-sm leading-[normal] font-medium">
+              {label}
+            </span>
+          )}
+          {help ? (
+            <span id={ids.help} className="text-small leading-[1.4] text-muted">
+              {help}
+            </span>
+          ) : null}
+        </div>
+        <div
+          className={controls[controlLayout]}
+          role={group ? 'group' : undefined}
+          aria-labelledby={group ? ids.label : undefined}
+          aria-describedby={
+            group
+              ? cn(help ? ids.help : null, note ? ids.note : null, error && ids.error) || undefined
+              : undefined
+          }
+        >
+          {control}
+        </div>
       </div>
       {note ? (
         <div
           id={ids.note}
-          className="basis-full rounded-small bg-subtle px-2.5 py-2 text-small leading-[1.4] text-ink"
+          className="rounded-small bg-subtle px-2.5 py-2 text-small leading-[1.4] text-ink"
         >
           {note}
         </div>
       ) : null}
       {error && (
-        <p id={ids.error} className="basis-full text-small leading-[1.4] text-warn">
+        <p id={ids.error} className="text-small leading-[1.4] text-warn">
           {error}
         </p>
       )}

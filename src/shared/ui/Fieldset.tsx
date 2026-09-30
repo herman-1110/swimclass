@@ -42,9 +42,12 @@ const steps: Partial<Record<string, number>> = {
 /**
  * Arrow keys move the choice between the radios of one name in this fieldset, wrapping at
  * the ends and skipping disabled ones: what browsers do for native radios, done here so
- * it behaves the same everywhere and can be tested.
+ * it behaves the same everywhere and can be tested. With Alt, Ctrl or Meta held the key
+ * belongs to the browser (Alt+Left is Back), as it does for native radios; Shift+Arrow
+ * still moves, as in Chrome.
  */
 function moveChoice(event: KeyboardEvent<HTMLFieldSetElement>) {
+  if (event.altKey || event.ctrlKey || event.metaKey) return
   const step = steps[event.key]
   const from = event.target
   if (!step || !(from instanceof HTMLInputElement) || from.type !== 'radio') return

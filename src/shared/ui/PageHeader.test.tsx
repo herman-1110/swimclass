@@ -34,6 +34,22 @@ describe('PageHeader', () => {
     ).toBeTruthy()
     const save = screen.getByRole('button', { name: 'Save changes' })
     expect(save.parentElement?.className).toContain('md:items-start')
+    // Settings' header keeps 16 px between the title and the button from 768 px.
+    expect(save.parentElement?.className).toContain('md:gap-4')
+  })
+
+  it('keeps 12 px between a centred coach title and its actions', () => {
+    render(
+      <PageHeader
+        size="coach"
+        title="Students & payments"
+        actions={<button type="button">Add students</button>}
+      />,
+    )
+    const row = screen.getByRole('button', { name: 'Add students' }).parentElement
+    expect(row?.className).toContain('md:items-center')
+    expect(row?.className).toContain('gap-3')
+    expect(row?.className).not.toContain('md:gap-4')
   })
 
   it('gives the h1 an id to name a form by, and focuses it when asked', () => {
