@@ -5,8 +5,9 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 
 import { SessionProvider } from '@/app/providers/SessionProvider'
 import { createRoutes } from '@/app/router/routes'
+import { settingsKeys } from '@/entities/settings'
 import { logIn, logOut, signUp } from '@/shared/api/auth'
-import { rpc } from '@/shared/api/rpc'
+import { AppError, rpc } from '@/shared/api/rpc'
 import { DEFAULT_BUSINESS_NAME } from '@/shared/config/business'
 import { DEMO_PASSWORD } from '@/shared/config/demo'
 
@@ -36,9 +37,10 @@ beforeAll(async () => {
 
 afterEach(cleanup)
 
-function renderAt(path: string) {
+const newClient = () => new QueryClient({ defaultOptions: { queries: { retry: false } } })
+
+function renderAt(path: string, queryClient = newClient()) {
   const router = createMemoryRouter(createRoutes(), { initialEntries: [path] })
-  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   render(
     <QueryClientProvider client={queryClient}>
       <SessionProvider>
@@ -72,5 +74,33 @@ describe('the business name', () => {
     await screen.findByRole('heading', { level: 1, name: 'Welcome back' })
     expect(screen.getByText(DEFAULT_BUSINESS_NAME)).toBeTruthy()
     expect(screen.queryByText(RENAMED)).toBeNull()
+  })
+
+  // Auth spec §6.5: "Business name loading / failed | An empty line of the same height / 'Swim Class'".
+  it('is an empty line of the same height while the settings load', async () => {
+    await logIn('newbie', DEMO_PASSWORD)
+    const queryClient = newClient()
+    // Never fetched, so the settings stay loading.
+    queryClient.setQueryDefaults(settingsKeys.public(), { enabled: false })
+    renderAt('/pending', queryClient)
+    await screen.findByRole('heading', { level: 1, name: 'Waiting for approval' })
+    const name = screen.getByRole('main').previousElementSibling
+    expect(name?.textContent).toBe('')
+    expect(name?.className).toContain('min-h-[1lh]')
+  })
+
+  it('is the default when the settings fail to load', async () => {
+    await logIn('meiling', DEMO_PASSWORD)
+    const queryClient = newClient()
+    // The settings query has failed, and nothing retries it.
+    queryClient.setQueryDefaults(settingsKeys.public(), { retryOnMount: false })
+    await queryClient.prefetchQuery({
+      queryKey: settingsKeys.public(),
+      queryFn: () => Promise.reject(new AppError('network')),
+    })
+    renderAt('/book', queryClient)
+    const sidebar = await screen.findByRole('complementary', { name: 'Main navigation' })
+    expect(await within(sidebar).findByText(DEFAULT_BUSINESS_NAME)).toBeTruthy()
+    expect(within(sidebar).queryByText(RENAMED)).toBeNull()
   })
 })
