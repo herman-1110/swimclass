@@ -201,7 +201,8 @@ The page folder is the route with `/` turned into `-`:
 
 | Route | Page folder | Who |
 |---|---|---|
-| `/login`, `/signup`, `/forgot-password`, `/reset-password` | `login/`, `signup/`, `forgot-password/`, `reset-password/` | anyone |
+| `/login`, `/signup`, `/forgot-password` | `login/`, `signup/`, `forgot-password/` | signed out (anyone signed in is sent on) |
+| `/reset-password` | `reset-password/` | anyone |
 | `/pending` | `pending/` | signed in, not approved yet |
 | `/book`, `/schedule`, `/my-classes`, `/account` | `book/`, `schedule/`, `my-classes/`, `account/` | customers (the coach can look) |
 | `/coach/schedule`, `/coach/students`, `/coach/add-students`, `/coach/settings` | `coach-schedule/`, `coach-students/`, `coach-add-students/`, `coach-settings/` | coach |
