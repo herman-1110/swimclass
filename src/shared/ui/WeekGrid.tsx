@@ -58,8 +58,11 @@ type WeekGridProps = {
   interactive?: boolean
   /** The text alternative (DESIGN §5), visually hidden after the grid: a list of each day. */
   summary?: ReactNode
-  /** Drawn over the day columns while loading or after an error; the header stays. */
+  /** Drawn over the day columns while loading or after an error; the header stays. It sits
+   *  beside the picture, not in it, so its status line, alert and "Try again" are read out. */
   overlay?: ReactNode
+  /** The week is loading: aria-busy on the picture, or on the region of an interactive grid. */
+  busy?: boolean
 }
 
 const looks = {
@@ -120,6 +123,7 @@ export function WeekGrid({
   interactive = false,
   summary,
   overlay,
+  busy = false,
 }: WeekGridProps) {
   const look = looks[size]
   const height = `calc(${(to - from) / 30} * var(--row))`
@@ -133,6 +137,7 @@ export function WeekGrid({
     <div
       role={interactive ? 'region' : undefined}
       aria-label={interactive ? label : undefined}
+      aria-busy={interactive && busy ? true : undefined}
       className={cn('flex min-w-0 flex-col', look.metrics)}
     >
       <div
@@ -164,65 +169,70 @@ export function WeekGrid({
           )
         })}
       </div>
-      <div
-        role={interactive ? undefined : 'img'}
-        aria-label={interactive ? undefined : label}
-        className={cn('relative grid', look.columns, look.body)}
-      >
-        <div aria-hidden="true" className="grid auto-rows-[var(--hour)]" style={{ height }}>
-          {gridHours(from, to).map((minute) => (
-            <span key={minute} className={look.hour}>
-              {hourLabel(minute)}
-            </span>
+      {/* The overlay is the picture's sibling: an image's children are hidden from screen
+          readers (ARIA img has presentational children). */}
+      <div className="relative">
+        <div
+          role={interactive ? undefined : 'img'}
+          aria-label={interactive ? undefined : label}
+          aria-busy={!interactive && busy ? true : undefined}
+          className={cn('grid', look.columns, look.body)}
+        >
+          <div aria-hidden="true" className="grid auto-rows-[var(--hour)]" style={{ height }}>
+            {gridHours(from, to).map((minute) => (
+              <span key={minute} className={look.hour}>
+                {hourLabel(minute)}
+              </span>
+            ))}
+          </div>
+          {days.map((day, column) => (
+            <Column
+              key={day.key}
+              role={interactive ? 'list' : undefined}
+              aria-label={interactive ? day.label : undefined}
+              className="relative m-0 list-none border-l border-tag bg-[repeating-linear-gradient(to_bottom,var(--tag)_0,var(--tag)_1px,transparent_1px,transparent_var(--hour))] p-0"
+              style={{ height }}
+            >
+              {interactive && day.summary && <li className="sr-only">{day.summary}</li>}
+              {sorted.map((block) => {
+                const position = block.column === column && blockPosition(block, from, to)
+                if (!position) return null
+                const button = interactive && block.onSelect
+                const face = cn(
+                  'overflow-hidden',
+                  look.face,
+                  tones[block.tone],
+                  block.content !== undefined && look.content,
+                )
+                return (
+                  <Item
+                    key={block.key}
+                    aria-hidden={interactive && !button ? true : undefined}
+                    className={cn('absolute', look.block, !button && face)}
+                    style={position}
+                  >
+                    {button ? (
+                      <button
+                        type="button"
+                        aria-label={block.label}
+                        onClick={block.onSelect}
+                        className={cn(
+                          'size-full cursor-pointer text-left',
+                          face,
+                          block.tone === 'accent' && 'hover:bg-accent-hover',
+                        )}
+                      >
+                        {block.content}
+                      </button>
+                    ) : (
+                      block.content
+                    )}
+                  </Item>
+                )
+              })}
+            </Column>
           ))}
         </div>
-        {days.map((day, column) => (
-          <Column
-            key={day.key}
-            role={interactive ? 'list' : undefined}
-            aria-label={interactive ? day.label : undefined}
-            className="relative m-0 list-none border-l border-tag bg-[repeating-linear-gradient(to_bottom,var(--tag)_0,var(--tag)_1px,transparent_1px,transparent_var(--hour))] p-0"
-            style={{ height }}
-          >
-            {interactive && day.summary && <li className="sr-only">{day.summary}</li>}
-            {sorted.map((block) => {
-              const position = block.column === column && blockPosition(block, from, to)
-              if (!position) return null
-              const button = interactive && block.onSelect
-              const face = cn(
-                'overflow-hidden',
-                look.face,
-                tones[block.tone],
-                block.content !== undefined && look.content,
-              )
-              return (
-                <Item
-                  key={block.key}
-                  aria-hidden={interactive && !button ? true : undefined}
-                  className={cn('absolute', look.block, !button && face)}
-                  style={position}
-                >
-                  {button ? (
-                    <button
-                      type="button"
-                      aria-label={block.label}
-                      onClick={block.onSelect}
-                      className={cn(
-                        'size-full cursor-pointer text-left',
-                        face,
-                        block.tone === 'accent' && 'hover:bg-accent-hover',
-                      )}
-                    >
-                      {block.content}
-                    </button>
-                  ) : (
-                    block.content
-                  )}
-                </Item>
-              )
-            })}
-          </Column>
-        ))}
         {overlay && <div className={cn('absolute right-0 bottom-0', look.overlay)}>{overlay}</div>}
       </div>
       {summary && <div className="sr-only">{summary}</div>}

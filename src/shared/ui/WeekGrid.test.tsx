@@ -108,6 +108,46 @@ describe('WeekGrid, the customer picture', () => {
     expect(you.style.height).toBe('max(1px, calc(2 * var(--row) - 2px))')
     expect(screen.queryByText('Too early')).toBeNull()
   })
+
+  it('puts the overlay beside the picture, where its alert and button are read out', () => {
+    const { rerender } = renderGrid(
+      <WeekGrid
+        size="compact"
+        days={week()}
+        blocks={[]}
+        hourLabel={hourLabel}
+        label={PICTURE}
+        overlay={
+          <div>
+            <p role="alert">Couldn’t reach the server. Check your connection and try again.</p>
+            <button type="button">Try again</button>
+          </div>
+        }
+      />,
+    )
+    // An image's children are presentational: nothing the overlay says may sit inside it.
+    const picture = screen.getByRole('img', { name: PICTURE })
+    expect(picture.contains(screen.getByRole('alert'))).toBe(false)
+    expect(picture.contains(screen.getByRole('button', { name: 'Try again' }))).toBe(false)
+    expect(picture.hasAttribute('aria-busy')).toBe(false)
+
+    rerender(
+      <MemoryRouter>
+        <WeekGrid
+          size="compact"
+          days={week()}
+          blocks={[]}
+          hourLabel={hourLabel}
+          label={PICTURE}
+          busy
+          overlay={<p role="status">Loading the timetable</p>}
+        />
+      </MemoryRouter>,
+    )
+    const loading = screen.getByRole('img', { name: PICTURE })
+    expect(loading.getAttribute('aria-busy')).toBe('true')
+    expect(loading.contains(screen.getByRole('status'))).toBe(false)
+  })
 })
 
 describe('WeekGrid, the coach’s interactive grid', () => {
@@ -195,5 +235,36 @@ describe('WeekGrid, the coach’s interactive grid', () => {
         .getAllByRole('button')
         .map((button) => button.textContent),
     ).toEqual(['Early', 'Late'])
+  })
+
+  it('marks the region busy while the week loads', () => {
+    const { rerender } = renderGrid(
+      <WeekGrid
+        size="comfortable"
+        interactive
+        days={coachDays}
+        blocks={[]}
+        hourLabel={(minute) => `${minute / 60}`}
+        label="Week"
+        busy
+        overlay={<p role="status">Loading the week</p>}
+      />,
+    )
+    const region = screen.getByRole('region', { name: 'Week' })
+    expect(region.getAttribute('aria-busy')).toBe('true')
+    expect(within(region).getByRole('status').textContent).toBe('Loading the week')
+    rerender(
+      <MemoryRouter>
+        <WeekGrid
+          size="comfortable"
+          interactive
+          days={coachDays}
+          blocks={[]}
+          hourLabel={(minute) => `${minute / 60}`}
+          label="Week"
+        />
+      </MemoryRouter>,
+    )
+    expect(screen.getByRole('region', { name: 'Week' }).hasAttribute('aria-busy')).toBe(false)
   })
 })

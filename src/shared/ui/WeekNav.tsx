@@ -8,10 +8,12 @@ import { ChevronRightIcon } from './icons/ChevronRightIcon'
 const labelLooks = {
   // Customer Schedule (design/Schedule.dc.html): 15 px 600.
   stretch: 'text-body font-semibold',
-  // Coach Schedule (design/AdminSchedule.dc.html): at least 160 px, centred. On a 360 px
-  // phone it may shrink and wrap rather than push the arrows under 44 px.
+  // Coach Schedule (design/AdminSchedule.dc.html): at least 160 px, wider for a longer label,
+  // centred. On a 360 px phone it may shrink and wrap rather than push the arrows under 44 px
+  // (coach-schedule C10), so the 160 px comes from a zero-height ::after that gives way
+  // (max-width 100%) instead of a min-width that wouldn't.
   packed:
-    'min-w-0 shrink basis-40 text-center text-body font-semibold text-balance md:min-w-40 md:basis-auto',
+    'min-w-0 shrink text-center text-body font-semibold text-balance after:block after:h-0 after:w-40 after:max-w-full md:min-w-40',
   // Book's "Day" heading row: 13 px muted, like the drawn range text (design/Main.dc.html).
   small: 'text-label text-muted',
 }

@@ -56,11 +56,13 @@ describe('Tabs', () => {
     expect(tab('All 13').getAttribute('aria-pressed')).toBe('false')
   })
 
-  it('is one Tab stop: only the chosen tab is in the Tab order', () => {
+  it('keeps every tab in the Tab order, as drawn', () => {
     render(<Filters />)
-    expect(filters.map((item) => tab(`${item.label} ${item.count}`).tabIndex)).toEqual([
-      0, -1, -1, -1,
-    ])
+    for (const item of filters) {
+      const button = tab(`${item.label} ${item.count}`)
+      expect(button.tabIndex).toBe(0)
+      expect(button.hasAttribute('tabindex')).toBe(false)
+    }
   })
 
   it('moves and chooses with the arrow keys, wrapping round, and Home and End', () => {
@@ -69,7 +71,6 @@ describe('Tabs', () => {
     fireEvent.keyDown(tab('All 13'), { key: 'ArrowRight' })
     expect(tab('Unpaid 2').getAttribute('aria-pressed')).toBe('true')
     expect(document.activeElement).toBe(tab('Unpaid 2'))
-    expect(tab('Unpaid 2').tabIndex).toBe(0)
 
     fireEvent.keyDown(tab('Unpaid 2'), { key: 'ArrowLeft' })
     fireEvent.keyDown(tab('All 13'), { key: 'ArrowLeft' })
@@ -84,6 +85,15 @@ describe('Tabs', () => {
     fireEvent.keyDown(tab('Paid 11'), { key: 'Home' })
     expect(document.activeElement).toBe(tab('All 13'))
     expect(tab('All 13').getAttribute('aria-pressed')).toBe('true')
+  })
+
+  it('moves from the focused tab, which Tab may have reached without choosing it', () => {
+    render(<Filters />)
+    tab('Paid 11').focus()
+    fireEvent.keyDown(tab('Paid 11'), { key: 'ArrowLeft' })
+    expect(document.activeElement).toBe(tab('Last lesson 2'))
+    expect(tab('Last lesson 2').getAttribute('aria-pressed')).toBe('true')
+    expect(tab('All 13').getAttribute('aria-pressed')).toBe('false')
   })
 
   it('leaves other keys alone', () => {

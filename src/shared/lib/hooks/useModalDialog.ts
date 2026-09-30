@@ -11,7 +11,8 @@ type ModalDialogOptions = {
   open: boolean
   /** Esc, or the browser closing the dialog itself (for example the Android back gesture). */
   onClose: () => void
-  /** False while a request runs: Esc does nothing. */
+  /** False while a request runs: Esc, the back gesture and the browser's own close requests
+   *  do nothing, and the dialog stays open. */
   dismissible?: boolean
   /** Where focus goes when it opens (a dialog's title, or its safest action). */
   initialFocus: RefObject<HTMLElement | null>
@@ -90,11 +91,30 @@ function precedes(node: Node, other: Node): boolean {
   return (other.compareDocumentPosition(node) & Node.DOCUMENT_POSITION_PRECEDING) !== 0
 }
 
+/** Shows the dialog as a modal. jsdom has no showModal: the open attribute shows it there,
+ *  and the focus guard keeps focus inside. */
+function show(dialog: HTMLDialogElement) {
+  if (typeof dialog.showModal === 'function') {
+    if (!dialog.open) dialog.showModal()
+  } else {
+    dialog.setAttribute('open', '')
+  }
+}
+
+/** Focus on `preferred`, or the first Tab stop when it can't take focus (it is disabled
+ *  while a request runs). */
+function focusInside(dialog: HTMLDialogElement, preferred: HTMLElement | null) {
+  preferred?.focus()
+  if (!dialog.contains(document.activeElement)) tabStops(dialog).at(0)?.focus()
+}
+
 /**
  * A native <dialog> shown as a modal (DESIGN §3): while `open`, it is shown with showModal()
  * (the page behind becomes inert), focus starts on `initialFocus`, Tab and Shift+Tab stay
  * inside it, Esc calls `onClose`, the page doesn't scroll, and when it closes focus goes back
- * to the element that opened it (unless the page has moved focus on since).
+ * to the element that opened it (unless the page has moved focus on since). While
+ * `dismissible` is false, nothing but the owner closes it: if the browser closes it anyway,
+ * it opens again at once.
  *
  * The component renders the <dialog> only while open; React state owns `open`, so Esc asks
  * the owner to close instead of closing it behind React's back.
@@ -114,23 +134,17 @@ export function useModalDialog(
     if (!open || !dialog) return
     const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null
 
-    // jsdom has no showModal: the open attribute shows it, and the focus guard below keeps
-    // focus inside.
-    if (typeof dialog.showModal === 'function') {
-      if (!dialog.open) dialog.showModal()
-    } else {
-      dialog.setAttribute('open', '')
-    }
+    show(dialog)
     stack.push(dialog)
     lockScroll()
-    const focusStart = () =>
-      (latest.current.initialFocus.current ?? tabStops(dialog).at(0))?.focus()
-    focusStart()
+    focusInside(dialog, latest.current.initialFocus.current)
 
     // If focus lands outside anyway (something scripted it there), bring it back.
     const guard = (event: FocusEvent) => {
       if (stack.at(-1) !== dialog) return
-      if (event.target instanceof Node && !dialog.contains(event.target)) focusStart()
+      if (event.target instanceof Node && !dialog.contains(event.target)) {
+        focusInside(dialog, latest.current.initialFocus.current)
+      }
     }
     document.addEventListener('focusin', guard)
 
@@ -181,16 +195,26 @@ export function useModalDialog(
       }
     },
     onCancel: (event) => {
-      // A close request that didn't come through Esc (the Android back gesture).
+      // A close request that didn't come through the dialog's keydown: the Android back
+      // gesture, or Esc while focus is on the page (a focused button became disabled).
       event.preventDefault()
       if (latest.current.dismissible) latest.current.onClose()
     },
     onClose: (event) => {
       // Our own close() (the owner closed it, or React re-ran the effect) takes it off the
-      // stack first, and the event comes later. Only a close the browser made on its own,
-      // while the dialog should still be showing, is passed on to the owner.
+      // stack first, and the event comes later: ignore it, and ignore a dialog that is
+      // showing again. What's left is a close the browser made on its own, because its
+      // close request couldn't be cancelled (Esc pressed again and again with focus on the
+      // page, or back pressed twice).
       const dialog = event.currentTarget
-      if (stack.includes(dialog) && !dialog.open) latest.current.onClose()
+      if (!stack.includes(dialog) || dialog.open) return
+      if (latest.current.dismissible) {
+        latest.current.onClose()
+        return
+      }
+      // Not now (a request is running): show it again, with focus inside.
+      show(dialog)
+      focusInside(dialog, latest.current.initialFocus.current)
     },
   }
 }

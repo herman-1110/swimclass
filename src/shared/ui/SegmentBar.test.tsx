@@ -33,6 +33,15 @@ describe('SegmentBar', () => {
     expect(segments(container)).toEqual(['used', 'used', 'used', 'booked'])
   })
 
+  it('keeps the table’s 113 px and 3 px gaps for any package size', () => {
+    const { container } = render(
+      <SegmentBar total={12} used={2} booked={1} size="md" width="fixed" />,
+    )
+    const bar = container.firstElementChild
+    expect(bar?.children).toHaveLength(12)
+    expect(bar?.className.split(' ')).toEqual(expect.arrayContaining(['gap-[3px]', 'w-[113px]']))
+  })
+
   it('draws nothing for an empty package', () => {
     const { container } = render(<SegmentBar total={0} used={0} booked={0} />)
     expect(container.firstElementChild).toBeNull()

@@ -21,7 +21,8 @@ type TabsProps = {
   note?: string
 }
 
-/** Where an arrow key, Home or End moves the choice (wrapping round), or null for other keys. */
+/** Where an arrow key, Home or End moves from the focused tab (wrapping round), or null for
+ *  other keys. */
 function moveTo(key: string, index: number, count: number): number | null {
   const from = Math.max(index, 0)
   if (key === 'ArrowRight') return (from + 1) % count
@@ -34,8 +35,9 @@ function moveTo(key: string, index: number, count: number): number | null {
 /**
  * Filter tabs over one list (design/AdminStudents.dc.html): 44 px buttons with a 2 px accent
  * underline on the chosen one, over a --line rule, 20 px apart (24 px from 768 px); they
- * scroll sideways on a phone. They filter one table, so they are aria-pressed buttons in a
- * named group (no tab panels). One Tab stop: the arrow keys, Home and End choose.
+ * scroll sideways when they don't fit. They filter one table, so they are aria-pressed
+ * buttons in a named group (no tab panels), each a Tab stop as drawn (coach-students §7). The
+ * arrow keys, Home and End also move along them and choose.
  */
 export function Tabs({ label, items, value, onChange, note }: TabsProps) {
   const listRef = useRef<HTMLDivElement>(null)
@@ -51,15 +53,16 @@ export function Tabs({ label, items, value, onChange, note }: TabsProps) {
     else if (end > list.scrollLeft + list.clientWidth) list.scrollLeft = end - list.clientWidth
   }, [value])
 
-  const index = items.findIndex((item) => item.value === value)
-
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-    const next = moveTo(event.key, index, items.length)
+    // From the focused tab: Tab can reach any of them, not only the chosen one.
+    const buttons = [...(listRef.current?.querySelectorAll<HTMLElement>('button') ?? [])]
+    const focused = buttons.findIndex((button) => button === event.target)
+    const next = moveTo(event.key, focused, items.length)
     const item = next === null ? undefined : items.at(next)
     if (next === null || !item) return
     event.preventDefault()
     onChange(item.value)
-    listRef.current?.querySelectorAll<HTMLElement>('button').item(next).focus()
+    buttons.at(next)?.focus()
   }
 
   return (
@@ -72,15 +75,13 @@ export function Tabs({ label, items, value, onChange, note }: TabsProps) {
         onKeyDown={onKeyDown}
         className="relative -mb-px flex min-w-0 gap-5 overflow-x-auto md:gap-6"
       >
-        {items.map((item, position) => {
+        {items.map((item) => {
           const on = item.value === value
           return (
             <button
               key={item.value}
               type="button"
               aria-pressed={on}
-              // One Tab stop: the chosen tab (the first while none is chosen).
-              tabIndex={on || (index < 0 && position === 0) ? 0 : -1}
               onClick={() => onChange(item.value)}
               className={cn(
                 'h-11 shrink-0 cursor-pointer border-b-2 px-0.5 text-sm whitespace-nowrap focus-visible:outline-offset-[-2px]',
@@ -94,8 +95,10 @@ export function Tabs({ label, items, value, onChange, note }: TabsProps) {
           )
         })}
       </div>
+      {/* flex-1: the note takes only the room the tabs leave and wraps in it, so the tabs
+          scroll only when they alone don't fit (coach-students C8). */}
       {note && (
-        <span className="hidden min-w-0 text-right text-small text-muted md:block">{note}</span>
+        <span className="hidden flex-1 text-right text-small text-muted md:block">{note}</span>
       )}
     </div>
   )

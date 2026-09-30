@@ -10,10 +10,12 @@ const TITLE = 'Cancel Sat 3 Oct, 9:00–10:00 am for Aiman & Sofia?'
 
 /** A page with a button that opens the cancel confirmation (the My classes pattern). */
 function Page({
-  dismissible = true,
+  dismissible,
+  busy = false,
   focusKeep = false,
 }: {
   dismissible?: boolean
+  busy?: boolean
   focusKeep?: boolean
 }) {
   const [open, setOpen] = useState(false)
@@ -31,6 +33,7 @@ function Page({
         description="The lesson goes back to your package."
         role={focusKeep ? 'alertdialog' : 'dialog'}
         initialFocus={focusKeep ? keep : undefined}
+        busy={busy}
         dismissible={dismissible}
         actions={
           <>
@@ -66,6 +69,7 @@ describe('Dialog', () => {
       description: 'The lesson goes back to your package.',
     })
     expect(dialog.getAttribute('aria-modal')).toBe('true')
+    expect(dialog.hasAttribute('aria-busy')).toBe(false)
     expect(document.activeElement).toBe(screen.getByRole('heading', { level: 2, name: TITLE }))
   })
 
@@ -130,6 +134,58 @@ describe('Dialog', () => {
     expect(close.getAttribute('aria-disabled')).toBe('true')
     fireEvent.click(close)
     expect(screen.getByRole('dialog')).toBeTruthy()
+  })
+
+  it('is busy while a request runs: aria-busy, and Esc and Close do nothing', () => {
+    render(<Page busy />)
+    openFrom('Cancel')
+    const dialog = screen.getByRole('dialog')
+    expect(dialog.getAttribute('aria-busy')).toBe('true')
+    fireEvent.keyDown(dialog, { key: 'Escape' })
+    fireEvent.click(screen.getByRole('button', { name: 'Close' }))
+    expect(screen.getByRole('dialog')).toBe(dialog)
+  })
+
+  it('answers the browser’s close request (the back gesture) only when dismissible', () => {
+    const { unmount } = render(<Page />)
+    const opener = openFrom('Cancel')
+    const request = new Event('cancel', { cancelable: true })
+    fireEvent(screen.getByRole('dialog'), request)
+    // Cancelled, so React state closes it rather than the browser.
+    expect(request.defaultPrevented).toBe(true)
+    expect(document.querySelector('dialog')).toBeNull()
+    expect(document.activeElement).toBe(opener)
+    unmount()
+
+    render(<Page dismissible={false} />)
+    openFrom('Cancel')
+    const held = new Event('cancel', { cancelable: true })
+    fireEvent(screen.getByRole('dialog'), held)
+    expect(held.defaultPrevented).toBe(true)
+    expect(screen.getByRole('dialog')).toBeTruthy()
+  })
+
+  it('opens again when the browser closes it itself while it is not dismissible', () => {
+    render(<Page dismissible={false} />)
+    openFrom('Cancel')
+    const dialog = screen.getByRole('dialog')
+    // A close request the browser wouldn't let us cancel (Esc again and again with focus on
+    // the page): it closes the dialog, then fires close.
+    dialog.removeAttribute('open')
+    fireEvent(dialog, new Event('close'))
+    expect(document.querySelector('dialog')).toBe(dialog)
+    expect(dialog.hasAttribute('open')).toBe(true)
+    expect(dialog.contains(document.activeElement)).toBe(true)
+  })
+
+  it('tells the owner when the browser closes it itself', () => {
+    render(<Page />)
+    const opener = openFrom('Cancel')
+    const dialog = screen.getByRole('dialog')
+    dialog.removeAttribute('open')
+    fireEvent(dialog, new Event('close'))
+    expect(document.querySelector('dialog')).toBeNull()
+    expect(document.activeElement).toBe(opener)
   })
 
   it('stops the page scrolling while open', () => {

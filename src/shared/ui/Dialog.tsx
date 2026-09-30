@@ -31,7 +31,10 @@ type DialogProps = {
   size?: keyof typeof widths
   /** Leave out "Close" when the actions already have a way out ("Keep lesson", "Cancel"). */
   hideClose?: boolean
-  /** False while a request runs: Esc and Close do nothing. */
+  /** A request is running ("Cancelling…"): aria-busy on the dialog, which also stops Esc and
+   *  Close from closing it unless `dismissible` says otherwise. */
+  busy?: boolean
+  /** False: Esc, Close and the browser's back gesture do nothing. Default: not while busy. */
   dismissible?: boolean
 }
 
@@ -53,7 +56,8 @@ export function Dialog({
   initialFocus,
   size = 'md',
   hideClose = false,
-  dismissible = true,
+  busy = false,
+  dismissible = !busy,
 }: DialogProps) {
   const ref = useRef<HTMLDialogElement>(null)
   const titleRef = useRef<HTMLHeadingElement>(null)
@@ -78,12 +82,14 @@ export function Dialog({
       aria-modal="true"
       aria-labelledby={`${id}-title`}
       aria-describedby={describedBy}
+      aria-busy={busy || undefined}
       className={cn(
         'fixed inset-0 m-0 h-dvh max-h-none w-full max-w-none flex-col gap-4.5 overflow-y-auto overscroll-contain bg-white px-5 pt-6 text-ink backdrop:bg-ink/40 open:flex',
         'md:m-auto md:h-fit md:max-h-[calc(100dvh_-_80px)] md:rounded-frame md:px-6 md:pt-6',
         widths[size],
         !actions && 'pb-[max(32px,env(safe-area-inset-bottom))] md:pb-6',
-        'motion-safe:transition-opacity motion-safe:duration-150 motion-safe:starting:open:opacity-0',
+        // Opens with a 150 ms fade and scale (my-classes §7, coach-schedule §3.10).
+        'motion-safe:transition-[opacity,scale] motion-safe:duration-150 motion-safe:starting:open:scale-95 motion-safe:starting:open:opacity-0',
       )}
       {...handlers}
     >
