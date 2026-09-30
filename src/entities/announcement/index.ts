@@ -1,1 +1,5 @@
 export { announcementKeys } from './api/keys'
+export { useLatestAnnouncement } from './api/useLatestAnnouncement'
+export { usePinnedAnnouncements } from './api/usePinnedAnnouncements'
+export type { Announcement, PinnedAnnouncement } from './model/types'
+export { CoachBanner } from './ui/CoachBanner'

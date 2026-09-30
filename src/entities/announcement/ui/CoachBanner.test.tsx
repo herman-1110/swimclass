@@ -1,0 +1,26 @@
+import { cleanup, render, screen } from '@testing-library/react'
+import { afterEach, describe, expect, it } from 'vitest'
+
+import { CoachBanner } from './CoachBanner'
+
+afterEach(cleanup)
+
+describe('CoachBanner', () => {
+  it('says the message after a bold "Coach:", as drawn', () => {
+    const { container } = render(
+      <CoachBanner message="If lightning closes the pool, your lesson goes back to your package." />,
+    )
+    const label = screen.getByText('Coach:')
+    expect(label.className).toContain('font-semibold')
+    expect(container.textContent).toBe(
+      'Coach: If lightning closes the pool, your lesson goes back to your package.',
+    )
+  })
+
+  it('keeps the line breaks the coach typed', () => {
+    render(<CoachBanner message={'Pool closed Friday.\nLessons move to Saturday.'} />)
+    const message = screen.getByText(/Pool closed Friday\./)
+    expect(message.textContent).toBe('Pool closed Friday.\nLessons move to Saturday.')
+    expect(message.className).toContain('whitespace-pre-line')
+  })
+})
