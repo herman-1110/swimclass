@@ -7,7 +7,7 @@ import { getSession, logIn, logOut } from '@/shared/api/auth'
 import { DEMO_PASSWORD } from '@/shared/config/demo'
 
 import { paymentKeys } from './keys'
-import { useGroupPayments, usePayments } from './usePayments'
+import { readPayments, useGroupPayments, usePayments } from './usePayments'
 
 // Runs in demo mode: the real migrations and seed in PGlite, clock at DEMO_NOW.
 
@@ -36,32 +36,35 @@ describe('usePayments', () => {
     await logIn('meiling', DEMO_PASSWORD)
     const { result } = renderHook(() => usePayments([AIMAN_SOFIA, SOFIA]), { wrapper: wrapper() })
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
-    expect(result.current.data).toEqual([
-      {
-        id: 'e0000000-0000-4000-8000-000000000001',
-        group_id: AIMAN_SOFIA,
-        lessons: 4,
-        amount_cents: 40000,
-        method: 'fpx',
-        paid_on: '2026-09-19',
-        note: null,
-        created_at: expect.any(String) as string,
-      },
-      expect.objectContaining({
-        id: 'e0000000-0000-4000-8000-000000000002',
-        group_id: SOFIA,
-        amount_cents: 24000,
-        method: 'transfer',
-        paid_on: '2026-08-29',
-      }),
-    ])
+    expect(result.current.data).toEqual({
+      payments: [
+        {
+          id: 'e0000000-0000-4000-8000-000000000001',
+          group_id: AIMAN_SOFIA,
+          lessons: 4,
+          amount_cents: 40000,
+          method: 'fpx',
+          paid_on: '2026-09-19',
+          note: null,
+          created_at: expect.any(String) as string,
+        },
+        expect.objectContaining({
+          id: 'e0000000-0000-4000-8000-000000000002',
+          group_id: SOFIA,
+          amount_cents: 24000,
+          method: 'transfer',
+          paid_on: '2026-08-29',
+        }),
+      ],
+      hasMore: false,
+    })
   })
 
   it('gives an empty list for an account with no groups', async () => {
     await logIn('herman', DEMO_PASSWORD)
     const { result } = renderHook(() => usePayments([]), { wrapper: wrapper() })
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
-    expect(result.current.data).toEqual([])
+    expect(result.current.data).toEqual({ payments: [], hasMore: false })
   })
 
   it('reads nothing while closed or while the groups are unknown', () => {
@@ -81,20 +84,35 @@ describe('usePayments', () => {
   })
 })
 
+describe('readPayments', () => {
+  it('keeps the newest payments up to the limit and says older ones exist', async () => {
+    await logIn('meiling', DEMO_PASSWORD)
+    const one = await readPayments([AIMAN_SOFIA, SOFIA], 1)
+    expect(one.hasMore).toBe(true)
+    expect(one.payments.map((payment) => payment.paid_on)).toEqual(['2026-09-19'])
+    const two = await readPayments([AIMAN_SOFIA, SOFIA], 2)
+    expect(two.hasMore).toBe(false)
+    expect(two.payments.map((payment) => payment.paid_on)).toEqual(['2026-09-19', '2026-08-29'])
+  })
+})
+
 describe('useGroupPayments', () => {
   it('lists one group’s payments for the coach', async () => {
     await logIn('herman', DEMO_PASSWORD)
     const { result } = renderHook(() => useGroupPayments(HANA), { wrapper: wrapper() })
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
-    expect(result.current.data).toMatchObject([
-      { group_id: HANA, lessons: 4, amount_cents: 24000, method: 'cash', paid_on: '2026-08-22' },
-    ])
+    expect(result.current.data).toMatchObject({
+      payments: [
+        { group_id: HANA, lessons: 4, amount_cents: 24000, method: 'cash', paid_on: '2026-08-22' },
+      ],
+      hasMore: false,
+    })
   })
 
   it('finds no payment for Nurul, whose lessons are a starting balance', async () => {
     await logIn('herman', DEMO_PASSWORD)
     const { result } = renderHook(() => useGroupPayments(NURUL), { wrapper: wrapper() })
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
-    expect(result.current.data).toEqual([])
+    expect(result.current.data).toEqual({ payments: [], hasMore: false })
   })
 })

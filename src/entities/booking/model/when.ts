@@ -1,4 +1,4 @@
-import { formatDay, formatRange, type Instant, mytDateKey } from '@/shared/lib/time'
+import { formatDay, formatRange, type Instant, mytDateKey, toMyt } from '@/shared/lib/time'
 
 /** Whether two moments fall on the same Malaysia calendar day. */
 export function isSameMytDay(a: Instant, b: Instant): boolean {
@@ -7,10 +7,13 @@ export function isSameMytDay(a: Instant, b: Instant): boolean {
 
 /**
  * "Sat 3 Oct, 9:00–10:00 am", never "Today": the cancel dialog's title, the Cancel button's
- * name, the coach's excuse options.
+ * name, the coach's excuse options and History. With `now`, a lesson in another year shows the
+ * year: "Fri 12 Dec 2025, 7:30–8:30 pm" (coach-students spec §6).
  */
-export function lessonDateRange(startsAt: Instant, endsAt: Instant): string {
-  return `${formatDay(startsAt)}, ${formatRange(startsAt, endsAt)}`
+export function lessonDateRange(startsAt: Instant, endsAt: Instant, now?: Instant): string {
+  const year = toMyt(startsAt).getFullYear()
+  const otherYear = now !== undefined && toMyt(now).getFullYear() !== year
+  return `${formatDay(startsAt)}${otherYear ? ` ${year}` : ''}, ${formatRange(startsAt, endsAt)}`
 }
 
 /**

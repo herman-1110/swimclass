@@ -13,3 +13,6 @@ export type Payment = Pick<
   PaymentRow,
   'id' | 'group_id' | 'lessons' | 'amount_cents' | 'method' | 'paid_on' | 'note' | 'created_at'
 >
+
+/** The latest payments, newest first, and whether older ones exist. */
+export type Payments = { payments: Payment[]; hasMore: boolean }

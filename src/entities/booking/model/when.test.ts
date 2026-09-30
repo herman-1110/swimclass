@@ -27,6 +27,23 @@ describe('lessonDateRange', () => {
       'Sat 26 Sep, 5:00–6:00 pm',
     )
   })
+
+  it('adds the year only for a lesson in another year than now', () => {
+    expect(lessonDateRange('2026-09-25T11:30:00+00:00', '2026-09-25T12:30:00+00:00', NOW)).toBe(
+      'Fri 25 Sep, 7:30–8:30 pm',
+    )
+    // 11:30 pm UTC on 31 Dec 2025 is already Thu 1 Jan 2026 in Malaysia.
+    expect(
+      lessonDateRange(
+        '2025-12-31T23:30:00+00:00',
+        '2026-01-01T00:30:00+00:00',
+        '2025-12-31T12:00:00+08:00',
+      ),
+    ).toBe('Thu 1 Jan 2026, 7:30–8:30 am')
+    expect(lessonDateRange('2025-12-12T11:30:00+00:00', '2025-12-12T12:30:00+00:00', NOW)).toBe(
+      'Fri 12 Dec 2025, 7:30–8:30 pm',
+    )
+  })
 })
 
 describe('isSameMytDay', () => {

@@ -10,6 +10,6 @@ export const bookingKeys = {
   /** An account's past lessons, by the account's group ids (My classes' Past view). */
   past: (groupIds: readonly string[] | null) =>
     [...bookingKeys.all, 'past', sorted(groupIds)] as const,
-  /** Every lesson of one group (the coach's History and excuse picker). */
+  /** One group's latest lessons (the coach's History and excuse picker). */
   group: (groupId: string | null) => [...bookingKeys.all, 'group', groupId] as const,
 }

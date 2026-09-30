@@ -1,5 +1,5 @@
 export { bookingKeys } from './api/keys'
-export { useExcusableLessons, useGroupLessons } from './api/useGroupLessons'
+export { GROUP_LESSON_LIMIT, useExcusableLessons, useGroupLessons } from './api/useGroupLessons'
 export { PAST_LESSON_LIMIT, usePastLessons } from './api/usePastLessons'
 export { useUpcomingLessons } from './api/useUpcomingLessons'
 export { cancelDeadline, cancelNote, type CancelState, cancelState } from './model/cancel'
@@ -25,6 +25,7 @@ export type {
   BookingStatus,
   ExcusableLesson,
   GroupLesson,
+  GroupLessons,
   LedgerEntry,
   LessonPosition,
   PastLesson,
@@ -33,6 +34,7 @@ export type {
   UpcomingLesson,
 } from './model/types'
 export { isSameMytDay, lessonDateRange, lessonWhen } from './model/when'
+export { HistoryLessonRow } from './ui/HistoryLessonRow'
 export { LessonRow } from './ui/LessonRow'
 export { LessonRowSkeleton } from './ui/LessonRowSkeleton'
 export { PastLessonRow } from './ui/PastLessonRow'

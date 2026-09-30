@@ -7,7 +7,7 @@ import { getSession, logIn, logOut } from '@/shared/api/auth'
 import { rpc } from '@/shared/api/rpc'
 import { DEMO_NOW, DEMO_PASSWORD } from '@/shared/config/demo'
 
-import { useExcusableLessons, useGroupLessons } from './useGroupLessons'
+import { readGroupLessons, useExcusableLessons, useGroupLessons } from './useGroupLessons'
 
 // Runs in demo mode: the real migrations and seed in PGlite, clock at DEMO_NOW. The last test
 // excuses a lesson, so it comes last.
@@ -36,7 +36,8 @@ describe('useGroupLessons', () => {
     await logIn('herman', DEMO_PASSWORD)
     const { result } = renderHook(() => useGroupLessons(WEI_JIE), { wrapper: wrapper() })
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
-    expect(result.current.data?.[0]).toEqual({
+    expect(result.current.data?.hasMore).toBe(false)
+    expect(result.current.data?.lessons[0]).toEqual({
       id: 'd0000000-0000-4000-8000-000000000008',
       group_id: WEI_JIE,
       starts_at: '2026-10-02T11:30:00+00:00',
@@ -51,7 +52,11 @@ describe('useGroupLessons', () => {
       used: false,
     })
     expect(
-      result.current.data?.map((lesson) => [lesson.starts_at, lesson.used, lesson.position]),
+      result.current.data?.lessons.map((lesson) => [
+        lesson.starts_at,
+        lesson.used,
+        lesson.position,
+      ]),
     ).toEqual([
       ['2026-10-02T11:30:00+00:00', false, { package_no: 2, lesson_in_package: 3, lessons: 1 }],
       ['2026-09-25T11:30:00+00:00', true, { package_no: 2, lesson_in_package: 2, lessons: 1 }],
@@ -63,12 +68,44 @@ describe('useGroupLessons', () => {
     await logIn('herman', DEMO_PASSWORD)
     const { result } = renderHook(() => useGroupLessons(KAI), { wrapper: wrapper() })
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
-    expect(result.current.data?.map((lesson) => lesson.gap_override)).toEqual([true])
+    expect(result.current.data?.lessons.map((lesson) => lesson.gap_override)).toEqual([true])
   })
 
   it('waits while no group is chosen', () => {
     const { result } = renderHook(() => useGroupLessons(null), { wrapper: wrapper() })
     expect(result.current.fetchStatus).toBe('idle')
+  })
+})
+
+describe('readGroupLessons', () => {
+  it('keeps the newest lessons up to the limit, each with its numbers, and says older ones exist', async () => {
+    await logIn('herman', DEMO_PASSWORD)
+    // Both reads take the newest rows: the ledger's oldest rows would leave these without numbers.
+    expect(await readGroupLessons(WEI_JIE, 1)).toEqual({
+      lessons: [
+        expect.objectContaining({
+          starts_at: '2026-10-02T11:30:00+00:00',
+          position: { package_no: 2, lesson_in_package: 3, lessons: 1 },
+          used: false,
+        }),
+      ],
+      hasMore: true,
+    })
+    const two = await readGroupLessons(WEI_JIE, 2)
+    expect(two.hasMore).toBe(true)
+    expect(
+      two.lessons.map((lesson) => [lesson.starts_at, lesson.position?.lesson_in_package]),
+    ).toEqual([
+      ['2026-10-02T11:30:00+00:00', 3],
+      ['2026-09-25T11:30:00+00:00', 2],
+    ])
+  })
+
+  it('says no older lessons exist when the group has exactly the limit', async () => {
+    await logIn('herman', DEMO_PASSWORD)
+    const three = await readGroupLessons(WEI_JIE, 3)
+    expect(three.hasMore).toBe(false)
+    expect(three.lessons).toHaveLength(3)
   })
 })
 
@@ -103,13 +140,13 @@ describe('useExcusableLessons', () => {
     })
     await waitFor(() => expect(lessons.result.current.isSuccess).toBe(true))
     await waitFor(() => expect(excusable.result.current.isSuccess).toBe(true))
-    expect(lessons.result.current.data?.[1]).toMatchObject({
+    expect(lessons.result.current.data?.lessons[1]).toMatchObject({
       status: 'excused',
       position: null,
       used: null,
     })
     // The next lesson moves up: Fri 2 Oct is now lesson 2 of Package 2.
-    expect(lessons.result.current.data?.[0]?.position?.lesson_in_package).toBe(2)
+    expect(lessons.result.current.data?.lessons[0]?.position?.lesson_in_package).toBe(2)
     expect(excusable.result.current.data?.map((lesson) => lesson.id)).toEqual([
       'd0000000-0000-4000-8000-000000000006',
     ])

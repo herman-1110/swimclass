@@ -5,14 +5,27 @@ import type { Instant } from '@/shared/lib/time'
 
 import { excusableLessons } from '../model/lists'
 import { positionOf } from '../model/position'
-import type { GroupLesson, LedgerEntry } from '../model/types'
+import type { GroupLessons, LedgerEntry } from '../model/types'
 import { bookingKeys } from './keys'
 
 /**
- * Every lesson of one group, newest first (coach-students spec §5.1 R7, R8): the bookings
- * rows, any status, joined with booking_ledger's numbers for the booked ones.
+ * How many of a group's lessons the coach's History reads, newest first: years of lessons,
+ * and well under the 1000 rows Supabase returns at most (data-contracts §2.3: history lists
+ * need a limit).
  */
-async function readGroupLessons(groupId: string): Promise<GroupLesson[]> {
+export const GROUP_LESSON_LIMIT = 200
+
+/**
+ * The newest `limit` lessons of one group, newest first (coach-students spec §5.1 R7, R8): the
+ * bookings rows, any status, joined with booking_ledger's numbers for the booked ones. Both
+ * reads take the newest rows in the same order, so every booked lesson kept has its ledger
+ * row. One more than the limit is read, which says whether older ones exist. Exported for its
+ * test; pages use useGroupLessons.
+ */
+export async function readGroupLessons(
+  groupId: string,
+  limit: number = GROUP_LESSON_LIMIT,
+): Promise<GroupLessons> {
   const [bookings, ledger] = await Promise.all([
     readRows('bookings', {
       eq: { group_id: groupId },
@@ -32,14 +45,20 @@ async function readGroupLessons(groupId: string): Promise<GroupLesson[]> {
         { column: 'starts_at', ascending: false },
         { column: 'id', ascending: false },
       ],
+      limit: limit + 1,
     }),
     readRows('booking_ledger', {
       eq: { group_id: groupId },
       columns: ['booking_id', 'package_no', 'lesson_in_package', 'lessons', 'used'],
+      order: [
+        { column: 'starts_at', ascending: false },
+        { column: 'booking_id', ascending: false },
+      ],
+      limit: limit + 1,
     }) as Promise<LedgerEntry[]>,
   ])
   const entries = new Map(ledger.map((entry) => [entry.booking_id, entry]))
-  return bookings.map((booking) => {
+  const lessons = bookings.slice(0, limit).map((booking) => {
     const entry = booking.status === 'booked' ? entries.get(booking.id) : undefined
     return {
       id: booking.id,
@@ -56,6 +75,7 @@ async function readGroupLessons(groupId: string): Promise<GroupLesson[]> {
       used: entry ? entry.used : null,
     }
   })
+  return { lessons, hasMore: bookings.length > limit }
 }
 
 function groupLessons(groupId: string | null) {
@@ -67,8 +87,9 @@ function groupLessons(groupId: string | null) {
 }
 
 /**
- * Every lesson of one group, newest first, for the coach's History: booked ones with their
- * lesson numbers and whether they have ended, cancelled and excused ones with their details.
+ * One group's latest GROUP_LESSON_LIMIT lessons, newest first, and whether older ones exist,
+ * for the coach's History: booked ones with their lesson numbers and whether they have ended,
+ * cancelled and excused ones with their details. Waits while no group is chosen.
  */
 export function useGroupLessons(groupId: string | null) {
   return useQuery(groupLessons(groupId))
@@ -82,6 +103,6 @@ export function useGroupLessons(groupId: string | null) {
 export function useExcusableLessons(groupId: string | null, now: Instant) {
   return useQuery({
     ...groupLessons(groupId),
-    select: (lessons) => excusableLessons(lessons, now),
+    select: (data) => excusableLessons(data.lessons, now),
   })
 }

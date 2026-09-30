@@ -74,6 +74,9 @@ export type GroupLesson = Pick<
   used: boolean | null
 }
 
+/** A group's newest lessons, newest first, and whether older ones exist (the coach's History). */
+export type GroupLessons = { lessons: GroupLesson[]; hasMore: boolean }
+
 /** A booked lesson that has started: the coach may mark it as excused (excuse_booking). */
 export type ExcusableLesson = GroupLesson & {
   status: 'booked'
