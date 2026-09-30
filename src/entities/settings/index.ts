@@ -1,3 +1,6 @@
 export { settingsKeys } from './api/keys'
+export { useCoachSettings } from './api/useCoachSettings'
 export { usePublicSettings } from './api/usePublicSettings'
-export type { PublicSettings } from './model/types'
+export { lessonsPriceCents, packagePriceCents } from './model/packagePrice'
+export type { CoachSettings, PublicSettings } from './model/types'
+export { DocumentTitle } from './ui/DocumentTitle'
