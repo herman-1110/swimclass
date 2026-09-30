@@ -50,10 +50,13 @@ export function DemoTools() {
   return (
     <>
       <div
-        // Placed where no drawing has a control at 360–1440 px, and it never moves the
-        // page: the top-right corner on phones; the empty end of the tab bar's last tab
-        // from 768 px; beside the business name in the sidebar from 1024 px.
-        className="fixed top-2 right-2 z-30 flex flex-col items-end gap-1 md:top-auto md:right-1 md:bottom-[calc(max(16px,env(safe-area-inset-bottom))+4px)] md:flex-col-reverse lg:top-[15px] lg:right-auto lg:bottom-auto lg:left-[168px] lg:flex-col lg:items-start"
+        // Placed where no drawing has a control or text at rest (360–1440 px), and it
+        // never moves the page: the top-right corner on phones; from 768 px the top edge
+        // at 40 % of the width, between the page title and the header's buttons (the tab
+        // bar's links fill their whole cells); beside the business name in the sidebar
+        // from 1024 px. z-[15]: above the tab bar (z-10), under the focused skip link
+        // (z-20) and anything a page opens over itself (conventions §7.7).
+        className="fixed top-2 right-2 z-[15] flex flex-col items-end gap-1 md:right-auto md:left-[40%] md:items-start lg:top-[15px] lg:left-[168px]"
       >
         <button
           ref={buttonRef}
