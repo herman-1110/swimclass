@@ -7,11 +7,14 @@ export type NavItem = {
   label: string
   /** A shorter label for the tab bar, where the sidebar's doesn't fit ("Students"). */
   tabLabel?: string
-  /** The tab bar's icon (TabIcon). The sidebar shows text only. */
+  /** The tab bar's icon, from shared/ui/icons (22 px, stroke 1.6). The sidebar shows text only. */
   icon: ReactNode
   /** Other pages of the same section, so this item stays current there. */
   alsoOn?: string[]
 }
+
+/** A text link at the bottom of the sidebar ("View as customer", "Back to coach view"). */
+export type SidebarLink = Pick<NavItem, 'to' | 'label'>
 
 /**
  * Returns a check for "is this item the current page?": its own page, a page below it,

@@ -3,6 +3,7 @@ import { Navigate, type RouteObject } from 'react-router'
 import { AuthLayout } from '@/app/layouts/AuthLayout'
 import { CoachLayout } from '@/app/layouts/CoachLayout'
 import { CustomerLayout } from '@/app/layouts/CustomerLayout'
+import { PendingLayout } from '@/app/layouts/PendingLayout'
 import { RootLayout } from '@/app/layouts/RootLayout'
 import { AccountPage } from '@/pages/account'
 import { BookPage } from '@/pages/book'
@@ -16,14 +17,21 @@ import { SchedulePage } from '@/pages/schedule'
 import { SignUpPage } from '@/pages/signup'
 import { ROUTES } from '@/shared/config/routes'
 
-import { HomeRedirect, RequireApproved, RequireCoach, RequireSignedIn } from './guards'
+import {
+  HomeRedirect,
+  RedirectIfSignedIn,
+  RequireApproved,
+  RequireCoach,
+  RequirePending,
+  RequireSignedIn,
+} from './guards'
 import { RouteError } from './RouteError'
 import { RouteLoading } from './RouteLoading'
 
 /**
- * Every route (ARCHITECTURE §3.5; paths from ROUTES). Guards run in order: signed in → approved → role.
- * Customer pages are bundled up front (phones on 4G); the coach's pages are loaded on
- * demand so customers never download them.
+ * Every route (ARCHITECTURE §3.5; paths from ROUTES; the tree in the auth spec §1.1).
+ * Guards run in order: signed in → approved → role. Customer pages are bundled up front
+ * (phones on 4G); the coach's pages are loaded on demand so customers never download them.
  *
  * A function, not a constant, so every router (the app's one, and one per test) gets its
  * own route objects: React Router writes to some route objects it is given, so sharing
@@ -38,24 +46,39 @@ export function createRoutes(): RouteObject[] {
       children: [
         { index: true, Component: HomeRedirect },
 
-        // Signed out
+        // Signed out: anyone signed in goes on to where they were going, or home
+        {
+          Component: RedirectIfSignedIn,
+          children: [
+            {
+              Component: AuthLayout,
+              children: [
+                { path: ROUTES.login, Component: LoginPage },
+                { path: ROUTES.signup, Component: SignUpPage },
+                { path: ROUTES.forgotPassword, Component: ForgotPasswordPage },
+              ],
+            },
+          ],
+        },
+
+        // Anyone: the reset link signs the person in, and a signed-in account may use it too
         {
           Component: AuthLayout,
-          children: [
-            { path: ROUTES.login, Component: LoginPage },
-            { path: ROUTES.signup, Component: SignUpPage },
-            { path: ROUTES.forgotPassword, Component: ForgotPasswordPage },
-            { path: ROUTES.resetPassword, Component: ResetPasswordPage },
-          ],
+          children: [{ path: ROUTES.resetPassword, Component: ResetPasswordPage }],
         },
 
         {
           Component: RequireSignedIn,
           children: [
-            // Signed in, not approved yet: this is the only page they can see
+            // Signed in, not approved yet: this is the only page they can see, and only they
             {
-              Component: AuthLayout,
-              children: [{ path: ROUTES.pending, Component: PendingPage }],
+              Component: RequirePending,
+              children: [
+                {
+                  Component: PendingLayout,
+                  children: [{ path: ROUTES.pending, Component: PendingPage }],
+                },
+              ],
             },
 
             {

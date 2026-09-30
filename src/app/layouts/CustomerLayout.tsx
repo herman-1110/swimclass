@@ -1,65 +1,48 @@
 import { Outlet } from 'react-router'
 
+import { useMyProfile } from '@/entities/account'
 import { ROUTES } from '@/shared/config/routes'
+import { CalendarPlusIcon } from '@/shared/ui/icons/CalendarPlusIcon'
+import { ListIcon } from '@/shared/ui/icons/ListIcon'
+import { TimetableIcon } from '@/shared/ui/icons/TimetableIcon'
+import { UserIcon } from '@/shared/ui/icons/UserIcon'
 
-import type { NavItem } from './navigation'
+import type { NavItem, SidebarLink } from './navigation'
 import { Sidebar } from './Sidebar'
 import { SkipLink } from './SkipLink'
-import { TabBar, TabIcon } from './TabBar'
+import { TabBar } from './TabBar'
+import { useBusinessName } from './useBusinessName'
 
 // Phone first (design/Main.dc.html, MainDesktop.dc.html): a bottom tab bar below 1024 px,
 // a 220 px sidebar from 1024 px (DESIGN §3, §5). Each page sets its own maximum width
 // (Book, Schedule and My classes stop at 1100 px).
 
 const items: NavItem[] = [
-  {
-    to: ROUTES.book,
-    label: 'Book',
-    icon: (
-      <TabIcon>
-        <rect x="3" y="5" width="18" height="16" rx="2" />
-        <path d="M3 10h18M8 3v4M16 3v4M12 13v5M9.5 15.5h5" />
-      </TabIcon>
-    ),
-  },
-  {
-    to: ROUTES.schedule,
-    label: 'Schedule',
-    icon: (
-      <TabIcon>
-        <rect x="3" y="4" width="18" height="17" rx="2" />
-        <path d="M3 9h18M9 9v12M15 9v12" />
-      </TabIcon>
-    ),
-  },
-  {
-    to: ROUTES.myClasses,
-    label: 'My classes',
-    icon: (
-      <TabIcon>
-        <path d="M8 6h13M8 12h13M8 18h13" />
-        <path d="M3.5 6h.01M3.5 12h.01M3.5 18h.01" />
-      </TabIcon>
-    ),
-  },
-  {
-    to: ROUTES.account,
-    label: 'Account',
-    icon: (
-      <TabIcon>
-        <circle cx="12" cy="8" r="4" />
-        <path d="M4 21a8 8 0 0 1 16 0" />
-      </TabIcon>
-    ),
-  },
+  { to: ROUTES.book, label: 'Book', icon: <CalendarPlusIcon /> },
+  { to: ROUTES.schedule, label: 'Schedule', icon: <TimetableIcon /> },
+  { to: ROUTES.myClasses, label: 'My classes', icon: <ListIcon /> },
+  { to: ROUTES.account, label: 'Account', icon: <UserIcon /> },
 ]
 
+// The coach looks at these pages through "View as customer"; this takes him back (auth
+// spec §1.5, Q10). On phones he finds it on Account.
+const backToCoachView: SidebarLink = { to: ROUTES.coachSchedule, label: 'Back to coach view' }
+
 export function CustomerLayout() {
+  const profile = useMyProfile()
+  const businessName = useBusinessName()
+  const isCoach = profile.data?.role === 'coach'
+
   return (
     <div className="flex min-h-dvh flex-col bg-white lg:flex-row">
       <SkipLink />
-      {/* "Signed in as …" needs the signed-in person's name: prompt 05 adds it. */}
-      <Sidebar label="Main" items={items} />
+      <Sidebar
+        label="Main"
+        businessName={businessName}
+        items={items}
+        bottomItems={isCoach ? [backToCoachView] : []}
+        signedInAs={profile.data?.display_name}
+      />
       <main
         id="main"
         tabIndex={-1}

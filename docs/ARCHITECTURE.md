@@ -93,11 +93,15 @@ src/
 │   ├── App.tsx                   providers + router
 │   ├── providers/                QueryProvider.tsx · SessionProvider.tsx · ErrorBoundary.tsx
 │   ├── router/                   routes.tsx (every route; the coach's pages lazy-loaded, §3.7)
-│   │                             guards.tsx · router.ts · RouteError.tsx · RouteLoading.tsx
-│   ├── layouts/                  AuthLayout.tsx (a card from 768 px) · CustomerLayout.tsx ·
-│   │                             CoachLayout.tsx (bottom tab bar under 1024 px, sidebar from
-│   │                             1024 px; DESIGN §5), built from TabBar.tsx · Sidebar.tsx ·
-│   │                             SkipLink.tsx · navigation.ts (NavItem, useIsCurrent)
+│   │                             guards.tsx · safeFrom.ts · router.ts · RouteError.tsx ·
+│   │                             RouteLoading.tsx
+│   ├── layouts/                  AuthLayout.tsx (a card from 768 px) · PendingLayout.tsx ·
+│   │                             CustomerLayout.tsx · CoachLayout.tsx (bottom tab bar under
+│   │                             1024 px, sidebar from 1024 px; DESIGN §5), built from
+│   │                             TabBar.tsx · Sidebar.tsx · SkipLink.tsx · navigation.ts
+│   │                             (NavItem, useIsCurrent) · useBusinessName.ts
+│   ├── demo/                     demo mode's own tools (§3.6): the Demo button and its panel
+│   │                             (sign in as anyone, sent emails, reset); demo builds only
 │   └── styles/                   index.css (tokens, Tailwind theme, font, focus ring)
 ├── pages/                        one folder per route (§3.5)
 │   ├── login/  signup/  forgot-password/  reset-password/  pending/
@@ -197,7 +201,8 @@ The page folder is the route with `/` turned into `-`:
 
 | Route | Page folder | Who |
 |---|---|---|
-| `/login`, `/signup`, `/forgot-password`, `/reset-password` | `login/`, `signup/`, `forgot-password/`, `reset-password/` | anyone |
+| `/login`, `/signup`, `/forgot-password` | `login/`, `signup/`, `forgot-password/` | signed out (anyone signed in is sent on) |
+| `/reset-password` | `reset-password/` | anyone |
 | `/pending` | `pending/` | signed in, not approved yet |
 | `/book`, `/schedule`, `/my-classes`, `/account` | `book/`, `schedule/`, `my-classes/`, `account/` | customers (the coach can look) |
 | `/coach/schedule`, `/coach/students`, `/coach/add-students`, `/coach/settings` | `coach-schedule/`, `coach-students/`, `coach-add-students/`, `coach-settings/` | coach |
