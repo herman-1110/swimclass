@@ -104,6 +104,13 @@ const CUSTOMER_CASES: Case[] = [
     'We can’t send another email just yet. Wait a few minutes and try again.',
   ],
   ['username_taken', {}, 'That username is taken.'],
+  // The auth forms' checks before any call (the auth spec §5.4, proposed).
+  ['invalid_username', {}, 'Use 3 to 30 small letters, numbers, dots or underscores.'],
+  ['username_required', {}, 'Enter your username.'],
+  ['password_required', {}, 'Enter your password.'],
+  ['name_required', {}, 'Enter your name.'],
+  ['phone_required', {}, 'Enter your phone number.'],
+  ['password_mismatch', {}, 'The passwords don’t match. Type the same password twice.'],
 ]
 
 const COACH_CASES: Case[] = [
@@ -201,40 +208,78 @@ const COACH_CASES: Case[] = [
   ['invalid_phone', {}, 'Shorten the phone number to 30 characters or fewer.'],
   ['invalid_email', {}, 'Type an email address, like name@example.com.'],
   ['email_taken', {}, 'Another account already uses this email.'],
+  // The coach's forms' checks before any call (proposed in the Add students, Students,
+  // Settings and Schedule specs).
+  ['account_required', {}, 'Choose an account, or create a new one.'],
+  ['amount_format', {}, 'Enter the amount in RM, like 240 or 240.50.'],
+  ['hours_incomplete', {}, 'Choose a start and an end time.'],
+  ['hours_out_of_range', {}, 'Open hours must be between 5:00 am and 11:00 pm.'],
+  ['last_day_before_first', {}, 'The last day must be on or after the first day.'],
 ]
+
+// Codes the customer table leaves generic on purpose (DESIGN §6's generic row), and codes in
+// neither table.
+const CUSTOMER_GENERIC = [
+  'not_your_group',
+  'not_your_booking',
+  'invalid_repeat',
+  'invalid_length',
+  'invalid_reason',
+  'not_found',
+  'unknown',
+  'invalid_week',
+  'off_step',
+  'signup_failed',
+  'not_signed_in',
+  'over_request_rate_limit',
+  'email_address_not_authorized',
+  'a_code_nobody_wrote',
+]
+
+// DESIGN §6's generic row of the coach table, and codes in neither table.
+const COACH_GENERIC = [
+  'not_coach',
+  'not_found',
+  'invalid_settings',
+  'unknown_setting',
+  'invalid_kind',
+  'invalid_active',
+  'not_customer',
+  'group_inactive',
+  'group_empty',
+  'unknown',
+  'invalid_week',
+  'invalid_length',
+  'invalid_repeat',
+  'a_code_nobody_wrote',
+]
+
+const CUSTOMER_CODES = new Set(CUSTOMER_CASES.map(([code]) => code))
+const COACH_CODES = new Set(COACH_CASES.map(([code]) => code))
 
 describe('messageFor on customer screens (DESIGN §6, first table)', () => {
   it.each(CUSTOMER_CASES)('turns %s into its words', (code, detail, words) => {
     expect(messageFor(new AppError(code, detail), CUSTOMER)).toBe(words)
   })
 
-  it.each([
-    'not_your_group',
-    'not_your_booking',
-    'invalid_repeat',
-    'invalid_length',
-    'invalid_reason',
-    'not_found',
-    'unknown',
-    // Codes in neither table.
-    'invalid_week',
-    'off_step',
-    'signup_failed',
-    'not_signed_in',
-    'over_request_rate_limit',
-    'a_code_nobody_wrote',
-  ])('gives %s the generic message', (code) => {
+  it.each(CUSTOMER_GENERIC)('gives %s the generic message', (code) => {
     expect(messageFor(new AppError(code), CUSTOMER)).toBe(GENERIC_MESSAGE)
   })
 
-  it.each(['not_started', 'invalid_note', 'price_not_set', 'invalid_setting', 'email_taken'])(
-    'keeps the coach’s words for %s off customer screens',
-    (code) => {
-      expect(messageFor(new AppError(code, { field: 'travel_gap_minutes' }), CUSTOMER)).toBe(
-        GENERIC_MESSAGE,
-      )
-    },
-  )
+  // With the detail, settings and labels the coach's words need: only the audience differs.
+  it.each(
+    COACH_CASES.filter(([code]) => !CUSTOMER_CODES.has(code) && !CUSTOMER_GENERIC.includes(code)),
+  )('keeps the coach’s words for %s off customer screens', (code, detail) => {
+    expect(messageFor(new AppError(code, detail), { ...COACH, audience: 'customer' })).toBe(
+      GENERIC_MESSAGE,
+    )
+  })
+
+  it.each(
+    COACH_GENERIC.filter((code) => !CUSTOMER_CODES.has(code) && !CUSTOMER_GENERIC.includes(code)),
+  )('gives the coach table’s generic %s the generic message too', (code) => {
+    expect(messageFor(new AppError(code), CUSTOMER)).toBe(GENERIC_MESSAGE)
+  })
 
   it('reads customer screens by default', () => {
     expect(messageFor(new AppError('outside_open_hours'))).toBe(
@@ -249,31 +294,22 @@ describe('messageFor on coach screens (DESIGN §6, coach table first)', () => {
     expect(messageFor(new AppError(code, detail), COACH)).toBe(words)
   })
 
-  it.each([
-    'not_coach',
-    'not_found',
-    'invalid_settings',
-    'unknown_setting',
-    'invalid_kind',
-    'invalid_active',
-    'not_customer',
-    'group_inactive',
-    'unknown',
-    'invalid_week',
-    'invalid_length',
-    'invalid_repeat',
-  ])('gives %s the generic message', (code) => {
+  it.each(COACH_GENERIC)('gives %s the generic message', (code) => {
     expect(messageFor(new AppError(code, { keys: ['id', 'updated_at'] }), COACH)).toBe(
       GENERIC_MESSAGE,
     )
   })
 
   it.each(
-    CUSTOMER_CASES.filter(([code]) =>
-      ['overlap_other', 'past', 'repeat_conflict', 'network', 'weak_password'].includes(code),
-    ),
+    CUSTOMER_CASES.filter(([code]) => !COACH_CODES.has(code) && !COACH_GENERIC.includes(code)),
   )('falls back to the customer table for %s', (code, detail, words) => {
     expect(messageFor(new AppError(code, detail), COACH)).toBe(words)
+  })
+
+  it.each(
+    CUSTOMER_GENERIC.filter((code) => !COACH_CODES.has(code) && !COACH_GENERIC.includes(code)),
+  )('gives the customer table’s generic %s the generic message too', (code) => {
+    expect(messageFor(new AppError(code), COACH)).toBe(GENERIC_MESSAGE)
   })
 })
 
@@ -383,6 +419,9 @@ describe('a code without the detail its message needs gets the generic message',
     ['credit_exceeded', { can_still_book: '1' }, COACH],
     ['not_booked', {}, COACH],
     ['not_booked', { status: 'booked' }, COACH],
+    // “that group” links to {group_id}.
+    ['duplicate_group', {}, COACH],
+    ['duplicate_group', { group_id: ' ' }, COACH],
     ['has_upcoming_lessons', {}, COACH],
     ['has_upcoming_lessons', { count: 0 }, COACH],
     ['group_full', {}, COACH],
@@ -416,10 +455,8 @@ describe('messageParts', () => {
     ])
   })
 
-  it('keeps the words without a link when the group id is missing', () => {
-    expect(messageParts(new AppError('duplicate_group'), COACH)).toEqual([
-      'These students already have an active group. Use that group, or deactivate it first.',
-    ])
+  it('gives the generic message when the group id is missing (no link, no “that group”)', () => {
+    expect(messageParts(new AppError('duplicate_group'), COACH)).toEqual([GENERIC_MESSAGE])
   })
 
   it('gives every other message as one piece of text', () => {
@@ -508,6 +545,33 @@ describe('what messageFor accepts', () => {
       'Pay for the current package before booking more lessons.',
     )
     expect(messageFor({ code: 'past', detail: null })).toBe('This time has already started.')
+  })
+
+  it('words a form’s checks before any call, on the form’s own screen', () => {
+    // Sign up and Account: the customer table (coach screens reach it through the fallback).
+    expect(messageFor({ code: 'password_mismatch' })).toBe(
+      'The passwords don’t match. Type the same password twice.',
+    )
+    expect(messageFor({ code: 'invalid_username' })).toBe(
+      'Use 3 to 30 small letters, numbers, dots or underscores.',
+    )
+    expect(messageFor({ code: 'name_required' }, COACH)).toBe('Enter your name.')
+    // Add students' new account: the same rule in the coach's words.
+    expect(messageFor({ code: 'invalid_username' }, COACH)).toBe(
+      'Use 3 to 30 lowercase letters, numbers, dots or underscores.',
+    )
+    // Record payment, Settings' hours, Block time.
+    expect(messageFor({ code: 'amount_format' }, COACH)).toBe(
+      'Enter the amount in RM, like 240 or 240.50.',
+    )
+    expect(messageFor({ code: 'overlapping_rules', detail: { weekday: 3 } }, COACH)).toBe(
+      'Two ranges on Wednesday overlap. Change one and save again.',
+    )
+    expect(messageFor({ code: 'last_day_before_first' }, COACH)).toBe(
+      'The last day must be on or after the first day.',
+    )
+    // The coach's checks never reach a customer screen.
+    expect(messageFor({ code: 'amount_format' })).toBe(GENERIC_MESSAGE)
   })
 
   it('turns other failures into codes the way rpc.ts does', () => {

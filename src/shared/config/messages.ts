@@ -9,6 +9,11 @@ import { formatRange, formatTime } from '@/shared/lib/time'
 // the customer table. Any code in neither gets the generic message, and so does a code
 // whose message needs a value that is missing (DESIGN §6). Copy uses the typographic ’ and
 // “ ”, as the drawings do.
+//
+// The checks a form runs before any call get their words here too, as `{ code, detail }`.
+// A check that mirrors a database rule uses that rule's code (weak_password, invalid_username,
+// invalid_name {index}, invalid_range, invalid_setting {field} …). The others have codes of
+// their own that no server sends (username_required, password_mismatch, amount_format …).
 
 /** DESIGN §6's generic row: every code without words of its own. */
 export const GENERIC_MESSAGE = 'Something went wrong. Refresh the page and try again.'
@@ -145,7 +150,7 @@ function labelOf(value: unknown, labels: MessageOptions['fieldLabels']): string 
 }
 
 /** The words, when the value they need is there. */
-function given<T>(value: T | null, words: (value: T) => string): string | null {
+function given<T, W extends Filled>(value: T | null, words: (value: T) => W): W | null {
   return value === null ? null : words(value)
 }
 
@@ -222,6 +227,16 @@ const CUSTOMER: Readonly<Record<string, Words>> = {
     'We can’t send another email just yet. Wait a few minutes and try again.',
   // The words of the sign-up username check (DESIGN §4); admin-accounts refuses with it.
   username_taken: 'That username is taken.',
+  // The auth forms' checks before any call (the auth spec §5.4, proposed). The format check
+  // mirrors the sign-up trigger's rule, so it has the trigger's code. An empty or malformed
+  // email uses email_address_invalid, and a short password weak_password (both above).
+  invalid_username: 'Use 3 to 30 small letters, numbers, dots or underscores.',
+  username_required: 'Enter your username.',
+  password_required: 'Enter your password.',
+  name_required: 'Enter your name.',
+  // Only if the owner makes the phone required at sign-up (the auth spec, open question 3).
+  phone_required: 'Enter your phone number.',
+  password_mismatch: 'The passwords don’t match. Type the same password twice.',
 }
 
 // --- DESIGN §6's coach table. Coach screens try it first.
@@ -266,15 +281,14 @@ const COACH: Readonly<Record<string, Words>> = {
   invalid_method: 'Choose how they paid: Cash, Transfer or FPX.',
   invalid_date: 'The payment date is in the future. Pick today or an earlier date.',
   invalid_note: 'The note is too long. Shorten it to 500 characters.',
-  // “that group” links to the group (messageParts). Without its id the words still hold.
-  duplicate_group: (d) => {
-    const before = 'These students already have an active group. Use '
-    const after = ', or deactivate it first.'
-    const groupId = textOf(d.group_id)
-    return groupId === null
-      ? `${before}that group${after}`
-      : [before, { text: 'that group', groupId }, after]
-  },
+  // “that group” links to the group (messageParts), so the message needs its id: without
+  // it, generic (DESIGN §6; data-contracts §4.2 lists detail.group_id as its placeholder).
+  duplicate_group: (d) =>
+    given(textOf(d.group_id), (groupId) => [
+      'These students already have an active group. Use ',
+      { text: 'that group', groupId },
+      ', or deactivate it first.',
+    ]),
   // One lesson reads "1 upcoming lesson. Cancel it first" (the Students spec, C18).
   has_upcoming_lessons: (d) =>
     given(
@@ -330,12 +344,25 @@ const COACH: Readonly<Record<string, Words>> = {
   invalid_active: GENERIC_MESSAGE,
   not_customer: GENERIC_MESSAGE,
   group_inactive: GENERIC_MESSAGE,
-  // A new account from Add students (admin-accounts; the Add students spec §5.2.2, proposed).
+  // A new account from Add students (admin-accounts; the Add students spec §5.2.2, proposed),
+  // and the same form's checks before the call (its §5.3). The username words are that
+  // spec's; sign-up's check (customer table) says “small letters”.
   invalid_username: 'Use 3 to 30 lowercase letters, numbers, dots or underscores.',
   invalid_display_name: 'Type their name (up to 100 characters).',
   invalid_phone: 'Shorten the phone number to 30 characters or fewer.',
   invalid_email: 'Type an email address, like name@example.com.',
   email_taken: 'Another account already uses this email.',
+  // The coach's forms' checks before any call (proposed wording). Add students: no account
+  // chosen (its spec §5.3). Record payment and Add students: an amount parseRinggit can't read
+  // (the Students spec §5.3 W1's words; the Add students spec proposed "Type the amount in
+  // ringgit, like 240 or 240.50.", and one check gets one wording). Settings' Edit hours
+  // dialog: a range left on “Choose”, or a time outside the form's 5:00 am–11:00 pm (its spec
+  // §7.3). Block time: an end date before the start date (the Schedule spec §6.5).
+  account_required: 'Choose an account, or create a new one.',
+  amount_format: 'Enter the amount in RM, like 240 or 240.50.',
+  hours_incomplete: 'Choose a start and an end time.',
+  hours_out_of_range: 'Open hours must be between 5:00 am and 11:00 pm.',
+  last_day_before_first: 'The last day must be on or after the first day.',
 }
 
 // The database's reason codes are lower_snake_case (rpc.ts).
@@ -385,7 +412,8 @@ export function messageParts(error: unknown, options: MessageOptions = {}): read
 
 /**
  * What went wrong and what to do next, in words (DESIGN §6), for any failure: the AppError
- * that rpc.ts, auth.ts and the query and mutation hooks give, or `{ code, detail }`.
+ * that rpc.ts, auth.ts and the query and mutation hooks give, or `{ code, detail }`, such as
+ * a form's check before any call (`messageFor({ code: 'password_mismatch' })`).
  * `messageFor(error, { audience: 'coach', gapMinutes: settings.travel_gap_minutes })`.
  */
 export function messageFor(error: unknown, options: MessageOptions = {}): string {
