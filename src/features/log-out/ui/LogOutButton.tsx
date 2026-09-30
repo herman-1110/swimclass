@@ -8,20 +8,15 @@ type LogOutButtonProps = {
   className?: string
 }
 
-/** "Log out", then Log in. While it works it says "Logging out…" and ignores more clicks. */
+/**
+ * "Log out": opens Log in, which says "Logging out…" while the session ends. A page's leave
+ * guard can stop it first (useLogOut), and then the person stays signed in on the page.
+ */
 export function LogOutButton({ className }: LogOutButtonProps) {
   const logOut = useLogOut()
   return (
-    <button
-      type="button"
-      className={className}
-      // aria-disabled, not disabled, so focus stays on the button (auth spec §7.5).
-      aria-disabled={logOut.isPending || undefined}
-      onClick={() => {
-        if (!logOut.isPending) logOut.mutate()
-      }}
-    >
-      {logOut.isPending ? 'Logging out…' : 'Log out'}
+    <button type="button" className={className} onClick={logOut}>
+      Log out
     </button>
   )
 }

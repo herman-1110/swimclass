@@ -1,10 +1,12 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
-import { createMemoryRouter, type RouteObject, RouterProvider } from 'react-router'
+import { createMemoryRouter, type RouteObject, RouterProvider, useBlocker } from 'react-router'
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { SessionProvider } from '@/app/providers/SessionProvider'
+import { LOG_OUT_REQUEST } from '@/features/log-out'
 import { getSession, logIn, logOut, signUp } from '@/shared/api/auth'
+import { demoDb } from '@/shared/api/demo/db'
 import { rpc } from '@/shared/api/rpc'
 import { DEMO_PASSWORD } from '@/shared/config/demo'
 
@@ -15,6 +17,9 @@ import { createRoutes } from './routes'
 
 /** An account that signed up and is still waiting for the coach's approval. */
 const WAITING = 'waiting'
+
+/** Accounts whose profile row each test deletes, as if the account was deleted meanwhile. */
+const GONE = ['gone.home', 'gone.book', 'gone.pending'] as const
 
 beforeAll(async () => {
   // jsdom has no scrolling; ScrollRestoration calls this on every navigation.
@@ -33,13 +38,15 @@ beforeAll(async () => {
     import('@/app/demo/DemoTools'),
   ])
   // Demo sign-up makes a confirmed account that waits for approval (auth spec §5.5).
-  await signUp({
-    username: WAITING,
-    displayName: 'Wai Ting',
-    email: 'waiting@example.com',
-    phone: null,
-    password: DEMO_PASSWORD,
-  })
+  for (const username of [WAITING, ...GONE]) {
+    await signUp({
+      username,
+      displayName: username === WAITING ? 'Wai Ting' : username,
+      email: `${username}@example.com`,
+      phone: null,
+      password: DEMO_PASSWORD,
+    })
+  }
 }, 60_000)
 
 afterEach(cleanup)
@@ -67,6 +74,22 @@ function renderAt(entry: Entry, routes = createRoutes()) {
 
 function findPageHeading(name: string) {
   return screen.findByRole('heading', { level: 1, name })
+}
+
+/** Every route, with the coach's Settings page loaded by `lazy` instead of its own code. */
+function routesWithSettings(lazy: RouteObject['lazy']): RouteObject[] {
+  const routes = createRoutes()
+  const findSettings = (list: RouteObject[]): RouteObject | undefined => {
+    for (const route of list) {
+      if (route.path === '/coach/settings') return route
+      const found = route.children && findSettings(route.children)
+      if (found) return found
+    }
+  }
+  const settings = findSettings(routes)
+  if (!settings) throw new Error('No settings route')
+  settings.lazy = lazy
+  return routes
 }
 
 // Every route (ARCHITECTURE §3.5), who opens it in the test, and the page title it shows
@@ -207,6 +230,24 @@ describe('Waiting for approval', () => {
     const router = renderAt('/pending')
     await findPageHeading('Welcome back')
     expect(router.state.location.state).toEqual({ from: '/pending' })
+  })
+})
+
+describe('an account whose profile is gone (deleted meanwhile)', () => {
+  // Auth spec §1.4, proposed change 3: logged out, not shown Waiting for approval.
+  it.each([
+    ['/', GONE[0]],
+    ['/book', GONE[1]],
+    ['/pending', GONE[2]],
+  ])('is logged out and sees Log in (%s)', async (path, username) => {
+    const { userId } = await logIn(username, DEMO_PASSWORD)
+    // The session stays valid for a while after the account is deleted (Supabase's token).
+    const db = await demoDb()
+    await db.query('delete from public.profiles where id = $1', [userId])
+    const router = renderAt(path)
+    await findPageHeading('Welcome back')
+    expect(router.state.location).toMatchObject({ pathname: '/login', state: null })
+    expect(await getSession()).toBeNull()
   })
 })
 
@@ -372,7 +413,8 @@ describe('coach navigation', () => {
     await findPageHeading('Settings')
     fireEvent.click(within(sidebar('Coach')).getByRole('button', { name: 'Log out' }))
     await findPageHeading('Welcome back')
-    expect(router.state.location.pathname).toBe('/login')
+    // No `from` (auth spec W7): whoever logs in next starts at their own home.
+    expect(router.state.location).toMatchObject({ pathname: '/login', state: null })
     expect(await getSession()).toBeNull()
   })
 
@@ -383,6 +425,63 @@ describe('coach navigation', () => {
       '#main',
     )
     expect(screen.getByRole('main').id).toBe('main')
+  })
+})
+
+describe('Log out', () => {
+  /**
+   * Settings with unsaved changes: its leave guard holds every navigation until the coach
+   * chooses (coach Settings spec §7.4).
+   */
+  function UnsavedSettings() {
+    const blocker = useBlocker(true)
+    return (
+      <>
+        <h1>Settings</h1>
+        {blocker.state === 'blocked' && (
+          <>
+            <button type="button" onClick={() => blocker.reset()}>
+              Keep editing
+            </button>
+            <button type="button" onClick={() => blocker.proceed()}>
+              Leave without saving
+            </button>
+          </>
+        )}
+      </>
+    )
+  }
+
+  it('lets a page with unsaved changes keep the coach signed in, or let him go', async () => {
+    await signIn('herman')
+    const router = renderAt(
+      '/coach/settings',
+      routesWithSettings(() => Promise.resolve({ Component: UnsavedSettings })),
+    )
+    await findPageHeading('Settings')
+    const logOutButton = () => within(sidebar('Coach')).getByRole('button', { name: 'Log out' })
+
+    fireEvent.click(logOutButton())
+    fireEvent.click(await screen.findByRole('button', { name: 'Keep editing' }))
+    await waitFor(() => expect(screen.queryByRole('button', { name: 'Keep editing' })).toBeNull())
+    expect(router.state.location.pathname).toBe('/coach/settings')
+    expect(await getSession()).not.toBeNull()
+
+    fireEvent.click(logOutButton())
+    fireEvent.click(await screen.findByRole('button', { name: 'Leave without saving' }))
+    await findPageHeading('Welcome back')
+    expect(router.state.location).toMatchObject({ pathname: '/login', state: null })
+    expect(await getSession()).toBeNull()
+  })
+
+  it('is not repeated once done, so logging in again keeps the new session', async () => {
+    await signIn(null)
+    const router = renderAt({ pathname: '/login', state: LOG_OUT_REQUEST })
+    await findPageHeading('Welcome back')
+    await waitFor(() => expect(router.state.location.state).toBeNull())
+    await act(() => logIn('meiling', DEMO_PASSWORD))
+    await findPageHeading('Book a lesson')
+    expect(await getSession()).not.toBeNull()
   })
 })
 
@@ -405,19 +504,9 @@ describe('when a page fails to load', () => {
   // A coach page's code file can fail to download: a dropped connection, or an old file
   // name after a new release. The error screen must show, not a blank page.
   function routesWithBrokenSettings() {
-    const routes = createRoutes()
-    const findSettings = (list: RouteObject[]): RouteObject | undefined => {
-      for (const route of list) {
-        if (route.path === '/coach/settings') return route
-        const found = route.children && findSettings(route.children)
-        if (found) return found
-      }
-    }
-    const settings = findSettings(routes)
-    if (!settings) throw new Error('No settings route')
-    settings.lazy = () =>
-      Promise.reject(new TypeError('Failed to fetch dynamically imported module'))
-    return routes
+    return routesWithSettings(() =>
+      Promise.reject(new TypeError('Failed to fetch dynamically imported module')),
+    )
   }
 
   it.each([
@@ -435,7 +524,8 @@ describe('when a page fails to load', () => {
     expect(screen.getByRole('button', { name: 'Reload the page' })).toBeTruthy()
     expect(screen.getByRole('link', { name: 'Go to the start' }).getAttribute('href')).toBe('/')
     expect(screen.getAllByRole('main')).toHaveLength(1)
-    expect(consoleError).toHaveBeenCalled()
+    // RouteError logs in an effect, which may run just after the heading appears.
+    await waitFor(() => expect(consoleError).toHaveBeenCalled())
     consoleError.mockRestore()
   })
 })

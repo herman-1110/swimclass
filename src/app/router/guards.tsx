@@ -1,6 +1,7 @@
 import { Navigate, Outlet, useLocation } from 'react-router'
 
 import { useMyProfile, useSession } from '@/entities/account'
+import { isLogOutRequest, LOG_OUT_REQUEST, LoggingOut } from '@/features/log-out'
 import { ROUTES } from '@/shared/config/routes'
 
 import { RouteLoading } from './RouteLoading'
@@ -31,15 +32,29 @@ export function RequireSignedIn() {
  * Log in, Sign up and Forgot password are for signed-out visitors. Anyone signed in goes
  * on: to where they were going before Log in, or home (auth spec §1.4). That also carries
  * a person on once they log in, or once an email's link signs them in on /login.
+ * "Log out" opens Log in with LOG_OUT_REQUEST: the session ends here ("Logging out…"), and
+ * the form shows once it has.
  */
 export function RedirectIfSignedIn() {
   const session = useSession()
   const location = useLocation()
   if (session.status === 'loading') return <RouteLoading />
+  const logOutRequested = isLogOutRequest(location.state)
   if (session.status === 'signed-in') {
+    if (logOutRequested) return <LoggingOut />
     return <Navigate to={safeFrom(location.state) ?? ROUTES.home} replace />
   }
+  // Signed out now: drop the request, so logging in again keeps the new session.
+  if (logOutRequested) return <Navigate to={`${location.pathname}${location.search}`} replace />
   return <Outlet />
+}
+
+/**
+ * A signed-in account whose profile row is gone (deleted meanwhile) is logged out and sees
+ * Log in, not Waiting for approval (auth spec §1.4, proposed change 3).
+ */
+function LogOutMissingProfile() {
+  return <Navigate to={ROUTES.login} replace state={LOG_OUT_REQUEST} />
 }
 
 /** Signed in but not approved yet → /pending, the only page they may see. */
@@ -47,7 +62,8 @@ export function RequireApproved() {
   const profile = useMyProfile()
   if (profile.isPending) return <RouteLoading />
   if (profile.isError) throw profile.error
-  if (!profile.data?.approved) return <Navigate to={ROUTES.pending} replace />
+  if (!profile.data) return <LogOutMissingProfile />
+  if (!profile.data.approved) return <Navigate to={ROUTES.pending} replace />
   return <Outlet />
 }
 
@@ -56,7 +72,8 @@ export function RequirePending() {
   const profile = useMyProfile()
   if (profile.isPending) return <RouteLoading />
   if (profile.isError) throw profile.error
-  if (profile.data?.approved) return <Navigate to={ROUTES.home} replace />
+  if (!profile.data) return <LogOutMissingProfile />
+  if (profile.data.approved) return <Navigate to={ROUTES.home} replace />
   return <Outlet />
 }
 
@@ -77,7 +94,8 @@ export function HomeRedirect() {
   if (session.status === 'signed-out') return <Navigate to={ROUTES.login} replace />
   if (profile.isPending) return <RouteLoading />
   if (profile.isError) throw profile.error
-  if (!profile.data?.approved) return <Navigate to={ROUTES.pending} replace />
+  if (!profile.data) return <LogOutMissingProfile />
+  if (!profile.data.approved) return <Navigate to={ROUTES.pending} replace />
   return (
     <Navigate to={profile.data.role === 'coach' ? ROUTES.coachSchedule : ROUTES.book} replace />
   )
