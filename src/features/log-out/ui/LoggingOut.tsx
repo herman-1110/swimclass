@@ -2,15 +2,14 @@ import { useEffect, useRef } from 'react'
 import { Link } from 'react-router'
 
 import { AppError } from '@/shared/api/rpc'
+import { GENERIC_MESSAGE, NETWORK_MESSAGE } from '@/shared/config/messages'
 import { ROUTES } from '@/shared/config/routes'
 
 import { useEndSession } from '../api/useEndSession'
 
-// DESIGN §6's wording. Move it to shared/config/messages.ts once that file exists.
+// DESIGN §6: the network row, otherwise the generic message.
 function failureText(error: Error): string {
-  return error instanceof AppError && error.code === 'network'
-    ? 'Couldn’t reach the server. Check your connection and try again.'
-    : 'Something went wrong. Refresh the page and try again.'
+  return error instanceof AppError && error.code === 'network' ? NETWORK_MESSAGE : GENERIC_MESSAGE
 }
 
 /**
