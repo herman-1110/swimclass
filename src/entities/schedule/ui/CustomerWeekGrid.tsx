@@ -1,9 +1,8 @@
 import type { ReactNode } from 'react'
 
-import type { DateKey } from '@/shared/lib/time'
+import { type DateKey, weekDays } from '@/shared/lib/time'
 import { WeekGrid, type WeekGridBlock } from '@/shared/ui/WeekGrid'
 
-import { weekDays } from '../model/days'
 import { customerHourLabel, dayHeading, formatDayKey } from '../model/labels'
 import { isWeekOf } from '../model/select'
 import {

@@ -1,12 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import {
-  accountLabel,
-  accountOptionLabel,
-  byDisplayName,
-  bySignUp,
-  toPendingAccount,
-} from './accounts'
+import { accountOptionLabel, byDisplayName, bySignUp, toPendingAccount } from './accounts'
 import type { Profile } from './types'
 
 function profile(overrides: Partial<Profile>): Profile {
@@ -27,22 +21,6 @@ describe('accountOptionLabel', () => {
     expect(accountOptionLabel({ display_name: 'Mei Ling', username: 'meiling' })).toBe(
       'Mei Ling · meiling',
     )
-  })
-})
-
-describe('accountLabel', () => {
-  it('says "Own account" when the group is the account holder alone', () => {
-    expect(accountLabel('Wei Jie', 'Wei Jie')).toBe('Own account')
-    expect(accountLabel(' wei jie ', 'Wei Jie')).toBe('Own account')
-  })
-
-  it('names the account holder otherwise, with the typographic apostrophe', () => {
-    expect(accountLabel('Farah', 'Hana')).toBe('Farah’s account')
-    expect(accountLabel('Mei Ling', 'Aiman & Sofia')).toBe('Mei Ling’s account')
-  })
-
-  it('gives nothing for an unknown account name', () => {
-    expect(accountLabel('', 'Hana')).toBe('')
   })
 })
 

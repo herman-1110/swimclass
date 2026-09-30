@@ -1,6 +1,5 @@
-import type { Instant } from '@/shared/lib/time'
+import { formatDayMonth, type Instant } from '@/shared/lib/time'
 
-import { formatDayMonth } from './dates'
 import { packagePosition } from './position'
 import type { GroupLesson, PastLesson, PastLessonStatus } from './types'
 

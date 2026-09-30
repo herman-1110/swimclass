@@ -1,8 +1,7 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 
-import { type DateKey, mytWeekStart } from '@/shared/lib/time'
+import { type DateKey, mytWeekStart, weekDays } from '@/shared/lib/time'
 
-import { weekDays } from '../model/days'
 import { coachWeekQuery } from './weekQueries'
 
 /**

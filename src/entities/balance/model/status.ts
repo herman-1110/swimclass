@@ -1,6 +1,5 @@
-import { formatDay, type Instant, mytDateKey, toMyt } from '@/shared/lib/time'
+import { formatDay, formatDayMonth, type Instant, mytDateKey, toMyt } from '@/shared/lib/time'
 
-import { formatDayMonth } from './dates'
 import { nextPaymentPackageNo } from './packages'
 import type { GroupBalance } from './types'
 

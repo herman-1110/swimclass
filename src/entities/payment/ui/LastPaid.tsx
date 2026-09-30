@@ -1,6 +1,5 @@
-import type { Instant } from '@/shared/lib/time'
+import { formatDayMonth, type Instant } from '@/shared/lib/time'
 
-import { formatPaidOn } from '../model/dates'
 import type { LastPaidInput } from '../model/lastPaid'
 import { methodLabel } from '../model/method'
 
@@ -20,7 +19,7 @@ type LastPaidProps = LastPaidInput & {
  * group_balance's last_paid_on and last_payment_method.
  */
 export function LastPaid({ paidOn, method, openingPaid = 0, variant, now }: LastPaidProps) {
-  const date = paidOn === null ? null : formatPaidOn(paidOn, now)
+  const date = paidOn === null ? null : formatDayMonth(paidOn, now)
   const how = method === null ? null : methodLabel(method)
 
   if (variant === 'inline') {

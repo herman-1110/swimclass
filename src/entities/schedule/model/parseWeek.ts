@@ -1,7 +1,6 @@
 import { AppError } from '@/shared/api/rpc'
-import { type DateKey, toMyt } from '@/shared/lib/time'
+import { addDays, type DateKey, toMyt } from '@/shared/lib/time'
 
-import { addDays } from './days'
 import type {
   BusyLesson,
   CoachException,

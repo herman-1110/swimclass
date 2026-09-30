@@ -1,10 +1,10 @@
 import { keepPreviousData, skipToken, useQuery } from '@tanstack/react-query'
 
 import { AppError, rpc } from '@/shared/api/rpc'
+import { useDebouncedValue } from '@/shared/lib/hooks/useDebouncedValue'
 
 import type { CoachSlotCheckArgs, SlotCheck } from '../model/types'
 import { slotKeys } from './keys'
-import { useDebouncedValue } from './useDebouncedValue'
 
 /** How long the dialog's input must stay still before it is checked (coach-schedule R8). */
 const CHECK_DELAY_MS = 300

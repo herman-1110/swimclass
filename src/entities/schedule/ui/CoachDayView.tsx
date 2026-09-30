@@ -2,10 +2,9 @@ import { type ReactNode, useId } from 'react'
 
 import { cn } from '@/shared/lib/cn'
 import { plural } from '@/shared/lib/format'
-import type { DateKey } from '@/shared/lib/time'
+import { type DateKey, weekDays } from '@/shared/lib/time'
 import { DayStrip } from '@/shared/ui/DayStrip'
 
-import { weekDays } from '../model/days'
 import { dayLessonsLabel } from '../model/describe'
 import { dayHeading, formatDayLong } from '../model/labels'
 import { bookedLessons, isWeekOf } from '../model/select'

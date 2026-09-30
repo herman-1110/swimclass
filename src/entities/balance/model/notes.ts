@@ -1,8 +1,7 @@
 import { messageFor } from '@/shared/config/messages'
 import { formatRinggit, possessive } from '@/shared/lib/format'
-import { type Instant, toMyt } from '@/shared/lib/time'
+import { formatDayMonth, type Instant, toMyt } from '@/shared/lib/time'
 
-import { formatDayMonth } from './dates'
 import { nextBookingPackageNo } from './packages'
 import type { GroupBalance } from './types'
 

@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  addDays,
   formatDay,
+  formatDayMonth,
+  formatDayMonthYear,
   formatRange,
   formatTime,
   MYT,
@@ -10,7 +13,69 @@ import {
   mytWeekStart,
   nowMyt,
   toMyt,
+  weekDays,
 } from './time'
+
+describe('formatDayMonth', () => {
+  it('writes a moment as its day in Malaysia time', () => {
+    expect(formatDayMonth('2026-09-26T04:00:00+00:00')).toBe('26 Sep')
+    // 11:30 pm UTC on 30 Sep is already 1 Oct in Malaysia.
+    expect(formatDayMonth('2026-09-30T23:30:00+00:00')).toBe('1 Oct')
+  })
+
+  it('reads a date column as that day, whatever the device’s time zone', () => {
+    expect(formatDayMonth('2026-09-19')).toBe('19 Sep')
+    expect(formatDayMonth('2026-08-01')).toBe('1 Aug')
+  })
+
+  it('adds the year only for a day in another year than now', () => {
+    const now = '2026-09-26T12:00:00+08:00'
+    expect(formatDayMonth('2026-09-18T11:30:00+00:00', now)).toBe('18 Sep')
+    expect(formatDayMonth('2025-12-18T11:30:00+00:00', now)).toBe('18 Dec 2025')
+    expect(formatDayMonth('2025-12-12', '2026-01-05T12:00:00+08:00')).toBe('12 Dec 2025')
+  })
+})
+
+describe('formatDayMonthYear', () => {
+  it('always gives the year', () => {
+    expect(formatDayMonthYear('2026-08-29')).toBe('29 Aug 2026')
+    expect(formatDayMonthYear('2026-09-30T23:30:00+00:00')).toBe('1 Oct 2026')
+  })
+})
+
+describe('addDays', () => {
+  it('moves by whole MYT days, across months and years', () => {
+    expect(addDays('2026-09-28', 7)).toBe('2026-10-05')
+    expect(addDays('2026-10-04', -6)).toBe('2026-09-28')
+    expect(addDays('2026-12-31', 1)).toBe('2027-01-01')
+    expect(addDays('2026-03-01', -1)).toBe('2026-02-28')
+    expect(addDays('2026-09-26', 0)).toBe('2026-09-26')
+  })
+
+  it('is not moved by the device’s daylight saving change', () => {
+    // Los Angeles changes its clocks on Sun 1 Nov 2026; Malaysia never does.
+    expect(addDays('2026-10-31', 1)).toBe('2026-11-01')
+    expect(addDays('2026-10-31', 2)).toBe('2026-11-02')
+  })
+
+  it('refuses a date that isn’t one', () => {
+    expect(() => addDays('2026-02-30', 1)).toThrow(RangeError)
+  })
+})
+
+describe('weekDays', () => {
+  it('lists the seven dates of a week, Monday first', () => {
+    expect(weekDays('2026-09-28')).toEqual([
+      '2026-09-28',
+      '2026-09-29',
+      '2026-09-30',
+      '2026-10-01',
+      '2026-10-02',
+      '2026-10-03',
+      '2026-10-04',
+    ])
+  })
+})
 
 describe('test setup', () => {
   it('runs with a device time zone that is not Malaysia', () => {

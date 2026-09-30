@@ -1,5 +1,3 @@
-import { possessive } from '@/shared/lib/format'
-
 import type { PendingAccount, Profile } from './types'
 
 // Names sort as people read them, ignoring case and accents. The demo database sorts in
@@ -33,17 +31,4 @@ export function toPendingAccount(profile: Profile): PendingAccount {
 /** Add students' account option: "Mei Ling · meiling" (AdminAddStudents.dc.html). */
 export function accountOptionLabel(account: Pick<Profile, 'display_name' | 'username'>): string {
   return `${account.display_name} · ${account.username}`
-}
-
-/**
- * Whose account a group is in, as the coach's screens write it: "Own account" when the group
- * is the account holder alone (Wei Jie's group in Wei Jie's account), otherwise "Farah’s
- * account" (AdminStudents.dc.html; Add booking; Record payment's subtitle). Names match when
- * they are the same after trimming, ignoring case. An unknown account name gives "".
- */
-export function accountLabel(accountName: string, groupNames: string): string {
-  const name = accountName.trim()
-  if (name === '') return ''
-  const own = name.toLocaleLowerCase('en') === groupNames.trim().toLocaleLowerCase('en')
-  return own ? 'Own account' : `${possessive(name)} account`
 }

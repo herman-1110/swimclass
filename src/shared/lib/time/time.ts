@@ -97,6 +97,45 @@ export function formatDay(instant: Instant): string {
   return format(toMyt(instant), 'EEE d MMM')
 }
 
+// A date column ("2026-09-19") is read at noon Malaysia time, so it names that day in any
+// time zone; anything else is a moment.
+function dayOf(value: Instant | DateKey): TZDate {
+  return typeof value === 'string' && DATE_KEY.test(value)
+    ? toMyt(mytInstant(value, '12:00'))
+    : toMyt(value)
+}
+
+/**
+ * A day as "26 Sep", from a moment or a date column ("2026-09-19"), in Malaysia time. With
+ * `now`, a day in another year shows the year too: "18 Dec 2025".
+ */
+export function formatDayMonth(value: Instant | DateKey, now?: Instant): string {
+  const day = dayOf(value)
+  const sameYear = now === undefined || toMyt(now).getFullYear() === day.getFullYear()
+  return format(day, sameYear ? 'd MMM' : 'd MMM yyyy')
+}
+
+/** A day with its year, "19 Sep 2026", from a moment or a date column. */
+export function formatDayMonthYear(value: Instant | DateKey): string {
+  return format(dayOf(value), 'd MMM yyyy')
+}
+
+const DAY_MS = 24 * 60 * 60 * 1000
+
+/**
+ * The MYT date `days` days after `date` (before it when negative): ("2026-09-28", 7) →
+ * "2026-10-05". MYT has no daylight saving, so a day is always 24 hours; counting from
+ * noon keeps every step inside the right day.
+ */
+export function addDays(date: DateKey, days: number): DateKey {
+  return mytDateKey(mytInstant(date, '12:00').getTime() + days * DAY_MS)
+}
+
+/** The seven dates of the week that starts on `weekStart` (a Monday), Monday first. */
+export function weekDays(weekStart: DateKey): DateKey[] {
+  return Array.from({ length: 7 }, (_, index) => addDays(weekStart, index))
+}
+
 /**
  * A time range with an en dash. The am/pm is written once when both ends share it:
  * "9:00–10:00 am", "5:30–6:30 pm", and on both ends when they don't: "11:00 am–12:00 pm".

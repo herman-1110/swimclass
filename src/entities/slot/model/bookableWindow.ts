@@ -1,6 +1,4 @@
-import { type DateKey, mytWeekStart } from '@/shared/lib/time'
-
-import { addDays } from './dateKeys'
+import { addDays, type DateKey, mytWeekStart } from '@/shared/lib/time'
 
 /** The weeks a customer may book, as the week navigation shows them. */
 export type BookableWindow = {

@@ -1,4 +1,5 @@
 import {
+  addDays,
   type DateKey,
   formatDay,
   formatRange,
@@ -7,8 +8,6 @@ import {
   mytInstant,
   toMyt,
 } from '@/shared/lib/time'
-
-import { addDays } from './days'
 
 // Words for the week views, built from shared/lib/time's own formats ("Sat 3 Oct",
 // "7:30 pm"), so every date and time is read in Malaysia time (CLAUDE.md rule 2).

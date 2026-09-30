@@ -48,7 +48,8 @@ export function useCustomerAccounts() {
 
 /**
  * Every customer account's display name by id, for "Farah’s account" on the coach's
- * screens (`accountLabel`): the Students table, Add booking's group list, Record payment.
+ * screens (`accountLabel` in entities/group): the Students table, Add booking's group list,
+ * Record payment.
  */
 export function useAccountNames() {
   return useQuery({ ...customerAccounts, select: namesById })

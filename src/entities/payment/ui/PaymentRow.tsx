@@ -1,7 +1,6 @@
 import { formatRinggit, plural } from '@/shared/lib/format'
-import type { Instant } from '@/shared/lib/time'
+import { formatDayMonth, formatDayMonthYear, type Instant } from '@/shared/lib/time'
 
-import { formatPaidOn, formatPaidOnFull } from '../model/dates'
 import { methodLabel } from '../model/method'
 import type { Payment } from '../model/types'
 
@@ -45,7 +44,7 @@ export function PaymentRow(props: PaymentRowProps) {
       <Element className="flex flex-col gap-0.5 border-b border-line py-3 break-words">
         <span className="text-sm leading-[normal] font-semibold">{`${amount} · ${lessons}`}</span>
         <span className="text-label">
-          {`${formatPaidOn(payment.paid_on, props.now)} · ${methodLabel(payment.method)}`}
+          {`${formatDayMonth(payment.paid_on, props.now)} · ${methodLabel(payment.method)}`}
         </span>
         {payment.note && <span className="text-label text-muted">{payment.note}</span>}
       </Element>
@@ -55,7 +54,7 @@ export function PaymentRow(props: PaymentRowProps) {
   return (
     <Element className="flex items-center justify-between gap-3 border-b border-line py-4">
       <span className="flex min-w-0 flex-col gap-0.5 break-words">
-        <span className="text-body font-semibold">{formatPaidOnFull(payment.paid_on)}</span>
+        <span className="text-body font-semibold">{formatDayMonthYear(payment.paid_on)}</span>
         <span className="text-label text-ink">
           {`${props.names} · ${props.typeLabel} · ${lessons}`}
         </span>

@@ -9,7 +9,7 @@ export {
   type UsernameCheckState,
   useUsernameAvailable,
 } from './api/useUsernameAvailable'
-export { accountLabel, accountOptionLabel } from './model/accounts'
+export { accountOptionLabel } from './model/accounts'
 export { SessionContext, type SessionState, useSession, useUserId } from './model/session'
 export type {
   CustomerAccount,

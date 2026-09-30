@@ -1,6 +1,5 @@
 export { paymentKeys } from './api/keys'
 export { PAYMENT_LIMIT, useGroupPayments, usePayments } from './api/usePayments'
-export { formatPaidOn, formatPaidOnFull } from './model/dates'
 export { type LastPaidInput, lastPaidPhrase } from './model/lastPaid'
 export { methodInSentence, methodLabel } from './model/method'
 export type { Payment, PaymentMethod, Payments } from './model/types'

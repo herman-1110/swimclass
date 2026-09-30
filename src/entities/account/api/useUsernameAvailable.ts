@@ -1,7 +1,7 @@
 import { queryOptions, useQuery } from '@tanstack/react-query'
-import { useEffect, useState } from 'react'
 
 import { rpc } from '@/shared/api/rpc'
+import { useDebouncedValue } from '@/shared/lib/hooks/useDebouncedValue'
 
 import { isValidUsername, normalizeUsername } from '../model/username'
 import { accountKeys } from './keys'
@@ -37,16 +37,6 @@ export type UsernameCheck = {
   /** The normalized username the state is about ("  MeiLing " → "meiling"). */
   username: string
   state: UsernameCheckState
-}
-
-/** The value, once it has stopped changing for `delayMs`. */
-function useDebouncedValue<T>(value: T, delayMs: number): T {
-  const [settled, setSettled] = useState(value)
-  useEffect(() => {
-    const timer = setTimeout(() => setSettled(value), delayMs)
-    return () => clearTimeout(timer)
-  }, [value, delayMs])
-  return settled
 }
 
 /**

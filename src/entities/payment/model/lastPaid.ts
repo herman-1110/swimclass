@@ -1,6 +1,5 @@
-import type { DateKey, Instant } from '@/shared/lib/time'
+import { type DateKey, formatDayMonth, type Instant } from '@/shared/lib/time'
 
-import { formatPaidOn } from './dates'
 import { methodInSentence } from './method'
 import type { PaymentMethod } from './types'
 
@@ -24,7 +23,7 @@ export function lastPaidPhrase(
   now?: Instant,
 ): string {
   if (paidOn !== null) {
-    const date = formatPaidOn(paidOn, now)
+    const date = formatDayMonth(paidOn, now)
     return method === null ? `last paid ${date}` : `last paid ${date}, ${methodInSentence(method)}`
   }
   return openingPaid > 0 ? 'paid in starting balance' : 'no payments yet'
