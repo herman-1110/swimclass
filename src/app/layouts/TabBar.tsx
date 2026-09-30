@@ -1,5 +1,6 @@
-import type { ReactNode } from 'react'
 import { Link } from 'react-router'
+
+import { cn } from '@/shared/lib/cn'
 
 import { type NavItem, useIsCurrent } from './navigation'
 
@@ -27,11 +28,12 @@ export function TabBar({ label, items }: TabBarProps) {
             key={item.to}
             to={item.to}
             aria-current={current ? 'page' : undefined}
-            className={`flex min-h-[52px] flex-col items-center justify-center gap-[3px] rounded-small text-[11px] no-underline ${
+            className={cn(
+              'flex min-h-[52px] flex-col items-center justify-center gap-[3px] rounded-small text-[0.6875rem] no-underline',
               current
                 ? 'font-semibold text-accent hover:text-accent'
-                : 'font-medium text-muted hover:text-ink'
-            }`}
+                : 'font-medium text-muted hover:text-ink',
+            )}
           >
             {item.icon}
             <span>{item.tabLabel ?? item.label}</span>
@@ -39,24 +41,5 @@ export function TabBar({ label, items }: TabBarProps) {
         )
       })}
     </nav>
-  )
-}
-
-/** A tab bar icon: 22 px, stroke 1.6, in the text colour. Draw it on a 24 px grid. */
-export function TabIcon({ children }: { children: ReactNode }) {
-  return (
-    <svg
-      width="22"
-      height="22"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.6"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      {children}
-    </svg>
   )
 }

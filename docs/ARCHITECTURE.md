@@ -93,11 +93,15 @@ src/
 │   ├── App.tsx                   providers + router
 │   ├── providers/                QueryProvider.tsx · SessionProvider.tsx · ErrorBoundary.tsx
 │   ├── router/                   routes.tsx (every route; the coach's pages lazy-loaded, §3.7)
-│   │                             guards.tsx · router.ts · RouteError.tsx · RouteLoading.tsx
-│   ├── layouts/                  AuthLayout.tsx (a card from 768 px) · CustomerLayout.tsx ·
-│   │                             CoachLayout.tsx (bottom tab bar under 1024 px, sidebar from
-│   │                             1024 px; DESIGN §5), built from TabBar.tsx · Sidebar.tsx ·
-│   │                             SkipLink.tsx · navigation.ts (NavItem, useIsCurrent)
+│   │                             guards.tsx · safeFrom.ts · router.ts · RouteError.tsx ·
+│   │                             RouteLoading.tsx
+│   ├── layouts/                  AuthLayout.tsx (a card from 768 px) · PendingLayout.tsx ·
+│   │                             CustomerLayout.tsx · CoachLayout.tsx (bottom tab bar under
+│   │                             1024 px, sidebar from 1024 px; DESIGN §5), built from
+│   │                             TabBar.tsx · Sidebar.tsx · SkipLink.tsx · navigation.ts
+│   │                             (NavItem, useIsCurrent) · useBusinessName.ts
+│   ├── demo/                     demo mode's own tools (§3.6): the Demo button and its panel
+│   │                             (sign in as anyone, sent emails, reset); demo builds only
 │   └── styles/                   index.css (tokens, Tailwind theme, font, focus ring)
 ├── pages/                        one folder per route (§3.5)
 │   ├── login/  signup/  forgot-password/  reset-password/  pending/
