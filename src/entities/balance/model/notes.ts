@@ -1,0 +1,77 @@
+import { messageFor } from '@/shared/config/messages'
+import { formatRinggit, possessive } from '@/shared/lib/format'
+import { type Instant, toMyt } from '@/shared/lib/time'
+
+import { formatDayMonth } from './dates'
+import { nextBookingPackageNo } from './packages'
+import type { GroupBalance } from './types'
+
+// The orange line under a package (DESIGN §4): what the customer should pay, and when. Display
+// only: the database decides the balance, and whether a booking may go ahead.
+
+/**
+ * Book's line under the package bar (book spec §5.2.1), or null: once the package has no
+ * lesson left to book, "New bookings start Package 3. Pay RM 240 before or at its first
+ * lesson." Without a price for the group's type: "… Pay for it before or at its first lesson."
+ * A group that can book nothing more (can_still_book 0 or less) gets DESIGN §6's
+ * credit_exceeded words instead.
+ */
+export function bookPackageNote(balance: GroupBalance, priceCents: number | null): string | null {
+  if (balance.left_in_package > 0) return null
+  if (balance.can_still_book <= 0) return messageFor({ code: 'credit_exceeded' })
+  const pay = priceCents === null ? 'Pay for it' : `Pay ${formatRinggit(priceCents)}`
+  return `New bookings start Package ${nextBookingPackageNo(balance)}. ${pay} before or at its first lesson.`
+}
+
+/** What My classes' note needs besides the balance. */
+export type AccountNoteInput = {
+  /** The group's names: "Sofia", "Aiman & Sofia". */
+  names: string
+  /** "1-to-1". */
+  typeLabel: string
+  /** The package price for the group's type (settings), or null while none is set. */
+  priceCents: number | null
+  /** useNow(): whether the first unpaid lesson is still ahead. */
+  now: Instant
+}
+
+/**
+ * My classes' line under a package (my-classes spec §5.2), or null while the group's next
+ * lesson is paid for. P = paid lessons, C = used + booked, S = the package size:
+ * - C = P, P a whole number of packages: "After 4 Oct, Sofia’s next 1-to-1 lesson starts
+ *   Package 3. Pay RM 240 before or at its first lesson." ("After …, " only while the last paid
+ *   lesson is still ahead; "Pay before …" without a price).
+ * - C = P otherwise (a free lesson or an uneven starting balance): "… next 1-to-1 lesson
+ *   isn’t paid yet. Pay before or at that lesson."
+ * - C > P (unpaid): "Package 6 isn’t paid yet. Pay RM 240 before or at its first lesson." while
+ *   the first unpaid lesson is ahead, else "Package 2 isn’t paid yet. Pay your coach RM 240 as
+ *   soon as you can."
+ */
+export function accountPackageNote(
+  balance: GroupBalance,
+  { names, typeLabel, priceCents, now }: AccountNoteInput,
+): string | null {
+  const paid = balance.paid_lessons
+  const counted = balance.used_lessons + balance.booked_lessons
+  const size = balance.package_size
+  const price = priceCents === null ? '' : ` ${formatRinggit(priceCents)}`
+  if (counted < paid) return null
+
+  if (counted === paid) {
+    const after = balance.last_lesson_at
+      ? `After ${formatDayMonth(balance.last_lesson_at, now)}, `
+      : ''
+    const next = `${after}${possessive(names)} next ${typeLabel} lesson`
+    if (paid % size === 0) {
+      return `${next} starts Package ${paid / size + 1}. Pay${price} before or at its first lesson.`
+    }
+    return `${next} isn’t paid yet. Pay before or at that lesson.`
+  }
+
+  const unpaid = `Package ${Math.floor(paid / size) + 1} isn’t paid yet.`
+  const ahead =
+    balance.unpaid_since !== null && toMyt(balance.unpaid_since).getTime() > toMyt(now).getTime()
+  return ahead
+    ? `${unpaid} Pay${price} before or at its first lesson.`
+    : `${unpaid} Pay your coach${price} as soon as you can.`
+}
