@@ -22,7 +22,11 @@ type GroupPickerProps = {
   name?: string
   /** A second, muted line under a group's names (Add booking: "Mei Ling’s account · Palm Court"). */
   secondary?: (group: Group) => ReactNode
-  /** Shown in place of the rows when there are no groups (Add booking's search). */
+  /**
+   * Shown in place of the rows when there are no groups (Add booking's search: "No active
+   * group matches “zz”."). It goes in a polite status that stays in the page, empty and
+   * taking no room, while there are rows, so it is read out when a search empties the list.
+   */
   emptyText?: string
   /**
    * grid (default, Book): a column on phones, rows side by side from 768 px wherever
@@ -71,14 +75,7 @@ export function GroupPicker({
       help={help}
       className={className}
     >
-      {groups.length === 0 ? (
-        emptyText && (
-          // A polite status: a search that empties the list is read out.
-          <p role="status" className="text-sm leading-normal text-muted">
-            {emptyText}
-          </p>
-        )
-      ) : (
+      {groups.length > 0 && (
         <div className={layouts[layout]}>
           {groups.map((group) => (
             <OptionRow
@@ -102,6 +99,14 @@ export function GroupPicker({
             />
           ))}
         </div>
+      )}
+      {emptyText !== undefined && (
+        // A live region added together with its text is often not read out, so this one
+        // stays in the page. While empty it takes no room: the negative margin cancels the
+        // fieldset's 8 px gap above it (as the kit's Field does with its status).
+        <p role="status" className="text-sm leading-normal text-muted empty:-mt-2">
+          {groups.length === 0 ? emptyText : null}
+        </p>
       )}
     </Fieldset>
   )

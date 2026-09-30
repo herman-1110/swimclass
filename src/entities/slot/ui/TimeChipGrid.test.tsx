@@ -108,9 +108,22 @@ describe('TimeChipGrid', () => {
 
 describe('TimeChipGridSkeleton', () => {
   it('draws hidden placeholder chips', () => {
-    const { container } = render(<TimeChipGridSkeleton count={4} />)
+    const { container } = render(<TimeChipGridSkeleton />)
     const blocks = container.querySelectorAll('[aria-hidden="true"]')
-    expect(blocks).toHaveLength(4)
+    expect(blocks.length).toBeGreaterThan(0)
+    expect(container.textContent).toBe('')
     expect(screen.queryAllByRole('button')).toHaveLength(0)
+  })
+
+  it('fills two rows at every width and clips the rest (book.md §6.1)', () => {
+    const { container } = render(<TimeChipGridSkeleton />)
+    const grid = container.firstElementChild
+    // Enough for two full rows of the widest grid Book has: 11 chips a row just under 768 px.
+    expect(grid?.children.length).toBeGreaterThanOrEqual(22)
+    // jsdom has no layout: the screenshots in the review folder show the two rows. Two 44 px
+    // rows and their 6 px gap (8 px from 768 px) are 94 px (96 px).
+    expect(grid?.className).toContain('overflow-hidden')
+    expect(grid?.className).toContain('max-h-23.5')
+    expect(grid?.className).toContain('md:max-h-24')
   })
 })

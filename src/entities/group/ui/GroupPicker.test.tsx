@@ -50,6 +50,21 @@ function BookPicker({ onChange }: { onChange?: (groupId: string) => void }) {
   )
 }
 
+/** Add booking's use: the page filters the groups by its search and says why none show. */
+function AddBookingPicker({ groups, query }: { groups: readonly Group[]; query: string }) {
+  return (
+    <GroupPicker
+      groups={groups}
+      value={null}
+      onChange={() => {}}
+      legend="Group"
+      help={null}
+      layout="scroll"
+      emptyText={`No active group matches “${query}”.`}
+    />
+  )
+}
+
 describe('GroupPicker', () => {
   it('is Book’s radio group: legend, one row per group with its tag, and the help', () => {
     render(<BookPicker />)
@@ -62,6 +77,8 @@ describe('GroupPicker', () => {
     expect(radio('Sofia 1-to-1').checked).toBe(false)
     expect(radio('Sofia 1-to-1').name).toBe('book-group')
     expect(radio('Sofia 1-to-1').value).toBe(sofia.group_id)
+    // No empty text, so no status region.
+    expect(screen.queryByRole('status')).toBeNull()
   })
 
   it('reports the group chosen by a press anywhere on its row', () => {
@@ -144,5 +161,27 @@ describe('GroupPicker', () => {
     )
     expect(screen.getByRole('status').textContent).toBe('No active group matches “zz”.')
     expect(screen.queryAllByRole('radio')).toHaveLength(0)
+  })
+
+  it('keeps its status in the page, so a search that empties the list is read out', () => {
+    const { rerender } = render(<AddBookingPicker groups={[aimanAndSofia, sofia]} query="" />)
+    // While there are rows the region is there, empty.
+    const status = screen.getByRole('status')
+    expect(status.textContent).toBe('')
+    expect(screen.getAllByRole('radio')).toHaveLength(2)
+
+    // The same region gets the words, which screen readers announce as a change.
+    rerender(<AddBookingPicker groups={[]} query="zz" />)
+    expect(screen.getByRole('status')).toBe(status)
+    expect(status.textContent).toBe('No active group matches “zz”.')
+    expect(screen.queryAllByRole('radio')).toHaveLength(0)
+
+    rerender(<AddBookingPicker groups={[]} query="zzz" />)
+    expect(status.textContent).toBe('No active group matches “zzz”.')
+
+    rerender(<AddBookingPicker groups={[sofia]} query="so" />)
+    expect(screen.getByRole('status')).toBe(status)
+    expect(status.textContent).toBe('')
+    expect(screen.getAllByRole('radio')).toHaveLength(1)
   })
 })

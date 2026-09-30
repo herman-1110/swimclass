@@ -5,7 +5,7 @@ import { afterEach, beforeAll, describe, expect, it } from 'vitest'
 
 import { getSession, logIn, logOut } from '@/shared/api/auth'
 import { DEMO_PASSWORD } from '@/shared/config/demo'
-import { formatTime } from '@/shared/lib/time'
+import { type DateKey, formatTime } from '@/shared/lib/time'
 
 import { freeCountByDay, slotsOfDay } from '../model/freeCountByDay'
 import { slotKeys } from './keys'
@@ -15,6 +15,7 @@ import { useWeekSlots } from './useWeekSlots'
 // 2026 12:00 MYT). The expected chips are book.md §8.2's (TECH_SPEC §10).
 
 const AIMAN_AND_SOFIA = 'c0000000-0000-4000-8000-000000000001'
+const SOFIA = 'c0000000-0000-4000-8000-000000000002'
 const HANA = 'c0000000-0000-4000-8000-000000000003'
 
 beforeAll(async () => {
@@ -110,6 +111,52 @@ describe('useWeekSlots', () => {
       expect(result.current.isPending).toBe(true)
       expect(result.current.fetchStatus).toBe('idle')
     }
+  })
+
+  it('shows no old chips while a new week, length or group loads (book.md §6.1)', async () => {
+    await logIn('meiling', DEMO_PASSWORD)
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    )
+    type Inputs = { week: DateKey; minutes: number; group: string }
+    const { result, rerender } = renderHook(
+      ({ week, minutes, group }: Inputs) => useWeekSlots(week, minutes, group),
+      { wrapper, initialProps: { week: '2026-09-28', minutes: 60, group: AIMAN_AND_SOFIA } },
+    )
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    expect(result.current.data).toHaveLength(80)
+
+    // Each change, straight away: no data (no chips of the old inputs), then the new answer.
+    const changeTo = async (inputs: Inputs) => {
+      rerender(inputs)
+      expect(result.current.data).toBeUndefined()
+      expect(result.current.isPending).toBe(true)
+      await waitFor(() => expect(result.current.isSuccess).toBe(true))
+      return [...freeCountByDay(result.current.data ?? [])]
+    }
+    const freeWeek = (weekday: number, weekend: number) => [
+      ['2026-10-05', weekday],
+      ['2026-10-06', weekday],
+      ['2026-10-07', weekday],
+      ['2026-10-08', weekday],
+      ['2026-10-09', weekday],
+      ['2026-10-10', weekend],
+      ['2026-10-11', weekend],
+    ]
+
+    // Next week, completely free (book.md §8.2): 8 starts on weekdays and 20 at weekends.
+    expect(await changeTo({ week: '2026-10-05', minutes: 60, group: AIMAN_AND_SOFIA })).toEqual(
+      freeWeek(8, 20),
+    )
+    // 2 hours: 6 and 16.
+    expect(await changeTo({ week: '2026-10-05', minutes: 120, group: AIMAN_AND_SOFIA })).toEqual(
+      freeWeek(6, 16),
+    )
+    // Her other group: the same starts, asked for again.
+    expect(await changeTo({ week: '2026-10-05', minutes: 120, group: SOFIA })).toEqual(
+      freeWeek(6, 16),
+    )
   })
 
   it('fails with not_your_group for another account’s group', async () => {
