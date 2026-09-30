@@ -23,8 +23,9 @@ type ApproveAccountButtonProps = {
 
 /**
  * "Approve" for an account waiting for approval (DESIGN §4; the Schedule spec §7.4: at once,
- * no confirmation). Its name includes the account ("Approve Siti Rahman"); it keeps its
- * label while the call runs, and a refusal shows under it.
+ * no confirmation). Its name includes the account ("Approve Siti Rahman"). While the call
+ * runs it keeps its label and focus, looks disabled and ignores presses (the Students spec
+ * §6 Disabled); a refusal shows under it.
  */
 export function ApproveAccountButton({
   account,
@@ -44,6 +45,8 @@ export function ApproveAccountButton({
           : { variant: 'link' as const, textSize: 'label' as const })}
         className="whitespace-nowrap"
         pending={approve.isPending}
+        // With `pending`, the kit's disabled look while busy (`pending` alone keeps the colours).
+        aria-disabled={approve.isPending || undefined}
         aria-describedby={approve.isError ? errorId : undefined}
         onClick={() => approve.mutate({ accountId: account.id })}
       >
@@ -53,10 +56,11 @@ export function ApproveAccountButton({
         </span>
       </Button>
       {approve.isError && (
+        // 13 px --warn, like every inline error (the Students spec §3.9).
         <span
           id={errorId}
           role="alert"
-          className="max-w-64 text-right text-small leading-[1.4] text-warn"
+          className="max-w-64 text-right text-label leading-normal text-warn"
         >
           {messageFor(approve.error, { audience: 'coach' })}
         </span>

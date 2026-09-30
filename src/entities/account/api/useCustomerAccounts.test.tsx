@@ -29,6 +29,7 @@ function renderAccountHooks() {
       accounts: useCustomerAccounts(),
       names: useAccountNames(),
       pending: usePendingAccounts(),
+      pendingByName: usePendingAccounts({ order: 'name' }),
     }),
     { wrapper },
   )
@@ -113,15 +114,17 @@ describe('the coach’s customer accounts', () => {
       'username',
     ])
     expect(pending[1]).toMatchObject({ display_name: 'Adam Wong', phone: null })
+    // Needs attention lists them by name (the Schedule spec §3.6).
+    expect(result.current.pendingByName.data?.map((a) => a.username)).toEqual(['adam.w', 'siti'])
     // Waiting accounts aren't offered in Add students, but their names are known.
     expect(result.current.accounts.data?.some((a) => a.username === 'siti')).toBe(false)
     expect([...(result.current.names.data?.values() ?? [])]).toContain('Siti Rahman')
   })
 
-  it('reads the profiles once for all three views', async () => {
+  it('reads the profiles once for every view', async () => {
     await logIn('herman', DEMO_PASSWORD)
     const { result, queryClient } = renderAccountHooks()
-    await waitFor(() => expect(result.current.pending.isSuccess).toBe(true))
+    await waitFor(() => expect(result.current.pendingByName.isSuccess).toBe(true))
     expect(queryClient.getQueryCache().findAll({ queryKey: accountKeys.all })).toHaveLength(1)
     expect(accountKeys.customers()).toEqual(['account', 'customers'])
   })

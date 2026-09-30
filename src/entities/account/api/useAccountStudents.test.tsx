@@ -4,10 +4,12 @@ import type { ReactNode } from 'react'
 import { afterEach, beforeAll, describe, expect, it } from 'vitest'
 
 import { getSession, logIn, logOut } from '@/shared/api/auth'
+import { demoDb } from '@/shared/api/demo/db'
 import { DEMO_PASSWORD } from '@/shared/config/demo'
 
+import type { StudentOrder } from '../model/types'
 import { accountKeys } from './keys'
-import { type StudentOrder, useAccountStudents } from './useAccountStudents'
+import { useAccountStudents } from './useAccountStudents'
 
 // Runs in demo mode: the real migrations and seed in PGlite, clock at DEMO_NOW.
 
@@ -63,6 +65,27 @@ describe('useAccountStudents', () => {
     const { result } = renderStudents(MEILING, 'name')
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
     expect(result.current.data?.map((s) => s.name)).toEqual(['Aiman', 'Sofia'])
+  })
+
+  it('orders by when they were added or by name, whatever order the database keeps', async () => {
+    // The seed adds every student at one moment, with each account's ids in name order, so it
+    // can't tell the orders apart. These three are stored (Ben, Zara, émile) in neither
+    // order, and were all added before Farah's Hana (added when the demo database loaded).
+    const db = await demoDb()
+    await db.query(
+      `insert into public.students (id, account_id, name, created_at) values
+         ('b0000000-0000-4000-8000-0000000000f1', $1, 'Ben', '2020-01-02T00:00:00Z'),
+         ('b0000000-0000-4000-8000-0000000000f2', $1, 'Zara', '2020-01-01T00:00:00Z'),
+         ('b0000000-0000-4000-8000-0000000000f3', $1, 'émile', '2020-01-03T00:00:00Z')`,
+      [FARAH],
+    )
+    await logIn('herman', DEMO_PASSWORD)
+    const added = renderStudents(FARAH)
+    await waitFor(() => expect(added.result.current.isSuccess).toBe(true))
+    expect(added.result.current.data?.map((s) => s.name)).toEqual(['Zara', 'Ben', 'émile', 'Hana'])
+    const byName = renderStudents(FARAH, 'name')
+    await waitFor(() => expect(byName.result.current.isSuccess).toBe(true))
+    expect(byName.result.current.data?.map((s) => s.name)).toEqual(['Ben', 'émile', 'Hana', 'Zara'])
   })
 
   it('gives a customer their own students, and nobody else’s (RLS)', async () => {

@@ -3,31 +3,26 @@ import { useCallback } from 'react'
 
 import { readRows } from '@/shared/api/rpc'
 
-import type { Student } from '../model/types'
+import { sortStudents } from '../model/students'
+import type { Student, StudentOrder } from '../model/types'
 import { accountKeys } from './keys'
 
 /**
- * Every active student the account may read, in the order they were added (created_at,
- * then id): the coach reads all of them, a customer only their own (RLS). One request
- * serves every account the coach picks in Add students.
+ * Every active student the account may read: the coach reads all of them, a customer only
+ * their own (RLS). One request serves every account the coach picks in Add students. The
+ * hook orders each account's students itself (`sortStudents`), so the order here doesn't
+ * matter.
  */
 const activeStudents = queryOptions({
   queryKey: accountKeys.students(),
-  queryFn: (): Promise<Student[]> =>
-    readRows('students', {
-      eq: { active: true },
-      order: [{ column: 'created_at' }, { column: 'id' }],
-    }),
+  queryFn: (): Promise<Student[]> => readRows('students', { eq: { active: true } }),
 })
-
-const collator = new Intl.Collator('en', { sensitivity: 'base' })
-
-export type StudentOrder = 'added' | 'name'
 
 /**
  * One account's active students (none while no account is given).
- * - `added` (default): the order they were added. Add students matches a typed name to the
- *   first student added with that name (its spec §5.3) and offers the names as suggestions.
+ * - `added` (default): the order they were added (created_at, then id). Add students matches
+ *   a typed name to the first student added with that name (its spec §5.3) and offers the
+ *   names as suggestions.
  * - `name`: alphabetical, then by id: My classes' "Mei Ling’s account · Aiman & Sofia".
  *
  * Pass the account's id even for the signed-in customer's own students: RLS shows the coach
@@ -38,12 +33,11 @@ export function useAccountStudents(
   { order = 'added' }: { order?: StudentOrder } = {},
 ) {
   const select = useCallback(
-    (students: Student[]): Student[] => {
-      const mine = students.filter((s) => s.account_id === accountId)
-      return order === 'name'
-        ? mine.toSorted((a, b) => collator.compare(a.name, b.name) || a.id.localeCompare(b.id))
-        : mine
-    },
+    (students: Student[]): Student[] =>
+      sortStudents(
+        students.filter((s) => s.account_id === accountId),
+        order,
+      ),
     [accountId, order],
   )
   return useQuery({ ...activeStudents, select })

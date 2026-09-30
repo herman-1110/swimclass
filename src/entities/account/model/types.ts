@@ -24,6 +24,23 @@ export type PendingAccount = Pick<
   email_confirmed: boolean | null
 }
 
+/**
+ * The order of the waiting list:
+ * - `signup`: oldest sign-up first, then by id (the Waiting for approval tab, the Students
+ *   spec §5.1 R5);
+ * - `name`: by display name, then username (the schedule's Needs attention, the Schedule
+ *   spec §3.6: "within waiting: by name").
+ */
+export type PendingAccountOrder = 'signup' | 'name'
+
 /** A student of an account (the students table): Add students matches typed names against
  *  them, and My classes lists them under the account's name. */
 export type Student = Row<'students'>
+
+/**
+ * The order of an account's students:
+ * - `added`: created_at, then id. Add students matches a typed name to the first student
+ *   added with that name (its spec §5.3).
+ * - `name`: alphabetical as people read names, then id (My classes, its spec R4).
+ */
+export type StudentOrder = 'added' | 'name'

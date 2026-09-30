@@ -3,7 +3,7 @@ import { queryOptions, useQuery } from '@tanstack/react-query'
 import { readRows } from '@/shared/api/rpc'
 
 import { byDisplayName, bySignUp, toPendingAccount } from '../model/accounts'
-import type { CustomerAccount, PendingAccount } from '../model/types'
+import type { CustomerAccount, PendingAccount, PendingAccountOrder } from '../model/types'
 import { accountKeys } from './keys'
 
 /**
@@ -24,11 +24,18 @@ const approvedOnly = (accounts: CustomerAccount[]) => accounts.filter((a) => a.a
 const namesById = (accounts: CustomerAccount[]): ReadonlyMap<string, string> =>
   new Map(accounts.map((a) => [a.id, a.display_name]))
 
-const waiting = (accounts: CustomerAccount[]): PendingAccount[] =>
-  accounts
-    .filter((a) => !a.approved)
-    .toSorted(bySignUp)
-    .map(toPendingAccount)
+const waitingBy =
+  (compare: (a: CustomerAccount, b: CustomerAccount) => number) =>
+  (accounts: CustomerAccount[]): PendingAccount[] =>
+    accounts
+      .filter((a) => !a.approved)
+      .toSorted(compare)
+      .map(toPendingAccount)
+
+const waiting: Record<PendingAccountOrder, (accounts: CustomerAccount[]) => PendingAccount[]> = {
+  signup: waitingBy(bySignUp),
+  name: waitingBy(byDisplayName),
+}
 
 /**
  * The coach's approved customer accounts, by display name: Add students' account picker
@@ -48,10 +55,13 @@ export function useAccountNames() {
 }
 
 /**
- * Accounts waiting for approval, oldest sign-up first: the schedule's Needs attention and
- * the Waiting for approval tab. Until `pending_accounts()` exists (prompt 09) this reads
- * `profiles`, so there is no email (the Students spec §5.1 R5; the Schedule spec R5).
+ * Accounts waiting for approval, for the schedule's Needs attention and the Waiting for
+ * approval tab. Until `pending_accounts()` exists (prompt 09) this reads `profiles`, so there
+ * is no email (the Students spec §5.1 R5; the Schedule spec R5).
+ * - `signup` (default): oldest sign-up first, then by id (the Waiting for approval tab).
+ * - `name`: by display name, then username (Needs attention: "within waiting: by name").
+ * Both orders select from the same request.
  */
-export function usePendingAccounts() {
-  return useQuery({ ...customerAccounts, select: waiting })
+export function usePendingAccounts({ order = 'signup' }: { order?: PendingAccountOrder } = {}) {
+  return useQuery({ ...customerAccounts, select: waiting[order] })
 }
