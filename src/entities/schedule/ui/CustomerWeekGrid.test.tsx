@@ -38,6 +38,9 @@ describe('CustomerWeekGrid', () => {
     renderGrid(<CustomerWeekGrid weekStart="2026-09-28" week={week} dayHref={toBook} />)
     expect(screen.getByRole('img', { name: PICTURE }).getAttribute('aria-busy')).toBeNull()
     const text = screen.getByRole('list', { name: 'Free times and your lessons, 28 Sep – 4 Oct' })
+    // jsdom applies no CSS, so the implicit role always passes. The explicit one keeps the list
+    // and its name in Safari, which drops them from lists without bullets.
+    expect(text.getAttribute('role')).toBe('list')
     expect(
       within(text)
         .getAllByRole('listitem')

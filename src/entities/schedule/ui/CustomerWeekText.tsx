@@ -17,7 +17,9 @@ type CustomerWeekTextProps = {
  */
 export function CustomerWeekText({ weekStart, week, hours }: CustomerWeekTextProps) {
   return (
-    <ul aria-label={`Free times and your lessons, ${formatWeekLabel(weekStart)}`}>
+    // role="list": Safari drops list semantics, and with them this name, from lists without
+    // bullets.
+    <ul role="list" aria-label={`Free times and your lessons, ${formatWeekLabel(weekStart)}`}>
       {week.map((day) => (
         <li key={day.day}>{describeCustomerDay(day, hours)}</li>
       ))}
