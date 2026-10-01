@@ -179,17 +179,20 @@ features/book-lesson/
                                   (sticky footer on phones, side card from 768 px)
 ```
 
-Pages are simpler: `index.ts`, the page component (`BookPage.tsx`), and `ui/` for pieces
-only that page uses.
+Pages are simpler: `index.ts`, the page component (`BookPage.tsx`), `ui/` for pieces
+only that page uses, and `model/` for logic only that page has (Book's address parameters
+and opening day), with its tests.
 
 ### 3.4 Example: how the Book screen fits together
 
 ```
 pages/book/BookPage.tsx       reads ?group, ?day, ?length, ?time from the URL and lays out the screen
 ├── entities/announcement     CoachBanner
+├── entities/settings         usePublicSettings (lengths, travel gap, window, cutoff) · DocumentTitle
 ├── entities/group            useMyGroups · GroupPicker ("Who's this lesson for?")
-├── entities/balance          useGroupBalance · PackageSummary (bar and counts)
+├── entities/balance          useAccountBalances · PackageSummary (bar and counts)
 ├── entities/slot             useWeekSlots · TimeChipGrid (free and crossed-out times)
+├── entities/schedule         useOwnLessonsOnDay ("Already booked this day")
 ├── shared/ui                 DayStrip · Segmented (1 hour / 2 hours)
 └── features/book-lesson      BookingSummary → book_lesson → refresh the data above
 ```
