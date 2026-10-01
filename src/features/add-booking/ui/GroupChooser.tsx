@@ -20,6 +20,7 @@ type GroupChooserProps = {
   onChange: (groupId: string) => void
   /** The search box: the dialog starts there (the Schedule spec §7.3). */
   searchRef?: Ref<HTMLInputElement>
+  /** It is booking: the search is read-only and the list disabled, so the choice holds. */
   readOnly?: boolean
 }
 
@@ -48,8 +49,10 @@ export function GroupChooser({
   const groups = useCoachGroups()
   const names = useAccountNames().data ?? NO_NAMES
 
+  // The label sits 6 px above the search box, as every label in the dialog (§3.10), and the
+  // list 8 px under it (mt-0.5).
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-1.5">
       {/* The search box and the list have their own names; this is the drawn label. */}
       <p aria-hidden="true" className="text-label font-medium text-muted">
         Group
@@ -65,20 +68,23 @@ export function GroupChooser({
         onChange={(event) => onQuery(event.target.value)}
       />
       {groups.data ? (
-        <GroupPicker
-          groups={searchGroups(groups.data, names, query)}
-          value={value}
-          onChange={onChange}
-          legend="Group"
-          hideLegend
-          help={null}
-          name="add-booking-group"
-          secondary={(group) => accountText(group, names)}
-          emptyText={query.trim() ? noMatch(query) : NO_GROUPS}
-          layout="scroll"
-        />
+        <fieldset disabled={readOnly} className="mt-0.5 min-w-0">
+          <GroupPicker
+            groups={searchGroups(groups.data, names, query)}
+            value={value}
+            onChange={onChange}
+            legend="Group"
+            hideLegend
+            help={null}
+            name="add-booking-group"
+            secondary={(group) => accountText(group, names)}
+            emptyText={query.trim() ? noMatch(query) : NO_GROUPS}
+            layout="scroll"
+          />
+        </fieldset>
       ) : groups.isError ? (
         <Banner
+          className="mt-0.5"
           role="alert"
           action={
             <Button variant="quiet" size="sm" tone="accent" onClick={() => void groups.refetch()}>
@@ -89,7 +95,7 @@ export function GroupChooser({
           {messageFor(groups.error, { audience: 'coach' })}
         </Banner>
       ) : (
-        <div aria-busy="true" className="flex flex-col gap-2">
+        <div aria-busy="true" className="mt-0.5 flex flex-col gap-2">
           {[0, 1, 2].map((row) => (
             <Skeleton key={row} className="h-12" />
           ))}

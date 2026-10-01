@@ -28,9 +28,10 @@ type CheckLineProps = {
 /**
  * The live clash reason (DESIGN §4; the Schedule spec §6.4): "Checking…" while
  * `coach_slot_check` runs, the reason in orange when the first week clashes (the coach's
- * words, DESIGN §6), "Only the first week is checked now…" while repeating, and a warning
- * for a start that has passed. A polite live region, so the answer is read out; while it has
- * nothing to say it takes no room.
+ * words, DESIGN §6), "Only the first week is checked now…" whenever "Repeat weekly" is on
+ * (after the reason, which covers the first week only), and a warning for a start that has
+ * passed. A polite live region, so the answer is read out; while it has nothing to say it
+ * takes no room.
  */
 export function CheckLine({
   checking,
@@ -51,9 +52,7 @@ export function CheckLine({
         <p className="text-warn">{messageFor(error, options)}</p>
       )}
       {reason !== null && <p className="text-warn">{reason}</p>}
-      {live && !checking && answer?.ok && repeating && (
-        <p className="text-muted">{FIRST_WEEK_ONLY}</p>
-      )}
+      {live && repeating && <p className="text-muted">{FIRST_WEEK_ONLY}</p>}
       {past && <p className="text-warn">{PAST_WARNING}</p>}
     </div>
   )

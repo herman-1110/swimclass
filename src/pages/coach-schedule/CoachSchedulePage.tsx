@@ -101,6 +101,7 @@ export function CoachSchedulePage() {
         <LessonDetailsDialog
           key={lesson.booking_id}
           lesson={lesson}
+          week={week.data}
           onClose={() => setLesson(null)}
           onDone={(text) => {
             setLesson(null)

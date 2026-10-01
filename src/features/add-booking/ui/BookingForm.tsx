@@ -1,12 +1,10 @@
 import { useId, useRef, useState } from 'react'
 
-import { toAppError } from '@/shared/api/rpc'
-import { type DateKey, mytDateKey } from '@/shared/lib/time'
+import type { DateKey } from '@/shared/lib/time'
 import { Dialog } from '@/shared/ui/Dialog'
 
-import { useCoachBook } from '../api/useCoachBook'
-import { bookedNotice, NO_EMAIL, primaryLabel } from '../model/copy'
-import { type BookingDraft, endOf, lastStartOf } from '../model/draft'
+import { NO_EMAIL, primaryLabel } from '../model/copy'
+import { endOf, lastStartOf } from '../model/draft'
 import { BookingActions } from './BookingActions'
 import { BookingError } from './BookingError'
 import { BookingRules } from './BookingRules'
@@ -15,17 +13,8 @@ import { CheckLine } from './CheckLine'
 import { GroupChooser } from './GroupChooser'
 import { LengthChoice } from './LengthChoice'
 import { useBookingDraft } from './useBookingDraft'
+import { type AddBookingBooked, useBookingSubmit } from './useBookingSubmit'
 import { WhenFields } from './WhenFields'
-
-/** What the page hears once the lessons are booked. */
-export type AddBookingBooked = {
-  /** The new bookings, in start order. */
-  bookingIds: string[]
-  /** The first lesson's day: the page shows its week. */
-  firstDate: DateKey
-  /** "Booked Tue 29 Sep, 7:30–8:30 pm for Aiman & Sofia." */
-  notice: string
-}
 
 export type BookingFormProps = {
   onClose: () => void
@@ -38,37 +27,16 @@ export type BookingFormProps = {
  * §6.4, §7.4): group, date, start, length, repeat and the coach's overrides, the live clash
  * reason for the first week, a summary, then "Book 7:30 pm for Aiman & Sofia". The live
  * check is a preview; `coach_book` decides, and its refusals show above the buttons ("Book
- * anyway" after `credit_exceeded`).
+ * anyway" after `credit_exceeded`). While it books the form holds still.
  */
 export function BookingForm({ onClose, defaultDate, onBooked }: BookingFormProps) {
   const formId = useId()
   const searchRef = useRef<HTMLInputElement>(null)
+  const primaryRef = useRef<HTMLButtonElement>(null)
   const [query, setQuery] = useState('')
   const form = useBookingDraft(defaultDate)
   const { draft, group, start, minutes, weeks, blocker, gapMinutes } = form
-  const book = useCoachBook({
-    onBooked: (bookingIds, input) => {
-      const first = new Date(input.startsAt)
-      const end = endOf(first, input.minutes)
-      onBooked({
-        bookingIds,
-        firstDate: mytDateKey(first),
-        notice: bookedNotice(first, end, input.repeatWeeks, group?.display_names ?? ''),
-      })
-    },
-  })
-  const creditRefused = book.isError && toAppError(book.error).code === 'credit_exceeded'
-
-  const update = (patch: Partial<BookingDraft>) => {
-    form.setDraft((current) => ({ ...current, ...patch }))
-    // A refusal ("Book anyway" included) was about the old input.
-    if (book.isError) book.reset()
-  }
-
-  const submit = () => {
-    if (form.input === null || book.isPending) return
-    book.mutate({ ...form.input, ignoreCredit: creditRefused })
-  }
+  const { book, creditRefused, update, submit } = useBookingSubmit(form, { onBooked, primaryRef })
 
   return (
     <Dialog
@@ -82,6 +50,7 @@ export function BookingForm({ onClose, defaultDate, onBooked }: BookingFormProps
       actions={
         <BookingActions
           formId={formId}
+          primaryRef={primaryRef}
           label={primaryLabel({
             blocker,
             pending: book.isPending,
@@ -117,6 +86,7 @@ export function BookingForm({ onClose, defaultDate, onBooked }: BookingFormProps
         <LengthChoice
           settings={form.settings}
           value={minutes}
+          disabled={book.isPending}
           onChange={(chosen) => update({ minutes: chosen })}
         />
         <BookingRules

@@ -13,6 +13,8 @@ type LengthChoiceProps = {
   settings: UseQueryResult<PublicSettings>
   /** The length chosen, or null before the settings are in. */
   value: number | null
+  /** It is booking: the choice holds until the answer is in. */
+  disabled?: boolean
   onChange: (minutes: number) => void
 }
 
@@ -23,7 +25,7 @@ const label = 'text-label font-medium text-muted'
  * control. With one length only there is nothing to choose, so it is plain text (§6.7). The
  * settings are usually in already (the layout reads them); until then a placeholder.
  */
-export function LengthChoice({ settings, value, onChange }: LengthChoiceProps) {
+export function LengthChoice({ settings, value, disabled, onChange }: LengthChoiceProps) {
   const lengths = settings.data?.lesson_lengths ?? []
 
   if (settings.isError && lengths.length === 0) {
@@ -69,6 +71,7 @@ export function LengthChoice({ settings, value, onChange }: LengthChoiceProps) {
       options={lengths.map((minutes) => ({
         value: String(minutes),
         label: formatMinutes(minutes),
+        disabled,
       }))}
       value={String(value)}
       onChange={(minutes) => onChange(Number(minutes))}

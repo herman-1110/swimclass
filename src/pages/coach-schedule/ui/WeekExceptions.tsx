@@ -10,7 +10,10 @@ type WeekExceptionsProps = {
   weekStart: DateKey
   /** useCoachWeek(weekStart).data: a week kept on screen while the next loads is skipped. */
   week: CoachWeek | undefined
-  /** A row was removed: show the notice and move focus to it (the row is gone). */
+  /**
+   * A row went: removed now ("Blocked time removed."), or removed already elsewhere (the
+   * generic message, §6.7). Show the words in the notice and move focus there: the row is gone.
+   */
   onRemoved: (notice: string) => void
 }
 
@@ -40,7 +43,7 @@ export function WeekExceptions({ weekStart, week, onRemoved }: WeekExceptionsPro
               </span>{' '}
               <span className="text-small break-words text-muted">{exceptionLine(exception)}</span>
             </div>
-            <RemoveExceptionButton exception={exception} onRemoved={onRemoved} />
+            <RemoveExceptionButton exception={exception} onRemoved={onRemoved} onGone={onRemoved} />
           </li>
         ))}
       </ul>

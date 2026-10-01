@@ -4,7 +4,9 @@ import { createMemoryRouter, RouterProvider } from 'react-router'
 import { afterEach, beforeAll, describe, expect, it } from 'vitest'
 
 import { SessionContext } from '@/entities/account'
+import { coachWeekQuery } from '@/entities/schedule'
 import { getSession, logIn, logOut, signUp } from '@/shared/api/auth'
+import { rpc } from '@/shared/api/rpc'
 import { DEMO_PASSWORD } from '@/shared/config/demo'
 import { ROUTES } from '@/shared/config/routes'
 
@@ -67,6 +69,14 @@ async function notice(text: string) {
   return found
 }
 
+/** The booking id of `names`' lesson on `day` (an index into the week), as coach_week has it. */
+async function bookingOf(weekStart: string, day: number, names: string) {
+  const week = await new QueryClient().fetchQuery(coachWeekQuery(weekStart))
+  const lesson = week[day].lessons.find((each) => each.display_names === names)
+  if (!lesson) throw new Error(`No lesson for ${names}`)
+  return lesson.booking_id
+}
+
 function submit(dialog: HTMLElement) {
   const [button] = within(dialog)
     .getAllByRole('button')
@@ -109,7 +119,15 @@ describe('CoachSchedulePage actions (§8.3)', () => {
         target: { value: 'Pool maintenance on Saturday morning. Those lessons move to 4 pm.' },
       })
       fireEvent.click(within(message).getByRole('button', { name: 'Send to all customers' }))
-      await notice('Sent to all customers.')
+      const sent = await notice('Sent to all customers.')
+      // The next action clears it (§3.9).
+      fireEvent.click(screen.getByRole('button', { name: 'Add booking' }))
+      expect(sent.isConnected).toBe(false)
+      fireEvent.click(
+        within(screen.getByRole('dialog', { name: 'Add booking' })).getByRole('button', {
+          name: 'Cancel',
+        }),
+      )
       const pinned = await within(message).findByRole('list', { name: 'Pinned messages' }, SLOW)
       expect(within(pinned).getByRole('listitem').textContent).toContain('Customers see this one')
       fireEvent.click(within(pinned).getByRole('button', { name: /^Remove message posted/ }))
@@ -293,6 +311,91 @@ describe('CoachSchedulePage actions (§8.3)', () => {
         () => expect(within(region).queryByRole('button', { name: /^Wei Jie/ })).toBeNull(),
         SLOW,
       )
+    },
+    FLOW,
+  )
+
+  it(
+    'says when a blocked time was removed elsewhere already, and the next action clears it (§6.7)',
+    async () => {
+      await logIn('herman', DEMO_PASSWORD)
+      const id = await rpc('add_exception', {
+        p_kind: 'closed',
+        p_starts_at: '2026-10-17T07:00:00+08:00',
+        p_ends_at: '2026-10-17T09:00:00+08:00',
+      })
+      await renderPage(`${ROUTES.coachSchedule}?day=2026-10-17`)
+      await grid('12–18 Oct 2026')
+      const list = await screen.findByRole('region', { name: 'Blocked and extra time' }, SLOW)
+      // Another tab removes it meanwhile.
+      await rpc('remove_exception', { p_id: id })
+      const remove = within(list).getByRole('button', {
+        name: 'Remove blocked time, Sat 17 Oct, 7:00–9:00 am',
+      })
+      remove.focus()
+      fireEvent.click(remove)
+      const shown = await notice('Something went wrong. Refresh the page and try again.')
+      await waitFor(() => expect(document.activeElement?.contains(shown)).toBe(true))
+      await waitFor(
+        () => expect(screen.queryByRole('region', { name: 'Blocked and extra time' })).toBeNull(),
+        SLOW,
+      )
+      // The row went; the words stay, with focus.
+      expect(document.activeElement?.contains(shown)).toBe(true)
+      expect(screen.queryByRole('alert')).toBeNull()
+      fireEvent.click(screen.getByRole('button', { name: 'Next week' }))
+      expect(shown.isConnected).toBe(false)
+    },
+    FLOW,
+  )
+
+  it(
+    'closes a lesson’s details once a refusal shows it was cancelled elsewhere (§6.6)',
+    async () => {
+      await renderPage(`${ROUTES.coachSchedule}?day=2026-09-28`)
+      const region = await grid('28 Sep – 4 Oct 2026')
+      fireEvent.click(within(region).getByRole('button', { name: /^Jun Hao, 7:30–8:30 pm/ }))
+      const details = screen.getByRole('dialog', { name: 'Jun Hao' })
+      // Another tab cancels it meanwhile.
+      await rpc('cancel_booking', { p_booking_id: await bookingOf('2026-09-28', 0, 'Jun Hao') })
+      fireEvent.click(within(details).getByRole('button', { name: 'Cancel lesson' }))
+      const confirm = screen.getByRole('alertdialog', { name: /^Cancel Mon 28 Sep/ })
+      fireEvent.click(within(confirm).getByRole('button', { name: 'Cancel lesson' }))
+      const refusal = await within(confirm).findByRole('alert', {}, SLOW)
+      const words = 'This lesson is already cancelled. Refresh to see the latest.'
+      expect(refusal.textContent).toBe(words)
+      fireEvent.click(within(confirm).getByRole('button', { name: 'Close' }))
+      // The week is read again: nothing can be done with the lesson, so the details go too,
+      // and focus goes to the notice instead of the lesson's block, which has gone.
+      const shown = await notice(words)
+      expect(screen.queryByRole('dialog')).toBeNull()
+      expect(screen.queryByRole('alertdialog')).toBeNull()
+      await waitFor(() => expect(document.activeElement?.contains(shown)).toBe(true))
+      expect(within(region).queryByRole('button', { name: /^Jun Hao/ })).toBeNull()
+    },
+    FLOW,
+  )
+
+  it(
+    'closes a lesson’s details once a refusal shows it was excused elsewhere (§6.6)',
+    async () => {
+      await renderPage(ROUTES.coachSchedule)
+      const region = await grid('21–27 Sep 2026')
+      fireEvent.click(within(region).getByRole('button', { name: /^Ethan, 9:00–10:00 am/ }))
+      const details = screen.getByRole('dialog', { name: 'Ethan' })
+      // Another tab excuses it meanwhile.
+      await rpc('excuse_booking', { p_booking_id: await bookingOf('2026-09-21', 5, 'Ethan') })
+      fireEvent.click(within(details).getByRole('button', { name: 'Mark as excused' }))
+      const confirm = screen.getByRole('alertdialog', { name: /^Mark Sat 26 Sep/ })
+      fireEvent.click(within(confirm).getByRole('button', { name: 'Mark as excused' }))
+      const refusal = await within(confirm).findByRole('alert', {}, SLOW)
+      const words = 'This lesson is already excused. Refresh to see the latest.'
+      expect(refusal.textContent).toBe(words)
+      fireEvent.click(within(confirm).getByRole('button', { name: 'Close' }))
+      const shown = await notice(words)
+      expect(screen.queryByRole('dialog')).toBeNull()
+      await waitFor(() => expect(document.activeElement?.contains(shown)).toBe(true))
+      expect(within(region).queryByRole('button', { name: /^Ethan/ })).toBeNull()
     },
     FLOW,
   )

@@ -2,11 +2,14 @@ import { describe, expect, it } from 'vitest'
 
 import {
   bookBlocker,
+  type BookingRequest,
+  changesDraft,
   checkArgs,
   clampWeeks,
   endOf,
   lastStartOf,
   newDraft,
+  sameBooking,
   startOf,
   weeksOf,
 } from './draft'
@@ -119,5 +122,56 @@ describe('checkArgs', () => {
     expect(checkArgs({ ...draft, groupId: null }, 60)).toBeNull()
     expect(checkArgs({ ...draft, start: '' }, 60)).toBeNull()
     expect(checkArgs(draft, null)).toBeNull()
+  })
+})
+
+describe('changesDraft', () => {
+  const draft = { ...newDraft('2026-10-05'), repeat: true, weeks: '3' }
+
+  it('is false for a field left as it was (leaving "Number of weeks", §7.4 step 10)', () => {
+    expect(changesDraft(draft, { weeks: '3' })).toBe(false)
+    expect(changesDraft(draft, { repeat: true, groupId: null })).toBe(false)
+  })
+
+  it('is true as soon as one field changes', () => {
+    expect(changesDraft(draft, { weeks: '4' })).toBe(true)
+    expect(
+      changesDraft(draft, { weeks: '3', groupId: 'c0000000-0000-4000-8000-000000000003' }),
+    ).toBe(true)
+  })
+})
+
+describe('sameBooking', () => {
+  const asked: BookingRequest = {
+    groupId: 'c0000000-0000-4000-8000-000000000004',
+    startsAt: '2026-10-06T09:30:00.000Z',
+    minutes: 60,
+    repeatWeeks: 2,
+    ignoreOpenHours: false,
+    gapOverride: false,
+  }
+
+  it('matches the booking that was refused, "Book anyway" aside', () => {
+    expect(sameBooking({ ...asked, ignoreCredit: false } as BookingRequest, { ...asked })).toBe(
+      true,
+    )
+  })
+
+  it('tells any other group, time, length, weeks or option apart', () => {
+    for (const change of [
+      { groupId: 'c0000000-0000-4000-8000-000000000003' },
+      { startsAt: '2026-10-06T10:30:00.000Z' },
+      { minutes: 120 },
+      { repeatWeeks: 3 },
+      { ignoreOpenHours: true },
+      { gapOverride: true },
+    ]) {
+      expect(sameBooking(asked, { ...asked, ...change })).toBe(false)
+    }
+  })
+
+  it('is false before anything was asked, or while the form can’t book', () => {
+    expect(sameBooking(undefined, asked)).toBe(false)
+    expect(sameBooking(asked, null)).toBe(false)
   })
 })

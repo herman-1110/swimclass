@@ -41,12 +41,17 @@ function stayBooked(weeks: readonly CoachWeek[], ranges: readonly DayRange[]): R
   )
 }
 
-/** Open extra time: part of it is blocked (blocked time wins), or it is all open already. */
+/**
+ * Open extra time: part of it is blocked (blocked time wins), or it is all open already. Both
+ * are lines of text, 13 px / 1.5: the warning in --warn (the Schedule spec §3.10, §6.5).
+ */
 function extraTimeNote(weeks: readonly CoachWeek[], range: DayRange | undefined): ReactNode {
   const day = range && dayOf(weeks, range.date)
   if (!range || !day) return null
   const blocks = blocksInside(day, range)
-  if (blocks.length > 0) return <Banner tone="warn">{blockedInsideMessage(blocks)}</Banner>
+  if (blocks.length > 0) {
+    return <p className="text-label leading-normal text-warn">{blockedInsideMessage(blocks)}</p>
+  }
   if (isOpenAlready(day, range)) {
     return <p className="text-label leading-normal text-muted">{ALREADY_OPEN}</p>
   }

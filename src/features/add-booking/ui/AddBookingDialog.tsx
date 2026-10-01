@@ -1,6 +1,7 @@
 import type { DateKey } from '@/shared/lib/time'
 
-import { type AddBookingBooked, BookingForm } from './BookingForm'
+import { BookingForm } from './BookingForm'
+import type { AddBookingBooked } from './useBookingSubmit'
 
 type AddBookingDialogProps = {
   /** Shown. The owner keeps it in state; "Cancel", "Close" and Esc call onClose. */

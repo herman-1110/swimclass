@@ -15,7 +15,7 @@ export const SEARCH_PLACEHOLDER = 'Search by student or account name'
 /** "Number of weeks"' help. */
 export const REPEAT_HELP = 'The same time each week. Nothing is booked if any week clashes.'
 
-/** Under an ok check while repeating: DESIGN §4 "the clash reason covers the first week only". */
+/** While repeating, under the reason: DESIGN §4 "the clash reason covers the first week only". */
 export const FIRST_WEEK_ONLY =
   'Only the first week is checked now. The other weeks are checked when you book.'
 

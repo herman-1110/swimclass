@@ -52,6 +52,9 @@ export function useBookingDraft(defaultDate: DateKey) {
     setDraft,
     settings,
     group: group ?? null,
+    /** A group's names by its id: the notice names the group that was booked. */
+    namesOf: (groupId: string) =>
+      groups.data?.find((each) => each.group_id === groupId)?.display_names ?? '',
     start,
     minutes,
     weeks,
@@ -63,3 +66,6 @@ export function useBookingDraft(defaultDate: DateKey) {
     input,
   }
 }
+
+/** The Add booking form's state, as useBookingDraft gives it. */
+export type BookingDraftState = ReturnType<typeof useBookingDraft>

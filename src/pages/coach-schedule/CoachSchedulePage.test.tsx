@@ -1,10 +1,11 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
-import { afterEach, beforeAll, describe, expect, it } from 'vitest'
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 
 import { SessionContext } from '@/entities/account'
 import { getSession, logIn, logOut } from '@/shared/api/auth'
+import { getBackend } from '@/shared/api/backend'
 import { DEMO_PASSWORD } from '@/shared/config/demo'
 import { ROUTES } from '@/shared/config/routes'
 
@@ -23,7 +24,10 @@ beforeAll(async () => {
   await getSession()
 }, 60_000)
 
-afterEach(cleanup)
+afterEach(() => {
+  cleanup()
+  vi.restoreAllMocks()
+})
 
 /** The page alone on its route, signed in (pages may not import app/, so no guards). */
 async function renderPage(path: string, username = 'herman') {
@@ -176,6 +180,8 @@ describe('CoachSchedulePage, moving through the weeks (§8.2)', () => {
     await grid('21–27 Sep 2026')
     fireEvent.click(screen.getByRole('button', { name: 'Next week' }))
     expect(router.state.location.search).toBe('?day=2026-10-03')
+    // No history entry per click (§1).
+    expect(router.state.historyAction).toBe('REPLACE')
     const region = await grid('28 Sep – 4 Oct 2026')
     expect(within(region).getAllByRole('button')).toHaveLength(14)
     expect(
@@ -204,6 +210,7 @@ describe('CoachSchedulePage, moving through the weeks (§8.2)', () => {
     const router = await renderPage(ROUTES.coachSchedule)
     await grid('21–27 Sep 2026')
     fireEvent.click(screen.getByRole('button', { name: 'Previous week' }))
+    expect(router.state.historyAction).toBe('REPLACE')
     const region = await grid('14–20 Sep 2026')
     expect(texts(within(region).getAllByRole('button'))).toEqual([
       'Wei Jie, 7:30–8:30 pm, Palm Court, Fri 18 Sep, unpaid',
@@ -211,6 +218,7 @@ describe('CoachSchedulePage, moving through the weeks (§8.2)', () => {
     ])
     fireEvent.click(screen.getByRole('button', { name: 'Today' }))
     expect(router.state.location.search).toBe('')
+    expect(router.state.historyAction).toBe('REPLACE')
     await grid('21–27 Sep 2026')
   })
 
@@ -228,6 +236,7 @@ describe('CoachSchedulePage, moving through the weeks (§8.2)', () => {
     await grid('21–27 Sep 2026')
     fireEvent.click(screen.getByRole('button', { name: 'Friday 25 Sep, 1 lesson' }))
     expect(router.state.location.search).toBe('?day=2026-09-25')
+    expect(router.state.historyAction).toBe('REPLACE')
     const list = screen.getByRole('list', { name: 'Friday 25 Sep' })
     expect(within(list).getByRole('button', { name: /^Wei Jie/ })).toBeTruthy()
   })
@@ -294,5 +303,31 @@ describe('CoachSchedulePage when the week can’t be read', () => {
     expect(
       within(screen.getByRole('group', { name: 'Week' })).getByText('21–27 Sep 2026'),
     ).toBeTruthy()
+  })
+
+  it('hands focus to the week once “Try again” reads it (§6.1)', async () => {
+    // coach_week for 12 Oct fails as on a lost connection, until reconnected.
+    const backend = await getBackend()
+    const rpc = backend.rpc.bind(backend)
+    let lost = true
+    vi.spyOn(backend, 'rpc').mockImplementation((fn, args) =>
+      lost && fn === 'coach_week' && args.p_week_start === '2026-10-12'
+        ? Promise.reject(new TypeError('Failed to fetch'))
+        : rpc(fn, args),
+    )
+    await renderPage(`${ROUTES.coachSchedule}?day=2026-10-14`)
+    const region = screen.getByRole('region', { name: 'Week of 12–18 Oct 2026' })
+    const alert = await within(region).findByRole('alert', {}, SLOW)
+    expect(alert.textContent).toBe(
+      'Couldn’t reach the server. Check your connection and try again.Try again',
+    )
+    lost = false
+    const retry = within(alert).getByRole('button', { name: 'Try again' })
+    retry.focus()
+    fireEvent.click(retry)
+    await grid('12–18 Oct 2026')
+    // Not dropped to the page with the button: the week that took its place has it.
+    expect(document.activeElement).not.toBe(document.body)
+    expect(document.activeElement?.contains(region)).toBe(true)
   })
 })

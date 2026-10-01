@@ -3,6 +3,7 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-li
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 
 import { getSession, logIn, logOut } from '@/shared/api/auth'
+import { getBackend } from '@/shared/api/backend'
 import { readRows } from '@/shared/api/rpc'
 import { DEMO_PASSWORD } from '@/shared/config/demo'
 
@@ -14,6 +15,7 @@ import { AddBookingDialog } from './AddBookingDialog'
 
 const GROUPS = {
   aimanSofia: 'c0000000-0000-4000-8000-000000000001',
+  hana: 'c0000000-0000-4000-8000-000000000003',
   weiJie: 'c0000000-0000-4000-8000-000000000004',
   daniel: 'c0000000-0000-4000-8000-000000000011',
 }
@@ -30,7 +32,31 @@ beforeAll(async () => {
 afterEach(cleanup)
 afterEach(() => {
   Reflect.deleteProperty(HTMLElement.prototype, 'scrollIntoView')
+  vi.restoreAllMocks()
 })
+
+/** Holds coach_book (as on a slow connection) until the returned function is called. */
+async function holdBooking() {
+  const backend = await getBackend()
+  const rpc = backend.rpc.bind(backend)
+  let release = () => {}
+  const held = new Promise<void>((resolve) => {
+    release = resolve
+  })
+  vi.spyOn(backend, 'rpc').mockImplementation(async (fn, args) => {
+    if (fn === 'coach_book') await held
+    return rpc(fn, args)
+  })
+  return () => release()
+}
+
+function radioOf(dialog: HTMLElement, value: string) {
+  const radio = within(dialog)
+    .getAllByRole<HTMLInputElement>('radio')
+    .find((each) => each.value === value)
+  if (!radio) throw new Error(`No radio ${value}`)
+  return radio
+}
 
 /** jsdom has no scrollIntoView: a stand-in that records what asked to be shown. */
 function watchScrolling() {
@@ -188,6 +214,18 @@ describe('AddBookingDialog', () => {
     ).toBeTruthy()
   })
 
+  it('says only the first week is checked whenever Repeat weekly is on (§6.4)', async () => {
+    const help = 'Only the first week is checked now. The other weeks are checked when you book.'
+    const { dialog } = await renderDialog()
+    expect(within(dialog).queryByText(help)).toBeNull()
+    fireEvent.click(within(dialog).getByRole('checkbox', { name: 'Repeat weekly' }))
+    // Before anything is chosen, and still under a clash reason (it covers the first week).
+    expect(within(dialog).getByText(help)).toBeTruthy()
+    choose(dialog, GROUPS.aimanSofia, '2026-09-29', '17:30')
+    await within(dialog).findByText('It overlaps another lesson at 5:30–6:30 pm.', {}, CHECKED)
+    expect(within(dialog).getByText(help)).toBeTruthy()
+  })
+
   it('summarises the lesson and books it, then hands the page its day and notice', async () => {
     const { dialog, onBooked } = await renderDialog()
     choose(dialog, GROUPS.aimanSofia, '2026-09-29', '19:30')
@@ -302,5 +340,84 @@ describe('AddBookingDialog', () => {
     fireEvent.change(weeks, { target: { value: '90' } })
     fireEvent.blur(weeks)
     expect(weeks.value).toBe('52')
+  })
+
+  it('holds still while it books, and the notice names the group booked (§6.4)', async () => {
+    const { dialog, onBooked } = await renderDialog()
+    choose(dialog, GROUPS.aimanSofia, '2026-10-07', '19:30')
+    await waitFor(
+      () => expect(primary(dialog).textContent).toBe('Book 7:30 pm for Aiman & Sofia'),
+      CHECKED,
+    )
+    const release = await holdBooking()
+    // Enter on the chosen radio books too; the radio is disabled while it books, so
+    // "Booking…" takes the focus.
+    const chosen = radioOf(dialog, GROUPS.aimanSofia)
+    chosen.focus()
+    fireEvent.submit(chosen.closest('form') as HTMLFormElement)
+    expect(document.activeElement).toBe(primary(dialog))
+    await waitFor(() => expect(primary(dialog).textContent).toBe('Booking…'))
+    expect(chosen.matches(':disabled')).toBe(true)
+    expect(
+      within(dialog).getByRole<HTMLInputElement>('radio', { name: '2 hours' }).matches(':disabled'),
+    ).toBe(true)
+    // Choosing another group or length meanwhile changes nothing.
+    fireEvent.click(radioOf(dialog, GROUPS.hana))
+    fireEvent.click(within(dialog).getByRole('radio', { name: '2 hours' }))
+    expect(radioOf(dialog, GROUPS.aimanSofia).checked).toBe(true)
+    expect(within(dialog).getByRole('radio', { name: '1 hour' })).toHaveProperty('checked', true)
+    expect(within(dialog).getByText('Aiman & Sofia · 1-to-2 · Palm Court')).toBeTruthy()
+    release()
+    await waitFor(() => expect(onBooked).toHaveBeenCalledTimes(1), CHECKED)
+    expect(onBooked).toHaveBeenCalledWith({
+      bookingIds: [expect.any(String)],
+      firstDate: '2026-10-07',
+      notice: 'Booked Wed 7 Oct, 7:30–8:30 pm for Aiman & Sofia.',
+    })
+    const [booking] = await readRows('bookings', {
+      eq: { id: (onBooked.mock.calls[0][0] as { bookingIds: string[] }).bookingIds[0] },
+    })
+    expect(booking).toMatchObject({ group_id: GROUPS.aimanSofia, status: 'booked' })
+  })
+
+  it('keeps a refusal and its “Book anyway” when Number of weeks is left as it was', async () => {
+    const { dialog, onBooked } = await renderDialog()
+    choose(dialog, GROUPS.hana, '2026-10-05', '17:30')
+    fireEvent.click(within(dialog).getByRole('checkbox', { name: 'Repeat weekly' }))
+    const weeks = within(dialog).getByRole('spinbutton', { name: 'Number of weeks' })
+    fireEvent.change(weeks, { target: { value: '3' } })
+    await waitFor(() => expect(primary(dialog).textContent).toBe('Book 3 weeks for Hana'), CHECKED)
+    fireEvent.click(primary(dialog))
+    const alert = await within(dialog).findByRole('alert', {}, CHECKED)
+    expect(alert.textContent).toBe(
+      'This group can book 2 more lessons before paying. Record a payment first, or choose “Book anyway”.',
+    )
+    // Leaving the field (Tab, or pressing the button) changes nothing.
+    fireEvent.blur(weeks)
+    expect(within(dialog).getByRole('alert')).toBe(alert)
+    expect(primary(dialog).textContent).toBe('Book anyway')
+    fireEvent.click(primary(dialog))
+    await waitFor(() => expect(onBooked).toHaveBeenCalledTimes(1), CHECKED)
+    expect(onBooked).toHaveBeenCalledWith({
+      bookingIds: [expect.any(String), expect.any(String), expect.any(String)],
+      firstDate: '2026-10-05',
+      notice: 'Booked 3 weeks for Hana from Mon 5 Oct.',
+    })
+  })
+
+  it('drops the refusal once the booking asked for changes', async () => {
+    const { dialog } = await renderDialog()
+    choose(dialog, GROUPS.weiJie, '2026-10-20', '17:30')
+    fireEvent.click(within(dialog).getByRole('checkbox', { name: 'Repeat weekly' }))
+    await waitFor(
+      () => expect(primary(dialog).textContent).toBe('Book 2 weeks for Wei Jie'),
+      CHECKED,
+    )
+    fireEvent.click(primary(dialog))
+    await within(dialog).findByRole('alert', {}, CHECKED)
+    expect(primary(dialog).textContent).toBe('Book anyway')
+    fireEvent.click(radioOf(dialog, GROUPS.hana))
+    expect(within(dialog).queryByRole('alert')).toBeNull()
+    await waitFor(() => expect(primary(dialog).textContent).toBe('Book 2 weeks for Hana'), CHECKED)
   })
 })

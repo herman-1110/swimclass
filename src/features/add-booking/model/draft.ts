@@ -1,6 +1,8 @@
 import type { CoachSlotCheckArgs } from '@/entities/slot'
 import { addDays, type DateKey, mytInstant } from '@/shared/lib/time'
 
+import type { CoachBookInput } from '../api/useCoachBook'
+
 // The Add booking form's inputs and what they become (DESIGN §4 "not drawn"; prompt 08
 // TASK 5; the Schedule spec §7.4). The database checks everything again when it books.
 
@@ -39,6 +41,34 @@ export function newDraft(date: DateKey): BookingDraft {
     ignoreOpenHours: false,
     gapOverride: false,
   }
+}
+
+/** Whether the patch changes anything: leaving a field as it was changes nothing. */
+export function changesDraft(draft: BookingDraft, patch: Partial<BookingDraft>): boolean {
+  return (Object.keys(patch) as (keyof BookingDraft)[]).some((key) => patch[key] !== draft[key])
+}
+
+/** What `coach_book` is asked, apart from "Book anyway" (ignoreCredit). */
+export type BookingRequest = Omit<CoachBookInput, 'ignoreCredit'>
+
+/**
+ * Whether a refusal of `asked` is about `now`: the same group, start, length, weeks and
+ * options. "Book anyway" books past the group's credit, so it may only ever repeat what
+ * `coach_book` refused.
+ */
+export function sameBooking(
+  asked: BookingRequest | undefined,
+  now: BookingRequest | null,
+): boolean {
+  if (!asked || !now) return false
+  return (
+    asked.groupId === now.groupId &&
+    asked.startsAt === now.startsAt &&
+    asked.minutes === now.minutes &&
+    asked.repeatWeeks === now.repeatWeeks &&
+    asked.ignoreOpenHours === now.ignoreOpenHours &&
+    asked.gapOverride === now.gapOverride
+  )
 }
 
 /** The start as a moment, or null while the date or time is missing or not real. */

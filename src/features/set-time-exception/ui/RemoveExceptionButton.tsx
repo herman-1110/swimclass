@@ -1,6 +1,7 @@
 import { useId } from 'react'
 
 import type { CoachException } from '@/entities/schedule'
+import { toAppError } from '@/shared/api/rpc'
 import { messageFor } from '@/shared/config/messages'
 import { Button } from '@/shared/ui/Button'
 
@@ -13,6 +14,13 @@ type RemoveExceptionButtonProps = {
   /** Removed: show this notice ("Blocked time removed.", "Extra time removed."). The row
    *  then leaves the list when the week refreshes. */
   onRemoved?: (notice: string) => void
+  /**
+   * It had been removed already (another tab). Its row leaves with the refresh, and a
+   * message under the button would go with it, so the words (DESIGN §6's generic message,
+   * the Schedule spec §6.7) come here: show them where they stay, and move focus there.
+   * Without it they show under the button.
+   */
+  onGone?: (message: string) => void
 }
 
 /**
@@ -21,11 +29,19 @@ type RemoveExceptionButtonProps = {
  * time, Sat 3 Oct, 7:00–9:00 am"). While the call runs it keeps its label and focus and
  * looks disabled; a refusal shows under it.
  */
-export function RemoveExceptionButton({ exception, onRemoved }: RemoveExceptionButtonProps) {
+export function RemoveExceptionButton({
+  exception,
+  onRemoved,
+  onGone,
+}: RemoveExceptionButtonProps) {
   const errorId = useId()
   const remove = useRemoveException({
     onRemoved: () => onRemoved?.(removedNotice(exception.kind)),
+    onGone: onGone && ((error) => onGone(messageFor(error, { audience: 'coach' }))),
   })
+  // What onGone took is said there, not again here.
+  const failed =
+    remove.isError && !(onGone !== undefined && toAppError(remove.error).code === 'not_found')
 
   return (
     <span className="inline-flex shrink-0 flex-col items-end gap-1">
@@ -35,7 +51,7 @@ export function RemoveExceptionButton({ exception, onRemoved }: RemoveExceptionB
         className="whitespace-nowrap"
         pending={remove.isPending}
         aria-disabled={remove.isPending || undefined}
-        aria-describedby={remove.isError ? errorId : undefined}
+        aria-describedby={failed ? errorId : undefined}
         onClick={() => remove.mutate({ id: exception.id })}
       >
         {/* The space stays outside the hidden part, so every browser keeps it in the name. */}
@@ -43,7 +59,7 @@ export function RemoveExceptionButton({ exception, onRemoved }: RemoveExceptionB
           Remove <span className="sr-only">{removeExceptionName(exception)}</span>
         </span>
       </Button>
-      {remove.isError && (
+      {failed && (
         <span
           id={errorId}
           role="alert"

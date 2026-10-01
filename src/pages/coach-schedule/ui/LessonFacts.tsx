@@ -1,3 +1,5 @@
+import { useRef } from 'react'
+
 import { PackageSummary, PackageSummarySkeleton, useCoachBalance } from '@/entities/balance'
 import { packagePosition } from '@/entities/booking'
 import { accountLabel } from '@/entities/group'
@@ -24,6 +26,7 @@ const value = 'm-0 text-sm leading-[1.45]'
  */
 export function LessonFacts({ lesson }: LessonFactsProps) {
   const balance = useCoachBalance(lesson.group_id)
+  const summary = useRef<HTMLElement>(null)
   const position = packagePosition(
     {
       package_no: lesson.package_no,
@@ -62,11 +65,16 @@ export function LessonFacts({ lesson }: LessonFactsProps) {
       </div>
       <div className={row}>
         <dt className={term}>Package</dt>
-        <dd className="m-0" aria-busy={balance.isPending || undefined}>
+        {/* Focusable, so "Try again" can hand focus to the package that takes its place. */}
+        <dd ref={summary} tabIndex={-1} className="m-0" aria-busy={balance.isPending || undefined}>
           {balance.data ? (
             <PackageSummary balance={balance.data} typeLabel={lesson.type_label} />
           ) : balance.isError ? (
-            <LoadError error={balance.error} onRetry={() => void balance.refetch()} />
+            <LoadError
+              error={balance.error}
+              onRetry={() => void balance.refetch()}
+              focusAfter={summary}
+            />
           ) : balance.isPending ? (
             <PackageSummarySkeleton />
           ) : null}

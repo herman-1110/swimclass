@@ -9,6 +9,11 @@ export type RemoveExceptionInput = { id: string }
 type UseRemoveExceptionOptions = {
   /** Called as soon as it is removed, before the refresh: show the notice. */
   onRemoved?: (input: RemoveExceptionInput) => void
+  /**
+   * It had gone already (`not_found`: another tab removed it). Called before the refresh,
+   * which takes its row away, so the caller can say so somewhere that stays.
+   */
+  onGone?: (error: unknown, input: RemoveExceptionInput) => void
 }
 
 /**
@@ -17,11 +22,14 @@ type UseRemoveExceptionOptions = {
  * also after `not_found` (another tab removed it already: the list was out of date), and
  * stays pending until they are fresh.
  */
-export function useRemoveException({ onRemoved }: UseRemoveExceptionOptions = {}) {
+export function useRemoveException({ onRemoved, onGone }: UseRemoveExceptionOptions = {}) {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: ({ id }: RemoveExceptionInput) => rpc('remove_exception', { p_id: id }),
     onSuccess: (_nothing, input) => onRemoved?.(input),
+    onError: (error, input) => {
+      if (toAppError(error).code === 'not_found') onGone?.(error, input)
+    },
     onSettled: (_nothing, error) =>
       error && toAppError(error).code !== 'not_found' ? undefined : refreshOpenTime(queryClient),
   })

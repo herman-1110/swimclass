@@ -1,4 +1,4 @@
-import { useId } from 'react'
+import { useId, useRef } from 'react'
 
 import { formatLessonPosition } from '@/entities/booking'
 import { formatDayKey, useCoachDay } from '@/entities/schedule'
@@ -22,11 +22,18 @@ type TodayPanelProps = {
  */
 export function TodayPanel({ today }: TodayPanelProps) {
   const titleId = useId()
+  const section = useRef<HTMLElement>(null)
   const day = useCoachDay(today)
   const lessons = day.data?.lessons.filter((lesson) => lesson.status !== 'cancelled') ?? []
 
   return (
-    <section aria-labelledby={titleId} className="flex flex-col gap-3.5">
+    // Focusable, so "Try again" can hand focus to the lessons that take its place.
+    <section
+      ref={section}
+      tabIndex={-1}
+      aria-labelledby={titleId}
+      className="flex flex-col gap-3.5"
+    >
       <SectionTitle id={titleId}>{`Today, ${formatDayKey(today)}`}</SectionTitle>
       {day.isPending ? (
         <div aria-busy="true" className="flex flex-col gap-3.5">
@@ -38,7 +45,7 @@ export function TodayPanel({ today }: TodayPanelProps) {
           </p>
         </div>
       ) : day.isError ? (
-        <LoadError error={day.error} onRetry={() => void day.refetch()} />
+        <LoadError error={day.error} onRetry={() => void day.refetch()} focusAfter={section} />
       ) : lessons.length === 0 ? (
         <p className="text-label text-muted">No lessons today.</p>
       ) : (

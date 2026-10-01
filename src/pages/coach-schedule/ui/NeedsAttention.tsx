@@ -1,4 +1,4 @@
-import { useId } from 'react'
+import { useId, useRef } from 'react'
 
 import { usePendingAccounts } from '@/entities/account'
 import { lastLessonLabel, unpaidPackageLabel, useCoachBalances } from '@/entities/balance'
@@ -29,6 +29,7 @@ const name = 'text-sm leading-[normal] font-medium break-words'
  */
 export function NeedsAttention({ onApproved }: NeedsAttentionProps) {
   const titleId = useId()
+  const section = useRef<HTMLElement>(null)
   const balances = useCoachBalances()
   const groups = useCoachGroups()
   const waiting = usePendingAccounts({ order: 'name' })
@@ -38,7 +39,8 @@ export function NeedsAttention({ onApproved }: NeedsAttentionProps) {
   const accounts = waiting.data ?? []
 
   return (
-    <section aria-labelledby={titleId} className="flex flex-col">
+    // Focusable, so "Try again" can hand focus to the rows that take its place.
+    <section ref={section} tabIndex={-1} aria-labelledby={titleId} className="flex flex-col">
       <SectionTitle id={titleId} className="mb-1.5">
         Needs attention
       </SectionTitle>
@@ -48,6 +50,7 @@ export function NeedsAttention({ onApproved }: NeedsAttentionProps) {
           onRetry={() => {
             for (const query of [balances, groups, waiting]) if (query.isError) void query.refetch()
           }}
+          focusAfter={section}
         />
       ) : !loaded ? (
         // Three rows of the drawn 52 px.

@@ -49,7 +49,12 @@ export function BookingRules({ draft, gapMinutes, readOnly, onChange }: BookingR
           value={draft.weeks}
           readOnly={readOnly}
           onChange={(event) => onChange({ weeks: event.target.value })}
-          onBlur={(event) => onChange({ weeks: clampWeeks(event.target.value) })}
+          onBlur={(event) => {
+            // Back inside 2 to 52 when left. Left as it was, nothing changes, so a refusal
+            // and its "Book anyway" stay.
+            const weeks = clampWeeks(event.target.value)
+            if (weeks !== draft.weeks) onChange({ weeks })
+          }}
         />
       )}
       <Checkbox

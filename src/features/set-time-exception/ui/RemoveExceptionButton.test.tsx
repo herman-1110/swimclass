@@ -33,16 +33,21 @@ beforeAll(async () => {
 
 afterEach(cleanup)
 
-function renderButton() {
+function renderButton({ withOnGone = false } = {}) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   const invalidate = vi.spyOn(queryClient, 'invalidateQueries')
   const onRemoved = vi.fn()
+  const onGone = vi.fn()
   render(
     <QueryClientProvider client={queryClient}>
-      <RemoveExceptionButton exception={block} onRemoved={onRemoved} />
+      <RemoveExceptionButton
+        exception={block}
+        onRemoved={onRemoved}
+        onGone={withOnGone ? onGone : undefined}
+      />
     </QueryClientProvider>,
   )
-  return { invalidate, onRemoved }
+  return { invalidate, onRemoved, onGone }
 }
 
 describe('RemoveExceptionButton', () => {
@@ -73,5 +78,22 @@ describe('RemoveExceptionButton', () => {
     expect(button.getAttribute('aria-describedby')).toBe(alert.id)
     expect(onRemoved).not.toHaveBeenCalled()
     await waitFor(() => expect(invalidate).toHaveBeenCalledWith({ queryKey: scheduleKeys.all }))
+  })
+
+  it('hands the words to its owner when it is gone already, before the list refreshes (§6.7)', async () => {
+    await logIn('herman', DEMO_PASSWORD)
+    const { invalidate, onRemoved, onGone } = renderButton({ withOnGone: true })
+    const button = screen.getByRole('button', { name: /^Remove blocked time/ })
+    fireEvent.click(button)
+    await waitFor(() =>
+      expect(onGone).toHaveBeenCalledWith('Something went wrong. Refresh the page and try again.'),
+    )
+    await waitFor(() => expect(invalidate).toHaveBeenCalledWith({ queryKey: scheduleKeys.all }))
+    expect(onGone.mock.invocationCallOrder[0]).toBeLessThan(invalidate.mock.invocationCallOrder[0])
+    // Said once, by the owner: the row (and anything under its button) leaves with the refresh.
+    await waitFor(() => expect(button.getAttribute('aria-busy')).toBeNull())
+    expect(screen.queryByRole('alert')).toBeNull()
+    expect(button.getAttribute('aria-describedby')).toBeNull()
+    expect(onRemoved).not.toHaveBeenCalled()
   })
 })
