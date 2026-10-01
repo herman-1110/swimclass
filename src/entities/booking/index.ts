@@ -36,5 +36,6 @@ export type {
 export { isSameMytDay, lessonDateRange, lessonWhen } from './model/when'
 export { HistoryLessonRow } from './ui/HistoryLessonRow'
 export { LessonRow } from './ui/LessonRow'
+export { LessonRowLayout } from './ui/LessonRowLayout'
 export { LessonRowSkeleton } from './ui/LessonRowSkeleton'
 export { PastLessonRow } from './ui/PastLessonRow'
