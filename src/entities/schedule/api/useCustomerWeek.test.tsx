@@ -109,6 +109,30 @@ describe('useCustomerWeek', () => {
     expect(result.current.error).toMatchObject({ name: 'AppError', code: 'not_approved' })
   })
 
+  it('waits while there is no week, and reads it once there is', async () => {
+    await logIn('meiling', DEMO_PASSWORD)
+    const queryClient = newClient()
+    const { result, rerender } = renderHook(
+      ({ weekStart }: { weekStart: string | null }) => useCustomerWeek(weekStart),
+      {
+        initialProps: { weekStart: null as string | null },
+        wrapper: ({ children }: { children: ReactNode }) => (
+          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+        ),
+      },
+    )
+    // Give a read the chance to start: none does.
+    await new Promise((resolve) => setTimeout(resolve, 50))
+    expect(result.current.isPending).toBe(true)
+    expect(result.current.fetchStatus).toBe('idle')
+    expect(queryClient.isFetching()).toBe(0)
+    expect(queryClient.getQueryState(scheduleKeys.customerWeek(''))?.dataUpdateCount).toBe(0)
+
+    rerender({ weekStart: '2026-09-28' })
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    expect(result.current.data?.[0].day).toBe('2026-09-28')
+  })
+
   it('keys each week under scheduleKeys.all, so a change can refresh them all', () => {
     expect(scheduleKeys.customerWeek('2026-09-28')).toEqual([
       'schedule',
