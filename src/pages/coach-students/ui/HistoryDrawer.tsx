@@ -1,3 +1,5 @@
+import { useEffect, useRef } from 'react'
+
 import { BalanceStatus, PackageProgress } from '@/entities/balance'
 import { accountLabel } from '@/entities/group'
 import type { Instant } from '@/shared/lib/time'
@@ -25,6 +27,17 @@ type HistoryDrawerProps = {
  * its status and "Record payment", then Payments, Lessons and the Group actions.
  */
 export function HistoryDrawer({ row, onClose, onRecordPayment, now }: HistoryDrawerProps) {
+  const titleRef = useRef<HTMLHeadingElement>(null)
+  const groupId = row?.group.group_id ?? null
+  // "that group" (a refused reactivation) shows another group in the open drawer, and the
+  // link goes with the old group's content: the title takes focus, as when the drawer opens.
+  const shownGroup = useRef(groupId)
+  useEffect(() => {
+    const before = shownGroup.current
+    shownGroup.current = groupId
+    if (before !== null && groupId !== null && before !== groupId) titleRef.current?.focus()
+  }, [groupId])
+
   const subtitle = row
     ? `${row.group.display_names} · ${accountLabel(row.group, row.accountName)}`
     : undefined
@@ -35,6 +48,7 @@ export function HistoryDrawer({ row, onClose, onRecordPayment, now }: HistoryDra
       subtitle={subtitle}
       open={row !== null}
       onClose={onClose}
+      titleRef={titleRef}
     >
       {row && (
         <div key={row.group.group_id} className="flex flex-col gap-6">

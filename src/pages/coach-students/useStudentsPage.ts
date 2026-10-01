@@ -9,8 +9,8 @@ import type { StudentsFilter } from './model/rows'
 import { useStaleParams } from './model/useStaleParams'
 import { useStudentsData } from './model/useStudentsData'
 import { useStudentsUrl } from './model/useStudentsUrl'
-import { studentsView } from './model/view'
-import { scrollToRow } from './ui/scrollToRow'
+import { studentsView, tabView } from './model/view'
+import { returnFocusToRow, scrollToRow } from './ui/rowFocus'
 
 type PageRefs = {
   /** The search box: "Clear search" puts focus back there. */
@@ -33,7 +33,14 @@ export function useStudentsPage(refs: PageRefs) {
   const [notice, setNotice] = useState<string | null>(null)
   const [added] = useState(url.added)
   const [shownAllFor, setShownAllFor] = useState<StudentsFilter | null>(null)
-  const [changed, setChanged] = useState(false)
+  // The group whose row opened the payment panel or History. Its row stays on screen after
+  // they close (until the tab or the search changes), so focus can go back to its button even
+  // when a payment moved the row past the collapse (coach-students §7).
+  const [kept, setKept] = useState<string | null>(null)
+  // What the live region says after the latest tab or search change, and how many changes
+  // there have been.
+  const [announced, setAnnounced] = useState({ text: '', change: 0 })
+  const settled = useDebouncedValue(announced, 500)
   // From 1280 px, the group whose "Record payment" was pressed: the panel's title takes focus
   // once the address shows that group (a later render than the press).
   const focusPanelFor = useRef<string | null>(null)
@@ -41,25 +48,28 @@ export function useStudentsPage(refs: PageRefs) {
 
   const { rows } = data
   const loaded = rows !== null
-  const view = studentsView({
-    ...url,
-    rows,
-    waiting: data.waiting.data ?? null,
-    query,
-    added,
-    wide,
-  })
+  const waiting = data.waiting.data ?? null
+  const view = studentsView({ ...url, rows, waiting, query, added, kept, wide })
   useStaleParams({
     ...url,
     payFound: loaded ? view.payRow !== null : null,
     historyFound: loaded ? view.historyRow !== null : null,
   })
 
-  const count = url.filter === 'waiting' ? view.waitingAccounts?.length : view.listed.length
-  const announcement = useDebouncedValue(
-    changed && loaded && count !== undefined ? listAnnouncement(url.filter, count) : '',
-    500,
-  )
+  // After a tab or search change, the polite region says what the list now shows
+  // (coach-students §7), once typing has stopped. Changes in the data (a payment, an approval)
+  // aren't announced here: their own notices say what happened.
+  const announce = (filter: StudentsFilter, text: string) => {
+    const tab = tabView({ rows, waiting, query: text, filter })
+    const count = filter === 'waiting' ? tab.waitingAccounts?.length : tab.listed.length
+    const noMatch = filter === 'waiting' ? tab.searching : tab.noMatch
+    setAnnounced(({ change }) => ({
+      text: loaded && count !== undefined ? listAnnouncement(filter, count, noMatch) : '',
+      change: change + 1,
+    }))
+  }
+  // Empty while a change is settling, so the same words are read out again on the next tab.
+  const announcement = settled.change === announced.change ? settled.text : ''
 
   // From 1280 px "Record payment" moves focus to the panel beside the list, once the panel
   // shows the group and History has closed (until then the History drawer keeps focus, and
@@ -70,6 +80,15 @@ export function useStudentsPage(refs: PageRefs) {
     focusPanelFor.current = null
     refs.panelTitle.current?.focus()
   }, [panelFocus, url.pay, url.history, refs.panelTitle])
+  // The payment panel (a modal below 1280 px) or History has closed: focus goes back to the
+  // row's button, which `kept` keeps on screen.
+  const modalOpen = url.history !== null || (!wide && url.pay !== null)
+  const wasOpen = useRef(modalOpen)
+  useEffect(() => {
+    const closed = wasOpen.current && !modalOpen
+    wasOpen.current = modalOpen
+    if (closed && kept !== null) returnFocusToRow(kept)
+  }, [modalOpen, kept])
   // A group just added shows on screen once the list is in.
   const addedShown = view.addedRow !== null
   useEffect(() => {
@@ -77,6 +96,7 @@ export function useStudentsPage(refs: PageRefs) {
   }, [addedShown, added])
 
   const recordPayment = (groupId: string, fromHistory = false) => {
+    setKept(groupId)
     if (fromHistory) url.historyToPay(groupId)
     else url.openPay(groupId)
     if (wide) {
@@ -99,22 +119,31 @@ export function useStudentsPage(refs: PageRefs) {
     showAll: shownAllFor === url.filter,
     search: (text: string) => {
       setQuery(text)
-      setChanged(true)
+      setKept(null)
+      announce(url.filter, text)
     },
     setFilter: (filter: StudentsFilter) => {
+      if (filter === url.filter) return
       url.setFilter(filter)
-      setChanged(true)
+      announce(filter, query)
       // "Show all" lasts until the tab changes (coach-students §5.2.6): back on this tab,
       // the list is collapsed again.
-      if (filter !== url.filter) setShownAllFor(null)
+      setShownAllFor(null)
+      setKept(null)
     },
     clearSearch: () => {
       setQuery('')
+      setKept(null)
+      announce(url.filter, '')
       refs.search.current?.focus()
     },
     showEveryRow: () => setShownAllFor(url.filter),
     setNotice,
     recordPayment,
+    openHistory: (groupId: string) => {
+      setKept(groupId)
+      url.openHistory(groupId)
+    },
     /** The coach worked on the panel's group: from 1280 px it then stays there. */
     engage: (groupId: string) => {
       if (wide && url.pay !== groupId) url.pinPay(groupId)

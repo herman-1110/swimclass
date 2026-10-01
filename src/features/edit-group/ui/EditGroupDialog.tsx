@@ -84,6 +84,9 @@ export function EditGroupDialog({ group, accountName, onClose, onSaved }: EditGr
     pattern: '[0-9]*',
     autoComplete: 'off',
   } as const
+  // The counts take digits only (coach-add-students §5.3): anything else typed or pasted is
+  // dropped, so "can’t be negative" is left for the database's own refusal.
+  const digits = (text: string) => text.replace(/\D/g, '')
   return (
     <Dialog
       open
@@ -127,7 +130,7 @@ export function EditGroupDialog({ group, accountName, onClose, onSaved }: EditGr
               label="Lessons already used"
               value={draft.usedText}
               readOnly={pending}
-              onChange={(event) => change({ usedText: event.target.value })}
+              onChange={(event) => change({ usedText: digits(event.target.value) })}
               error={errorAt('used')}
             />
             <Field
@@ -136,7 +139,7 @@ export function EditGroupDialog({ group, accountName, onClose, onSaved }: EditGr
               label="Lessons already paid"
               value={draft.paidText}
               readOnly={pending}
-              onChange={(event) => change({ paidText: event.target.value })}
+              onChange={(event) => change({ paidText: digits(event.target.value) })}
               error={errorAt('paid')}
             />
           </div>

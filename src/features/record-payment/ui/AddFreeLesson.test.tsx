@@ -42,6 +42,13 @@ describe('AddFreeLesson', () => {
     expect(block?.textContent).toContain('Adds 1 lesson at RM 0 to Hana’s package, dated today.')
     expect(screen.getByLabelText('Note (optional)')).toBeTruthy()
     expect(add().textContent).toBe('Add 1 free lesson')
+    // The line that says what the button does is read out with it.
+    expect(
+      screen.getByRole('button', {
+        name: 'Add 1 free lesson',
+        description: 'Adds 1 lesson at RM 0 to Hana’s package, dated today.',
+      }),
+    ).toBeTruthy()
   })
 
   it('adds the lesson, then reads "Free lesson added" until the note changes', async () => {

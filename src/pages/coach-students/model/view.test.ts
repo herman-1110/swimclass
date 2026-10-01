@@ -5,7 +5,7 @@ import type { GroupBalance } from '@/entities/balance'
 import type { Group } from '@/entities/group'
 
 import { packageRows } from './rows'
-import { studentsView } from './view'
+import { studentsView, tabView } from './view'
 
 function row(id: string, names: string, unpaid: boolean) {
   const group = {
@@ -35,6 +35,7 @@ const base = {
   pay: null,
   history: null,
   added: null,
+  kept: null,
   wide: false,
 }
 const ids = (set: ReadonlySet<string>) => [...set]
@@ -82,5 +83,32 @@ describe('studentsView', () => {
     expect(view.matching).toBeNull()
     expect(view.panelRow).toBeNull()
     expect(view.waitingAccounts).toBeNull()
+  })
+
+  it('keeps the row focus goes back to on screen, without highlighting it', () => {
+    const view = studentsView({ ...base, kept: 'kai', added: 'weijie' })
+    expect(ids(view.highlighted)).toEqual(['weijie'])
+    expect(ids(view.onScreen)).toEqual(['weijie', 'kai'])
+    expect(ids(studentsView(base).onScreen)).toEqual([])
+  })
+})
+
+describe('tabView', () => {
+  const tab = (filter: 'all' | 'unpaid' | 'paid', query: string) =>
+    tabView({ rows, waiting: [siti], filter, query })
+
+  it('lists a tab’s rows for the search, and counts every tab’s matches', () => {
+    // "i" is in Wei Jie and Kai (not in Hana, or in Farah, their account holder).
+    const unpaid = tab('unpaid', 'i')
+    expect(unpaid.listed.map((r) => r.group.group_id)).toEqual(['weijie'])
+    expect(unpaid.matching?.map((r) => r.group.group_id)).toEqual(['weijie', 'kai'])
+    expect(unpaid.searching).toBe(true)
+  })
+
+  it('says a search matches nothing only when no tab has a match', () => {
+    // "Kai" is paid: the Unpaid tab is empty, but the search found him.
+    expect(tab('unpaid', 'kai')).toMatchObject({ listed: [], noMatch: false })
+    expect(tab('unpaid', 'zz')).toMatchObject({ listed: [], noMatch: true })
+    expect(tab('paid', '').noMatch).toBe(false)
   })
 })

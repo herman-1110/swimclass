@@ -11,14 +11,16 @@ const COLUMNS: readonly TableColumn[] = [
 ]
 
 // One placeholder row at a real row's height (67 px at 1440: the Package cell is the
-// tallest), so nothing jumps when the rows come in.
+// tallest), so nothing jumps when the rows come in. No placeholder is wider than what it
+// stands for can shrink to: the names give way like the names do (the table squeezes at
+// 768 and 1280 px), and Action is as wide as "Record payment".
 const placeholderRow = (key: number) => ({
   key: String(key),
   cells: {
     students: (
       <span className="flex flex-col gap-1">
-        <Skeleton shape="line" className="h-4 w-20" />
-        <Skeleton shape="line" className="h-3 w-36 max-w-full" />
+        <Skeleton shape="line" className="h-4 w-full max-w-20" />
+        <Skeleton shape="line" className="h-3 w-full max-w-36" />
       </span>
     ),
     type: <Skeleton shape="line" className="h-5 w-12" />,
@@ -36,7 +38,7 @@ const placeholderRow = (key: number) => ({
         <Skeleton shape="line" className="h-3.5 w-10" />
       </span>
     ),
-    action: <Skeleton className="ml-auto h-11 w-32" />,
+    action: <Skeleton className="ml-auto h-11 w-[126px]" />,
   },
 })
 

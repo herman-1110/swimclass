@@ -7,6 +7,7 @@ import { Tag } from '@/shared/ui/Tag'
 import type { PackageRow } from '../model/rows'
 import { GroupName } from './GroupName'
 import { RowAction } from './RowAction'
+import { rowActionId } from './rowFocus'
 
 type PackageCardsProps = {
   rows: readonly PackageRow[]
@@ -57,7 +58,7 @@ export function PackageCards({
                 <BalanceStatus balance={balance} now={now} lastPaid={lastPaid} />
                 <RowAction
                   row={row}
-                  id={`row-action-card-${group.group_id}`}
+                  id={rowActionId('card', group.group_id)}
                   onRecordPayment={onRecordPayment}
                   onHistory={onHistory}
                 />

@@ -36,6 +36,7 @@ Put these in `src/app/styles/index.css` as CSS variables and expose them to Tail
 | --booked-other | #9AA5AD | other people's lessons in the customer schedule |
 | --seg-booked | #A9CFDB | booked lessons in package bars |
 | --seg-free | #ECECE9 | unused lessons in package bars |
+| --seg-free-table | #E4E4E0 | unused lessons in the 6 px bars of the Students table and cards (#ECECE9 almost vanishes on the selected row) |
 | --tag | #F1F1EE / text #3F4A52 | 1-to-1 / 1-to-2 / 1-to-3 tags |
 
 - Font: Figtree 400, 500, 600 (self-host with `@fontsource/figtree`). No second typeface.

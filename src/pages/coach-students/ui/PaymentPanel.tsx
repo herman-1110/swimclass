@@ -4,10 +4,10 @@ import { accountLabel } from '@/entities/group'
 import type { PublicSettings } from '@/entities/settings'
 import type { Instant } from '@/shared/lib/time'
 import { SidePanel } from '@/shared/ui/SidePanel'
-import { Skeleton } from '@/shared/ui/Skeleton'
 
 import type { PackageRow } from '../model/rows'
 import { LoadError } from './LoadError'
+import { PanelSkeleton } from './PanelSkeleton'
 import { PaymentPanelContent } from './PaymentPanelContent'
 
 type PaymentPanelProps = {
@@ -26,21 +26,6 @@ type PaymentPanelProps = {
   /** The coach worked on the group shown (from 1280 px it then stays in the panel). */
   onEngage: (groupId: string) => void
   titleRef?: Ref<HTMLHeadingElement>
-}
-
-/** Placeholders for the form while the list or the prices load. */
-function PanelSkeleton() {
-  return (
-    <div aria-hidden="true" className="flex flex-col gap-4.5">
-      {['w-16', 'w-16', 'w-14', 'w-18', 'w-28'].map((width, index) => (
-        <div key={index} className="flex flex-col gap-1.5">
-          <Skeleton shape="line" className={`h-4 ${width}`} />
-          <Skeleton className="h-11.5" />
-        </div>
-      ))}
-      <Skeleton className="h-11.5" />
-    </div>
-  )
 }
 
 /**

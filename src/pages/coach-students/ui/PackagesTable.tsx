@@ -7,6 +7,7 @@ import { Tag } from '@/shared/ui/Tag'
 import type { PackageRow } from '../model/rows'
 import { GroupName } from './GroupName'
 import { RowAction } from './RowAction'
+import { rowActionId } from './rowFocus'
 
 // AdminStudents.dc.html:107-112: the first five columns as wide as drawn (their content,
 // without the cell padding); Action takes the rest.
@@ -63,7 +64,7 @@ export function PackagesTable({
               action: (
                 <RowAction
                   row={row}
-                  id={`row-action-table-${group.group_id}`}
+                  id={rowActionId('table', group.group_id)}
                   onRecordPayment={onRecordPayment}
                   onHistory={onHistory}
                 />

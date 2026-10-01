@@ -14,7 +14,7 @@ type PaymentPanelContentProps = {
   now: Instant
   /** Cancel: below 1280 px it closes the panel; from 1280 px the form only resets. */
   onCancel?: () => void
-  /** The coach worked on this group (typed, saved, added, excused). */
+  /** The coach worked on this group: typed, picked, or sent one of its forms. */
   onEngage: () => void
 }
 
@@ -41,9 +41,11 @@ export function PaymentPanelContent({
   }
 
   return (
-    // `contents`: the pieces stay 18 px apart in the panel's column. Typing anywhere in it
-    // counts as working on this group.
-    <div className="contents" onChange={onEngage}>
+    // `contents`: the pieces stay 18 px apart in the panel's column. Typing or picking
+    // anywhere in it, or sending either form, counts as working on this group. From 1280 px
+    // that names the group in the address before any write starts, so the refresh after a
+    // payment, which moves its row, can't swap the group (and "Payment saved") out of the panel.
+    <div className="contents" onChange={onEngage} onSubmit={onEngage}>
       <RecordPaymentForm
         group={group}
         balance={balance}
@@ -51,18 +53,13 @@ export function PaymentPanelContent({
         accountName={row.accountName}
         today={mytDateKey(now)}
         onCancel={onCancel}
-        onSaved={onEngage}
       />
       <div className="flex flex-col items-start border-t border-line pt-3.5">
         <SectionLabel as="h3" className="mb-0.5">
           Other adjustments
         </SectionLabel>
-        <AddFreeLesson groupId={group.group_id} names={group.display_names} onAdded={onEngage} />
-        <ExcuseMissedLesson
-          lessons={lessons}
-          packageSize={balance.package_size}
-          onExcused={onEngage}
-        />
+        <AddFreeLesson groupId={group.group_id} names={group.display_names} />
+        <ExcuseMissedLesson lessons={lessons} packageSize={balance.package_size} />
       </div>
       <p className="text-small leading-normal text-muted">
         Online payments (FPX, DuitNow) record themselves once a payment gateway is connected.

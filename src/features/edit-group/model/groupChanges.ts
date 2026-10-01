@@ -28,7 +28,8 @@ export function groupDraft(group: EditableGroup): GroupDraft {
 
 /**
  * A starting-balance count as typed: digits only, empty counts as 0 (as on Add students,
- * coach-add-students §5.3). Null for anything else ("-1", "2.5").
+ * coach-add-students §5.3). The dialog's fields drop anything but digits as they're typed;
+ * null for anything else ("-1", "2.5", or more digits than a number holds).
  */
 export function countFrom(text: string): number | null {
   const trimmed = text.trim()

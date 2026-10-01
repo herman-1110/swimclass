@@ -18,7 +18,17 @@ export const GROUP = {
   hana: 'c0000000-0000-4000-8000-000000000003',
   weiJie: 'c0000000-0000-4000-8000-000000000004',
   priya: 'c0000000-0000-4000-8000-000000000005',
+  chloe: 'c0000000-0000-4000-8000-000000000008',
+  kai: 'c0000000-0000-4000-8000-000000000010',
+  nurul: 'c0000000-0000-4000-8000-000000000013',
 } as const
+
+/** The polite region that says what the list shows after a tab or search change. */
+export function listAnnouncer(): HTMLElement {
+  const region = document.querySelector<HTMLElement>('p[aria-live="polite"]')
+  if (!region) throw new Error('No list announcer')
+  return region
+}
 
 /**
  * The page alone at `path`, signed in as a seeded account. With `readsFail`, the session

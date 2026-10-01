@@ -42,6 +42,18 @@ describe('SegmentBar', () => {
     expect(bar?.className.split(' ')).toEqual(expect.arrayContaining(['gap-[3px]', 'w-[113px]']))
   })
 
+  it('draws the 6 px bars’ free segments a shade darker than the 4 px bars’ (#E4E4E0)', () => {
+    const free = (size: 'sm' | 'md') => {
+      const { container } = render(<SegmentBar total={4} used={0} booked={2} size={size} />)
+      const last = container.firstElementChild?.lastElementChild?.className.split(' ')
+      cleanup()
+      return last
+    }
+    expect(free('sm')).toContain('bg-seg-free')
+    expect(free('md')).toContain('bg-seg-free-table')
+    expect(free('md')).not.toContain('bg-seg-free')
+  })
+
   it('draws nothing for an empty package', () => {
     const { container } = render(<SegmentBar total={0} used={0} booked={0} />)
     expect(container.firstElementChild).toBeNull()

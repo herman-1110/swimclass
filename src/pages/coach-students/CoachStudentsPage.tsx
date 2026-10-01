@@ -40,6 +40,7 @@ export function CoachStudentsPage() {
             <StudentsFigures figures={data.rows ? studentsFigures(data.rows) : null} />
             <StudentsList
               rows={view.matching}
+              noMatch={view.noMatch}
               waiting={{
                 accounts: view.waitingAccounts,
                 error: data.waiting.error,
@@ -52,11 +53,12 @@ export function CoachStudentsPage() {
               showAll={page.showAll}
               onShowAll={page.showEveryRow}
               highlighted={view.highlighted}
+              onScreen={view.onScreen}
               now={now}
               notice={page.notice}
               onNotice={page.setNotice}
               onRecordPayment={page.recordPayment}
-              onHistory={url.openHistory}
+              onHistory={page.openHistory}
             />
           </div>
         )}

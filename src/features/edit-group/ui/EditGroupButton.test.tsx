@@ -100,15 +100,17 @@ describe('EditGroupButton', () => {
     expect(document.activeElement).toBe(location)
   })
 
-  it('stops a count below 0 before sending it', () => {
+  it('keeps only the digits typed in the starting balance', () => {
     const { dialog } = openDialog()
     const used = field(dialog, 'Lessons already used')
+    const paid = field(dialog, 'Lessons already paid')
+    fireEvent.change(used, { target: { value: '1.5' } })
+    expect(used.value).toBe('15')
     fireEvent.change(used, { target: { value: '-1' } })
-    fireEvent.click(saveIn(dialog))
-    expect(used.getAttribute('aria-invalid')).toBe('true')
-    expect(document.getElementById(`${used.id}-error`)?.textContent).toBe(
-      'Lessons already used and paid can’t be negative. Enter 0 or more.',
-    )
+    expect(used.value).toBe('1')
+    fireEvent.change(paid, { target: { value: 'abc' } })
+    expect(paid.value).toBe('')
+    expect(used.getAttribute('aria-invalid')).toBeNull()
   })
 
   it('closes on Cancel', () => {

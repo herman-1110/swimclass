@@ -27,6 +27,7 @@
   --booked-other: #9aa5ad; /* other people's lessons in the customer schedule */
   --seg-booked: #a9cfdb; /* booked lessons in package bars */
   --seg-free: #ecece9; /* unused lessons in package bars */
+  --seg-free-table: #e4e4e0; /* unused lessons in the 6 px bars of the Students table and cards */
   --tag: #f1f1ee; /* 1-to-1 / 1-to-2 / 1-to-3 tag background */
   --tag-ink: #3f4a52; /* 1-to-1 / 1-to-2 / 1-to-3 tag text */
 
@@ -59,6 +60,7 @@
   --color-booked-other: var(--booked-other);
   --color-seg-booked: var(--seg-booked);
   --color-seg-free: var(--seg-free);
+  --color-seg-free-table: var(--seg-free-table);
   --color-tag: var(--tag);
   --color-tag-ink: var(--tag-ink);
 

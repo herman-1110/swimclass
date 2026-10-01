@@ -3,7 +3,15 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 
 import { getSession, logOut } from '@/shared/api/auth'
 
-import { cardNames, findTable, GROUP, renderAs, stubWidth, tableNames } from './testing'
+import {
+  cardNames,
+  findTable,
+  GROUP,
+  listAnnouncer,
+  renderAs,
+  stubWidth,
+  tableNames,
+} from './testing'
 
 // Demo mode: the real migrations and seed in PGlite, clock at Sat 26 Sep 2026 12:00 MYT,
 // signed in as herman (coach-students §8). This file only reads; the writes are in
@@ -73,6 +81,11 @@ describe('CoachStudentsPage', () => {
     expect(tableNames(table)).toEqual(ALL)
     expect(cardNames()).toEqual(ALL)
     expect(screen.queryByRole('button', { name: 'Show all' })).toBeNull()
+    // Focus goes to the first row "Show all" added (a card here: jsdom is narrow).
+    const cards = screen.getByRole('list', { name: 'Packages, needs action first' })
+    expect(document.activeElement).toBe(
+      within(cards).getByRole('button', { name: 'History for Aiman & Sofia' }),
+    )
   })
 
   it('shows each row’s package, status, last payment and action as in the seed', async () => {
@@ -150,6 +163,41 @@ describe('CoachStudentsPage', () => {
     expect(tableNames(await findTable())).toEqual(ALL.slice(0, 9))
   })
 
+  it('says a tab is empty, not that nothing matches, when the search found someone elsewhere', async () => {
+    await renderAs('herman')
+    await findTable()
+    fireEvent.change(screen.getByRole('searchbox', { name: 'Search students' }), {
+      target: { value: 'Priya' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Unpaid 0' }))
+    expect(screen.getByText('No unpaid packages.')).toBeTruthy()
+    expect(screen.queryByText(/No students match/)).toBeNull()
+    expect(screen.getByRole('button', { name: 'All 1' })).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Clear search' }))
+    expect(screen.getByRole('button', { name: 'Unpaid 2' })).toBeTruthy()
+  })
+
+  it('says what a tab or search shows, again on each change, once typing stops', async () => {
+    await renderAs('herman')
+    await findTable()
+    const region = listAnnouncer()
+    expect(region.textContent).toBe('')
+    fireEvent.click(screen.getByRole('button', { name: 'Unpaid 2' }))
+    await waitFor(() => expect(region.textContent).toBe('2 packages'))
+    // The same words on the next tab are cleared first, so they are read out again.
+    fireEvent.click(screen.getByRole('button', { name: 'Last lesson 2' }))
+    expect(region.textContent).toBe('')
+    await waitFor(() => expect(region.textContent).toBe('2 packages'))
+    fireEvent.change(screen.getByRole('searchbox', { name: 'Search students' }), {
+      target: { value: 'zz' },
+    })
+    await waitFor(() => expect(region.textContent).toBe('No packages match'))
+    fireEvent.change(screen.getByRole('searchbox', { name: 'Search students' }), {
+      target: { value: 'Hana' },
+    })
+    await waitFor(() => expect(region.textContent).toBe('No one is on their last lesson.'))
+  })
+
   it('opens Record payment for a row as a panel below 1280 px, and closes it', async () => {
     const router = await renderAs('herman')
     const table = await findTable()
@@ -217,6 +265,48 @@ describe('CoachStudentsPage', () => {
     expect(within(group).getByText('20 used · 16 paid')).toBeTruthy()
     expect(within(group).getByRole('button', { name: 'Edit group' })).toBeTruthy()
     expect(within(group).getByRole('button', { name: 'Deactivate group' })).toBeTruthy()
+  })
+
+  it('shows History with no payment rows: the lessons paid before the app instead', async () => {
+    await renderAs('herman', `/coach/students?history=${GROUP.nurul}`)
+    const drawer = await screen.findByRole(
+      'dialog',
+      { name: 'History', description: 'Nurul · Own account' },
+      { timeout: 5000 },
+    )
+    const payments = within(drawer).getByRole('region', { name: 'Payments' })
+    expect(await within(payments).findByText('No payments yet.')).toBeTruthy()
+    expect(within(payments).getByText('Starting balance · 4 lessons paid')).toBeTruthy()
+    const lessons = within(drawer).getByRole('region', { name: 'Lessons' })
+    expect(await within(lessons).findByText('Sun 4 Oct, 7:00–8:00 pm')).toBeTruthy()
+    expect(within(lessons).getByText('Booked · Package 1 · lesson 3 of 4')).toBeTruthy()
+  })
+
+  it('shows a gap override and a 2-hour lesson in History', async () => {
+    await renderAs('herman', `/coach/students?history=${GROUP.kai}`)
+    let drawer = await screen.findByRole('dialog', { name: 'History' }, { timeout: 5000 })
+    let lessons = within(drawer).getByRole('region', { name: 'Lessons' })
+    expect(await within(lessons).findByText('Fri 2 Oct, 9:00–10:00 pm')).toBeTruthy()
+    expect(within(lessons).getByText('Booked · Package 1 · lesson 1 of 4')).toBeTruthy()
+    expect(within(lessons).getByText('Palm Court · Gap override')).toBeTruthy()
+    cleanup()
+    await renderAs('herman', `/coach/students?history=${GROUP.chloe}`)
+    drawer = await screen.findByRole('dialog', { name: 'History' }, { timeout: 5000 })
+    lessons = within(drawer).getByRole('region', { name: 'Lessons' })
+    expect(await within(lessons).findByText('Sun 4 Oct, 10:00 am–12:00 pm')).toBeTruthy()
+    expect(within(lessons).getByText('Booked · Package 3 · lessons 1–2 of 4')).toBeTruthy()
+  })
+
+  it('has no lesson of Hana’s to excuse: hers is tonight', async () => {
+    await renderAs('herman', `/coach/students?pay=${GROUP.hana}`)
+    const panel = await screen.findByRole('dialog', { name: 'Record payment' }, { timeout: 5000 })
+    await within(panel).findByRole('combobox', { name: 'Package' })
+    fireEvent.click(within(panel).getByRole('button', { name: 'Excuse a missed lesson' }))
+    expect(
+      await within(panel).findByText(
+        'No lessons to excuse. Only lessons that have started can be excused.',
+      ),
+    ).toBeTruthy()
   })
 
   it('records a payment from History, for paying ahead', async () => {

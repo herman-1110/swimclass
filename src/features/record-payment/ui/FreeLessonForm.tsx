@@ -57,13 +57,7 @@ export function FreeLessonForm({ id, groupId, names, onAdded, onCancel }: FreeLe
   }
 
   return (
-    <form
-      id={id}
-      noValidate
-      aria-describedby={helpId}
-      onSubmit={submit}
-      className="flex flex-col gap-3 self-stretch"
-    >
+    <form id={id} noValidate onSubmit={submit} className="flex flex-col gap-3 self-stretch">
       <p id={helpId} className="text-label leading-normal text-muted">
         {freeLessonHelp(names)}
       </p>
@@ -85,11 +79,14 @@ export function FreeLessonForm({ id, groupId, names, onAdded, onCancel }: FreeLe
         </p>
       )}
       <div className="flex items-center gap-2">
+        {/* The help line says what the button does: it describes the button (an unnamed
+            form's description isn't read out). */}
         <Button
           type="submit"
           className="flex-1"
           pending={add.isPending}
           aria-disabled={added || undefined}
+          aria-describedby={helpId}
         >
           {added ? FREE_LESSON_ADDED : ADD_FREE_LESSON}
         </Button>

@@ -18,9 +18,9 @@ type GroupActiveButtonProps = {
 
 /**
  * The History drawer's "Deactivate group" (with a confirmation) or "Reactivate group" (at
- * once) (coach-add-students §2.7, §5.2.3). One button, so focus stays on it when the group
- * flips. A refused reactivation (`duplicate_group`) shows under it, with "that group" linking
- * to the group that already has these students.
+ * once): a quiet button (coach-add-students §2.7, §5.2.3). One button, so focus stays on it
+ * when the group flips. A refused reactivation (`duplicate_group`) shows under it, with "that
+ * group" linking to the group that already has these students.
  */
 export function GroupActiveButton({ group, onChanged }: GroupActiveButtonProps) {
   const errorId = useId()
@@ -43,8 +43,10 @@ export function GroupActiveButton({ group, onChanged }: GroupActiveButtonProps) 
   return (
     <div className="flex flex-col items-start gap-1">
       <Button
-        variant="link"
-        flush
+        variant="quiet"
+        size="sm"
+        // Its words line up with the text of the drawer's group block (and "Edit group").
+        className="-ml-3.5"
         aria-haspopup={group.active ? 'dialog' : undefined}
         pending={pending}
         aria-disabled={pending || undefined}
