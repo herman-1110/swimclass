@@ -13,14 +13,21 @@ type CardProps = ComponentPropsWithoutRef<'section'> & {
   padding?: CardPadding
   /** md: flat on phones, framed from 768 px (Book's cards, My classes' packages). */
   framedFrom?: 'base' | 'md'
+  /**
+   * The chosen item of a list of cards: --accent-soft instead of white, like a table's
+   * selected row (a Students card for the group just added; DESIGN §3).
+   */
+  selected?: boolean
 }
 
 // UI kit spec §3.20: 1 px --frame, radius 12, white. className is for layout: the inner
 // flex column and its gap, margins, grid placement, and Book's `md:sticky md:top-6`.
 const framed = {
-  base: 'rounded-frame border border-frame bg-white',
-  md: 'md:rounded-frame md:border md:border-frame md:bg-white',
+  base: 'rounded-frame border border-frame',
+  md: 'md:rounded-frame md:border md:border-frame',
 }
+
+const backgrounds = { base: 'bg-white', md: 'md:bg-white' }
 
 const paddings: Record<'base' | 'md', Record<CardPadding, string>> = {
   base: { md: 'p-5', sm: 'px-4 py-3.5', list: 'px-5 pt-1 pb-2', none: '' },
@@ -32,13 +39,19 @@ export function Card({
   as: Element = 'div',
   padding = 'md',
   framedFrom = 'base',
+  selected = false,
   className,
   ...rest
 }: CardProps) {
   return (
     <Element
       {...rest}
-      className={cn(framed[framedFrom], paddings[framedFrom][padding], className)}
+      className={cn(
+        framed[framedFrom],
+        selected ? 'bg-accent-soft' : backgrounds[framedFrom],
+        paddings[framedFrom][padding],
+        className,
+      )}
     />
   )
 }

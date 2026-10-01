@@ -103,4 +103,57 @@ describe('Tabs', () => {
     fireEvent.keyDown(tab('All 13'), { key: 'a' })
     expect(onChange).not.toHaveBeenCalled()
   })
+
+  it('keeps the chosen tab in view when the counts come in and widen the tabs', () => {
+    // jsdom has no layout: each tab is 10 px per character, side by side, in a 250 px row.
+    const width = (el: Element) => (el.textContent?.length ?? 0) * 10
+    const scrolled = new WeakMap<Element, number>()
+    const stub = (name: string, get: (el: HTMLElement) => number, set?: boolean) => {
+      const saved = Object.getOwnPropertyDescriptor(HTMLElement.prototype, name)
+      Object.defineProperty(HTMLElement.prototype, name, {
+        configurable: true,
+        get(this: HTMLElement) {
+          return get(this)
+        },
+        set: set
+          ? function (this: HTMLElement, value: number) {
+              scrolled.set(this, value)
+            }
+          : undefined,
+      })
+      return () => {
+        if (saved) Object.defineProperty(HTMLElement.prototype, name, saved)
+      }
+    }
+    const restore = [
+      stub('offsetWidth', (el) => (el.tagName === 'BUTTON' ? width(el) : 0)),
+      stub('offsetLeft', (el) => {
+        let left = 0
+        for (let before = el.previousElementSibling; before; before = before.previousElementSibling)
+          left += width(before)
+        return el.tagName === 'BUTTON' ? left : 0
+      }),
+      stub('clientWidth', (el) => (el.getAttribute('role') === 'group' ? 250 : 0)),
+      stub('scrollLeft', (el) => scrolled.get(el) ?? 0, true),
+    ]
+    try {
+      const items = (counts: boolean): TabsItem[] => [
+        { value: 'all', label: 'All', count: counts ? 13 : undefined },
+        { value: 'unpaid', label: 'Unpaid', count: counts ? 2 : undefined },
+        { value: 'waiting', label: 'Waiting for approval', count: counts ? 1 : undefined },
+      ]
+      const view = (counts: boolean) => (
+        <Tabs label="Filter packages" items={items(counts)} value="waiting" onChange={() => {}} />
+      )
+      const { rerender } = render(view(false))
+      const row = screen.getByRole('group', { name: 'Filter packages' })
+      // "Waiting for approval" ends at 290 px: scrolled 40 px.
+      expect(row.scrollLeft).toBe(40)
+      rerender(view(true))
+      // "Waiting for approval 1" now ends at 360 px: scrolled 110 px, so all of it shows.
+      expect(row.scrollLeft).toBe(110)
+    } finally {
+      for (const undo of restore) undo()
+    }
+  })
 })
