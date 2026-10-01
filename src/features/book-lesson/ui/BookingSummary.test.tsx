@@ -4,9 +4,9 @@ import { useState } from 'react'
 import { MemoryRouter } from 'react-router'
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 
-import type { GroupBalance } from '@/entities/balance'
+import { type GroupBalance, useAccountBalance } from '@/entities/balance'
 import type { Group } from '@/entities/group'
-import type { Slot } from '@/entities/slot'
+import { type Slot, startTimeKey } from '@/entities/slot'
 import { getSession, logIn, logOut } from '@/shared/api/auth'
 import { demoDb } from '@/shared/api/demo/db'
 import { DEMO_PASSWORD } from '@/shared/config/demo'
@@ -68,21 +68,41 @@ beforeAll(async () => {
   await getSession()
 }, 60_000)
 
-afterEach(cleanup)
+afterEach(() => {
+  cleanup()
+  vi.restoreAllMocks()
+})
+
+type DemoDb = Awaited<ReturnType<typeof demoDb>>
 
 /**
- * Holds the demo database in an open transaction, so the next call waits (as on a slow
- * connection) until the returned function is called.
+ * Holds the demo database in an open transaction, from this very moment, so the calls made
+ * after it wait (as on a slow connection) until `release` is called.
  */
+function holdNow(db: DemoDb): () => Promise<void> {
+  let open = () => {}
+  const released = new Promise<void>((resolve) => {
+    open = resolve
+  })
+  const held = db.transaction(async () => {
+    await released
+  })
+  return async () => {
+    open()
+    await held
+  }
+}
+
+/** holdNow, once the transaction has started (the calls already queued go first). */
 async function holdDatabase(): Promise<() => Promise<void>> {
   const db = await demoDb()
-  let release = () => {}
-  const released = new Promise<void>((resolve) => {
-    release = resolve
-  })
   let started = () => {}
   const holding = new Promise<void>((resolve) => {
     started = resolve
+  })
+  let release = () => {}
+  const released = new Promise<void>((resolve) => {
+    release = resolve
   })
   const held = db.transaction(async () => {
     started()
@@ -95,39 +115,68 @@ async function holdDatabase(): Promise<() => Promise<void>> {
   }
 }
 
+type HarnessProps = {
+  first: Slot | null
+  /** Reads the balance from the demo database, so the refresh after booking shows. */
+  live?: boolean
+  /** The page's onBooked, called before the harness forgets the picked time. */
+  onBooked?: () => void
+  onBookAnother?: () => void
+}
+
 /** The summary as the page uses it: the page forgets the picked time once it is booked. */
-function Harness({ first, onBookAnother }: { first: Slot | null; onBookAnother?: () => void }) {
+function Harness({ first, live = false, onBooked, onBookAnother }: HarnessProps) {
   const [picked, setPicked] = useState(first)
+  const fresh = useAccountBalance(live ? MEILING : null, AIMAN_AND_SOFIA.group_id)
+  const balance = live ? fresh.data : BALANCE
+  if (!balance) return null
   return (
     <>
       <BookingSummary
         group={AIMAN_AND_SOFIA}
-        balance={BALANCE}
+        balance={balance}
         settings={SETTINGS}
         day={first?.day ?? '2026-09-29'}
         slot={picked}
+        time={picked ? startTimeKey(picked) : null}
         minutes={60}
         lastBookableDay="2026-10-25"
-        onBooked={() => setPicked(null)}
+        onBooked={() => {
+          onBooked?.()
+          setPicked(null)
+        }}
         onBookAnother={onBookAnother}
       />
       <button type="button" onClick={() => setPicked(TUE_730)}>
         Pick 7:30 pm
       </button>
+      <button type="button" onClick={() => setPicked(null)}>
+        Forget the time
+      </button>
     </>
   )
 }
 
-function renderSummary(first: Slot | null, onBookAnother?: () => void) {
+function renderHarness(props: HarnessProps) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   render(
     <QueryClientProvider client={queryClient}>
       <MemoryRouter>
-        <Harness first={first} onBookAnother={onBookAnother} />
+        <Harness {...props} />
       </MemoryRouter>
     </QueryClientProvider>,
   )
+}
+
+function renderSummary(first: Slot | null) {
+  renderHarness({ first })
   return within(screen.getByRole('region', { name: 'Booking summary' }))
+}
+
+/** The summary with the account's real balance (signed in as meiling), once it is read. */
+async function renderLive(first: Slot, props: Omit<HarnessProps, 'first' | 'live'> = {}) {
+  renderHarness({ first, live: true, ...props })
+  return within(await screen.findByRole('region', { name: 'Booking summary' }))
 }
 
 describe('BookingSummary', () => {
@@ -208,47 +257,73 @@ describe('BookingSummary', () => {
     expect(button.getAttribute('aria-disabled')).toBeNull()
   })
 
-  it('books, says "Booking…" meanwhile, then shows the lesson and moves focus to it', async () => {
+  it('says "Booking…" only while book_lesson runs, then shows the lesson and moves focus to it', async () => {
     await logIn('meiling', DEMO_PASSWORD)
+    const db = await demoDb()
     const onBookAnother = vi.fn()
-    const summary = renderSummary(TUE_730, onBookAnother)
-    const release = await holdDatabase()
+    const focus = vi.spyOn(HTMLElement.prototype, 'focus')
+    // The page's refresh after booking waits until releaseRefresh is called.
+    let releaseRefresh = async () => {}
+    const summary = await renderLive(TUE_730, {
+      onBooked: () => {
+        releaseRefresh = holdNow(db)
+      },
+      onBookAnother,
+    })
+    const releaseBooking = await holdDatabase()
     fireEvent.click(summary.getByRole('button', { name: 'Book 7:30 pm for Aiman & Sofia' }))
     const busy = await summary.findByRole('button', { name: 'Booking…' })
     expect(busy.getAttribute('aria-busy')).toBe('true')
     expect(busy.getAttribute('aria-disabled')).toBe('true')
     expect(summary.getByRole<HTMLInputElement>('checkbox').disabled).toBe(true)
-    await release()
+    await releaseBooking()
 
     const heading = await summary.findByRole('heading', {
       level: 2,
       name: 'Booked 7:30 pm for Aiman & Sofia',
     })
     expect(document.activeElement).toBe(heading)
+    // The heading is on screen already: focusing it must not scroll the page (phones).
+    expect(focus.mock.contexts).toContain(heading)
+    expect(focus).toHaveBeenCalledWith({ preventScroll: true })
     expect(summary.getByText('Tue 29 Sep · 7:30–8:30 pm')).toBeTruthy()
-    // The package line waits for the refreshed balance.
-    expect(await summary.findByText(/^Package 4 · /)).toBeTruthy()
     expect(summary.getByRole('link', { name: 'See My classes' }).getAttribute('href')).toBe(
       '/my-classes',
     )
     expect(summary.getByText('Free to cancel or reschedule up to 6 hours before.')).toBeTruthy()
 
+    // The screen is still refreshing: the package line waits for the new balance, and
+    // nothing says "Booking…" any more.
+    expect(summary.queryByText(/^Package 4 · /)).toBeNull()
     fireEvent.click(summary.getByRole('button', { name: 'Book another lesson' }))
-    expect(summary.getByText('Pick a start time')).toBeTruthy()
     expect(onBookAnother).toHaveBeenCalledTimes(1)
+    expect(summary.getByText('Pick a start time')).toBeTruthy()
+    expect(
+      summary.getByRole('button', { name: 'Pick a time' }).getAttribute('aria-busy'),
+    ).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Pick 7:30 pm' }))
+    expect(summary.queryByRole('button', { name: 'Booking…' })).toBeNull()
+    expect(
+      summary
+        .getByRole('button', { name: 'Book 7:30 pm for Aiman & Sofia' })
+        .getAttribute('aria-busy'),
+    ).toBeNull()
+    await releaseRefresh()
   })
 
-  it('books every week of a weekly booking and lists them', async () => {
+  it('books every week of a weekly booking and lists them, then the refreshed package', async () => {
     await logIn('meiling', DEMO_PASSWORD)
-    const summary = renderSummary(slot('2026-09-30', '2026-09-30T09:30:00+00:00'))
+    const summary = await renderLive(slot('2026-09-30', '2026-09-30T09:30:00+00:00'))
     fireEvent.click(summary.getByRole('checkbox', { name: 'Repeat weekly for 4 weeks' }))
     fireEvent.click(summary.getByRole('button', { name: 'Book 5:30 pm for Aiman & Sofia' }))
     expect(
       await summary.findByText('Wed 30 Sep, Wed 7 Oct, Wed 14 Oct and Wed 21 Oct · 5:30–6:30 pm'),
     ).toBeTruthy()
+    // 3 booked before, 4 more: Package 4 is fully booked and Package 5 has 3.
+    expect(await summary.findByText('Package 4 · 0 used · 4 booked · fully booked')).toBeTruthy()
   })
 
-  it('drops the success panel as soon as another start is picked', async () => {
+  it('drops the success panel for good once another start is picked', async () => {
     await logIn('meiling', DEMO_PASSWORD)
     const summary = renderSummary(slot('2026-10-02', '2026-10-02T09:30:00+00:00'))
     fireEvent.click(summary.getByRole('button', { name: 'Book 5:30 pm for Aiman & Sofia' }))
@@ -256,6 +331,14 @@ describe('BookingSummary', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Pick 7:30 pm' }))
     expect(summary.queryByRole('heading')).toBeNull()
     expect(summary.getByText('Tue 29 Sep · 7:30–8:30 pm')).toBeTruthy()
+    // Back to no time picked, as just after the booking: the plain summary, and focus
+    // stays where it was.
+    const forget = screen.getByRole('button', { name: 'Forget the time' })
+    forget.focus()
+    fireEvent.click(forget)
+    expect(summary.queryByRole('heading')).toBeNull()
+    expect(summary.getByText('Pick a start time')).toBeTruthy()
+    expect(document.activeElement).toBe(forget)
   })
 })
 

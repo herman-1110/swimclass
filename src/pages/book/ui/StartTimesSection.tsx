@@ -16,7 +16,10 @@ type StartTimesSectionProps = {
   day: DateKey | null
   /** The Monday of the week shown ("See the week" opens the Schedule on it). */
   weekStart: DateKey
-  /** The chosen day's start times, free and crossed out; null while they load or failed. */
+  /**
+   * The chosen day's start times, free and crossed out; null (grey chips) while they, or the
+   * day's own lessons for "Already booked", load, or if they failed.
+   */
   daySlots: readonly Slot[] | null
   /** The week's start times failed to load: their error, and how to try again. */
   failure: { error: unknown; retry: () => void } | null

@@ -31,14 +31,14 @@ beforeAll(async () => {
 
 afterEach(cleanup)
 
-function renderUseBookLesson(onBooked = vi.fn()) {
+function renderUseBookLesson(onBooked = vi.fn(), onRefused = vi.fn()) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   const invalidate = vi.spyOn(queryClient, 'invalidateQueries')
   const wrapper = ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
   )
-  const hook = renderHook(() => useBookLesson({ onBooked }), { wrapper })
-  return { ...hook, invalidate, onBooked }
+  const hook = renderHook(() => useBookLesson({ onBooked, onRefused }), { wrapper })
+  return { ...hook, invalidate, onBooked, onRefused }
 }
 
 /** Books through the hook; gives the new ids, or the refusal. */
@@ -58,19 +58,27 @@ function refreshed(invalidate: { mock: { calls: readonly (readonly unknown[])[] 
 describe('useBookLesson', () => {
   it('passes a clash on through as the reason week_slots gives (gap_after) and refreshes', async () => {
     await logIn('meiling', DEMO_PASSWORD)
-    const { result, invalidate, onBooked } = renderUseBookLesson()
-    const error = await book(result, {
+    const { result, invalidate, onBooked, onRefused } = renderUseBookLesson()
+    const refusedBeforeRefresh: boolean[] = []
+    onRefused.mockImplementation(() => {
+      // Told before the refresh, which may take the refused start away.
+      refusedBeforeRefresh.push(invalidate.mock.calls.length === 0)
+    })
+    const input = {
       groupId: AIMAN_AND_SOFIA,
       startsAt: '2026-09-29T11:00:00+00:00',
       minutes: 60,
       repeatWeeks: 1,
-    })
+    }
+    const error = await book(result, input)
     expect(error).toBeInstanceOf(AppError)
     expect(error).toMatchObject({
       code: 'gap_after',
       detail: { ends_at: '2026-09-29T18:30:00+08:00' },
     })
     expect(onBooked).not.toHaveBeenCalled()
+    expect(onRefused).toHaveBeenCalledWith(error, input)
+    expect(refusedBeforeRefresh).toEqual([true])
     expect(refreshed(invalidate)).toEqual(expect.arrayContaining(CHANGED))
   })
 
@@ -110,11 +118,13 @@ describe('useBookLesson', () => {
       // Called before the refresh: nothing refreshed yet, and the mutation still pending.
       pendingWhenBooked.push(invalidate.mock.calls.length === 0)
     })
+    // What the caller adds for its own use is not sent, and comes back as it was.
     const input = {
       groupId: AIMAN_AND_SOFIA,
       startsAt: '2026-09-29T11:30:00+00:00',
       minutes: 60,
       repeatWeeks: 1,
+      names: 'Aiman & Sofia',
     }
     const ids = await book(result, input)
     expect(ids).toHaveLength(1)

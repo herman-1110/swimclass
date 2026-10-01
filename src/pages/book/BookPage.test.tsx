@@ -1,10 +1,12 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
-import { afterEach, beforeAll, describe, expect, it } from 'vitest'
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 
 import { SessionContext } from '@/entities/account'
 import { getSession, logIn, logOut } from '@/shared/api/auth'
+import { getBackend } from '@/shared/api/backend'
+import { demoDb } from '@/shared/api/demo/db'
 import { DEMO_PASSWORD } from '@/shared/config/demo'
 import { NO_GROUPS_MESSAGE } from '@/shared/config/messages'
 import { ROUTES } from '@/shared/config/routes'
@@ -25,7 +27,10 @@ beforeAll(async () => {
   await getSession()
 }, 60_000)
 
-afterEach(cleanup)
+afterEach(() => {
+  cleanup()
+  vi.restoreAllMocks()
+})
 
 /** The page alone on its route, signed in as a seeded account (pages may not import app/). */
 async function renderBook(username: string, path: string = ROUTES.book) {
@@ -62,6 +67,31 @@ const dayLabels = () =>
   within(screen.getByRole('group', { name: 'Day' }))
     .getAllByRole('button')
     .map((day) => day.getAttribute('aria-label'))
+
+/**
+ * Holds the demo database in an open transaction, so the next calls wait (as on a slow
+ * connection) until the returned function is called.
+ */
+async function holdDatabase(): Promise<() => Promise<void>> {
+  const db = await demoDb()
+  let started = () => {}
+  const holding = new Promise<void>((resolve) => {
+    started = resolve
+  })
+  let release = () => {}
+  const released = new Promise<void>((resolve) => {
+    release = resolve
+  })
+  const held = db.transaction(async () => {
+    started()
+    await released
+  })
+  await holding
+  return async () => {
+    release()
+    await held
+  }
+}
 
 describe('BookPage', () => {
   it('shows the heading at once and the screen’s skeleton while it loads', async () => {
@@ -210,12 +240,56 @@ describe('BookPage', () => {
     expect(router.state.location.search).toBe(`?group=${SOFIA}&day=2026-09-29&length=60&time=19:30`)
   })
 
+  it('goes straight to the new group’s lesson while its start times load (§6.6)', async () => {
+    await renderBook('meiling', '/book?day=2026-09-29&length=60&time=19:30')
+    await startTimes('Tue 29 Sep')
+    const release = await holdDatabase()
+    try {
+      fireEvent.click(screen.getByRole('radio', { name: 'Sofia 1-to-1' }))
+      // Only the chips wait; the summary keeps the picked time with Sofia's package.
+      expect(await screen.findByText('Loading start times…')).toBeTruthy()
+      const box = summary()
+      expect(box.getByText('Tue 29 Sep · 7:30–8:30 pm')).toBeTruthy()
+      expect(
+        box.getByText('1-to-1 for Sofia · uses 1 lesson from Package 3, not paid yet'),
+      ).toBeTruthy()
+      expect(box.getByRole('button', { name: 'Book 7:30 pm for Sofia' })).toBeTruthy()
+    } finally {
+      await release()
+    }
+    await startTimes('Tue 29 Sep')
+    expect(chipNames()).toContain('7:30 pm, available *')
+  })
+
   it('moves a week on to the same weekday and names the account’s own lesson there', async () => {
     const { router } = await renderBook('meiling')
     await startTimes('Sun 27 Sep')
+    // The account's own lessons (week_busy) answer 150 ms after the start times, as two
+    // separate requests may. The "Already booked" line must come with the chips, never
+    // after them: it would push them down (book §6.1). Every state Sun 4 Oct passes
+    // through is watched.
+    const backend = await getBackend()
+    const rpc = backend.rpc.bind(backend)
+    vi.spyOn(backend, 'rpc').mockImplementation(async (fn, args) => {
+      if (fn === 'week_busy') await new Promise((resolve) => setTimeout(resolve, 150))
+      return rpc(fn, args)
+    })
+    const shown: string[] = []
+    const watch = new MutationObserver(() => {
+      const section = screen
+        .queryByRole('heading', { name: 'Start time · Sun 4 Oct' })
+        ?.closest('section')
+      if (!section) return
+      const chips = section.querySelectorAll('button[aria-pressed]').length > 0
+      const line = section.textContent?.includes('Already booked this day') ?? false
+      if (chips) shown.push(line ? 'chips with the line' : 'chips alone')
+    })
+    watch.observe(document.body, { subtree: true, childList: true, characterData: true })
     fireEvent.click(screen.getByRole('button', { name: 'Next week' }))
     await startTimes('Sun 4 Oct')
-    expect(await screen.findByText('Already booked this day: Sofia, 5:00–6:00 pm')).toBeTruthy()
+    watch.disconnect()
+    expect(shown).not.toContain('chips alone')
+    expect(screen.getByText('Already booked this day: Sofia, 5:00–6:00 pm')).toBeTruthy()
     expect(chipNames().filter((name) => name.endsWith(', available'))).toEqual([
       '9:00 pm, available',
     ])
@@ -273,6 +347,19 @@ describe('BookPage', () => {
       ),
     ).toBeTruthy()
     expect(screen.getByText('0 used · 2 booked · 2 left to book')).toBeTruthy()
+
+    // Another start dismisses the refusal, and picking 5:00 pm again doesn't bring it back.
+    fireEvent.click(screen.getByRole('button', { name: '5:30 pm, available' }))
+    expect(await box.findByText('Sun 27 Sep · 5:30–6:30 pm')).toBeTruthy()
+    expect(box.queryByText(/^These weeks clash/)).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: '5:00 pm, available' }))
+    expect(await box.findByText('Sun 27 Sep · 5:00–6:00 pm')).toBeTruthy()
+    expect(
+      box.getByText(
+        '1-to-2 for Aiman & Sofia · uses 1 lesson from Package 4, 1 left to book after this',
+      ),
+    ).toBeTruthy()
+    expect(box.queryByText(/^These weeks clash/)).toBeNull()
   })
 
   it('books 7:30 pm for Aiman & Sofia, then shows it booked everywhere (book §8.3)', async () => {
@@ -313,6 +400,56 @@ describe('BookPage', () => {
     fireEvent.click(await summary().findByRole('button', { name: 'Book another lesson' }))
     expect(summary().getByText('Pick a start time')).toBeTruthy()
     expect(document.activeElement).toBe(heading)
+  })
+
+  it('dismisses the success panel for good: going back doesn’t bring it, or its focus, back', async () => {
+    await renderBook('meiling', '/book?day=2026-10-13&length=60&time=19:30')
+    await startTimes('Tue 13 Oct')
+    fireEvent.click(summary().getByRole('button', { name: 'Book 7:30 pm for Aiman & Sofia' }))
+    await screen.findByRole('heading', { name: 'Booked 7:30 pm for Aiman & Sofia' }, SLOW)
+
+    // 2 hours, then 1 hour again: the plain summary, and focus stays on the length.
+    fireEvent.click(screen.getByRole('radio', { name: '2 hours' }))
+    await waitFor(() => expect(summary().queryByRole('heading')).toBeNull())
+    const oneHour = screen.getByRole('radio', { name: '1 hour' })
+    oneHour.focus()
+    fireEvent.click(oneHour)
+    await startTimes('Tue 13 Oct')
+    expect(summary().getByText('Pick a start time')).toBeTruthy()
+    expect(summary().queryByRole('heading')).toBeNull()
+    expect(document.activeElement).toBe(oneHour)
+
+    // Wed 14 Oct, then Tue 13 Oct again: the same.
+    fireEvent.click(screen.getByRole('button', { name: /^Wed 14 Oct/ }))
+    await startTimes('Wed 14 Oct')
+    const tuesday = screen.getByRole('button', { name: /^Tue 13 Oct/ })
+    tuesday.focus()
+    fireEvent.click(tuesday)
+    await startTimes('Tue 13 Oct')
+    expect(summary().getByText('Pick a start time')).toBeTruthy()
+    expect(summary().queryByRole('heading')).toBeNull()
+    expect(document.activeElement).toBe(tuesday)
+  })
+
+  it('names the group booked when another group is chosen while it books', async () => {
+    await renderBook('meiling', '/book?day=2026-10-15&length=60&time=19:30')
+    await startTimes('Thu 15 Oct')
+    const release = await holdDatabase()
+    try {
+      fireEvent.click(summary().getByRole('button', { name: 'Book 7:30 pm for Aiman & Sofia' }))
+      expect(await summary().findByRole('button', { name: 'Booking…' })).toBeTruthy()
+      fireEvent.click(screen.getByRole('radio', { name: 'Sofia 1-to-1' }))
+      expect(await screen.findByText('1-to-1 · Package 2')).toBeTruthy()
+    } finally {
+      await release()
+    }
+    expect(
+      await summary().findByRole('heading', { name: 'Booked 7:30 pm for Aiman & Sofia' }, SLOW),
+    ).toBeTruthy()
+    expect(summary().getByText('Thu 15 Oct · 7:30–8:30 pm')).toBeTruthy()
+    // Sofia's package is on screen, so the panel leaves the booked group's package out.
+    await waitFor(() => expect(screen.queryByText('Loading start times…')).toBeNull(), SLOW)
+    expect(summary().queryByText(/^Package \d/)).toBeNull()
   })
 })
 

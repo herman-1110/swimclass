@@ -1,4 +1,5 @@
 import type { UseQueryResult } from '@tanstack/react-query'
+import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 
 import type { Group } from '@/entities/group'
@@ -65,11 +66,29 @@ export function useBookSelection(settings: PublicSettings, groups: readonly Grou
 
   const slots = useWeekSlots(weekStart, minutes, groupId)
   const daySlots = day !== null && slots.data ? slotsOfDay(slots.data, day) : null
-  const picked =
+  const found =
     asked.time === null || daySlots === null
       ? null
       : (daySlots.find((slot) => startTimeKey(slot) === asked.time) ?? null)
-  // The time a group change keeps: the picked one, or the asked one while the times load.
+
+  // A group change keeps the picked start (design/Main.dc.html:269). week_slots answers the
+  // same for every group of the account (TECH_SPEC §5.1; book spec §8.2), so while the new
+  // group's start times load, the start picked a moment ago still stands: the summary goes
+  // straight to the new group's lesson, and only the chips wait.
+  const [lastFound, setLastFound] = useState<{ slot: Slot; minutes: number } | null>(null)
+  if (found !== null && (lastFound?.slot !== found || lastFound.minutes !== minutes)) {
+    setLastFound({ slot: found, minutes })
+  }
+  const kept =
+    slots.isPending &&
+    lastFound !== null &&
+    lastFound.minutes === minutes &&
+    lastFound.slot.day === day &&
+    startTimeKey(lastFound.slot) === asked.time
+      ? lastFound.slot
+      : null
+  const picked = found ?? kept
+  // The time a change keeps: the picked one, or the asked one while the times load.
   const time = picked ? asked.time : slots.data ? null : asked.time
 
   const write = (change: Partial<BookChoice>) => {
@@ -92,6 +111,11 @@ export function useBookSelection(settings: PublicSettings, groups: readonly Grou
     slots,
     daySlots,
     picked,
+    /**
+     * The picked start as the address names it ("19:30"), or null. Unlike `picked` it stays
+     * when the refreshed start times no longer have that start (a refusal of it stays).
+     */
+    askedTime: asked.time,
     /** A group keeps the day and the picked time (design/Main.dc.html:269). */
     selectGroup: (id: string) => write({ group: id }),
     /** A day, a week or a length clears the picked time (book spec §6.6). */

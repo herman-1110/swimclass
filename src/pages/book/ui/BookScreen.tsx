@@ -37,6 +37,8 @@ export function BookScreen({ settings, groups, balances }: BookScreenProps) {
   const balance = group && balances.find((row) => row.group_id === group.group_id)
   if (!group || !balance) return null
 
+  const focusStartTimes = () => document.getElementById(startTimesId)?.focus()
+
   return (
     <div className={BOOK_GRID}>
       <GroupPicker
@@ -81,11 +83,20 @@ export function BookScreen({ settings, groups, balances }: BookScreenProps) {
         headingId={startTimesId}
         day={book.day}
         weekStart={book.weekStart}
-        daySlots={book.daySlots}
+        // The chips wait for the day's own lessons too, so "Already booked this day" never
+        // pushes them down after they show (book spec §6.1: the layout stays stable).
+        daySlots={own.isPending ? null : book.daySlots}
         failure={
           // A failed refresh keeps the chips already shown; only a week that never loaded fails.
-          book.slots.isError && !book.slots.data
-            ? { error: book.slots.error, retry: () => void book.slots.refetch() }
+          book.slots.isLoadingError
+            ? {
+                error: book.slots.error,
+                retry: () => {
+                  // "Try again" goes while the week loads again: focus waits on the heading.
+                  focusStartTimes()
+                  void book.slots.refetch()
+                },
+              }
             : null
         }
         selected={book.picked?.starts_at ?? null}
@@ -99,10 +110,11 @@ export function BookScreen({ settings, groups, balances }: BookScreenProps) {
         settings={settings}
         day={book.day}
         slot={book.picked}
+        time={book.askedTime}
         minutes={book.minutes}
         lastBookableDay={book.bookable.lastBookableDay}
         onBooked={book.clearTime}
-        onBookAnother={() => document.getElementById(startTimesId)?.focus()}
+        onBookAnother={focusStartTimes}
         className={AREA.summary}
       />
     </div>

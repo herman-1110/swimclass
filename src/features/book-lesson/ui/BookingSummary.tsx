@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-import { type GroupBalance, packageCaption } from '@/entities/balance'
+import type { GroupBalance } from '@/entities/balance'
 import type { Group } from '@/entities/group'
 import type { PublicSettings } from '@/entities/settings'
 import type { Slot } from '@/entities/slot'
@@ -8,8 +8,15 @@ import type { DateKey } from '@/shared/lib/time'
 import { Button } from '@/shared/ui/Button'
 import { Checkbox } from '@/shared/ui/Checkbox'
 
-import { useBookLesson } from '../api/useBookLesson'
-import { bookedOutcome, choiceKey, type Outcome } from '../model/outcome'
+import { type BookLessonInput, useBookLesson } from '../api/useBookLesson'
+import {
+  bookedOutcome,
+  bookedPackageLine,
+  type Choice,
+  followChoice,
+  type Outcome,
+  sameChoice,
+} from '../model/outcome'
 import { lessonsPerBooking, repeatLabel, repeatWeeks } from '../model/repeatWeeks'
 import { bookingSummaryState, cancelPolicyNote } from '../model/summary'
 import { BookedActions, BookedText } from './BookedPanel'
@@ -29,6 +36,11 @@ type BookingSummaryProps = {
   day: DateKey | null
   /** The picked start, free or crossed out, or null. */
   slot: Slot | null
+  /**
+   * The picked start as the address names it ("19:30"), or null. It outlives `slot` when the
+   * refreshed start times no longer have that start, so a refusal of it stays on screen.
+   */
+  time: string | null
   /** The lesson's length in minutes. */
   minutes: number
   /** The last day a customer may book (bookableWindow), for "Repeat weekly". */
@@ -41,6 +53,15 @@ type BookingSummaryProps = {
   className?: string
 }
 
+/** What Book sends, plus what the outcome needs from the moment it was pressed. */
+type Submission = BookLessonInput & {
+  /** The group's names: the success panel names the group booked. */
+  names: string
+  /** The start pressed, and the choice it was pressed for. */
+  slot: Slot
+  choice: Choice
+}
+
 /**
  * The booking summary (DESIGN §4 item 7; design/Main.dc.html:149-162; book spec §5.2–§5.3):
  * the picked lesson and what it uses, "Repeat weekly", the Book button and the cancel
@@ -49,33 +70,49 @@ type BookingSummaryProps = {
  */
 export function BookingSummary(props: BookingSummaryProps) {
   const { group, balance, settings, day, slot, minutes, lastBookableDay } = props
+  const choice: Choice = { groupId: group.group_id, day, minutes, time: props.time }
   const [repeat, setRepeat] = useState(false)
-  const [outcome, setOutcome] = useState<Outcome | null>(null)
-  const book = useBookLesson({
-    onBooked: (ids, input) => {
-      setOutcome(bookedOutcome(input, ids.length, group.display_names))
+  // book_lesson is running ("Booking…"); the refresh after it is not part of it.
+  const [submitting, setSubmitting] = useState(false)
+  const [kept, setOutcome] = useState<Outcome | null>(null)
+  // A new choice dismisses the panel or the refusal for good (book spec §4.4, §5.3.2).
+  const outcome = followChoice(kept, choice)
+  if (outcome !== kept) setOutcome(outcome)
+
+  const book = useBookLesson<Submission>({
+    onBooked: (ids, submission) => {
+      setSubmitting(false)
+      setOutcome(bookedOutcome(submission, ids.length, choice, balance))
       setRepeat(false)
       props.onBooked()
     },
+    onRefused: (error, submission) => {
+      setSubmitting(false)
+      // A choice left behind while it was booking needs no explanation.
+      if (sameChoice(submission.choice, choice)) {
+        setOutcome({ kind: 'refused', choice, error, slot: submission.slot })
+      }
+    },
   })
 
-  const key = choiceKey(group.group_id, day, minutes, slot?.starts_at ?? null)
-  const shown = outcome?.key === key ? outcome : null
-  const weeks = slot
+  const refusal = outcome?.kind === 'refused' ? outcome : null
+  // The start it is about: the picked one, or the refused one once the refresh took it away.
+  const lesson = slot ?? refusal?.slot ?? null
+  const weeks = lesson
     ? repeatWeeks({
         canStillBook: balance.can_still_book,
         lessonsPerBooking: lessonsPerBooking(minutes),
-        day: slot.day,
+        day: lesson.day,
         lastBookableDay,
       })
     : 0
   const state = bookingSummaryState({
-    slot,
+    slot: lesson,
     minutes,
     group,
     balance,
     repeatWeeks: weeks,
-    refusal: shown?.kind === 'refused' ? shown.error : null,
+    refusal: refusal?.error ?? null,
     messages: {
       gapMinutes: settings.travel_gap_minutes,
       windowWeeks: settings.booking_window_weeks,
@@ -83,33 +120,33 @@ export function BookingSummary(props: BookingSummaryProps) {
   })
 
   function submit() {
-    if (!slot || !state.canBook) return
-    const submitted = key
-    book.mutate(
-      {
-        groupId: group.group_id,
-        startsAt: slot.starts_at,
-        minutes,
-        repeatWeeks: repeat && state.showRepeat ? weeks : 1,
-      },
-      { onError: (error) => setOutcome({ key: submitted, kind: 'refused', error }) },
-    )
+    if (!lesson || !state.canBook || submitting) return
+    setSubmitting(true)
+    book.mutate({
+      groupId: group.group_id,
+      startsAt: lesson.starts_at,
+      minutes,
+      repeatWeeks: repeat && state.showRepeat ? weeks : 1,
+      names: group.display_names,
+      slot: lesson,
+      choice,
+    })
   }
 
   return (
     <SummaryFrame className={props.className}>
       <div aria-live="polite" className="flex flex-col gap-0.5">
-        {shown?.kind === 'booked' ? (
+        {outcome?.kind === 'booked' ? (
           <BookedText
-            heading={shown.heading}
-            when={shown.when}
-            packageLine={book.isPending ? null : packageCaption(balance)}
+            heading={outcome.heading}
+            when={outcome.when}
+            packageLine={bookedPackageLine(outcome, balance)}
           />
         ) : (
           <SummaryText state={state} />
         )}
       </div>
-      {shown?.kind === 'booked' ? (
+      {outcome?.kind === 'booked' ? (
         <BookedActions
           onBookAnother={() => {
             setOutcome(null)
@@ -118,24 +155,24 @@ export function BookingSummary(props: BookingSummaryProps) {
         />
       ) : (
         <>
-          {state.showRepeat && slot && (
+          {state.showRepeat && lesson && (
             <Checkbox
               id="book-repeat"
               size="md"
-              label={repeatLabel(weeks, slot.day)}
+              label={repeatLabel(weeks, lesson.day)}
               checked={repeat}
-              disabled={book.isPending}
+              disabled={submitting}
               onChange={(event) => setRepeat(event.target.checked)}
             />
           )}
           <Button
             size="xl"
             block
-            pending={book.isPending}
-            aria-disabled={!state.canBook || book.isPending || undefined}
+            pending={submitting}
+            aria-disabled={!state.canBook || submitting || undefined}
             onClick={submit}
           >
-            {book.isPending ? 'Booking…' : state.buttonLabel}
+            {submitting ? 'Booking…' : state.buttonLabel}
           </Button>
         </>
       )}

@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { type ReactNode, useId } from 'react'
 
 import { useMyProfile, useUserId } from '@/entities/account'
 import { CoachBanner, useLatestAnnouncement } from '@/entities/announcement'
@@ -23,6 +23,7 @@ const TITLE = 'Book a lesson'
  * times.
  */
 export function BookPage() {
+  const titleId = useId()
   const userId = useUserId()
   const profile = useMyProfile()
   const settings = usePublicSettings()
@@ -31,13 +32,17 @@ export function BookPage() {
   const announcement = useLatestAnnouncement()
   const name = profile.data?.display_name
   const reads = [settings, groups, balances]
-  const failed = reads.find((read) => read.isError)
+  // Only a read that never loaded fails the screen: a failed refresh (after a booking, or
+  // on returning to the tab) keeps what is already shown.
+  const failed = reads.find((read) => read.isLoadingError)
 
   let body: ReactNode
   if (groups.data && !groups.data.some((group) => group.active)) {
     body = <EmptyState>{NO_GROUPS_MESSAGE}</EmptyState>
   } else if (failed) {
     const retry = () => {
+      // "Try again" goes while the reads run again: focus waits on the page's title.
+      document.getElementById(titleId)?.focus()
       for (const read of reads) if (read.isError) void read.refetch()
     }
     body = <RetryMessage error={failed.error} onRetry={retry} />
@@ -53,7 +58,13 @@ export function BookPage() {
     // From 1024 px the screen stops at 1100 px, left-aligned (Main@1440).
     <div className="-mb-5 flex flex-1 flex-col gap-6 md:mb-0 md:gap-7 md:pb-2 lg:max-w-[1100px] lg:pb-0">
       <DocumentTitle page={TITLE} />
-      <PageHeader size="customer" title={TITLE} eyebrow={name ? `Hi, ${name}` : ' '} />
+      <PageHeader
+        size="customer"
+        title={TITLE}
+        eyebrow={name ? `Hi, ${name}` : ' '}
+        titleId={titleId}
+        focusable
+      />
       {announcement.data && <CoachBanner message={announcement.data.message} />}
       {body}
     </div>
