@@ -1,17 +1,23 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
-import { afterEach, beforeAll, describe, expect, it } from 'vitest'
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { SessionContext, type SessionState } from '@/entities/account'
-import { getSession, logIn, logOut } from '@/shared/api/auth'
+import { getSession, logIn, logOut, updatePassword } from '@/shared/api/auth'
+import { AppError } from '@/shared/api/rpc'
 import { DEMO_PASSWORD } from '@/shared/config/demo'
 import { ROUTES } from '@/shared/config/routes'
 
 import { ResetPasswordPage } from './ResetPasswordPage'
 
 // Runs in demo mode, which sends no reset email: the page works for a signed-in account
-// (auth spec §5.5). The session comes from SessionContext (pages may not import app/).
+// (auth spec §5.5). The session comes from SessionContext (pages may not import app/). One
+// test makes updatePassword wait, then fail, as Supabase can; otherwise it is the real one.
+vi.mock('@/shared/api/auth', async (importOriginal) => {
+  const auth = await importOriginal<typeof import('@/shared/api/auth')>()
+  return { ...auth, updatePassword: vi.fn(auth.updatePassword) }
+})
 
 beforeAll(async () => {
   // Load the demo database here (about 4 s in jsdom), not inside the first test's 5 s.
@@ -19,11 +25,16 @@ beforeAll(async () => {
   await getSession()
 }, 60_000)
 
+beforeEach(() => {
+  vi.mocked(updatePassword).mockClear()
+})
+
 afterEach(async () => {
   cleanup()
   await logOut()
 })
 
+/** Renders the page; `setSession` hands it another session, as SessionProvider would. */
 function renderReset(session: SessionState) {
   const router = createMemoryRouter(
     [
@@ -35,14 +46,15 @@ function renderReset(session: SessionState) {
     { initialEntries: [ROUTES.resetPassword] },
   )
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-  render(
+  const tree = (state: SessionState) => (
     <QueryClientProvider client={queryClient}>
-      <SessionContext value={session}>
+      <SessionContext value={state}>
         <RouterProvider router={router} />
       </SessionContext>
-    </QueryClientProvider>,
+    </QueryClientProvider>
   )
-  return router
+  const { rerender } = render(tree(session))
+  return { router, setSession: (state: SessionState) => rerender(tree(state)) }
 }
 
 /** The page as the reset link leaves it: signed in as `username`. */
@@ -73,12 +85,18 @@ describe('ResetPasswordPage', () => {
       ROUTES.login,
     )
     expect(screen.queryByRole('form')).toBeNull()
+    // Opened signed out, nothing takes focus: no form was replaced.
+    expect(document.activeElement).toBe(document.body)
+    expect(heading.hasAttribute('tabindex')).toBe(false)
     await waitFor(() => expect(document.title).toBe('This link has expired · Swim Class'))
   })
 
-  it('says "Loading…" while the link is read', () => {
+  it('says only "Loading…" while the link is read', () => {
     renderReset({ status: 'loading' })
-    expect(screen.getByRole('heading', { level: 1, name: 'Set a new password' })).toBeTruthy()
+    const heading = screen.getByRole('heading', { level: 1, name: 'Set a new password' })
+    // Nothing asks for a password before there is a session to set it for (auth spec §2.5).
+    expect(heading.nextElementSibling).toBeNull()
+    expect(screen.queryByText(/Choose a new password/)).toBeNull()
     expect(screen.getByRole('status').textContent).toBe('Loading…')
     expect(screen.queryByRole('form')).toBeNull()
   })
@@ -124,19 +142,56 @@ describe('ResetPasswordPage', () => {
     expect(input('New password').getAttribute('aria-invalid')).toBe('true')
   })
 
-  it('shows the expired page if the session ends before saving', async () => {
+  it('shows the expired page if the session ends before saving, and focuses it', async () => {
     await renderSignedIn('meiling')
     // Signed out meanwhile (another tab): demo mode answers not_signed_in.
     await logOut()
     typePasswords('swim-new-2026')
     save()
-    expect(
-      await screen.findByRole('heading', { level: 1, name: 'This link has expired' }),
-    ).toBeTruthy()
+    const heading = await screen.findByRole('heading', { level: 1, name: 'This link has expired' })
+    // It replaces the form, so focus moves to it (auth spec §7.5).
+    expect(document.activeElement).toBe(heading)
+  })
+
+  it('focuses the expired page when the session ends while the form shows', async () => {
+    const { setSession } = await renderSignedIn('meiling')
+    input('New password').focus()
+    await logOut()
+    setSession({ status: 'signed-out' })
+    const heading = await screen.findByRole('heading', { level: 1, name: 'This link has expired' })
+    expect(document.activeElement).toBe(heading)
+  })
+
+  it('says "Saving…" while it saves, and a refusal above the button', async () => {
+    let refuse = () => {}
+    vi.mocked(updatePassword).mockImplementationOnce(
+      () =>
+        new Promise<void>((_, reject) => {
+          refuse = () => reject(new AppError('network'))
+        }),
+    )
+    await renderSignedIn('meiling')
+    typePasswords('swim-new-2026')
+    save()
+    const button = await screen.findByRole('button', { name: 'Saving…' })
+    expect(button.getAttribute('aria-busy')).toBe('true')
+    expect(button.getAttribute('aria-disabled')).toBe('true')
+    // Another press, or Enter in a field, asks nothing more.
+    save()
+    fireEvent.submit(screen.getByRole('form', { name: 'Set a new password' }))
+    refuse()
+    const alert = await screen.findByRole('alert')
+    expect(alert.textContent).toBe(
+      'Couldn’t reach the server. Check your connection and try again.',
+    )
+    expect(alert.nextElementSibling).toBe(screen.getByRole('button', { name: 'Save new password' }))
+    expect(updatePassword).toHaveBeenCalledTimes(1)
+    // The form stays, with what was typed, to try again.
+    expect(input('New password').value).toBe('swim-new-2026')
   })
 
   it('saves the new password, then goes on from there', async () => {
-    const router = await renderSignedIn('daniel')
+    const { router } = await renderSignedIn('daniel')
     const form = screen.getByRole('heading', { level: 1, name: 'Set a new password' })
     await waitFor(() => expect(form.nextElementSibling?.textContent).toContain('daniel'))
     typePasswords('swim-new-2026')

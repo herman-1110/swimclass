@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
-import { afterEach, beforeAll, describe, expect, it } from 'vitest'
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { SessionContext } from '@/entities/account'
 import { getSession, logIn, logOut } from '@/shared/api/auth'
@@ -13,7 +13,12 @@ import { LoginPage } from './LoginPage'
 
 // Runs in demo mode: the real migrations and seed in PGlite, and demo mode's stand-in for
 // the `login` Edge Function. The page alone, signed out (pages may not import app/, so no
-// guards: after logging in, RedirectIfSignedIn would carry the person on).
+// guards: after logging in, RedirectIfSignedIn would carry the person on). logIn is the
+// real one, watched, so a test can count the calls.
+vi.mock('@/shared/api/auth', async (importOriginal) => {
+  const auth = await importOriginal<typeof import('@/shared/api/auth')>()
+  return { ...auth, logIn: vi.fn(auth.logIn) }
+})
 
 const MEILING = 'a0000000-0000-4000-8000-000000000002'
 
@@ -22,6 +27,10 @@ beforeAll(async () => {
   await logOut()
   await getSession()
 }, 60_000)
+
+beforeEach(() => {
+  vi.mocked(logIn).mockClear()
+})
 
 afterEach(async () => {
   cleanup()
@@ -178,7 +187,7 @@ describe('LoginPage', () => {
       const button = await screen.findByRole('button', { name: 'Logging in…' })
       expect(button.getAttribute('aria-busy')).toBe('true')
       expect(button.getAttribute('aria-disabled')).toBe('true')
-      // The fields stay editable; another press changes nothing.
+      // The fields stay editable; another press, or Enter, asks nothing more.
       expect(input('Username').disabled).toBe(false)
       fireEvent.click(button)
       fireEvent.submit(screen.getByRole('form', { name: 'Welcome back' }))
@@ -186,6 +195,7 @@ describe('LoginPage', () => {
       await release()
     }
     await waitFor(async () => expect((await getSession())?.userId).toBe(MEILING))
+    expect(logIn).toHaveBeenCalledTimes(1)
   })
 
   it('says to wait after 10 failures in 15 minutes, keeping both fields', async () => {

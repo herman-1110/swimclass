@@ -6,13 +6,15 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 import { SessionContext } from '@/entities/account'
 import { getSession, logOut, signUp } from '@/shared/api/auth'
 import { demoDb } from '@/shared/api/demo/db'
+import { AppError } from '@/shared/api/rpc'
 import { ROUTES } from '@/shared/config/routes'
 
 import { SignUpPage } from './SignUpPage'
 
 // Runs in demo mode: the real migrations, seed and sign-up trigger in PGlite. Demo sign-up
-// sends no email and counts the address as confirmed (auth spec §5.5). One test makes
-// signUp answer as Supabase does with email confirmations off; otherwise it is the real one.
+// sends no email and counts the address as confirmed (auth spec §5.5). Two tests make
+// signUp answer as Supabase can (confirmations off; a wait, then a rate limit); otherwise
+// it is the real one.
 vi.mock('@/shared/api/auth', async (importOriginal) => {
   const auth = await importOriginal<typeof import('@/shared/api/auth')>()
   return { ...auth, signUp: vi.fn(auth.signUp) }
@@ -94,6 +96,12 @@ describe('SignUpPage', () => {
       ['signup-password', 'password', 'new-password', null],
       ['signup-password-confirm', 'password', 'new-password', null],
     ])
+    // The username's keyboard is set up as the log-in username's (auth spec §7.3).
+    expect(
+      ['autocapitalize', 'autocorrect', 'spellcheck', 'enterkeyhint'].map((name) =>
+        input('Username').getAttribute(name),
+      ),
+    ).toEqual(['none', 'off', 'false', 'next'])
     expect(
       screen.getByText(
         '3 to 30 small letters, numbers, dots or underscores. You’ll log in with it.',
@@ -139,6 +147,22 @@ describe('SignUpPage', () => {
     expect(screen.queryByText(/^Use 3 to 30/)).toBeNull()
     await waitFor(() => expect(usernameStatus()).toBe('That username is available.'), CHECK)
     expect(input('Username').hasAttribute('aria-invalid')).toBe(false)
+  })
+
+  it('names the wrong format only once the field is left with something in it', () => {
+    renderSignUp()
+    // Passing through the empty field (Tab, then Shift+Tab back) doesn't count as leaving it.
+    fireEvent.blur(input('Username'))
+    type('Username', 'n')
+    expect(screen.queryByText(/^Use 3 to 30/)).toBeNull()
+    expect(input('Username').hasAttribute('aria-invalid')).toBe(false)
+    expect(screen.getByText(/You’ll log in with it/)).toBeTruthy()
+
+    fireEvent.blur(input('Username'))
+    expect(
+      screen.getByText('Use 3 to 30 small letters, numbers, dots or underscores.'),
+    ).toBeTruthy()
+    expect(input('Username').getAttribute('aria-invalid')).toBe('true')
   })
 
   it('names every problem before any call, and focuses the first', () => {
@@ -217,6 +241,36 @@ describe('SignUpPage', () => {
     ).toBeTruthy()
     expect(document.activeElement).toBe(input('Email'))
     expect(input('Email').getAttribute('aria-invalid')).toBe('true')
+  })
+
+  it('says "Creating account…" while it asks, and a refusal above the button', async () => {
+    let refuse = () => {}
+    vi.mocked(signUp).mockImplementationOnce(
+      () =>
+        new Promise<{ confirmEmail: boolean }>((_, reject) => {
+          refuse = () => reject(new AppError('over_email_send_rate_limit'))
+        }),
+    )
+    renderSignUp()
+    fillIn({ ...newbie, Username: 'busy.try', Email: 'busy.try@example.com' })
+    fireEvent.click(screen.getByRole('button', { name: 'Create account' }))
+    const button = await screen.findByRole('button', { name: 'Creating account…' })
+    expect(button.getAttribute('aria-busy')).toBe('true')
+    expect(button.getAttribute('aria-disabled')).toBe('true')
+    // It asks once the username check is in; another press, or Enter, asks nothing more.
+    await waitFor(() => expect(signUp).toHaveBeenCalledTimes(1), CHECK)
+    fireEvent.click(button)
+    fireEvent.submit(screen.getByRole('form', { name: 'Create an account' }))
+    refuse()
+    const alert = await screen.findByRole('alert')
+    expect(alert.textContent).toBe(
+      'We can’t send another email just yet. Wait a few minutes and try again.',
+    )
+    expect(alert.nextElementSibling).toBe(screen.getByRole('button', { name: 'Create account' }))
+    expect(signUp).toHaveBeenCalledTimes(1)
+    // The form stays, with everything typed, to try again later.
+    expect(screen.getByRole('form', { name: 'Create an account' })).toBeTruthy()
+    expect(input('Email').value).toBe('busy.try@example.com')
   })
 
   it('goes home when Supabase signs the person in at once (no confirmation email)', async () => {

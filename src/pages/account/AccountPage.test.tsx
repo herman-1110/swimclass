@@ -1,13 +1,13 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
-import { afterEach, beforeAll, describe, expect, it } from 'vitest'
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { accountKeys, SessionContext } from '@/entities/account'
 import { isLogOutRequest } from '@/features/log-out'
 import { type AuthSession, getSession, logIn, logOut } from '@/shared/api/auth'
 import { demoDb } from '@/shared/api/demo/db'
-import { AppError, readRows } from '@/shared/api/rpc'
+import { AppError, readRows, updateRows } from '@/shared/api/rpc'
 import { DEMO_PASSWORD } from '@/shared/config/demo'
 import { ROUTES } from '@/shared/config/routes'
 
@@ -15,12 +15,22 @@ import { AccountPage } from './AccountPage'
 
 // Runs in demo mode: the real migrations and seed in PGlite, with RLS. The page alone,
 // signed in through SessionContext (pages may not import app/, so no layout or guards).
+// One test makes the details' save fail as a dropped connection does; otherwise
+// updateRows is the real one.
+vi.mock('@/shared/api/rpc', async (importOriginal) => {
+  const rpc = await importOriginal<typeof import('@/shared/api/rpc')>()
+  return { ...rpc, updateRows: vi.fn(rpc.updateRows) }
+})
 
 beforeAll(async () => {
   // Load the demo database here (about 4 s in jsdom), not inside the first test's 5 s.
   await logOut()
   await getSession()
 }, 60_000)
+
+beforeEach(() => {
+  vi.mocked(updateRows).mockClear()
+})
 
 afterEach(async () => {
   cleanup()
@@ -218,6 +228,25 @@ describe('AccountPage', () => {
     })
   })
 
+  it('says when the details couldn’t be saved, above the button', async () => {
+    vi.mocked(updateRows).mockRejectedValueOnce(new AppError('network'))
+    const { session } = await renderAs('meiling')
+    await screen.findByRole('region', { name: 'Your details' })
+    type('Name', 'Mei Ling Tan')
+    fireEvent.click(saveDetails())
+    const alert = await screen.findByRole('alert')
+    expect(alert.textContent).toBe(
+      'Couldn’t reach the server. Check your connection and try again.',
+    )
+    expect(alert.nextElementSibling?.contains(saveDetails())).toBe(true)
+    // Nothing was saved, so it can be tried again.
+    expect(saveDetails().textContent).toBe('Save details')
+    expect(saveDetails().hasAttribute('aria-disabled')).toBe(false)
+    expect(screen.queryByText('Details saved.')).toBeNull()
+    expect(input('Name').value).toBe('Mei Ling Tan')
+    expect(await savedDetails(session.userId)).toMatchObject({ display_name: 'Mei Ling' })
+  })
+
   it('refuses the current password', async () => {
     await renderAs('meiling')
     await screen.findByRole('region', { name: 'Password' })
@@ -228,6 +257,39 @@ describe('AccountPage', () => {
       await screen.findByText('That’s your current password. Choose a different one.'),
     ).toBeTruthy()
     expect(document.activeElement).toBe(input('New password'))
+  })
+
+  it('says "Saving…" while the new password saves', async () => {
+    await renderAs('priya')
+    await screen.findByRole('region', { name: 'Password' })
+    const savePassword = () => screen.getByRole('button', { name: /^(Save new password|Saving…)$/ })
+    type('New password', 'swim-new-2026')
+    type('Confirm new password', 'swim-new-2026')
+    const release = await holdDatabase()
+    try {
+      fireEvent.click(savePassword())
+      await waitFor(() => expect(savePassword().textContent).toBe('Saving…'))
+      expect(savePassword().getAttribute('aria-busy')).toBe('true')
+      expect(savePassword().getAttribute('aria-disabled')).toBe('true')
+    } finally {
+      await release()
+    }
+    await screen.findByText('New password saved.')
+  })
+
+  it('says something went wrong when the session is gone before the password saves', async () => {
+    await renderAs('meiling')
+    await screen.findByRole('region', { name: 'Password' })
+    // Signed out meanwhile (another tab): demo mode answers not_signed_in (auth spec W5).
+    await logOut()
+    type('New password', 'swim-new-2026')
+    type('Confirm new password', 'swim-new-2026')
+    fireEvent.click(screen.getByRole('button', { name: 'Save new password' }))
+    const alert = await screen.findByRole('alert')
+    expect(alert.textContent).toBe('Something went wrong. Refresh the page and try again.')
+    const savePassword = screen.getByRole('button', { name: 'Save new password' })
+    expect(alert.nextElementSibling?.contains(savePassword)).toBe(true)
+    expect(screen.queryByText('New password saved.')).toBeNull()
   })
 
   it('logs out through Log in, which ends the session', async () => {
