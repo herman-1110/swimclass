@@ -29,6 +29,12 @@ export const NO_GROUPS_MESSAGE =
 export const DAY_FULLY_BOOKED_MESSAGE = 'This day is fully booked. Try another day.'
 
 /**
+ * Settings: put before the refusal's own words when the open hours were saved and the other
+ * changes then weren't (prompt 10 TASK 7; the Settings spec §5.4, proposed).
+ */
+export const OPEN_HOURS_SAVED_LEAD = 'Your open hours were saved, but your other changes weren’t.'
+
+/**
  * The shortest password `weak_password`'s message asks for (the auth spec's proposed 8,
  * its open question 2). The sign-up and password forms check the same number.
  */

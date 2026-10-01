@@ -14,6 +14,7 @@ import {
   MIN_PASSWORD_LENGTH,
   NETWORK_MESSAGE,
   NO_GROUPS_MESSAGE,
+  OPEN_HOURS_SAVED_LEAD,
   reasonMessage,
 } from './messages'
 
@@ -610,6 +611,12 @@ describe('the fixed messages', () => {
     expect(DAY_FULLY_BOOKED_MESSAGE).toBe('This day is fully booked. Try another day.')
   })
 
+  it('say when Settings saved the open hours but not the other changes (proposed)', () => {
+    expect(OPEN_HOURS_SAVED_LEAD).toBe(
+      'Your open hours were saved, but your other changes weren’t.',
+    )
+  })
+
   it('all use typographic quotes, end with a full stop and never shout', () => {
     const all = [
       ...CUSTOMER_CASES.map(([, , words]) => words),
@@ -618,6 +625,7 @@ describe('the fixed messages', () => {
       NETWORK_MESSAGE,
       NO_GROUPS_MESSAGE,
       DAY_FULLY_BOOKED_MESSAGE,
+      OPEN_HOURS_SAVED_LEAD,
     ]
     for (const words of all) {
       expect(words).not.toMatch(/['"!]/)
