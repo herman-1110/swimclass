@@ -4,7 +4,7 @@ import { flushSync } from 'react-dom'
 import { type CustomerAccount, useAccountStudents, useUsernameAvailable } from '@/entities/account'
 import { type CoachSettings, packagePriceCents } from '@/entities/settings'
 
-import { defaultAccount } from '../model/account'
+import { chosenAccount } from '../model/account'
 import { amountPrefill } from '../model/amount'
 import { firstProblem, focusSelector, withoutProblems } from '../model/fields'
 import { resolveStudents } from '../model/students'
@@ -18,7 +18,7 @@ import {
 
 /** What the coach has typed and chosen. */
 export type AddStudentsDraft = {
-  /** null until the coach picks one: the default then applies (defaultAccount). */
+  /** null until the coach picks one: the default then applies (chosenAccount). */
   account: string | null
   newAccount: NewAccountDraft
   /** The chosen lesson type; above the students per lesson it shows as the maximum. */
@@ -89,7 +89,7 @@ export function useAddStudentsDraft({
 
   const max = settings.max_students_per_lesson
   const size = Math.min(draft.size, max)
-  const account = draft.account ?? defaultAccount(accounts, initialAccountId)
+  const account = chosenAccount(draft.account, accounts, initialAccountId)
   const isNew = account === NEW_ACCOUNT
   const accountId = account !== '' && !isNew ? account : null
   const students = useAccountStudents(accountId)

@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import { type CustomerAccount, usernameAvailableQuery } from '@/entities/account'
 import type { CoachSettings } from '@/entities/settings'
@@ -39,6 +39,15 @@ export function useAddStudents({
 }: UseAddStudentsOptions) {
   const queryClient = useQueryClient()
   const running = useRef(false)
+  // The coach can leave while a save runs. The save still completes, but its answer then
+  // changes nothing on screen: no move to Students & payments, no problem shown.
+  const mounted = useRef(false)
+  useEffect(() => {
+    mounted.current = true
+    return () => {
+      mounted.current = false
+    }
+  }, [])
   const form = useAddStudentsDraft({ settings, accounts, initialAccountId })
   const [created, setCreated] = useState<CreatedAccount | null>(null)
   const [checkingUsername, setCheckingUsername] = useState(false)
@@ -62,11 +71,16 @@ export function useAddStudents({
     }
   }
 
+  /** Shows what came back, while the page is still there. */
+  function showHere(found: Problems) {
+    if (mounted.current) show(found)
+  }
+
   async function save(found: Problems) {
     if (isNew && found.newUsername === undefined && (await usernameTaken())) {
       found.newUsername = { code: 'username_taken' }
     }
-    if (Object.keys(found).length > 0) return show(found)
+    if (Object.keys(found).length > 0) return showHere(found)
     form.setProblems({})
 
     let accountId = form.accountId
@@ -81,7 +95,7 @@ export function useAddStudents({
       try {
         accountId = await createAccount.mutateAsync(input)
       } catch (error) {
-        return show(problemAt(accountErrorField(error), toAppError(error)))
+        return showHere(problemAt(accountErrorField(error), toAppError(error)))
       }
       setCreated({ id: accountId, name: input.displayName, email: input.email })
       form.setDraft((current) => ({
@@ -105,10 +119,10 @@ export function useAddStudents({
         openingUsed: draft.openingOpen ? readLessons(draft.openingUsed) : 0,
         openingPaid: draft.openingOpen ? readLessons(draft.openingPaid) : 0,
       })
-      onAdded({ groupId, size, invitedEmail })
+      if (mounted.current) onAdded({ groupId, size, invitedEmail })
     } catch (error) {
       const visible = { size, paid: draft.paid, openingOpen: draft.openingOpen }
-      show(problemAt(groupErrorField(error, visible), toAppError(error)))
+      showHere(problemAt(groupErrorField(error, visible), toAppError(error)))
     }
   }
 

@@ -1,7 +1,10 @@
+import type { KeyboardEvent } from 'react'
+
 import { type CustomerAccount, USERNAME_CHECK_DELAY_MS } from '@/entities/account'
 import { useGroupLocations } from '@/entities/group'
 import type { CoachSettings } from '@/entities/settings'
 import { messageFor, messageParts } from '@/shared/config/messages'
+import { cn } from '@/shared/lib/cn'
 import { useDebouncedValue } from '@/shared/lib/hooks/useDebouncedValue'
 import { Segmented } from '@/shared/ui/Segmented'
 
@@ -34,6 +37,24 @@ type AddStudentsEditorProps = {
   onAdded: (result: AddedResult) => void
 }
 
+// The drawn inputs have no arrow at the right: Chrome adds one to an input with suggestions
+// (Students, Pool location) on hover and focus, shown through its own inline style, so only
+// an !important rule hides it. The suggestions still come as they type.
+const NO_SUGGESTION_ARROW = '[&_input::-webkit-calendar-picker-indicator]:hidden!'
+
+/**
+ * Enter on "First package already paid" or on a Lesson type segment works it, as Space does
+ * (the spec §7), rather than adding the group: only Enter in a text field submits.
+ */
+function enterWorksChoice(event: KeyboardEvent<HTMLFormElement>) {
+  const control = event.target
+  if (event.key !== 'Enter' || !(control instanceof HTMLInputElement)) return
+  if (control.id !== FIELD_IDS.paid && control.name !== FIELD_IDS.type) return
+  event.preventDefault()
+  // A held-down Enter repeats: it ticks once.
+  if (!event.repeat) control.click()
+}
+
 /** The form itself, once settings and accounts are in (see AddStudentsForm). */
 export function AddStudentsEditor({
   settings,
@@ -58,7 +79,8 @@ export function AddStudentsEditor({
         event.preventDefault()
         form.submit()
       }}
-      className={GRID}
+      onKeyDown={enterWorksChoice}
+      className={cn(GRID, NO_SUGGESTION_ARROW)}
     >
       <div className={FORM_AREA}>
         <AccountField

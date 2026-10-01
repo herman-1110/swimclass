@@ -18,11 +18,16 @@ const TITLE_ID = 'add-preview-title'
 /**
  * "What the customer sees when booking" (AdminAddStudents.dc.html:108-115): the option row
  * the customer will get on Book, then what sharing a group means. A picture only: nothing in
- * it can be focused.
+ * it can be focused. A name typed as one long word (up to 100 characters) breaks inside the
+ * card rather than pushing the type tag out of it and the page sideways (DESIGN §5).
  */
 export function CustomerPreview({ names, size, className }: CustomerPreviewProps) {
   return (
-    <Card as="aside" aria-labelledby={TITLE_ID} className={cn('flex flex-col gap-3', className)}>
+    <Card
+      as="aside"
+      aria-labelledby={TITLE_ID}
+      className={cn('flex flex-col gap-3 wrap-anywhere', className)}
+    >
       <span id={TITLE_ID} className="text-label font-medium text-muted">
         What the customer sees when booking
       </span>

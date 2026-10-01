@@ -1,3 +1,4 @@
+import { normalizeUsername } from '@/entities/account'
 import { Field } from '@/shared/ui/Field'
 import { Fieldset } from '@/shared/ui/Fieldset'
 
@@ -18,6 +19,8 @@ type NewAccountFieldsProps = {
  * §5.2.2): name, username, email and an optional phone. The account gets an email to set
  * its password, so there is no password field. Laid out like the drawn Students rows (an
  * 80 px label beside each input, 12 px apart), so the legend reads as the group's title.
+ * Username is lowercased and loses its spaces as they type, as on Sign up: the field shows
+ * the username that is checked and sent ("Siti.Rahman" → "siti.rahman").
  */
 export function NewAccountFields({
   value,
@@ -43,7 +46,7 @@ export function NewAccountFields({
           layout="inline"
           label="Username"
           value={value.username}
-          onChange={(event) => onChange('username', event.target.value)}
+          onChange={(event) => onChange('username', normalizeUsername(event.target.value))}
           autoComplete="off"
           autoCapitalize="none"
           autoCorrect="off"

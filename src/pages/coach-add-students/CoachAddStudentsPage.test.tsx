@@ -17,9 +17,12 @@ import { CoachAddStudentsPage } from './CoachAddStudentsPage'
 // create_account in PGlite, clock at DEMO_NOW. Tests that add something use accounts and
 // names that later tests don't depend on.
 
+const MEILING = 'a0000000-0000-4000-8000-000000000002'
 const ZULAIKHA = 'a0000000-0000-4000-8000-000000000006'
 const FARAH = 'a0000000-0000-4000-8000-000000000003'
 const PRIYA = 'a0000000-0000-4000-8000-000000000005'
+const KAI = 'a0000000-0000-4000-8000-000000000010'
+const DANIEL = 'a0000000-0000-4000-8000-000000000011'
 
 beforeAll(async () => {
   // Load the demo database here (about 4 s in jsdom), not inside the first test's 5 s.
@@ -33,6 +36,11 @@ afterEach(cleanup)
 function StudentsStub() {
   const location = useLocation()
   return <p>Students page {location.search}</p>
+}
+
+// Another page the coach can go to while a save runs.
+function SettingsStub() {
+  return <p>Settings page</p>
 }
 
 /**
@@ -70,6 +78,7 @@ function mount(
     [
       { path: ROUTES.coachAddStudents, Component: CoachAddStudentsPage },
       { path: ROUTES.coachStudents, Component: StudentsStub },
+      { path: ROUTES.coachSettings, Component: SettingsStub },
     ],
     { initialEntries: [path] },
   )
@@ -93,6 +102,14 @@ const field = (label: string) => screen.getByLabelText<HTMLInputElement>(label)
 
 async function formReady() {
   await screen.findByRole('combobox', { name: 'Account' })
+}
+
+/** The form is in, and Add no longer waits for the chosen account's students. */
+async function addReady(label: string) {
+  await formReady()
+  await waitFor(() =>
+    expect(screen.getByRole('button', { name: label }).getAttribute('aria-disabled')).toBeNull(),
+  )
 }
 
 function choose(value: string) {
@@ -388,8 +405,12 @@ describe('CoachAddStudentsPage', () => {
     expect(within(fields).getByLabelText('Phone (optional)').getAttribute('type')).toBe('tel')
     type('Username', 'zulaikha')
     expect(await screen.findByText('That username is taken.', {}, { timeout: 3000 })).toBeTruthy()
+    // The field shows what is checked and sent: lowercased, without spaces, as on Sign up.
     type('Username', 'Siti.Rahman')
+    expect(field('Username').value).toBe('siti.rahman')
     expect(await screen.findByText('Available', {}, { timeout: 3000 })).toBeTruthy()
+    type('Username', 'Has Space')
+    expect(field('Username').value).toBe('hasspace')
     type('Username', 'ab')
     expect(
       await screen.findByText(
@@ -406,6 +427,7 @@ describe('CoachAddStudentsPage', () => {
     choose('new')
     type('Name', 'Siti Rahman')
     type('Username', 'Siti.Rahman')
+    expect(field('Username').value).toBe('siti.rahman')
     type('Email', 'siti@example.com')
     type('Phone (optional)', '012-345 6789')
     type('Student 1', 'Aisyah')
@@ -503,6 +525,137 @@ describe('CoachAddStudentsPage', () => {
     expect(
       screen.getByRole('combobox', { name: 'Student 1', description: 'Existing student' }),
     ).toBeTruthy()
+  })
+
+  it('saves once, Add busy with its label kept, however often it is pressed (the spec §6)', async () => {
+    const router = await renderPage('herman', `${ROUTES.coachAddStudents}?account=${KAI}`)
+    await addReady('Add student')
+    type('Student 1', 'Twice')
+    type('Pool location', 'Palm Court')
+    const button = screen.getByRole('button', { name: 'Add student' })
+    const release = await holdDatabase()
+    try {
+      // Two presses before React draws again, then one more while it saves.
+      act(() => {
+        fireEvent.click(button)
+        fireEvent.click(button)
+      })
+      expect(button.getAttribute('aria-busy')).toBe('true')
+      expect(button.getAttribute('aria-disabled')).toBe('true')
+      expect(button.textContent).toBe('Add student')
+      fireEvent.click(button)
+      // The fields stay editable.
+      expect(field('Pool location').disabled).toBe(false)
+    } finally {
+      await release()
+    }
+    await waitFor(() => expect(router.state.location.pathname).toBe(ROUTES.coachStudents))
+    expect(
+      await readRows('group_details', { eq: { account_id: KAI, display_names: 'Twice' } }),
+    ).toHaveLength(1)
+  })
+
+  it('shows a refusal that belongs to no field above the buttons, keeping everything', async () => {
+    const router = await renderPage('herman', `${ROUTES.coachAddStudents}?account=${KAI}`)
+    await addReady('Add student')
+    type('Student 1', 'Lost')
+    type('Pool location', 'Palm Court')
+    // The session ends behind the form: create_group, run as nobody, answers unknown.
+    await logOut()
+    add('Add student')
+    const alert = await screen.findByRole('alert')
+    expect(alert.id).toBe('add-form-error')
+    expect(alert.textContent).toBe('Something went wrong. Refresh the page and try again.')
+    expect(field('Student 1').value).toBe('Lost')
+    expect(field('Pool location').value).toBe('Palm Court')
+    expect(router.state.location.pathname).toBe(ROUTES.coachAddStudents)
+  })
+
+  it('works the checkbox and the segments with Enter, as Space does (the spec §7)', async () => {
+    const router = await renderPage('herman')
+    await formReady()
+    const paid = screen.getByRole<HTMLInputElement>('checkbox', {
+      name: 'First package already paid',
+    })
+    // fireEvent answers false when the default, the browser submitting the form, is stopped.
+    expect(fireEvent.keyDown(paid, { key: 'Enter' })).toBe(false)
+    expect(paid.checked).toBe(true)
+    expect(field('Amount (RM)')).toBeTruthy()
+    expect(fireEvent.keyDown(paid, { key: 'Enter', repeat: true })).toBe(false)
+    expect(paid.checked).toBe(true)
+    expect(fireEvent.keyDown(paid, { key: 'Enter' })).toBe(false)
+    expect(paid.checked).toBe(false)
+
+    const three = screen.getByRole<HTMLInputElement>('radio', { name: '1-to-3' })
+    expect(fireEvent.keyDown(three, { key: 'Enter' })).toBe(false)
+    expect(three.checked).toBe(true)
+    expect(field('Student 3')).toBeTruthy()
+    expect(fireEvent.keyDown(three, { key: 'Enter' })).toBe(false)
+    expect(three.checked).toBe(true)
+
+    // Enter in a text field still submits, and other keys are left alone.
+    expect(fireEvent.keyDown(field('Pool location'), { key: 'Enter' })).toBe(true)
+    expect(fireEvent.keyDown(paid, { key: 'a' })).toBe(true)
+    expect(screen.queryByText('Choose an account, or create a new one.')).toBeNull()
+    expect(router.state.location.pathname).toBe(ROUTES.coachAddStudents)
+  })
+
+  it('goes back to “Choose an account” when the chosen account leaves the list', async () => {
+    await renderPage('herman')
+    await formReady()
+    choose(MEILING)
+    type('Student 1', 'Sofia')
+    type('Pool location', 'Palm Court')
+    await waitFor(() =>
+      expect(
+        screen.getByRole('combobox', { name: 'Student 1', description: 'Existing student' }),
+      ).toBeTruthy(),
+    )
+    // Mei Ling stops being a customer behind the form: create_group refuses (not_customer)
+    // and the list is read again without her.
+    const db = await demoDb()
+    await db.query(`update public.profiles set role = 'coach' where id = $1`, [MEILING])
+    try {
+      add('Add student')
+      expect((await screen.findByRole('alert')).textContent).toBe(
+        'Something went wrong. Refresh the page and try again.',
+      )
+      await waitFor(() => expect(account().value).toBe(''))
+      expect(account().selectedOptions[0]?.text).toBe('Choose an account')
+      expect(screen.queryByText('Existing student')).toBeNull()
+      expect(field('Student 1').getAttribute('list')).toBeNull()
+
+      add('Add student')
+      expect(screen.getByText('Choose an account, or create a new one.')).toBeTruthy()
+      expect(document.activeElement).toBe(account())
+    } finally {
+      await db.query(`update public.profiles set role = 'customer' where id = $1`, [MEILING])
+    }
+  })
+
+  it('stays where the coach went when they leave while Add saves', async () => {
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const session = await logIn('herman', DEMO_PASSWORD)
+    const router = mount(session, `${ROUTES.coachAddStudents}?account=${DANIEL}`, queryClient)
+    await addReady('Add student')
+    type('Student 1', 'Dan Two')
+    type('Pool location', 'Kiara Park')
+    const release = await holdDatabase()
+    try {
+      add('Add student')
+      await act(() => router.navigate(ROUTES.coachSettings))
+      expect(screen.getByText('Settings page')).toBeTruthy()
+    } finally {
+      await release()
+    }
+    // The save completes, and the coach stays on Settings.
+    await waitFor(() => expect(queryClient.isMutating()).toBe(0))
+    await act(() => new Promise((resolve) => setTimeout(resolve, 50)))
+    expect(
+      await readRows('group_details', { eq: { account_id: DANIEL, display_names: 'Dan Two' } }),
+    ).toHaveLength(1)
+    expect(router.state.location.pathname).toBe(ROUTES.coachSettings)
+    expect(screen.getByText('Settings page')).toBeTruthy()
   })
 
   it('says what went wrong, with Try again, when the form can’t load', async () => {

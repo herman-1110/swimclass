@@ -4,25 +4,8 @@ import { Skeleton } from '@/shared/ui/Skeleton'
 
 import { saveLabel } from '../model/copy'
 import { AddStudentsActions } from './AddStudentsActions'
+import { LabelledBlockSkeleton } from './LabelledBlockSkeleton'
 import { ACTIONS_AREA, FORM_AREA, GRID, PREVIEW_AREA } from './layout'
-
-type LabelledBlockProps = {
-  /** The control's height: h-11.5 for a 46 px input or select, h-12.5 for the track. */
-  control: string
-  /** A 12 px help line under it, as wide as the drawn one. */
-  help?: string
-}
-
-// A 13 px label over a control and its help, 6 px apart, as the real fields are.
-function LabelledBlock({ control, help }: LabelledBlockProps) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <Skeleton shape="line" className="h-4 w-24" />
-      <Skeleton className={control} />
-      {help && <Skeleton shape="line" className={cn('h-3 max-w-full', help)} />}
-    </div>
-  )
-}
 
 /**
  * The form while settings and accounts load (the spec §6): grey blocks at the real heights
@@ -37,10 +20,10 @@ export function AddStudentsSkeleton() {
         Loading…
       </p>
       <div className={FORM_AREA}>
-        <LabelledBlock control="h-11.5" help="w-96" />
-        <LabelledBlock control="h-12.5" help="w-64" />
-        <LabelledBlock control="h-11.5" />
-        <LabelledBlock control="h-11.5" />
+        <LabelledBlockSkeleton control="h-11.5" help="w-96" />
+        <LabelledBlockSkeleton control="h-12.5" help="w-64" />
+        <LabelledBlockSkeleton control="h-11.5" />
+        <LabelledBlockSkeleton control="h-11.5" />
         <div className="flex flex-col gap-0.5">
           <Skeleton shape="line" className="my-3.5 h-4 w-52" />
           <Skeleton shape="line" className="ml-7 h-3 w-48" />

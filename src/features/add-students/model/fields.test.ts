@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { defaultAccount } from './account'
+import { chosenAccount, defaultAccount } from './account'
 import { firstProblem, focusSelector, problemAt, withoutProblems } from './fields'
 import { NEW_ACCOUNT } from './types'
 import { usernameStatus } from './usernameStatus'
@@ -53,6 +53,22 @@ describe('defaultAccount', () => {
 
   it('opens "Create a new account…" when there are no accounts (the spec §6)', () => {
     expect(defaultAccount([], 'a6')).toBe(NEW_ACCOUNT)
+  })
+})
+
+describe('chosenAccount', () => {
+  const accounts = [{ id: 'a2' }, { id: 'a6' }]
+
+  it('keeps the coach’s choice while it is in the list, and the default until they choose', () => {
+    expect(chosenAccount('a2', accounts, 'a6')).toBe('a2')
+    expect(chosenAccount(NEW_ACCOUNT, accounts)).toBe(NEW_ACCOUNT)
+    expect(chosenAccount(null, accounts, 'a6')).toBe('a6')
+    expect(chosenAccount(null, accounts)).toBe('')
+  })
+
+  it('goes back to the placeholder, never to another account, when the choice leaves the list', () => {
+    expect(chosenAccount('a2', [{ id: 'a6' }], 'a6')).toBe('')
+    expect(chosenAccount('a2', [])).toBe(NEW_ACCOUNT)
   })
 })
 

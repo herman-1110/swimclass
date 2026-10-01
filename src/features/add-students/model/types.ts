@@ -1,4 +1,4 @@
-import type { PaymentMethod } from '@/entities/payment'
+import { methodLabel, type PaymentMethod } from '@/entities/payment'
 
 /**
  * How the first package was paid: the three ways the form offers, matching
@@ -7,12 +7,15 @@ import type { PaymentMethod } from '@/entities/payment'
  */
 export type PaidBy = Extract<PaymentMethod, 'cash' | 'transfer' | 'fpx'>
 
-/** Paid by's choices, in the drawn order (AdminStudents.dc.html:291-298). */
-export const PAID_BY: readonly { value: PaidBy; label: string }[] = [
-  { value: 'cash', label: 'Cash' },
-  { value: 'transfer', label: 'Transfer' },
-  { value: 'fpx', label: 'FPX' },
-]
+const PAID_BY_METHODS = ['cash', 'transfer', 'fpx'] as const satisfies readonly PaidBy[]
+
+/**
+ * Paid by's choices, in the drawn order (AdminStudents.dc.html:291-298), named as payments
+ * are everywhere else: "Cash", "Transfer", "FPX".
+ */
+export const PAID_BY: readonly { value: PaidBy; label: string }[] = PAID_BY_METHODS.map(
+  (value) => ({ value, label: methodLabel(value) }),
+)
 
 /** The Account select's value for "Create a new account…". Profile ids are uuids, so it
  *  never clashes with an account. */
