@@ -1,6 +1,8 @@
 import { beforeAll, describe, expect, it } from 'vitest'
 
-import { logIn, logOut } from '../auth'
+import { MIN_PASSWORD_LENGTH } from '@/shared/config/messages'
+
+import { logIn, logOut, signUp, updatePassword } from '../auth'
 import { demoAccounts, demoMailbox } from '../backend'
 import { AppError, readRows, rpc, updateRows } from '../rpc'
 
@@ -49,6 +51,22 @@ describe('signed out (anon)', () => {
   it('logs in with a username and the sample password only', async () => {
     expect((await failure(logIn('meiling', 'wrong'))).code).toBe('invalid_login')
     expect((await failure(logIn('nobody', 'swim-test-2026'))).code).toBe('invalid_login')
+  })
+
+  it('asks for passwords as long as the forms do (MIN_PASSWORD_LENGTH)', async () => {
+    const account = (username: string, password: string) => ({
+      username,
+      displayName: username,
+      email: `${username}@example.com`,
+      phone: null,
+      password,
+    })
+    const short = 'x'.repeat(MIN_PASSWORD_LENGTH - 1)
+    expect((await failure(signUp(account('short.pw', short)))).code).toBe('weak_password')
+    await expect(signUp(account('long.pw', `${short}x`))).resolves.toEqual({ confirmEmail: true })
+    await logIn('long.pw', `${short}x`)
+    expect((await failure(updatePassword(short))).code).toBe('weak_password')
+    await logOut()
   })
 })
 

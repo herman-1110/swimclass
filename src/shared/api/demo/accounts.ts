@@ -10,8 +10,11 @@ import { demoSession, setDemoSession } from './session'
 
 const FAILURE_WINDOW_MS = 15 * 60_000
 const MAX_FAILURES = 10
-/** Supabase Auth's default minimum. */
-const MIN_PASSWORD_LENGTH = 6
+/**
+ * The shortest password, as the forms check it (MIN_PASSWORD_LENGTH in shared/config/messages,
+ * the auth spec's Q2). Supabase Auth's "Minimum password length" must say the same.
+ */
+const MIN_PASSWORD_LENGTH = 8
 
 const failures = new Map<string, number[]>()
 
