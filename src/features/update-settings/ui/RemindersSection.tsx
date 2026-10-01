@@ -6,8 +6,12 @@ import { SettingsSection } from './SettingsSection'
 import { SwitchRow } from './SwitchRow'
 import { TimeRow } from './TimeRow'
 
+type RemindersSectionProps = {
+  form: ReadySettingsForm
+}
+
 /** Reminders & emails (design/AdminSettings.dc.html:203-228). */
-export function RemindersSection({ form }: { form: ReadySettingsForm }) {
+export function RemindersSection({ form }: RemindersSectionProps) {
   return (
     <SettingsSection id="emails" title="Reminders & emails" note="Times are Malaysia time.">
       <FieldList>

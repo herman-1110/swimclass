@@ -106,6 +106,8 @@ describe('EditDayHoursDialog', () => {
     const words = 'Two ranges on Monday overlap. Change one and save again.'
     expect(within(range(2)).getByText(words)).toBeTruthy()
     expect(within(range(1)).queryByText(words)).toBeNull()
+    // The range's group is described by the message as well as its selects.
+    screen.getByRole('group', { name: 'Hours 2', description: words })
     const from = within(range(2)).getByRole('combobox', { name: 'From', description: words })
     expect(from.getAttribute('aria-invalid')).toBe('true')
     expect(document.activeElement).toBe(from)
@@ -146,6 +148,7 @@ describe('EditDayHoursDialog', () => {
     within(range(1)).getByText(words)
     choose(1, 'To', '13:00')
     expect(screen.queryByText(words)).toBeNull()
+    expect(range(1).getAttribute('aria-describedby')).toBeNull()
   })
 
   it('drops its changes on Cancel and on Esc', () => {

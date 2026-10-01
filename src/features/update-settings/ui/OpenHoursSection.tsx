@@ -28,12 +28,16 @@ const COLUMNS: readonly TableColumn[] = [
   },
 ]
 
+type OpenHoursSectionProps = {
+  form: ReadySettingsForm
+}
+
 /**
  * Open hours (prompt 10 TASK 2): each weekday's ranges as chips, and "Edit" for the day's
  * dialog. The dialog changes the form only; Save sends the whole week. A note shows while
  * any day differs from the saved hours.
  */
-export function OpenHoursSection({ form }: { form: ReadySettingsForm }) {
+export function OpenHoursSection({ form }: OpenHoursSectionProps) {
   const [editing, setEditing] = useState<Weekday | null>(null)
   const rows: TableRowData[] = WEEKDAYS.map((weekday) => {
     const error = form.dayErrors[weekday]
@@ -53,10 +57,14 @@ export function OpenHoursSection({ form }: { form: ReadySettingsForm }) {
         ),
         actions: (
           // 44 px wide (the drawing's 35.7 px is under DESIGN §5's targets, coach-settings C11).
+          // The 44 px button leaves 2 px above and below it in its 48 px row, so its focus ring
+          // is drawn just inside it: the frame's overflow: hidden would cut the usual 2 px
+          // offset off Sunday's (coach-settings §7.5).
           <Button
             id={editHoursId(weekday)}
             variant="link"
             textSize="label"
+            className="focus-visible:-outline-offset-2"
             aria-label={`Edit ${weekdayName(weekday, 'long')} hours`}
             aria-haspopup="dialog"
             aria-describedby={error ? hoursErrorId(weekday) : undefined}

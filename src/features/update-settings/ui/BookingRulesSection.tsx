@@ -23,8 +23,12 @@ const START_STEPS: readonly SelectOption[] = [
   { value: '60', label: 'Every hour' },
 ]
 
+type BookingRulesSectionProps = {
+  form: ReadySettingsForm
+}
+
 /** Booking rules (design/AdminSettings.dc.html:132-168). */
-export function BookingRulesSection({ form }: { form: ReadySettingsForm }) {
+export function BookingRulesSection({ form }: BookingRulesSectionProps) {
   return (
     <SettingsSection
       id="booking-rules"

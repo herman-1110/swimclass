@@ -1,16 +1,9 @@
 import { type Weekday, WEEKDAYS } from '@/entities/open-hours'
 import { toAppError } from '@/shared/api/rpc'
-import { messageFor } from '@/shared/config/messages'
+import { messageFor, OPEN_HOURS_SAVED_LEAD } from '@/shared/config/messages'
 
 import { FIELD_LABELS, isSettingsField } from './fields'
 import type { DayErrors, FieldErrors, SaveRequest, SettingsField } from './types'
-
-/**
- * Before the message when set_open_hours saved the hours and update_settings then refused
- * the rest (prompt 10 TASK 7: "say the open hours were saved and the other changes
- * weren't"; the words are proposed, coach-settings §5.4).
- */
-export const HOURS_SAVED_LEAD = 'Your open hours were saved, but your other changes weren’t.'
 
 /** Where a refused save shows its words (coach-settings §6.8), and what gets focus. */
 export type SaveFailure = {
@@ -44,7 +37,8 @@ function dayOf(code: string, detail: Readonly<Record<string, unknown>>, request:
 /**
  * A refused save in words (coach-settings §5.4, DESIGN §6's coach table): the setting or day
  * it names, and the line near Save. `hoursSaved`: set_open_hours had saved the hours before
- * update_settings refused, so the line says so first.
+ * update_settings refused, so the line says so first (prompt 10 TASK 7: "say the open hours
+ * were saved and the other changes weren't").
  */
 export function describeSaveFailure(
   error: unknown,
@@ -54,7 +48,7 @@ export function describeSaveFailure(
   const { code, detail } = toAppError(error)
   const message = messageFor({ code, detail }, { audience: 'coach', fieldLabels: FIELD_LABELS })
   const failure: SaveFailure = {
-    summary: hoursSaved ? `${HOURS_SAVED_LEAD} ${message}` : message,
+    summary: hoursSaved ? `${OPEN_HOURS_SAVED_LEAD} ${message}` : message,
     fields: {},
     days: {},
     focus: null,

@@ -6,12 +6,16 @@ import { settingNote } from '../model/notes'
 import type { ReadySettingsForm } from './formContext'
 import { rowDescription } from './rowDescription'
 
+type EmailRowProps = {
+  form: ReadySettingsForm
+}
+
 /**
  * Your email (design/AdminSettings.dc.html:224-227): a full line on phones, a 240 px box
  * from 768 px. Empty is allowed (no schedule and alerts are sent then, which the note says);
  * the database checks the address.
  */
-export function EmailRow({ form }: { form: ReadySettingsForm }) {
+export function EmailRow({ form }: EmailRowProps) {
   const id = FIELD_IDS.coach_email
   const note = settingNote('coach_email', form.draft, form.check.changed)
   const error = form.fieldErrors.coach_email

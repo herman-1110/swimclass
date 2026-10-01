@@ -1,4 +1,4 @@
-import { EmailLogSection } from '@/entities/email-log'
+import type { ReactNode } from 'react'
 
 import { SETTINGS_FORM_ID } from '../model/fields'
 import { BookingRulesSection } from './BookingRulesSection'
@@ -7,6 +7,11 @@ import { OpenHoursSection } from './OpenHoursSection'
 import { PackagesSection } from './PackagesSection'
 import { RemindersSection } from './RemindersSection'
 
+type SettingsSectionsProps = {
+  /** What the page places after the four sections, in the same grid (the email log). */
+  children?: ReactNode
+}
+
 /**
  * The Settings form (design/AdminSettings.dc.html `.sections`): the four sections in one
  * column up to 760 px, two columns from 1280 px filled row by row, each section as tall as
@@ -14,7 +19,7 @@ import { RemindersSection } from './RemindersSection'
  * (coach-settings C15, proposed). The Save buttons sit outside it and submit it by its id;
  * Enter in a box does the same. Renders nothing until the settings and hours are in.
  */
-export function SettingsSections() {
+export function SettingsSections({ children }: SettingsSectionsProps) {
   const form = useSettingsForm()
   if (!form.ready) return null
   return (
@@ -33,9 +38,7 @@ export function SettingsSections() {
       <BookingRulesSection form={form} />
       <PackagesSection form={form} />
       <RemindersSection form={form} />
-      {/* After the sections, across both columns (coach-settings §2.6); nothing until the
-          database has email_log(). */}
-      <EmailLogSection className="xl:col-span-2" />
+      {children}
     </form>
   )
 }

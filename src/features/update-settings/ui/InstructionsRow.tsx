@@ -5,12 +5,16 @@ import { FIELD_IDS } from '../model/fields'
 import type { ReadySettingsForm } from './formContext'
 import { rowDescription } from './rowDescription'
 
+type InstructionsRowProps = {
+  form: ReadySettingsForm
+}
+
 /**
  * Payment instructions (design/AdminSettings.dc.html:193-196): two lines under the label at
  * every width, resizable. Customers see them under their packages; an empty box is none.
  * The database trims the text and keeps up to 2000 characters (it refuses more).
  */
-export function InstructionsRow({ form }: { form: ReadySettingsForm }) {
+export function InstructionsRow({ form }: InstructionsRowProps) {
   const id = FIELD_IDS.payment_instructions
   const error = form.fieldErrors.payment_instructions
   return (

@@ -8,8 +8,12 @@ import { InstructionsRow } from './InstructionsRow'
 import { PricesRow } from './PricesRow'
 import { SettingsSection } from './SettingsSection'
 
+type PackagesSectionProps = {
+  form: ReadySettingsForm
+}
+
 /** Packages & payments (design/AdminSettings.dc.html:169-202). */
-export function PackagesSection({ form }: { form: ReadySettingsForm }) {
+export function PackagesSection({ form }: PackagesSectionProps) {
   return (
     <SettingsSection
       id="packages"

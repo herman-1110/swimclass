@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest'
 
 import { AppError } from '@/shared/api/rpc'
-import { GENERIC_MESSAGE, NETWORK_MESSAGE } from '@/shared/config/messages'
+import { GENERIC_MESSAGE, NETWORK_MESSAGE, OPEN_HOURS_SAVED_LEAD } from '@/shared/config/messages'
 
-import { describeInvalidFields, describeSaveFailure, HOURS_SAVED_LEAD } from './saveFailure'
+import { describeInvalidFields, describeSaveFailure } from './saveFailure'
 import type { SaveRequest } from './types'
 
 const GAP_REFUSED = 'Travel gap has a value that isn’t allowed. Check it and save again.'
@@ -53,7 +53,7 @@ describe('describeSaveFailure', () => {
     expect(failure.summary).toBe(
       'Your open hours were saved, but your other changes weren’t. Travel gap has a value that isn’t allowed. Check it and save again.',
     )
-    expect(HOURS_SAVED_LEAD).toBe('Your open hours were saved, but your other changes weren’t.')
+    expect(failure.summary.startsWith(`${OPEN_HOURS_SAVED_LEAD} `)).toBe(true)
     expect(failure.fields.travel_gap_minutes).toBe(GAP_REFUSED)
   })
 

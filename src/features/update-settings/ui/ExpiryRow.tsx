@@ -19,12 +19,17 @@ function expiryOptions(months: number | null): SelectOption[] {
   )
 }
 
+type ExpiryRowProps = {
+  /** The saved lesson_expiry_months (null: never). */
+  months: CoachSettings['lesson_expiry_months']
+}
+
 /**
  * Unused lessons expire: shown, never changed (prompt 10 TASK 4, DESIGN §4: nothing applies
  * lesson_expiry_months yet, BR-24). The disabled select shows the saved value, and Save
  * never sends it (coach-settings C3).
  */
-export function ExpiryRow({ months }: { months: CoachSettings['lesson_expiry_months'] }) {
+export function ExpiryRow({ months }: ExpiryRowProps) {
   return (
     <FieldRow
       label="Unused lessons expire"

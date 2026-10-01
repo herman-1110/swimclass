@@ -1,6 +1,7 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useLocation } from 'react-router'
 
+import { EmailLogSection } from '@/entities/email-log'
 import { useWeeklyHours } from '@/entities/open-hours'
 import { DocumentTitle, useCoachSettings } from '@/entities/settings'
 import {
@@ -25,10 +26,13 @@ export function CoachSettingsPage() {
   const hours = useWeeklyHours()
   const { hash } = useLocation()
   const ready = settings.data !== undefined && hours.data !== undefined
-  // A read that failed and isn't being tried again ("Try again" shows the skeleton meanwhile).
-  const failed = [settings, hours].find(
-    (query) => query.data === undefined && query.isError && !query.isFetching,
-  )
+  const failed = [settings, hours].find((query) => query.data === undefined && query.isError)
+  // A read that runs again ("Try again", or the window getting focus back) has no error until
+  // it answers, so the page keeps the last one: the banner and its focused "Try again" stay
+  // meanwhile (coach-settings §6.3).
+  const [lastError, setLastError] = useState<unknown>(null)
+  if (failed && failed.error !== lastError) setLastError(failed.error)
+  const loadError = ready ? null : (failed?.error ?? lastError)
 
   // A link to a section (/coach/settings#packages; coach-settings §1, proposed) lands on it
   // once the sections are in: the browser looked for it before they were.
@@ -45,12 +49,21 @@ export function CoachSettingsPage() {
         <SettingsHeader
           action={<SaveChangesButton placement="header" />}
           status={<SaveStatus placement="header" />}
+          // The sections take the place of the banner and its "Try again": focus goes to the
+          // title rather than being lost.
+          focusTitle={ready && lastError !== null}
         />
         {ready ? (
-          <SettingsSections />
-        ) : failed ? (
+          <SettingsSections>
+            {/* After the sections, across both columns (coach-settings §2.6); nothing until
+                the database has email_log(). */}
+            <EmailLogSection className="xl:col-span-2" />
+          </SettingsSections>
+        ) : loadError !== null ? (
           <SettingsLoadError
-            error={failed.error}
+            error={loadError}
+            failures={settings.errorUpdateCount + hours.errorUpdateCount}
+            retrying={!failed}
             onRetry={() => {
               void settings.refetch()
               void hours.refetch()
@@ -59,7 +72,7 @@ export function CoachSettingsPage() {
         ) : (
           <SettingsSkeleton />
         )}
-        {(ready || !failed) && <SaveBar />}
+        {loadError === null && <SaveBar />}
       </div>
     </SettingsFormProvider>
   )

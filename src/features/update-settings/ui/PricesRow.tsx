@@ -12,13 +12,17 @@ const TYPES: Readonly<Record<PriceField, string>> = {
   price_1to3_cents: '1-to-3',
 }
 
+type PricesRowProps = {
+  form: ReadySettingsForm
+}
+
 /**
  * Package prices in RM, one per lesson type (design/AdminSettings.dc.html:177-183): a row of
  * three under the label on phones, beside it from 768 px. An empty box is no price; the
  * drawing's "[PRICE]" is the design tool's stand-in, so an unset price says "Not set"
  * (proposed).
  */
-export function PricesRow({ form }: { form: ReadySettingsForm }) {
+export function PricesRow({ form }: PricesRowProps) {
   const changed = PRICE_FIELDS.some((field) => form.check.changed.includes(field))
   const errors = PRICE_FIELDS.flatMap((field) => form.fieldErrors[field] ?? [])
   return (

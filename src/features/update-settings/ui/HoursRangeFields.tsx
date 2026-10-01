@@ -44,7 +44,7 @@ export function HoursRangeFields({
   const describedBy = error ? `${id}-error` : undefined
   const choices = (value: string) => (value === '' ? [CHOOSE, ...options] : options)
   return (
-    <Fieldset id={id} legend={`Hours ${position}`} hideLegend error={error}>
+    <Fieldset id={id} legend={`Hours ${position}`} hideLegend aria-describedby={describedBy}>
       <div className="flex items-end gap-2">
         <Select
           id={`${id}-from`}
@@ -70,6 +70,12 @@ export function HoursRangeFields({
           Remove
         </Button>
       </div>
+      {/* 12 px, like the setting rows' messages (§7.3); the kit Fieldset's own is 13 px. */}
+      {error && (
+        <p id={describedBy} className="text-small leading-[1.4] text-warn">
+          {error}
+        </p>
+      )}
     </Fieldset>
   )
 }

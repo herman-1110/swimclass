@@ -1,9 +1,10 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { createMemoryRouter, Link, Outlet, RouterProvider } from 'react-router'
-import { afterEach, beforeAll, describe, expect, it } from 'vitest'
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 
 import { getSession, logIn, logOut } from '@/shared/api/auth'
+import { getBackend } from '@/shared/api/backend'
 import { readRows, rpc } from '@/shared/api/rpc'
 import { DEMO_PASSWORD } from '@/shared/config/demo'
 import { GENERIC_MESSAGE } from '@/shared/config/messages'
@@ -49,6 +50,31 @@ async function restoreSeed() {
 async function saved() {
   const [settings] = await readRows('settings', { eq: { id: 1 } })
   return settings
+}
+
+/**
+ * Holds every read of `source` until release() (the demo database would answer before the
+ * test could look), and counts them.
+ */
+async function holdReads(source: string) {
+  const backend = await getBackend()
+  const read = backend.read.bind(backend)
+  let release = () => {}
+  const held = new Promise<void>((resolve) => {
+    release = resolve
+  })
+  const spy = vi.spyOn(backend, 'read').mockImplementation(async (from, query) => {
+    if (from === source) await held
+    return read(from, query)
+  })
+  return {
+    count: () => spy.mock.calls.filter(([from]) => from === source).length,
+    release,
+    restore: () => {
+      release()
+      spy.mockRestore()
+    },
+  }
 }
 
 async function savedHours(weekday: number) {
@@ -507,6 +533,41 @@ describe('CoachSettingsPage', () => {
     expect((await saved())?.travel_gap_minutes).toBe(60)
   })
 
+  it('goes where the coach asked once a save that was running has finished (§6.6)', async () => {
+    await logIn('herman', DEMO_PASSWORD)
+    const { router } = await renderLoaded()
+    try {
+      type('Travel gap', '30')
+      save()
+      // Leaving while it saves: the question first…
+      fireEvent.click(screen.getByRole('link', { name: 'Schedule' }))
+      await screen.findByRole('alertdialog', { name: 'Leave without saving?' })
+      // …then, once it is saved and nothing is left to save, the page that was asked for.
+      await screen.findByRole('heading', { level: 1, name: 'Schedule' }, SAVE_WAIT)
+      expect(router.state.location.pathname).toBe('/coach/schedule')
+      expect(screen.queryByRole('alertdialog')).toBeNull()
+      expect((await saved())?.travel_gap_minutes).toBe(30)
+    } finally {
+      await restoreSeed()
+    }
+  })
+
+  it('keeps asking when a save that was running is refused', async () => {
+    await logIn('herman', DEMO_PASSWORD)
+    const { router } = await renderLoaded()
+    type('Travel gap', '500')
+    save()
+    fireEvent.click(screen.getByRole('link', { name: 'Schedule' }))
+    const dialog = await screen.findByRole('alertdialog', { name: 'Leave without saving?' })
+    await waitFor(
+      () => expect(textbox('Travel gap').getAttribute('aria-invalid')).toBe('true'),
+      SAVE_WAIT,
+    )
+    expect(screen.getByRole('alertdialog', { name: 'Leave without saving?' })).toBe(dialog)
+    expect(router.state.location.pathname).toBe('/coach/settings')
+    expect((await saved())?.travel_gap_minutes).toBe(60)
+  })
+
   it('lets the coach leave at once when nothing changed', async () => {
     await logIn('herman', DEMO_PASSWORD)
     const { router } = await renderLoaded()
@@ -633,14 +694,63 @@ describe('CoachSettingsPage', () => {
     renderPage()
     const alert = await screen.findByRole('alert', {}, { timeout: 3000 })
     expect(alert.textContent).toContain(GENERIC_MESSAGE)
-    within(alert).getByRole('button', { name: 'Try again' })
+    const tryAgain = within(alert).getByRole('button', { name: 'Try again' })
     screen.getByRole('heading', { level: 1, name: 'Settings' })
     // The header's Save, unavailable; no Save bar.
     expect(saveButtons()).toHaveLength(1)
     expect(saveButtons()[0].getAttribute('aria-disabled')).toBe('true')
     expect(screen.queryByRole('textbox')).toBeNull()
 
-    fireEvent.click(within(alert).getByRole('button', { name: 'Try again' }))
-    expect(await screen.findByRole('alert', {}, { timeout: 3000 })).toBeTruthy()
+    const reads = await holdReads('settings')
+    try {
+      const words = within(alert).getByText(GENERIC_MESSAGE)
+      tryAgain.focus()
+      fireEvent.click(tryAgain)
+      // It reads the settings again. Meanwhile the banner stays, with its button busy and
+      // still focused: no skeleton in its place.
+      await waitFor(() => expect(tryAgain.getAttribute('aria-busy')).toBe('true'))
+      expect(reads.count()).toBe(1)
+      expect(tryAgain.getAttribute('aria-disabled')).toBe('true')
+      expect(document.activeElement).toBe(tryAgain)
+      expect(screen.queryByText('Loading settings…')).toBeNull()
+      expect(saveButtons()).toHaveLength(1)
+
+      // Refused again: the same banner and button, still focused, with the words given anew
+      // so that they are read out again.
+      reads.release()
+      await waitFor(() => expect(tryAgain.getAttribute('aria-busy')).toBeNull())
+      expect(screen.getByRole('alert')).toBe(alert)
+      expect(document.activeElement).toBe(tryAgain)
+      expect(within(alert).getByText(GENERIC_MESSAGE)).not.toBe(words)
+    } finally {
+      reads.restore()
+    }
+  })
+
+  it('moves focus to the title when Try again brings the settings in (§6.3)', async () => {
+    await logIn('meiling', DEMO_PASSWORD)
+    renderPage()
+    const alert = await screen.findByRole('alert', {}, { timeout: 3000 })
+    const tryAgain = within(alert).getByRole('button', { name: 'Try again' })
+    // The coach signs in meanwhile, so the settings can be read this time.
+    await logIn('herman', DEMO_PASSWORD)
+    tryAgain.focus()
+    fireEvent.click(tryAgain)
+    await screen.findByRole('textbox', { name: 'Travel gap' }, { timeout: 3000 })
+    expect(screen.queryByRole('alert')).toBeNull()
+    await waitFor(() =>
+      expect(document.activeElement).toBe(
+        screen.getByRole('heading', { level: 1, name: 'Settings' }),
+      ),
+    )
+    expect(saveButtons()).toHaveLength(2)
+  })
+
+  it('leaves the title alone when the settings load at once', async () => {
+    await logIn('herman', DEMO_PASSWORD)
+    await renderLoaded()
+    const title = screen.getByRole('heading', { level: 1, name: 'Settings' })
+    expect(document.activeElement).not.toBe(title)
+    expect(title.getAttribute('tabindex')).toBeNull()
   })
 })

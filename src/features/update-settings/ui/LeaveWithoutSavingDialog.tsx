@@ -31,6 +31,12 @@ export function LeaveWithoutSavingDialog({ when }: LeaveWithoutSavingDialogProps
     return () => window.removeEventListener('beforeunload', ask)
   }, [when])
 
+  // The coach tried to leave while a save ran (§6.6), and it has finished with nothing left
+  // unsaved: go where they asked to. A refused save leaves changes, so the question stays.
+  useEffect(() => {
+    if (blocker.state === 'blocked' && !when) blocker.proceed()
+  }, [blocker, when])
+
   const stay = () => blocker.reset?.()
   return (
     <Dialog

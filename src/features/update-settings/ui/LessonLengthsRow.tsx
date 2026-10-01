@@ -8,11 +8,15 @@ import type { ReadySettingsForm } from './formContext'
 // The lengths the database allows (settings' check: a non-empty subset of {60, 120}).
 const LENGTHS = [60, 120] as const
 
+type LessonLengthsRowProps = {
+  form: ReadySettingsForm
+}
+
 /**
  * Lesson lengths (design/AdminSettings.dc.html:140-146): "1 hour" and "2 hours", a group
  * named by the row's label. Ticking neither is the database's to refuse (invalid_setting).
  */
-export function LessonLengthsRow({ form }: { form: ReadySettingsForm }) {
+export function LessonLengthsRow({ form }: LessonLengthsRowProps) {
   const ticked = form.draft.lesson_lengths
   const note = settingNote('lesson_lengths', form.draft, form.check.changed)
   const error = form.fieldErrors.lesson_lengths
