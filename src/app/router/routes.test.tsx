@@ -97,7 +97,8 @@ const pages = [
   ['/login', null, 'Welcome back'],
   ['/signup', null, 'Create an account'],
   ['/forgot-password', null, 'Forgot your password?'],
-  ['/reset-password', null, 'Set a new password'],
+  // Signed out, the reset link has nothing to work with (auth spec §2.5)
+  ['/reset-password', null, 'This link has expired'],
   ['/pending', WAITING, 'Waiting for approval'],
   ['/book', 'meiling', 'Book a lesson'],
   ['/schedule', 'meiling', 'Schedule'],

@@ -1,27 +1,38 @@
-import { Link } from 'react-router'
-
+import { LoginForm } from '@/features/log-in'
+import { DEFAULT_BUSINESS_NAME } from '@/shared/config/business'
 import { ROUTES } from '@/shared/config/routes'
-import { PlaceholderPage } from '@/shared/ui/PlaceholderPage'
+import { ButtonLink } from '@/shared/ui/ButtonLink'
+import { CardFooter } from '@/shared/ui/CardFooter'
+import { PageHeader } from '@/shared/ui/PageHeader'
 
+const TITLE = 'Welcome back'
+
+/**
+ * Log in (design/Login.dc.html, LoginDesktop.dc.html; auth spec §2.2). AuthLayout draws the
+ * card and the business name; RedirectIfSignedIn carries a signed-in visitor on, so the form
+ * needs no navigation of its own.
+ */
 export function LoginPage() {
   return (
-    <PlaceholderPage
-      title="Welcome back"
-      description="Log in to book lessons and check your package."
-      builtIn="05"
-      variant="auth"
-    >
-      <p className="m-0 flex flex-col items-start">
-        <Link to={ROUTES.forgotPassword} className="inline-flex min-h-11 items-center">
-          Forgot username or password?
-        </Link>
-        <Link to={ROUTES.signup} className="inline-flex min-h-11 items-center">
-          New here? Create an account
-        </Link>
-      </p>
-      <p className="m-0 text-small text-muted">
-        Your coach approves new accounts before you can book.
-      </p>
-    </PlaceholderPage>
+    <>
+      <title>{`${TITLE} · ${DEFAULT_BUSINESS_NAME}`}</title>
+      <PageHeader
+        size="auth"
+        title={TITLE}
+        titleId="login-title"
+        description="Log in to book lessons and check your package."
+      />
+      <LoginForm labelledBy="login-title" />
+      <CardFooter>
+        <ButtonLink to={ROUTES.signup} variant="text" tone="ink">
+          <span>
+            New here? <span className="font-semibold text-accent">Create an account</span>
+          </span>
+        </ButtonLink>
+        <p className="text-small leading-normal text-muted">
+          Your coach approves new accounts before you can book.
+        </p>
+      </CardFooter>
+    </>
   )
 }

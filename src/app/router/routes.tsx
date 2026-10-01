@@ -142,7 +142,12 @@ export function createRoutes(): RouteObject[] {
           ],
         },
 
-        { path: '*', Component: NotFoundPage },
+        // Anyone, signed in or out: the sign-in card, with a way back to the start (auth spec
+        // §1.1, §2.8)
+        {
+          Component: AuthLayout,
+          children: [{ path: '*', Component: NotFoundPage }],
+        },
       ],
     },
   ]
