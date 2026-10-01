@@ -2,9 +2,10 @@ import { cn } from '@/shared/lib/cn'
 
 const sizes = {
   // 4 px: Book and My classes (design/Main.dc.html, MyClasses.dc.html)
-  sm: { bar: 'gap-1', segment: 'h-1 rounded-xs' },
-  // 6 px: the Students table and cards (design/AdminStudents.dc.html)
-  md: { bar: 'gap-[3px]', segment: 'h-1.5 rounded-[3px]' },
+  sm: { bar: 'gap-1', segment: 'h-1 rounded-xs', free: 'bg-seg-free' },
+  // 6 px: the Students table and cards (design/AdminStudents.dc.html:119, :199), whose free
+  // segments are a shade darker so they still show on the selected row (coach-students C4)
+  md: { bar: 'gap-[3px]', segment: 'h-1.5 rounded-[3px]', free: 'bg-seg-free-table' },
 }
 
 type SegmentBarProps = {
@@ -12,7 +13,8 @@ type SegmentBarProps = {
   total: number
   /** Lessons used (accent). */
   used: number
-  /** Lessons booked, not used yet (--seg-booked). The rest are free (--seg-free). */
+  /** Lessons booked, not used yet (--seg-booked). The rest are free (--seg-free, and
+   *  --seg-free-table at md). */
   booked: number
   /** sm 4 px tall; md 6 px. */
   size?: keyof typeof sizes
@@ -54,7 +56,7 @@ export function SegmentBar({
               ? 'bg-accent'
               : index < usedCount + bookedCount
                 ? 'bg-seg-booked'
-                : 'bg-seg-free',
+                : sizes[size].free,
           )}
         />
       ))}

@@ -29,4 +29,23 @@ describe('Card', () => {
     expect(classes).not.toContain('border')
     expect(classes).not.toContain('px-5')
   })
+
+  it('is white, or --accent-soft when it is the chosen card of a list', () => {
+    render(
+      <>
+        <Card aria-label="Wei Jie" padding="sm">
+          Wei Jie
+        </Card>
+        <Card aria-label="Hana" padding="sm" selected>
+          Hana
+        </Card>
+      </>,
+    )
+    const plain = screen.getByLabelText('Wei Jie').className.split(' ')
+    const chosen = screen.getByLabelText('Hana').className.split(' ')
+    expect(plain).toContain('bg-white')
+    expect(plain).not.toContain('bg-accent-soft')
+    expect(chosen).toEqual(expect.arrayContaining(['bg-accent-soft', 'border-frame', 'px-4']))
+    expect(chosen).not.toContain('bg-white')
+  })
 })

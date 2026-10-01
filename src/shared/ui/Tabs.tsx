@@ -21,6 +21,11 @@ type TabsProps = {
   note?: string
 }
 
+/** A tab's words: "Unpaid 2", or "Unpaid" while the count isn't known. */
+function tabText(item: TabsItem): string {
+  return item.count === undefined ? item.label : `${item.label} ${item.count}`
+}
+
 /** Where an arrow key, Home or End moves from the focused tab (wrapping round), or null for
  *  other keys. */
 function moveTo(key: string, index: number, count: number): number | null {
@@ -41,6 +46,9 @@ function moveTo(key: string, index: number, count: number): number | null {
  */
 export function Tabs({ label, items, value, onChange, note }: TabsProps) {
   const listRef = useRef<HTMLDivElement>(null)
+  // The words on the tabs: when the counts come in the tabs widen, which can push the chosen
+  // one out of view again (a page opened on its last tab).
+  const words = items.map(tabText).join('\n')
 
   // On a phone, scroll the row sideways so the chosen tab is in view (never the page).
   useLayoutEffect(() => {
@@ -51,7 +59,7 @@ export function Tabs({ label, items, value, onChange, note }: TabsProps) {
     const end = start + tab.offsetWidth
     if (start < list.scrollLeft) list.scrollLeft = start
     else if (end > list.scrollLeft + list.clientWidth) list.scrollLeft = end - list.clientWidth
-  }, [value])
+  }, [value, words])
 
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     // From the focused tab: Tab can reach any of them, not only the chosen one.
@@ -90,7 +98,7 @@ export function Tabs({ label, items, value, onChange, note }: TabsProps) {
                   : 'border-transparent font-medium text-muted',
               )}
             >
-              {item.count === undefined ? item.label : `${item.label} ${item.count}`}
+              {tabText(item)}
             </button>
           )
         })}
