@@ -25,3 +25,11 @@ export const ROUTES = {
   coachAddStudents: '/coach/add-students',
   coachSettings: '/coach/settings',
 } as const
+
+/**
+ * Students & payments with one group's Record payment panel open (`?pay=<group id>`):
+ * where the coach Schedule's Needs attention sends "Record payment" (prompt 09 DIAGNOSE 3).
+ */
+export function coachStudentsPay(groupId: string): string {
+  return `${ROUTES.coachStudents}?${new URLSearchParams({ pay: groupId }).toString()}`
+}
