@@ -10,9 +10,16 @@ import {
 import type { Group } from '@/entities/group'
 import { PAYMENT_LIMIT, PaymentRow, usePayments } from '@/entities/payment'
 import type { PublicSettings } from '@/entities/settings'
+import { type ReadFailure, useReadFailure } from '@/shared/lib/hooks/useReadFailure'
 import { SectionLabel } from '@/shared/ui/SectionLabel'
 
 import { SectionError } from './SectionError'
+
+const LESSONS_HEADING_ID = 'past-lessons-heading'
+const PAYMENTS_HEADING_ID = 'payments-heading'
+
+/** Where focus goes once "Try again" has brought a list: its heading. */
+const heading = (id: string) => () => document.getElementById(id)
 
 type PastPanelProps = {
   /** The account's groups, paused ones too: every past lesson and payment names its group. */
@@ -24,17 +31,9 @@ type PastPanelProps = {
   now: Date
 }
 
-/** A list's place while its reads run, or the first failure with "Try again". */
-function notReady(failed: readonly UseQueryResult[], status: string): ReactNode {
-  if (failed.length > 0) {
-    return (
-      <SectionError
-        error={failed[0].error}
-        retrying={failed.some((query) => query.isFetching)}
-        onRetry={() => failed.forEach((query) => void query.refetch())}
-      />
-    )
-  }
+/** A list's place while its reads run, or their failure with "Try again". */
+function notReady(failure: ReadFailure | null, status: string): ReactNode {
+  if (failure) return <SectionError failure={failure} />
   return (
     <>
       <p role="status" className="sr-only">
@@ -59,12 +58,13 @@ export function PastPanel({ groups, settings, me, now }: PastPanelProps) {
   const past = usePastLessons(groupIds)
   const payments = usePayments(groupIds)
   const byId = new Map(groups.map((group) => [group.group_id, group]))
+  const lessonsFailure = useReadFailure([settings, past], heading(LESSONS_HEADING_ID))
+  const paymentsFailure = useReadFailure([payments], heading(PAYMENTS_HEADING_ID))
 
-  const lessonsFailed = [settings, past].filter((query) => query.isError)
-  const lessonsLoading = lessonsFailed.length === 0 && (!settings.data || !past.data)
+  const lessonsLoading = !lessonsFailure && (!settings.data || !past.data)
   let lessons: ReactNode
-  if (lessonsFailed.length > 0 || !settings.data || !past.data) {
-    lessons = notReady(lessonsFailed, 'Loading your past lessons…')
+  if (lessonsFailure || !settings.data || !past.data) {
+    lessons = notReady(lessonsFailure, 'Loading your past lessons…')
   } else {
     const packageSize = settings.data.lessons_per_package
     lessons = (
@@ -98,9 +98,10 @@ export function PastPanel({ groups, settings, me, now }: PastPanelProps) {
     )
   }
 
+  const paymentsLoading = !paymentsFailure && !payments.data
   let receipts: ReactNode
-  if (payments.isError || !payments.data) {
-    receipts = notReady(payments.isError ? [payments] : [], 'Loading your payments…')
+  if (paymentsFailure || !payments.data) {
+    receipts = notReady(paymentsFailure, 'Loading your payments…')
   } else {
     receipts = (
       <>
@@ -133,14 +134,14 @@ export function PastPanel({ groups, settings, me, now }: PastPanelProps) {
 
   return (
     <>
-      <section aria-labelledby="past-lessons-heading" aria-busy={lessonsLoading || undefined}>
-        <SectionLabel as="h2" id="past-lessons-heading" className="mb-1">
+      <section aria-labelledby={LESSONS_HEADING_ID} aria-busy={lessonsLoading || undefined}>
+        <SectionLabel as="h2" id={LESSONS_HEADING_ID} tabIndex={-1} className="mb-1">
           Past lessons
         </SectionLabel>
         {lessons}
       </section>
-      <section aria-labelledby="payments-heading" aria-busy={payments.isPending || undefined}>
-        <SectionLabel as="h2" id="payments-heading" className="mb-1">
+      <section aria-labelledby={PAYMENTS_HEADING_ID} aria-busy={paymentsLoading || undefined}>
+        <SectionLabel as="h2" id={PAYMENTS_HEADING_ID} tabIndex={-1} className="mb-1">
           Payments
         </SectionLabel>
         {receipts}

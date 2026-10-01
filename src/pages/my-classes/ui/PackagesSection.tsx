@@ -11,10 +11,14 @@ import type { Group } from '@/entities/group'
 import { LastPaid } from '@/entities/payment'
 import { packagePriceCents, type PublicSettings } from '@/entities/settings'
 import { cn } from '@/shared/lib/cn'
+import { useReadFailure } from '@/shared/lib/hooks/useReadFailure'
 import { Card } from '@/shared/ui/Card'
 import { SectionLabel } from '@/shared/ui/SectionLabel'
 
 import { SectionError } from './SectionError'
+
+// The h2: it names the section, and takes focus once "Try again" has brought the packages.
+const HEADING_ID = 'packages-heading'
 
 type PackagesSectionProps = {
   /** The account's groups, oldest first: the active ones have a package to show. */
@@ -39,22 +43,18 @@ export function PackagesSection({
   now,
   className,
 }: PackagesSectionProps) {
-  const failed = [settings, groups, balances].filter((query) => query.isError)
+  const failure = useReadFailure([settings, groups, balances], () =>
+    document.getElementById(HEADING_ID),
+  )
   const ready =
     settings.data && groups.data && balances.data
       ? { settings: settings.data, groups: groups.data, balances: balances.data }
       : null
-  const loading = failed.length === 0 && !ready
+  const loading = !failure && !ready
 
   let body: ReactNode
-  if (failed.length > 0) {
-    body = (
-      <SectionError
-        error={failed[0].error}
-        retrying={failed.some((query) => query.isFetching)}
-        onRetry={() => failed.forEach((query) => void query.refetch())}
-      />
-    )
+  if (failure) {
+    body = <SectionError failure={failure} />
   } else if (!ready) {
     body = (
       <>
@@ -114,11 +114,11 @@ export function PackagesSection({
       as="section"
       framedFrom="md"
       padding="list"
-      aria-labelledby="packages-heading"
+      aria-labelledby={HEADING_ID}
       aria-busy={loading || undefined}
       className={cn('flex flex-col', className)}
     >
-      <SectionLabel as="h2" id="packages-heading" className="mt-3 mb-1">
+      <SectionLabel as="h2" id={HEADING_ID} tabIndex={-1} className="mt-3 mb-1">
         Packages
       </SectionLabel>
       {body}

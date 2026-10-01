@@ -7,6 +7,7 @@ import type { Group } from '@/entities/group'
 import type { PublicSettings } from '@/entities/settings'
 import { ROUTES } from '@/shared/config/routes'
 import { cn } from '@/shared/lib/cn'
+import { useReadFailure } from '@/shared/lib/hooks/useReadFailure'
 import { Banner } from '@/shared/ui/Banner'
 import { ButtonLink } from '@/shared/ui/ButtonLink'
 import { EmptyState } from '@/shared/ui/EmptyState'
@@ -14,6 +15,9 @@ import { SectionLabel } from '@/shared/ui/SectionLabel'
 
 import { SectionError } from './SectionError'
 import { UpcomingLessonRow } from './UpcomingLessonRow'
+
+// The h2: it names the section, and takes focus once "Try again" has brought the rows.
+const HEADING_ID = 'upcoming-heading'
 
 type UpcomingSectionProps = {
   upcoming: UseQueryResult<UpcomingLesson[]>
@@ -52,23 +56,20 @@ export function UpcomingSection({
     if (notice) noticeRef.current?.focus()
   }, [notice])
 
-  const failed = [settings, groups, upcoming].filter((query) => query.isError)
-  // The balances only name a later package: the rows wait for them, but not for a failure.
+  const failure = useReadFailure([settings, groups, upcoming], () =>
+    document.getElementById(HEADING_ID),
+  )
+  // The balances only name a later package: the rows wait for their first answer, but not
+  // for a failure, nor for reading them again after one (Packages shows that).
   const ready =
-    settings.data && groups.data && upcoming.data && !balances.isPending
+    settings.data && groups.data && upcoming.data && balances.isFetched
       ? { settings: settings.data, groups: groups.data, lessons: upcoming.data }
       : null
-  const loading = failed.length === 0 && !ready
+  const loading = !failure && !ready
 
   let body: ReactNode
-  if (failed.length > 0) {
-    body = (
-      <SectionError
-        error={failed[0].error}
-        retrying={failed.some((query) => query.isFetching)}
-        onRetry={() => failed.forEach((query) => void query.refetch())}
-      />
-    )
+  if (failure) {
+    body = <SectionError failure={failure} />
   } else if (!ready) {
     body = (
       <>
@@ -122,11 +123,11 @@ export function UpcomingSection({
 
   return (
     <section
-      aria-labelledby="upcoming-heading"
+      aria-labelledby={HEADING_ID}
       aria-busy={loading || undefined}
       className={cn('flex flex-col', className)}
     >
-      <SectionLabel as="h2" id="upcoming-heading" className="mb-1">
+      <SectionLabel as="h2" id={HEADING_ID} tabIndex={-1} className="mb-1">
         Upcoming
       </SectionLabel>
       {notice && (

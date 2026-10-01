@@ -1,12 +1,14 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
-import { afterEach, beforeAll, describe, expect, it } from 'vitest'
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 
 import { SessionContext } from '@/entities/account'
 import { type AuthSession, getSession, logIn, logOut } from '@/shared/api/auth'
+import { getBackend } from '@/shared/api/backend'
 import { rpc } from '@/shared/api/rpc'
 import { DEMO_PASSWORD } from '@/shared/config/demo'
+import { NETWORK_MESSAGE } from '@/shared/config/messages'
 import { ROUTES } from '@/shared/config/routes'
 
 import { MyClassesPage } from './MyClassesPage'
@@ -20,7 +22,41 @@ beforeAll(async () => {
   await getSession()
 }, 60_000)
 
-afterEach(cleanup)
+afterEach(() => {
+  cleanup()
+  vi.restoreAllMocks()
+})
+
+/**
+ * Stands between the page and the demo database's reads of `sources` (tables and views):
+ * at first they fail as if the server were out of reach; after hold() they wait for
+ * release(), and then go through.
+ */
+async function guardReads(sources: readonly string[]) {
+  const backend = await getBackend()
+  const answer = backend.read.bind(backend)
+  let failing = true
+  let release = () => {}
+  let released = Promise.resolve()
+  vi.spyOn(backend, 'read').mockImplementation(async (source, query) => {
+    if (sources.includes(source)) {
+      if (failing) throw new TypeError('Failed to fetch')
+      await released
+    }
+    return answer(source, query)
+  })
+  return {
+    hold() {
+      failing = false
+      released = new Promise((resolve) => {
+        release = resolve
+      })
+    },
+    release: () => release(),
+  }
+}
+
+const heading = (name: string) => screen.getByRole('heading', { level: 2, name })
 
 /** The page alone on its route, for this session (pages may not import app/: no guards). */
 function renderPage(session: AuthSession) {
@@ -200,13 +236,80 @@ describe('MyClassesPage', () => {
     // The name couldn't be read either: the line under the title is left out, not loading.
     expect(screen.getByRole('heading', { level: 1 }).previousElementSibling).toBeNull()
 
-    // Signed in again: Try again brings the lessons.
+    // Signed in again: Try again brings the lessons, and focus goes on to their heading.
     await logIn('meiling', DEMO_PASSWORD)
-    fireEvent.click(within(section('Upcoming')).getByRole('button', { name: 'Try again' }))
+    const retry = within(section('Upcoming')).getByRole('button', { name: 'Try again' })
+    retry.focus()
+    fireEvent.click(retry)
     await waitFor(() =>
       expect(within(section('Upcoming')).getAllByRole('listitem')).toHaveLength(3),
     )
     expect(within(section('Upcoming')).queryByRole('alert')).toBeNull()
+    expect(document.activeElement).toBe(heading('Upcoming'))
+  })
+
+  it('keeps the lessons while Packages is read again, and Try again brings the packages', async () => {
+    const balances = await guardReads(['group_balance'])
+    await renderAs('meiling')
+    // The balances couldn't be read: Packages says so, and the lessons show without them.
+    await waitFor(() =>
+      expect(within(section('Packages')).getByRole('alert').textContent).toBe(NETWORK_MESSAGE),
+    )
+    expect(await rowsOf('Upcoming')).toHaveLength(3)
+
+    // While they are read again, Try again stays, busy, with focus, and the lessons stay.
+    balances.hold()
+    const retry = within(section('Packages')).getByRole('button', { name: 'Try again' })
+    retry.focus()
+    fireEvent.click(retry)
+    await waitFor(() => expect(retry.getAttribute('aria-busy')).toBe('true'))
+    expect(document.activeElement).toBe(retry)
+    expect(within(section('Packages')).getByRole('alert').textContent).toBe(NETWORK_MESSAGE)
+    expect(section('Upcoming').getAttribute('aria-busy')).toBeNull()
+    expect(within(section('Upcoming')).getAllByRole('listitem')).toHaveLength(3)
+    expect(within(section('Upcoming')).getAllByRole('button', { name: /^Cancel / })).toHaveLength(2)
+
+    balances.release()
+    await waitFor(() =>
+      expect(within(section('Packages')).getAllByRole('listitem')).toHaveLength(2),
+    )
+    expect(within(section('Packages')).queryByRole('alert')).toBeNull()
+    expect(document.activeElement).toBe(heading('Packages'))
+  })
+
+  it('says when the past can’t be read, and Try again brings each list', async () => {
+    await renderAs('weijie')
+    await rowsOf('Upcoming')
+    const reads = await guardReads(['bookings', 'payments'])
+    fireEvent.click(screen.getByRole('button', { name: 'Past lessons and receipts' }))
+    await waitFor(() =>
+      expect(within(section('Past lessons')).getByRole('alert').textContent).toBe(NETWORK_MESSAGE),
+    )
+    await waitFor(() =>
+      expect(within(section('Payments')).getByRole('alert').textContent).toBe(NETWORK_MESSAGE),
+    )
+    expect(section('Past lessons').getAttribute('aria-busy')).toBeNull()
+
+    reads.hold()
+    const lessonsRetry = within(section('Past lessons')).getByRole('button', {
+      name: 'Try again',
+    })
+    lessonsRetry.focus()
+    fireEvent.click(lessonsRetry)
+    await waitFor(() => expect(lessonsRetry.getAttribute('aria-busy')).toBe('true'))
+    expect(document.activeElement).toBe(lessonsRetry)
+    reads.release()
+    await waitFor(() =>
+      expect(within(section('Past lessons')).getAllByRole('listitem')).toHaveLength(2),
+    )
+    expect(document.activeElement).toBe(heading('Past lessons'))
+
+    const paymentsRetry = within(section('Payments')).getByRole('button', { name: 'Try again' })
+    paymentsRetry.focus()
+    fireEvent.click(paymentsRetry)
+    const payment = await within(section('Payments')).findByRole('listitem')
+    expect(payment.textContent).toBe('16 Aug 2026Wei Jie · 1-to-1 · 4 lessonsFPXRM 240')
+    expect(document.activeElement).toBe(heading('Payments'))
   })
 
   it('shows the coach, looking as a customer, that he has no lessons of his own', async () => {

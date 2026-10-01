@@ -8,10 +8,11 @@ import { customerWeekQuery } from './weekQueries'
 /**
  * week_busy for the week that starts on `weekStart` (a Monday): the customer Schedule's
  * grid. No placeholder while another week loads: the old week's blocks must never sit under
- * the new week's dates (customer-schedule §5.1).
+ * the new week's dates (customer-schedule §5.1). Waits while `weekStart` is null (the
+ * Schedule doesn't yet know whether the week asked for is in the booking window).
  */
-export function useCustomerWeek(weekStart: DateKey) {
-  return useQuery(customerWeekQuery(weekStart))
+export function useCustomerWeek(weekStart: DateKey | null) {
+  return useQuery({ ...customerWeekQuery(weekStart ?? ''), enabled: weekStart !== null })
 }
 
 /**

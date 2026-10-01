@@ -1,10 +1,11 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
-import { afterEach, beforeAll, describe, expect, it } from 'vitest'
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 
 import { accountKeys, SessionContext, type SessionState } from '@/entities/account'
 import { getSession, logIn, logOut, signUp } from '@/shared/api/auth'
+import { getBackend } from '@/shared/api/backend'
 import { rpc } from '@/shared/api/rpc'
 import { DEMO_PASSWORD } from '@/shared/config/demo'
 import { ROUTES } from '@/shared/config/routes'
@@ -20,7 +21,30 @@ beforeAll(async () => {
   await getSession()
 }, 60_000)
 
-afterEach(cleanup)
+afterEach(() => {
+  cleanup()
+  vi.restoreAllMocks()
+})
+
+/**
+ * Stands between the page and the demo database: calls of the function `held` wait for
+ * release(), so the page can be seen while they run. Records which weeks week_busy reads.
+ */
+async function holdRpc(held: string) {
+  const backend = await getBackend()
+  const answer = backend.rpc.bind(backend)
+  let release = () => {}
+  const released = new Promise<void>((resolve) => {
+    release = resolve
+  })
+  const spy = vi.spyOn(backend, 'rpc').mockImplementation(async (fn, args) => {
+    if (fn === held) await released
+    return answer(fn, args)
+  })
+  const weeksRead = () =>
+    spy.mock.calls.filter(([fn]) => fn === 'week_busy').map(([, args]) => args.p_week_start)
+  return { release, weeksRead }
+}
 
 const PICTURE =
   'Week timetable showing free, booked, travel and closed times. The Book tab lists every free start time.'
@@ -68,10 +92,13 @@ async function weekInWords(label: string) {
 describe('SchedulePage', () => {
   it('shows the drawn week of 28 Sep for meiling: her lessons as You, the rest as Booked', async () => {
     const router = await renderAs('meiling', `${ROUTES.schedule}?week=2026-09-28`)
-    // The title, the week and the day headers need no data.
+    // The title and the day headers need no data. A week after this one waits for the
+    // booking window (the settings) before it is named, read or linked.
     expect(screen.getByRole('heading', { level: 1, name: 'Schedule' })).toBeTruthy()
     expect(screen.getByText('Your coach’s timetable')).toBeTruthy()
-    expect(weekLabel()?.textContent).toBe('28 Sep – 4 Oct')
+    expect(screen.getByText('Mon').parentElement?.textContent).toBe('Mon 28')
+    expect(weekLabel()?.textContent).toBe('')
+    expect(screen.queryAllByRole('link')).toEqual([])
     expect(screen.getByRole('status').textContent).toBe('Loading the timetable')
     expect(screen.getByRole('img', { name: PICTURE }).getAttribute('aria-busy')).toBe('true')
 
@@ -84,6 +111,7 @@ describe('SchedulePage', () => {
       'Sat 3 Oct: free 7:00 am to 8:00 am, your lesson 9:00 am to 10:00 am, free 7:00 pm to 10:00 pm',
       'Sun 4 Oct: your lesson 5:00 pm to 6:00 pm, free 9:00 pm to 10:00 pm',
     ])
+    expect(weekLabel()?.textContent).toBe('28 Sep – 4 Oct')
     expect(screen.getAllByText('You')).toHaveLength(2)
     // Other people's lessons carry no names or places (CLAUDE.md rule 6).
     expect(document.body.textContent).not.toMatch(/Hana|Wei Jie|Priya|Palm Court|Kiara Park/)
@@ -198,6 +226,28 @@ describe('SchedulePage', () => {
     await weekInWords(label)
   })
 
+  it('names, reads and links a later week only once the booking window is known', async () => {
+    const settings = await holdRpc('get_public_settings')
+    const router = await renderAs('meiling', `${ROUTES.schedule}?week=2026-11-02`)
+    // Give the page time to read anything it would: it reads nothing for 2 Nov.
+    await new Promise((resolve) => setTimeout(resolve, 100))
+    expect(weekLabel()?.textContent).toBe('')
+    expect(screen.queryAllByRole('link')).toEqual([])
+    expect(screen.getByRole('status').textContent).toBe('Loading the timetable')
+    expect(previous().getAttribute('aria-disabled')).toBe('true')
+    expect(next().getAttribute('aria-disabled')).toBe('true')
+    expect(router.state.location.search).toBe('?week=2026-11-02')
+    expect(settings.weeksRead()).toEqual([])
+
+    // 2 Nov is past the window's last week: that week is shown instead, and only it is read.
+    settings.release()
+    await waitFor(() => expect(weekLabel()?.textContent).toBe('19 Oct – 25 Oct'))
+    await weekInWords('19 Oct – 25 Oct')
+    expect(router.state.location.search).toBe('?week=2026-10-19')
+    expect(settings.weeksRead()).toEqual(['2026-10-19'])
+    expect(screen.getAllByRole('link')).toHaveLength(7)
+  })
+
   it('shows the coach every lesson as Booked, with none of his own', async () => {
     await renderAs('herman', `${ROUTES.schedule}?week=2026-09-28`)
     const words = await weekInWords('28 Sep – 4 Oct')
@@ -206,24 +256,45 @@ describe('SchedulePage', () => {
     expect(screen.queryByText('You')).toBeNull()
   })
 
-  it('says what went wrong over the empty grid, with Try again, when the week can’t be read', async () => {
-    // Signed out, week_busy refuses (permission denied: the generic message).
-    await renderAs(null, `${ROUTES.schedule}?week=2026-09-28`)
+  it('says what went wrong over the empty grid, and Try again reads the week again', async () => {
+    // Signed out, the settings and week_busy refuse (permission denied: the generic message).
+    const router = await renderAs(null, `${ROUTES.schedule}?week=2026-09-28`)
     const alert = await screen.findByRole('alert')
     expect(alert.textContent).toBe('Something went wrong. Refresh the page and try again.')
     expect(screen.getByRole('img', { name: PICTURE }).getAttribute('aria-busy')).toBeNull()
     expect(screen.queryByText('Loading the timetable')).toBeNull()
+    // Without the settings only this week is known to be in the window: the week asked for
+    // gives way to it, and Next waits.
+    expect(weekLabel()?.textContent).toBe('21 Sep – 27 Sep')
+    await waitFor(() => expect(router.state.location.search).toBe('?week=2026-09-21'))
+    expect(next().getAttribute('aria-disabled')).toBe('true')
     // The headers and their links stay.
-    expect(screen.getByRole('link', { name: 'Book on Sat 3 Oct' })).toBeTruthy()
-    // Without the settings the window's end is unknown: Next waits.
-    await waitFor(() => expect(next().getAttribute('aria-disabled')).toBe('true'))
+    expect(screen.getByRole('link', { name: 'Book on Sat 26 Sep' })).toBeTruthy()
 
+    // Still signed out: while the week is read again, Try again stays, busy, with focus.
+    const weekBusy = await holdRpc('week_busy')
     const retry = screen.getByRole('button', { name: 'Try again' })
     retry.focus()
     fireEvent.click(retry)
-    expect(await screen.findByRole('alert')).toBeTruthy()
-    await waitFor(() => expect(retry.getAttribute('aria-busy')).toBeNull())
+    await waitFor(() => expect(retry.getAttribute('aria-busy')).toBe('true'))
+    expect(screen.getByRole('alert')).toBe(alert)
+    expect(screen.queryByText('Loading the timetable')).toBeNull()
     expect(document.activeElement).toBe(retry)
+    weekBusy.release()
+    // It fails again: the message is read out again, and focus is still on Try again.
+    await waitFor(() => expect(retry.getAttribute('aria-busy')).toBeNull())
+    expect(screen.getByRole('alert')).not.toBe(alert)
+    expect(document.activeElement).toBe(retry)
+
+    // Signed in, Try again brings the week, and focus goes on to it.
+    await logIn('meiling', DEMO_PASSWORD)
+    fireEvent.click(retry)
+    expect(await weekInWords('21 Sep – 27 Sep')).toHaveLength(7)
+    expect(screen.queryByRole('alert')).toBeNull()
+    expect(retry.isConnected).toBe(false)
+    const focused = document.activeElement
+    expect(focused).not.toBe(document.body)
+    expect(focused?.contains(screen.getByRole('img', { name: PICTURE }))).toBe(true)
   })
 
   // Writes to the demo database (a new sign-up): after the tests that read the seed.
