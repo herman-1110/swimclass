@@ -67,4 +67,13 @@ describe('PageHeader', () => {
     expect(heading.getAttribute('tabindex')).toBe('-1')
     expect(document.activeElement).toBe(heading)
   })
+
+  it('lets the page focus the h1 later without taking focus on mount', () => {
+    render(<PageHeader size="customer" title="Book a lesson" titleId="book-title" focusable />)
+    const heading = screen.getByRole('heading', { level: 1, name: 'Book a lesson' })
+    expect(heading.getAttribute('tabindex')).toBe('-1')
+    expect(document.activeElement).not.toBe(heading)
+    document.getElementById('book-title')?.focus()
+    expect(document.activeElement).toBe(heading)
+  })
 })

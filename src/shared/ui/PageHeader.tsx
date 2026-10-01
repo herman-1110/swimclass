@@ -25,6 +25,11 @@ type PageHeaderProps = {
   titleId?: string
   /** Moves focus to the h1 when it appears (a form swapped for its result). */
   focusOnMount?: boolean
+  /**
+   * Lets the page move focus to the h1 itself (tabIndex -1, found by `titleId`), without
+   * focusing it on mount: Book does after "Try again", which replaces the content below it.
+   */
+  focusable?: boolean
 }
 
 // UI kit spec §3.29: Main.dc.html:65-68, Schedule.dc.html:67-70, MyClasses.dc.html:52-55
@@ -64,6 +69,7 @@ export function PageHeader({
   align = size === 'customer' ? 'end' : 'center',
   titleId,
   focusOnMount = false,
+  focusable = false,
 }: PageHeaderProps) {
   const heading = useRef<HTMLHeadingElement>(null)
 
@@ -77,7 +83,7 @@ export function PageHeader({
       <h1
         ref={heading}
         id={titleId}
-        tabIndex={focusOnMount ? -1 : undefined}
+        tabIndex={focusOnMount || focusable ? -1 : undefined}
         className={titles[size]}
       >
         {title}
