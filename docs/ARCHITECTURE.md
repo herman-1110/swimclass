@@ -151,7 +151,6 @@ src/
     └── ui/                       Button, Field, Select, Checkbox, OptionRow, Segmented, Chip,
                                   DayStrip, SegmentBar, Tag, Pill, Table, Tabs, Dialog, SidePanel,
                                   WeekGrid, Skeleton, EmptyState, Banner, icons/
-                                  PlaceholderPage (until every screen is built; then delete it)
 ```
 
 Folders appear when their first file is written; don't create empty ones.
