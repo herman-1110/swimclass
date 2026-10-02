@@ -293,7 +293,9 @@ describe('BookPage', () => {
     await startTimes('Sun 4 Oct')
     watch.disconnect()
     expect(shown).not.toContain('chips alone')
-    expect(screen.getByText('Already booked this day: Sofia, 5:00–6:00 pm')).toBeTruthy()
+    const alreadyBooked = screen.getByText('Already booked this day: Sofia, 5:00–6:00 pm')
+    // It names groups: a one-word name of up to 100 characters breaks inside (book §6.6).
+    expect(alreadyBooked.className).toContain('wrap-anywhere')
     expect(chipNames().filter((name) => name.endsWith(', available'))).toEqual([
       '9:00 pm, available',
     ])
