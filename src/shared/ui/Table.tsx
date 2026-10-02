@@ -64,11 +64,13 @@ const tightCell = { default: 'box-content', compact: 'box-border h-12' }
  * A data table in a light frame (DESIGN §3; design/AdminStudents.dc.html,
  * AdminSettings.dc.html): --frame border, radius 12, --table-head header with 12 px 600
  * --tag-ink text, --line-row dividers, zebra rows. Pages show it from 768 px and cards below
- * (DESIGN §5).
+ * (DESIGN §5). A table that can't fit (large text on a phone) scrolls sideways inside its
+ * frame rather than hiding its last columns; the frame still clips it to its corners, and
+ * (relative) holds its screen-reader-only text, which would otherwise widen the page.
  */
 export function Table({ columns, rows, density = 'default', caption, labelledBy }: TableProps) {
   return (
-    <div className="overflow-hidden rounded-frame border border-frame">
+    <div className="relative overflow-x-auto rounded-frame border border-frame">
       <table aria-labelledby={labelledBy} className="w-full border-collapse">
         {caption && <caption className="sr-only">{caption}</caption>}
         <thead>

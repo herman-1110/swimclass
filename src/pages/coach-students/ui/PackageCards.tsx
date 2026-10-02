@@ -54,8 +54,12 @@ export function PackageCards({
                 <Tag>{group.type_label}</Tag>
               </div>
               <PackageProgress balance={balance} variant="card" />
-              <div className="flex items-center justify-between gap-3">
-                <BalanceStatus balance={balance} now={now} lastPaid={lastPaid} />
+              {/* With large text the button drops under the status rather than off the card:
+                  the status keeps at least 8 rem beside it (WCAG 1.4.4). */}
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="min-w-0 grow basis-32">
+                  <BalanceStatus balance={balance} now={now} lastPaid={lastPaid} />
+                </div>
                 <RowAction
                   row={row}
                   id={rowActionId('card', group.group_id)}
