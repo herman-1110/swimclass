@@ -4,9 +4,14 @@ import type { StudentsFilter } from './rows'
 
 // The page's own words (coach-students §6, §7; coach-add-students §5.2.1; proposed).
 
-/** After Add students (`?added=`): "3 students added", "Student added". */
-export function studentsAdded(size: number): string {
-  return size === 1 ? 'Student added' : `${size} students added`
+/**
+ * After Add students (`?added=`): "3 students added", "Student added", and when Add students
+ * created the account, whom its invite went to: "Student added · Invite sent to
+ * siti@example.com" (coach-add-students §5.2.1).
+ */
+export function studentsAdded(size: number, invitedEmail?: string | null): string {
+  const added = size === 1 ? 'Student added' : `${size} students added`
+  return invitedEmail ? `${added} · Invite sent to ${invitedEmail}` : added
 }
 
 /** The All tab with no groups at all (coach-students §6). */

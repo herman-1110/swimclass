@@ -390,6 +390,28 @@ describe('CoachStudentsPage', () => {
     expect(router.state.location.search).toBe('')
   })
 
+  it('says whom the invite went to when Add students created the account (its router state)', async () => {
+    const added = { groupId: GROUP.weiJie, size: 1, invitedEmail: 'siti@example.com' }
+    const router = await renderAs('herman', `/coach/students?added=${GROUP.weiJie}`, {
+      state: { added },
+    })
+    await findTable()
+    const notice = await screen.findByText('Student added · Invite sent to siti@example.com')
+    expect(notice.closest('[role=status]')).toBeTruthy()
+    // The address and its state go once shown; the notice stays.
+    await waitFor(() => expect(router.state.location.search).toBe(''))
+    expect(router.state.location.state).toBeNull()
+    expect(screen.getByText('Student added · Invite sent to siti@example.com')).toBeTruthy()
+  })
+
+  it('ignores router state about another group than ?added', async () => {
+    const added = { groupId: GROUP.hana, size: 1, invitedEmail: 'siti@example.com' }
+    await renderAs('herman', `/coach/students?added=${GROUP.weiJie}`, { state: { added } })
+    await findTable()
+    expect(await screen.findByText('Student added')).toBeTruthy()
+    expect(screen.queryByText(/Invite sent/)).toBeNull()
+  })
+
   it('keeps the list when a refresh fails (coach-students §6: keep showing the current data)', async () => {
     await renderAs('herman')
     const table = await findTable()

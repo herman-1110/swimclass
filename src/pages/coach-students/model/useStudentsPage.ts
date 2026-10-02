@@ -31,7 +31,10 @@ export function useStudentsPage(refs: PageRefs) {
   const data = useStudentsData()
   const [query, setQuery] = useState('')
   const [notice, setNotice] = useState<string | null>(null)
+  // The group Add students just added, and whom its invite went to: kept from the first
+  // render, as `?added` and its router state go once shown (useStaleParams).
   const [added] = useState(url.added)
+  const [invitedEmail] = useState(url.invitedEmail)
   const [shownAllFor, setShownAllFor] = useState<StudentsFilter | null>(null)
   // The group whose row opened the payment panel or History. Its row stays on screen after
   // they close (until the tab or the search changes), so focus can go back to its button even
@@ -115,7 +118,8 @@ export function useStudentsPage(refs: PageRefs) {
     view,
     query,
     announcement,
-    notice: notice ?? (view.addedRow ? studentsAdded(view.addedRow.group.size) : null),
+    notice:
+      notice ?? (view.addedRow ? studentsAdded(view.addedRow.group.size, invitedEmail) : null),
     showAll: shownAllFor === url.filter,
     search: (text: string) => {
       setQuery(text)

@@ -1,5 +1,6 @@
 import { useLocation, useNavigate, useSearchParams } from 'react-router'
 
+import { readAddedState } from '@/features/add-students'
 import { STUDENTS_PARAMS } from '@/shared/config/routes'
 
 import { openedBy, type OpenedState, readFilter, type StudentsParam, withParams } from './params'
@@ -9,7 +10,8 @@ type Changes = Partial<Record<StudentsParam, string | null>>
 
 /**
  * The page's URL state (coach-students §1): the filter, the group in the payment panel
- * (`pay`) and in the History drawer (`history`), and a new group to highlight (`added`).
+ * (`pay`) and in the History drawer (`history`), and a new group to highlight (`added`),
+ * with the email its account's invite went to when Add students says so in router state.
  *
  * Opening a modal pushes an entry, so a phone's Back closes it; Close, Esc and Cancel go back
  * when this visit pushed that entry, and otherwise remove the param. From 1280 px the panel
@@ -20,6 +22,9 @@ export function useStudentsUrl(wide: boolean) {
   const location = useLocation()
   const navigate = useNavigate()
   const opened = openedBy(location.state)
+  const added = params.get(STUDENTS_PARAMS.added)
+  // Add students' router state about that group: whom a new account's invite went to.
+  const fromAddStudents = readAddedState(location.state)
 
   const change = (
     changes: Changes,
@@ -37,7 +42,12 @@ export function useStudentsUrl(wide: boolean) {
     filter: readFilter(params.get(STUDENTS_PARAMS.filter)),
     pay: params.get(STUDENTS_PARAMS.pay),
     history: params.get(STUDENTS_PARAMS.history),
-    added: params.get(STUDENTS_PARAMS.added),
+    added,
+    /** The email Add students sent the new account's invite to, for the group in `added`. */
+    invitedEmail:
+      added !== null && fromAddStudents?.groupId === added
+        ? (fromAddStudents.invitedEmail ?? null)
+        : null,
     setFilter: (filter: StudentsFilter) => change({ filter: filter === 'all' ? null : filter }),
     openPay: (groupId: string) =>
       wide
