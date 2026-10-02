@@ -83,7 +83,8 @@ uses Chip, `GroupPicker` (entity `group`) uses OptionRow. The tab bar and sideba
 - **Navigation** (`src/app/layouts/`): below 1024 px a bottom tab bar, fixed to the
   bottom (4 items, icons 22 px stroke 1.6 with the label under, 52 px tall, active in
   accent, plus the phone's safe-area inset). From 1024 px a 220 px sidebar instead:
-  business name at the top, text links (current one on `--subtle`), "Signed in as …"
+  business name at the top ("Swim Class", from settings; the drawings' "Swim Class
+  Booking" is the old name), text links (current one on `--subtle`), "Signed in as …"
   at the bottom.
   - Customer: Book, Schedule, My classes, Account.
   - Coach: Schedule, Students & payments ("Students" in the tab bar), Settings, and

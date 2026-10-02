@@ -160,7 +160,8 @@ export function createSupabaseBackend(): Backend {
         return { confirmEmail: !data.session }
       },
       async logOut() {
-        const { error } = await supabase.auth.signOut()
+        // This device only (Herman, 2 Oct 2026): other phones and computers stay signed in.
+        const { error } = await supabase.auth.signOut({ scope: 'local' })
         if (error) throw authError(error)
       },
       async sendPasswordReset(email, redirectTo) {

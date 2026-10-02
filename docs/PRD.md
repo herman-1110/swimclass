@@ -57,7 +57,8 @@ Non-goals for version 1
 Every rule has an ID so code, tests and prompts can refer to it.
 
 ### Accounts and login
-- **BR-1** Customers sign up with username, name, email, phone and password. Usernames
+- **BR-1** Customers sign up with username, name, email and password; a phone number is
+  optional (Herman, 2 Oct 2026). Usernames
   are unique, lowercase, 3 to 30 characters of `a-z 0-9 . _`.
 - **BR-2** New sign-ups cannot book until the coach approves them (setting, default on).
   They see a "Waiting for your coach to approve your account" screen.

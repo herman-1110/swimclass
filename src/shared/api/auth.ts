@@ -61,6 +61,7 @@ export function signUp(input: SignUpInput): Promise<{ confirmEmail: boolean }> {
   return run(async () => (await getBackend()).auth.signUp(input, linkTo(ROUTES.login)))
 }
 
+/** Ends the session on this device only; the account's other devices stay signed in. */
 export function logOut(): Promise<void> {
   return run(async () => (await getBackend()).auth.logOut())
 }
