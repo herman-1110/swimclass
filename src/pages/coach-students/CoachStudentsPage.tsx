@@ -3,13 +3,13 @@ import { useRef } from 'react'
 import { DocumentTitle } from '@/entities/settings'
 
 import { studentsFigures } from './model/rows'
+import { useStudentsPage } from './model/useStudentsPage'
 import { HistoryDrawer } from './ui/HistoryDrawer'
 import { LoadError } from './ui/LoadError'
 import { PaymentPanel } from './ui/PaymentPanel'
 import { StudentsFigures } from './ui/StudentsFigures'
 import { StudentsHeader } from './ui/StudentsHeader'
 import { StudentsList } from './ui/StudentsList'
-import { useStudentsPage } from './useStudentsPage'
 
 /**
  * Students & payments (`/coach/students`; coach-students spec, AdminStudents.dc.html): every

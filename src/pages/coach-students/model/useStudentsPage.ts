@@ -4,13 +4,13 @@ import { useDebouncedValue } from '@/shared/lib/hooks/useDebouncedValue'
 import { useMediaQuery } from '@/shared/lib/hooks/useMediaQuery'
 import { useNow } from '@/shared/lib/hooks/useNow'
 
-import { listAnnouncement, studentsAdded } from './model/copy'
-import type { StudentsFilter } from './model/rows'
-import { useStaleParams } from './model/useStaleParams'
-import { useStudentsData } from './model/useStudentsData'
-import { useStudentsUrl } from './model/useStudentsUrl'
-import { studentsView, tabView } from './model/view'
-import { returnFocusToRow, scrollToRow } from './ui/rowFocus'
+import { returnFocusToRow, scrollToRow } from '../ui/rowFocus'
+import { listAnnouncement, studentsAdded } from './copy'
+import type { StudentsFilter } from './rows'
+import { useStaleParams } from './useStaleParams'
+import { useStudentsData } from './useStudentsData'
+import { useStudentsUrl } from './useStudentsUrl'
+import { studentsView, tabView } from './view'
 
 type PageRefs = {
   /** The search box: "Clear search" puts focus back there. */

@@ -10,7 +10,7 @@ import { ButtonLink } from '@/shared/ui/ButtonLink'
 import { SectionTitle } from '@/shared/ui/SectionTitle'
 import { Skeleton } from '@/shared/ui/Skeleton'
 
-import { attentionGroups } from './attention'
+import { attentionGroups } from '../model/attention'
 import { LoadError } from './LoadError'
 
 type NeedsAttentionProps = {
