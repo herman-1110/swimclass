@@ -162,6 +162,13 @@ describe('buttonClasses', () => {
     expect(classes({ variant: 'quiet', tone: 'muted' })).not.toContain('text-ink')
   })
 
+  it('breaks a long word in a label that may wrap; one-line sizes stay on one line', () => {
+    // "Book 9:00 pm for {a 100-character name}" at 360 px (DESIGN §5).
+    expect(classes({ size: 'xl' })).toContain('wrap-anywhere')
+    expect(classes({ variant: 'quiet' })).toContain('wrap-anywhere')
+    expect(classes({ size: 'sm' })).toContain('whitespace-nowrap')
+  })
+
   it('makes a block button full width', () => {
     expect(classes({ block: true })).toContain('w-full')
     expect(classes({})).not.toContain('w-full')

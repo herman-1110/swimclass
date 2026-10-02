@@ -79,7 +79,8 @@ export function PageHeader({
 
   const block = (
     <div className={blocks[size]}>
-      {eyebrow && <p className="text-label text-muted">{eyebrow}</p>}
+      {/* Names in the eyebrow and description wrap, even inside a long word (DESIGN §5). */}
+      {eyebrow && <p className="text-label text-muted wrap-anywhere">{eyebrow}</p>}
       <h1
         ref={heading}
         id={titleId}
@@ -88,7 +89,7 @@ export function PageHeader({
       >
         {title}
       </h1>
-      {description && <p className={descriptions[size]}>{description}</p>}
+      {description && <p className={cn(descriptions[size], 'wrap-anywhere')}>{description}</p>}
     </div>
   )
 

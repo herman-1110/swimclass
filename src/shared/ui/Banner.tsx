@@ -14,7 +14,8 @@ type BannerProps = ComponentPropsWithRef<'div'> & {
 
 // UI kit spec §3.22: Main.dc.html:69, MyClasses.dc.html:126. Static text by default; pass
 // role="status" (a notice after an action) or role="alert" (a failed load), and ref and
-// tabIndex={-1} when the page moves focus to it. className is for layout (margins).
+// tabIndex={-1} when the page moves focus to it. className is for layout (margins). Its text
+// wraps even inside a word, so a pasted link never runs out of the box (DESIGN §5).
 const tones = {
   neutral: 'bg-subtle text-ink',
   warn: 'bg-warn-tint text-warn',
@@ -42,7 +43,7 @@ export function Banner({
       <div
         {...rest}
         className={cn(
-          'rounded-control px-3.5 py-3 text-label leading-normal',
+          'rounded-control px-3.5 py-3 text-label leading-normal wrap-anywhere',
           tones[tone],
           className,
         )}
@@ -62,7 +63,7 @@ export function Banner({
         className,
       )}
     >
-      <div className="min-w-0 flex-1 py-2.5">{text}</div>
+      <div className="min-w-0 flex-1 py-2.5 wrap-anywhere">{text}</div>
       <div className="shrink-0">{action}</div>
     </div>
   )

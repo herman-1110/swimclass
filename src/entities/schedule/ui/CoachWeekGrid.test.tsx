@@ -70,6 +70,18 @@ describe('CoachWeekGrid', () => {
     }
   })
 
+  it('reads each name from one hidden line, the drawn lines hidden from screen readers', () => {
+    render(<CoachWeekGrid weekStart="2026-09-28" week={week} onSelectLesson={() => {}} />)
+    const weiJie = screen.getByRole('button', { name: /^Wei Jie,/ })
+    // One line for screen readers, so no comma sits apart ("Wei Jie , 7:30–8:30 pm") or at
+    // the end of a cut-off line, beyond the block (coach-schedule §7.2).
+    const spoken = [...weiJie.querySelectorAll('.sr-only')].map((span) => span.textContent)
+    expect(spoken).toEqual(['Wei Jie, 7:30–8:30 pm, Palm Court, Fri 2 Oct, unpaid'])
+    const drawn = [...weiJie.children].filter((child) => !child.classList.contains('sr-only'))
+    expect(drawn.map((line) => line.textContent)).toEqual(['Wei Jie', '7:30–8:30 pm', 'Palm Court'])
+    expect(drawn.every((line) => line.getAttribute('aria-hidden') === 'true')).toBe(true)
+  })
+
   it('shows the drawn lines: "Gap override" in place of Kai’s place, "2 lessons" for Chloe', () => {
     render(<CoachWeekGrid weekStart="2026-09-28" week={week} onSelectLesson={() => {}} />)
     const kai = screen.getByRole('button', { name: /^Kai,/ })

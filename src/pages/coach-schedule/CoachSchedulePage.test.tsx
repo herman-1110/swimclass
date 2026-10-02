@@ -212,7 +212,9 @@ describe('CoachSchedulePage, moving through the weeks (§8.2)', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Previous week' }))
     expect(router.state.historyAction).toBe('REPLACE')
     const region = await grid('14–20 Sep 2026')
-    expect(texts(within(region).getAllByRole('button'))).toEqual([
+    // Each lesson's name is its one screen-reader line (the drawn lines are aria-hidden).
+    const lessons = within(region).getAllByRole('button')
+    expect(lessons.map((lesson) => lesson.querySelector('.sr-only')?.textContent)).toEqual([
       'Wei Jie, 7:30–8:30 pm, Palm Court, Fri 18 Sep, unpaid',
       'Adam, Alya & Amir, 11 am–12 pm, 1-to-3 · Maple Condo, Sat 19 Sep',
     ])

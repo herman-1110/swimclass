@@ -99,6 +99,8 @@ describe('CoachDayView', () => {
       'Wei Jie 7:30–8:30 pm · Palm Court Unpaid',
       'Kai 9:00–10:00 pm · Palm Court Gap override',
     ])
+    // Long names and places wrap inside the block, even inside a word (coach-schedule §6.7).
+    expect(lessons[0].className).toContain('wrap-anywhere')
     fireEvent.click(
       screen.getByRole('button', { name: 'Kai 9:00–10:00 pm · Palm Court Gap override' }),
     )

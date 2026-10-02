@@ -63,7 +63,8 @@ export function DayViewItem({ day, item, onSelectLesson }: DayViewItemProps) {
 
   const { lesson } = item
   const notes = lessonNotes(lesson)
-  const face = cn(block, 'border-accent bg-accent px-3 py-2.5 text-left')
+  // Long names and locations wrap, even inside a word (coach-schedule §6.7).
+  const face = cn(block, 'border-accent bg-accent px-3 py-2.5 text-left wrap-anywhere')
   const lines = (
     <>
       <span className="text-sm leading-[normal] font-semibold text-white">

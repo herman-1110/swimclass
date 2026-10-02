@@ -2,7 +2,9 @@ import { cn } from '@/shared/lib/cn'
 
 // The look of every button and every action-looking link (UI kit spec §3.1), shared by
 // Button and ButtonLink. Sizes never change with the window width (DESIGN §2); min-h-*
-// rather than h-* so a long label can wrap at 360 px instead of being cut off (DESIGN §5).
+// rather than h-* so a long label can wrap at 360 px instead of being cut off (DESIGN §5),
+// even inside a long word ("Book 9:00 pm for {a 100-character name}"); the sizes that keep
+// one line (whitespace-nowrap) still do.
 //
 // The label is a flex row (an icon and text sit 6 px apart), so wrap mixed text in one
 // span to keep it one line of text: <span>New here? <span …>Create an account</span></span>.
@@ -38,7 +40,8 @@ export type ButtonLook = {
 // drawn), and data-disabled, which Button sets for aria-disabled so the button keeps focus
 // (Settings' "Save changes"). Both get the same look. Tailwind emits disabled: and data-*:
 // after hover:, so a hovered disabled button keeps its disabled look.
-const base = 'inline-flex items-center gap-1.5 text-center leading-[normal] cursor-pointer'
+const base =
+  'inline-flex items-center gap-1.5 text-center leading-[normal] wrap-anywhere cursor-pointer'
 const inactive = 'disabled:cursor-default data-disabled:cursor-default aria-busy:cursor-progress'
 
 const primary =

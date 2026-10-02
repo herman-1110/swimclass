@@ -69,7 +69,10 @@ export function Sidebar({
           ))}
           {logOut && <LogOutButton className={cn(linkBase, 'w-full text-left text-muted')} />}
           {signedInAs && (
-            <span className={cn('px-3 text-small text-muted', hasBottomLinks && 'pt-2')}>
+            // A long name wraps inside the 220 px column (DESIGN §5).
+            <span
+              className={cn('px-3 text-small text-muted wrap-anywhere', hasBottomLinks && 'pt-2')}
+            >
               Signed in as {signedInAs}
             </span>
           )}

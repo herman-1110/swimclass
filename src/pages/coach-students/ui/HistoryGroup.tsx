@@ -24,7 +24,7 @@ export function HistoryGroup({ row }: HistoryGroupProps) {
       <dl>
         <div className={line}>
           <dt className="text-label text-muted">Pool location</dt>
-          <dd className="text-right text-sm break-words">{group.location}</dd>
+          <dd className="min-w-0 text-right text-sm wrap-anywhere">{group.location}</dd>
         </div>
         <div className={line}>
           <dt className="text-label text-muted">Starting balance</dt>

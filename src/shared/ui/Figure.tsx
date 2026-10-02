@@ -17,13 +17,16 @@ type FigureProps = {
  */
 export function Figure({ value, caption, tone = 'ink' }: FigureProps) {
   return (
-    <div className="flex flex-col gap-0.5">
+    // The caption names groups, so it wraps, inside a long word too (DESIGN §5); from 768 px,
+    // where the figures sit in a row at their own widths, within 320 px, so a long list of
+    // names doesn't squeeze the figures beside it.
+    <div className="flex min-w-0 flex-col gap-0.5 md:max-w-80">
       <span
         className={cn('text-title font-semibold leading-[1.2]', tone === 'warn' && 'text-warn')}
       >
         {value}
       </span>
-      <span className="text-label text-muted">{caption}</span>
+      <span className="text-label text-muted wrap-anywhere">{caption}</span>
     </div>
   )
 }

@@ -14,6 +14,8 @@ describe('PageHeader', () => {
     expect(heading.className).toContain('leading-tight')
     // Nothing is focusable unless the page asks for it.
     expect(heading.hasAttribute('tabindex')).toBe(false)
+    // A long name in the eyebrow wraps, even inside a word (DESIGN §5).
+    expect(heading.previousElementSibling?.className).toContain('wrap-anywhere')
   })
 
   it('shows a coach description and actions', () => {

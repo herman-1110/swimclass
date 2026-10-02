@@ -29,7 +29,7 @@ export function PendingPage() {
       <CardFooter>
         <LogOutButton className={buttonClasses({ variant: 'link' })} />
         {profile.data && (
-          <p className="text-small leading-normal text-muted">
+          <p className="text-small leading-normal text-muted wrap-anywhere">
             Signed in as {profile.data.display_name} ({profile.data.username}).
           </p>
         )}

@@ -48,4 +48,19 @@ describe('GroupIdentity', () => {
       screen.getByRole('rowheader', { name: 'Aiman & Sofia Mei Ling’s account · Palm Court' }),
     ).toBeTruthy()
   })
+
+  it('wraps long names and places inside a word, so the Students column can shrink', () => {
+    const { container } = render(
+      <GroupIdentity
+        group={{
+          display_names: 'Nurulhidayahbintimohdzulkifli'.repeat(3),
+          size: 1,
+          location: 'Palm Court',
+        }}
+        accountName="Farah"
+      />,
+    )
+    expect(container.firstElementChild?.className).toContain('min-w-0')
+    expect(container.firstElementChild?.className).toContain('wrap-anywhere')
+  })
 })

@@ -95,4 +95,25 @@ describe('OptionRow', () => {
     const mark = screen.getByText('Adam, Alya & Amir').previousElementSibling
     expect(mark?.getAttribute('aria-hidden')).toBe('true')
   })
+
+  it('breaks a long one-word name inside the row, keeping the tag in it (DESIGN §5)', () => {
+    const name = 'Muhammadharithiskandarbinmohdshahrulnizam'.repeat(3).slice(0, 100)
+    render(
+      <Fieldset legend="Who’s this lesson for?" spacing="loose">
+        <OptionRow
+          name="book-group"
+          value="g9"
+          checked={false}
+          onChange={() => {}}
+          label={name}
+          trailing={<Tag>1-to-3</Tag>}
+        />
+      </Fieldset>,
+    )
+    const text = screen.getByText(name)
+    // A flex item that can shrink below its longest word, and breaks inside it.
+    expect(text.className).toContain('min-w-0')
+    expect(text.className).toContain('wrap-anywhere')
+    expect(screen.getByText('1-to-3').className).toContain('shrink-0')
+  })
 })
