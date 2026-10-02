@@ -51,12 +51,15 @@ describe('BookPage when a read fails', () => {
     await db.query('alter view public.group_details rename to group_details_hidden')
     try {
       await renderBook()
-      expect(await screen.findByRole('alert', {}, SLOW)).toHaveProperty(
-        'textContent',
-        GENERIC_MESSAGE,
-      )
+      const alert = await screen.findByRole('alert', {}, SLOW)
+      expect(alert.textContent).toBe(GENERIC_MESSAGE)
       expect(screen.getByRole('heading', { level: 1, name: 'Book a lesson' })).toBeTruthy()
       expect(screen.queryByRole('radio')).toBeNull()
+      // As every screen shows a failed read: the kit Banner, "Try again" quiet in accent.
+      const banner = alert.closest('.bg-subtle')
+      expect(banner).not.toBeNull()
+      const button = within(banner as HTMLElement).getByRole('button', { name: 'Try again' })
+      expect(button.className).toContain('text-accent')
     } finally {
       await db.query('alter view public.group_details_hidden rename to group_details')
     }
