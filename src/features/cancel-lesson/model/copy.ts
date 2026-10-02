@@ -1,12 +1,12 @@
-import { formatDay, formatRange } from '@/shared/lib/time'
+import { lessonDateRange } from '@/entities/booking'
 
 import type { CancelableLesson, CancelAudience } from './types'
 
 type Timed = Pick<CancelableLesson, 'starts_at' | 'ends_at'>
 
 /** "Sat 3 Oct, 9:00–10:00 am": always the date, never "Today" (the My classes spec §2.6). */
-export function lessonWhen(lesson: Timed): string {
-  return `${formatDay(lesson.starts_at)}, ${formatRange(lesson.starts_at, lesson.ends_at)}`
+function lessonWhen(lesson: Timed): string {
+  return lessonDateRange(lesson.starts_at, lesson.ends_at)
 }
 
 /** The Cancel button's full name: "Cancel Sat 3 Oct, 9:00–10:00 am for Aiman & Sofia". */

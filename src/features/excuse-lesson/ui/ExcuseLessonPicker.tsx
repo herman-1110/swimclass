@@ -3,6 +3,7 @@ import { useCallback, useId, useRef, useState } from 'react'
 import { messageFor } from '@/shared/config/messages'
 import { cn } from '@/shared/lib/cn'
 import { useFocusFallback } from '@/shared/lib/hooks/useFocusFallback'
+import { useNow } from '@/shared/lib/hooks/useNow'
 import { useReadFailure } from '@/shared/lib/hooks/useReadFailure'
 import { Banner } from '@/shared/ui/Banner'
 import { Button } from '@/shared/ui/Button'
@@ -14,9 +15,8 @@ import { useExcuseLesson, useRefreshAfterExcuse } from '../api/useExcuseLesson'
 import {
   EXCUSE_HELP,
   excuseButtonLabel,
-  excusePosition,
+  excuseOption,
   LESSON_EXCUSED,
-  lessonWhen,
   NO_LESSONS_TO_EXCUSE,
 } from '../model/copy'
 import { excuseErrorOutcome, refreshesAfter } from '../model/errorOutcome'
@@ -74,6 +74,8 @@ export function ExcuseLessonPicker({
     useCallback(() => intro.current, []),
   )
   const fallback = useFocusFallback(() => refusal.current ?? intro.current)
+  // Only to tell this year's lessons from older ones ("Fri 12 Dec 2025").
+  const now = useNow()
   const shown = (lessons.data ?? []).toSorted(newestFirst).slice(0, SHOWN)
   const chosen = shown.find((lesson) => lesson.booking_id === chosenId)
   const outcome = excuse.isError ? excuseErrorOutcome(excuse.error) : null
@@ -141,26 +143,27 @@ export function ExcuseLessonPicker({
           </p>
           <Fieldset legend="Lesson to excuse" hideLegend aria-describedby={helpId}>
             <div className="flex flex-col gap-2">
-              {shown.map((lesson) => (
-                <OptionRow
-                  key={lesson.booking_id}
-                  name={name}
-                  value={lesson.booking_id}
-                  checked={lesson.booking_id === chosenId}
-                  disabled={excuse.isPending}
-                  onChange={choose}
-                  // The position goes under the date: beside it, neither fits one line in
-                  // the 292 px panel. The space keeps the two apart in the radio's name.
-                  label={
-                    <span className="flex flex-col gap-0.5 py-1.5">
-                      <span className="text-sm">{lessonWhen(lesson)}</span>{' '}
-                      <span className="text-small font-normal text-muted">
-                        {excusePosition(lesson, packageSize)}
+              {shown.map((lesson) => {
+                const option = excuseOption(lesson, packageSize, now)
+                return (
+                  <OptionRow
+                    key={lesson.booking_id}
+                    name={name}
+                    value={lesson.booking_id}
+                    checked={lesson.booking_id === chosenId}
+                    disabled={excuse.isPending}
+                    onChange={choose}
+                    // The position goes under the date: beside it, neither fits one line in
+                    // the 292 px panel. The space keeps the two apart in the radio's name.
+                    label={
+                      <span className="flex flex-col gap-0.5 py-1.5">
+                        <span className="text-sm">{option.when}</span>{' '}
+                        <span className="text-small font-normal text-muted">{option.position}</span>
                       </span>
-                    </span>
-                  }
-                />
-              ))}
+                    }
+                  />
+                )
+              })}
             </div>
           </Fieldset>
         </>

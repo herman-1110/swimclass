@@ -186,6 +186,24 @@ describe('ExcuseMissedLesson', () => {
     )
   })
 
+  it('gives the year of a lesson from another year, as History does', () => {
+    renderBlock(
+      loaded([
+        {
+          ...WEI_JIE_STARTED[0],
+          starts_at: '2025-12-12T11:30:00+00:00',
+          ends_at: '2025-12-12T12:30:00+00:00',
+        },
+      ]),
+    )
+    openBlock()
+    expect(
+      screen.getByRole('radio', {
+        name: 'Fri 12 Dec 2025, 7:30–8:30 pm Package 2 · lesson 1 of 4',
+      }),
+    ).toBeTruthy()
+  })
+
   it('says when there is nothing to excuse', () => {
     renderBlock(loaded([]))
     openBlock()
