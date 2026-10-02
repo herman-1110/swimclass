@@ -2,7 +2,7 @@ import { useNavigate, useSearchParams } from 'react-router'
 
 import { DocumentTitle } from '@/entities/settings'
 import { type AddedResult, AddStudentsForm } from '@/features/add-students'
-import { ROUTES } from '@/shared/config/routes'
+import { coachStudentsAdded, ROUTES } from '@/shared/config/routes'
 import { BackLink } from '@/shared/ui/BackLink'
 import { PageHeader } from '@/shared/ui/PageHeader'
 
@@ -42,7 +42,7 @@ export function CoachAddStudentsPage() {
         initialAccountId={params.get('account') ?? undefined}
         onAdded={(added) => {
           const state: AddedState = { added }
-          void navigate(`${ROUTES.coachStudents}?added=${added.groupId}`, { state })
+          void navigate(coachStudentsAdded(added.groupId), { state })
         }}
       />
     </div>

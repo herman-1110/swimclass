@@ -1,5 +1,7 @@
 import { useLocation, useNavigate, useSearchParams } from 'react-router'
 
+import { STUDENTS_PARAMS } from '@/shared/config/routes'
+
 import { openedBy, type OpenedState, readFilter, type StudentsParam, withParams } from './params'
 import type { StudentsFilter } from './rows'
 
@@ -32,10 +34,10 @@ export function useStudentsUrl(wide: boolean) {
     })
 
   return {
-    filter: readFilter(params.get('filter')),
-    pay: params.get('pay'),
-    history: params.get('history'),
-    added: params.get('added'),
+    filter: readFilter(params.get(STUDENTS_PARAMS.filter)),
+    pay: params.get(STUDENTS_PARAMS.pay),
+    history: params.get(STUDENTS_PARAMS.history),
+    added: params.get(STUDENTS_PARAMS.added),
     setFilter: (filter: StudentsFilter) => change({ filter: filter === 'all' ? null : filter }),
     openPay: (groupId: string) =>
       wide

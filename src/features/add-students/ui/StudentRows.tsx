@@ -1,7 +1,7 @@
 import { Link } from 'react-router'
 
 import type { MessagePart } from '@/shared/config/messages'
-import { ROUTES } from '@/shared/config/routes'
+import { coachStudentsHistory } from '@/shared/config/routes'
 import { Field } from '@/shared/ui/Field'
 import { Fieldset } from '@/shared/ui/Fieldset'
 
@@ -84,7 +84,7 @@ export function StudentRows({
             ) : (
               <Link
                 key={part.groupId}
-                to={`${ROUTES.coachStudents}?history=${part.groupId}`}
+                to={coachStudentsHistory(part.groupId)}
                 className="underline underline-offset-2"
               >
                 {part.text}
