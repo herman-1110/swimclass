@@ -146,6 +146,10 @@ describe('CoachStudentsPage', () => {
     ).toBeTruthy()
     const waiting = screen.getByRole('button', { name: 'Waiting for approval 0' })
     expect(waiting.getAttribute('aria-pressed')).toBe('true')
+    // It lists accounts, not packages: the packages' note isn't beside it.
+    expect(screen.queryByText('One row per package · needs action first')).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Unpaid 2' }))
+    expect(screen.getByText('One row per package · needs action first')).toBeTruthy()
   })
 
   it('searches students and account holders, and says when nothing matches', async () => {

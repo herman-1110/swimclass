@@ -70,7 +70,8 @@ export function StudentsList(props: StudentsListProps) {
           ]}
           value={filter}
           onChange={(value) => props.onFilter(readFilter(value))}
-          note="One row per package · needs action first"
+          // The Waiting tab lists accounts, oldest sign-up first: the note is the packages'.
+          note={filter === 'waiting' ? undefined : 'One row per package · needs action first'}
         />
       </div>
       {filter === 'waiting' ? (
