@@ -1,11 +1,12 @@
 import { FieldRow } from '@/shared/ui/FieldRow'
 import { Select, type SelectOption } from '@/shared/ui/Select'
 
+import { rowDescriptionId } from '../model/description'
 import { FIELD_IDS } from '../model/fields'
 import { settingNote } from '../model/notes'
 import type { ChoiceField } from '../model/types'
 import type { ReadySettingsForm } from './formContext'
-import { rowDescription } from './rowDescription'
+import { RowDescription } from './RowDescription'
 
 type ChoiceRowProps = {
   form: ReadySettingsForm
@@ -28,16 +29,19 @@ export function ChoiceRow({ form, field, label, help, options }: ChoiceRowProps)
       note={note}
       error={error}
       control={
-        <Select
-          id={id}
-          size="row"
-          options={options}
-          value={form.draft[field]}
-          onChange={(event) => form.setField(field, event.target.value)}
-          aria-readonly={form.saving || undefined}
-          aria-invalid={error ? true : undefined}
-          aria-describedby={rowDescription(id, { note, error })}
-        />
+        <>
+          <Select
+            id={id}
+            size="row"
+            options={options}
+            value={form.draft[field]}
+            onChange={(event) => form.setField(field, event.target.value)}
+            aria-readonly={form.saving || undefined}
+            aria-invalid={error ? true : undefined}
+            aria-describedby={rowDescriptionId(id)}
+          />
+          <RowDescription id={id} parts={[help, note, error]} />
+        </>
       }
     />
   )

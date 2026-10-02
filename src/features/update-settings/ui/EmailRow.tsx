@@ -1,10 +1,13 @@
 import { Field } from '@/shared/ui/Field'
 import { FieldRow } from '@/shared/ui/FieldRow'
 
+import { rowDescriptionId } from '../model/description'
 import { FIELD_IDS } from '../model/fields'
 import { settingNote } from '../model/notes'
 import type { ReadySettingsForm } from './formContext'
-import { rowDescription } from './rowDescription'
+import { RowDescription } from './RowDescription'
+
+const HELP = 'Where your schedule and alerts go'
 
 type EmailRowProps = {
   form: ReadySettingsForm
@@ -22,24 +25,27 @@ export function EmailRow({ form }: EmailRowProps) {
   return (
     <FieldRow
       label="Your email"
-      help="Where your schedule and alerts go"
+      help={HELP}
       htmlFor={id}
       controlLayout="email"
       note={note}
       error={error}
       control={
-        <Field
-          id={id}
-          type="email"
-          size="row"
-          autoComplete="email"
-          placeholder="you@example.com"
-          value={form.draft.coach_email}
-          onChange={(event) => form.setField('coach_email', event.target.value)}
-          readOnly={form.saving}
-          aria-invalid={error ? true : undefined}
-          aria-describedby={rowDescription(id, { note, error })}
-        />
+        <>
+          <Field
+            id={id}
+            type="email"
+            size="row"
+            autoComplete="email"
+            placeholder="you@example.com"
+            value={form.draft.coach_email}
+            onChange={(event) => form.setField('coach_email', event.target.value)}
+            readOnly={form.saving}
+            aria-invalid={error ? true : undefined}
+            aria-describedby={rowDescriptionId(id)}
+          />
+          <RowDescription id={id} parts={[HELP, note, error]} />
+        </>
       }
     />
   )

@@ -42,6 +42,7 @@ export function BookingRulesSection({ form }: BookingRulesSectionProps) {
           label="Travel gap"
           help="Blocked before and after every lesson"
           unit={['min', 'min']}
+          spokenUnit="minutes"
         />
         <LessonLengthsRow form={form} />
         <ChoiceRow
@@ -64,6 +65,7 @@ export function BookingRulesSection({ form }: BookingRulesSectionProps) {
           label="Cancel or reschedule"
           help="Allowed up to this long before the lesson"
           unit={['hour', 'hours']}
+          spokenUnit="hours"
         />
         <CountRow
           form={form}
@@ -71,6 +73,7 @@ export function BookingRulesSection({ form }: BookingRulesSectionProps) {
           label="Booking window"
           help="How far ahead customers can book"
           unit={['week', 'weeks']}
+          spokenUnit="weeks"
         />
         <SwitchRow
           form={form}

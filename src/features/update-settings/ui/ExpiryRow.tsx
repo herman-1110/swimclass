@@ -3,6 +3,14 @@ import { plural } from '@/shared/lib/format'
 import { FieldRow } from '@/shared/ui/FieldRow'
 import { Select, type SelectOption } from '@/shared/ui/Select'
 
+import { rowDescriptionId } from '../model/description'
+import { RowDescription } from './RowDescription'
+
+const ID = 'set-expiry'
+
+/** The help's two drawn lines. */
+const HELP = ['Counted from when a package is paid', 'Not available yet'] as const
+
 const DRAWN: readonly SelectOption[] = [
   { value: '', label: 'Never' },
   { value: '3', label: 'After 3 months' },
@@ -33,23 +41,27 @@ export function ExpiryRow({ months }: ExpiryRowProps) {
   return (
     <FieldRow
       label="Unused lessons expire"
-      htmlFor="set-expiry"
+      htmlFor={ID}
       help={
         // The space keeps the two lines apart when a screen reader reads them as one.
         <>
-          Counted from when a package is paid <br />
-          Not available yet
+          {HELP[0]} <br />
+          {HELP[1]}
         </>
       }
       control={
-        <Select
-          id="set-expiry"
-          size="row"
-          disabled
-          options={expiryOptions(months)}
-          value={months === null ? '' : String(months)}
-          aria-describedby="set-expiry-help"
-        />
+        <>
+          <Select
+            id={ID}
+            size="row"
+            disabled
+            options={expiryOptions(months)}
+            value={months === null ? '' : String(months)}
+            aria-describedby={rowDescriptionId(ID)}
+          />
+          {/* The select is described by the two lines as two sentences. */}
+          <RowDescription id={ID} parts={HELP} />
+        </>
       }
     />
   )

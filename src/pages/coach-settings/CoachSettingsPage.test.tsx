@@ -121,7 +121,7 @@ function renderPage(entry = '/coach/settings') {
 /** The page, once the settings and the hours are in. */
 async function renderLoaded(entry?: string) {
   const rendered = renderPage(entry)
-  await screen.findByRole('textbox', { name: 'Travel gap' }, { timeout: 3000 })
+  await screen.findByRole('textbox', { name: 'Travel gap (minutes)' }, { timeout: 3000 })
   return rendered
 }
 
@@ -168,7 +168,7 @@ describe('CoachSettingsPage', () => {
       expect(button.textContent).toBe('Save changes')
       expect(button.getAttribute('aria-disabled')).toBe('true')
     }
-    await screen.findByRole('textbox', { name: 'Travel gap' }, { timeout: 3000 })
+    await screen.findByRole('textbox', { name: 'Travel gap (minutes)' }, { timeout: 3000 })
     await waitFor(() => expect(document.title).toBe('Settings · Swim Class'))
     expect(screen.queryByText('Loading settings…')).toBeNull()
   })
@@ -205,8 +205,13 @@ describe('CoachSettingsPage', () => {
   it('shows the seed’s settings, with Save unavailable until something changes (§8.1)', async () => {
     await logIn('herman', DEMO_PASSWORD)
     await renderLoaded()
-    expect(screen.getByRole('textbox', { name: 'Travel gap', description: /min$/ })).toBeTruthy()
-    expect(textbox('Travel gap').value).toBe('60')
+    expect(
+      screen.getByRole('textbox', {
+        name: 'Travel gap (minutes)',
+        description: 'Blocked before and after every lesson.',
+      }),
+    ).toBeTruthy()
+    expect(textbox('Travel gap (minutes)').value).toBe('60')
     const lengths = screen.getByRole('group', { name: 'Lesson lengths' })
     expect(within(lengths).getByRole('checkbox', { name: '1 hour' })).toHaveProperty(
       'checked',
@@ -223,9 +228,14 @@ describe('CoachSettingsPage', () => {
       'Every 15 min',
       'Every hour',
     ])
-    expect(textbox('Cancel or reschedule').value).toBe('6')
-    expect(screen.getByRole('textbox', { name: 'Cancel or reschedule', description: /hours$/ }))
-    expect(textbox('Booking window').value).toBe('4')
+    expect(textbox('Cancel or reschedule (hours)').value).toBe('6')
+    expect(
+      screen.getByRole('textbox', {
+        name: 'Cancel or reschedule (hours)',
+        description: 'Allowed up to this long before the lesson.',
+      }),
+    )
+    expect(textbox('Booking window (weeks)').value).toBe('4')
     expect(checkbox('Approve new accounts').checked).toBe(true)
     expect(textbox('Lessons per package').value).toBe('4')
     const prices = screen.getByRole('group', { name: 'Package prices (RM)' })
@@ -235,11 +245,14 @@ describe('CoachSettingsPage', () => {
       expect(price.placeholder).toBe('Not set')
     }
     expect(
-      screen.getByRole('textbox', { name: 'Unpaid packages allowed', description: /package$/ }),
+      screen.getByRole('textbox', {
+        name: 'Unpaid packages allowed',
+        description: 'How many can start before paying.',
+      }),
     )
     const expiry = screen.getByRole<HTMLSelectElement>('combobox', {
       name: 'Unused lessons expire',
-      description: 'Counted from when a package is paid Not available yet',
+      description: 'Counted from when a package is paid. Not available yet.',
     })
     expect(expiry.disabled).toBe(true)
     expect(expiry.selectedOptions[0]?.textContent).toBe('Never')
@@ -259,10 +272,10 @@ describe('CoachSettingsPage', () => {
     for (const button of saveButtons()) {
       expect(button.getAttribute('aria-disabled')).toBe('true')
     }
-    type('Travel gap', '45')
+    type('Travel gap (minutes)', '45')
     for (const button of saveButtons()) expect(button.getAttribute('aria-disabled')).toBeNull()
     // Changed back: nothing to save.
-    type('Travel gap', '60 ')
+    type('Travel gap (minutes)', '60 ')
     for (const button of saveButtons()) {
       expect(button.getAttribute('aria-disabled')).toBe('true')
     }
@@ -272,11 +285,11 @@ describe('CoachSettingsPage', () => {
     await logIn('herman', DEMO_PASSWORD)
     await renderLoaded()
     try {
-      type('Travel gap', '30')
+      type('Travel gap (minutes)', '30')
       screen.getByRole('textbox', {
-        name: 'Travel gap',
+        name: 'Travel gap (minutes)',
         description:
-          'Blocked before and after every lesson Changing the travel gap affects times shown to customers straight away. Existing lessons stay booked. min',
+          'Blocked before and after every lesson. Changing the travel gap affects times shown to customers straight away. Existing lessons stay booked.',
       })
       saveButtons()[0].focus()
       save()
@@ -286,12 +299,12 @@ describe('CoachSettingsPage', () => {
         expect(button.getAttribute('aria-disabled')).toBe('true')
       }
       expect(document.activeElement).toBe(saveButtons()[0])
-      expect(textbox('Travel gap').value).toBe('30')
+      expect(textbox('Travel gap (minutes)').value).toBe('30')
       expect(screen.queryByText(/Changing the travel gap/)).toBeNull()
       expect((await saved())?.travel_gap_minutes).toBe(30)
 
       // The next change turns it back into "Save changes".
-      type('Travel gap', '60')
+      type('Travel gap (minutes)', '60')
       expect(saveButtons()[0].textContent).toBe('Save changes')
       save()
       await savedAnnouncement()
@@ -304,19 +317,22 @@ describe('CoachSettingsPage', () => {
   it('shows a refused travel gap under its row and near Save, and focuses it (walkthrough 3)', async () => {
     await logIn('herman', DEMO_PASSWORD)
     await renderLoaded()
-    type('Travel gap', '500')
+    type('Travel gap (minutes)', '500')
     save()
     const words = 'Travel gap has a value that isn’t allowed. Check it and save again.'
     const alerts = await screen.findAllByRole('alert', {}, SAVE_WAIT)
     expect(alerts.map((alert) => alert.textContent)).toEqual([words, words])
-    const gap = screen.getByRole('textbox', { name: 'Travel gap', description: new RegExp(words) })
+    const gap = screen.getByRole('textbox', {
+      name: 'Travel gap (minutes)',
+      description: new RegExp(words),
+    })
     expect(gap.getAttribute('aria-invalid')).toBe('true')
     await waitFor(() => expect(document.activeElement).toBe(gap))
     expect((await saved())?.travel_gap_minutes).toBe(60)
     for (const button of saveButtons()) expect(button.textContent).toBe('Save changes')
 
     // A change clears the field's message; the line near Save stays until the next save.
-    type('Travel gap', '50')
+    type('Travel gap (minutes)', '50')
     expect(gap.getAttribute('aria-invalid')).toBeNull()
     expect(screen.getAllByRole('alert')).toHaveLength(2)
   })
@@ -339,7 +355,7 @@ describe('CoachSettingsPage', () => {
     await logIn('herman', DEMO_PASSWORD)
     await renderLoaded()
     type('Lesson reminder to customers', '24:00')
-    type('Booking window', 'four')
+    type('Booking window (weeks)', 'four')
     fireEvent.change(
       within(screen.getByRole('group', { name: 'Package prices (RM)' })).getByRole('textbox', {
         name: '1-to-2',
@@ -354,7 +370,7 @@ describe('CoachSettingsPage', () => {
     screen.getByText(
       'Lesson reminder to customers has a value that isn’t allowed. Check it and save again.',
     )
-    await waitFor(() => expect(document.activeElement).toBe(textbox('Booking window')))
+    await waitFor(() => expect(document.activeElement).toBe(textbox('Booking window (weeks)')))
     expect(textbox('Lesson reminder to customers').getAttribute('aria-invalid')).toBe('true')
     expect((await saved())?.reminder_time).toBe('20:00:00')
   })
@@ -443,7 +459,7 @@ describe('CoachSettingsPage', () => {
         target: { value: '18:00' },
       })
       fireEvent.click(within(dialog).getByRole('button', { name: 'Set Monday hours' }))
-      type('Travel gap', '500')
+      type('Travel gap (minutes)', '500')
       save()
 
       const words =
@@ -453,8 +469,8 @@ describe('CoachSettingsPage', () => {
       expect(chips('Mon')).toEqual(['6:00–10:00 pm'])
       // Monday is the saved hours now, so its note is gone; the gap still waits to be saved.
       expect(screen.queryByText(/Changing open hours/)).toBeNull()
-      expect(textbox('Travel gap').value).toBe('500')
-      expect(textbox('Travel gap').getAttribute('aria-invalid')).toBe('true')
+      expect(textbox('Travel gap (minutes)').value).toBe('500')
+      expect(textbox('Travel gap (minutes)').getAttribute('aria-invalid')).toBe('true')
       expect(saveButtons()[0].getAttribute('aria-disabled')).toBeNull()
       expect(await savedHours(1)).toEqual(['18:00:00–22:00:00'])
       expect((await saved())?.travel_gap_minutes).toBe(60)
@@ -492,7 +508,11 @@ describe('CoachSettingsPage', () => {
       type('Lessons per package', '2')
       screen.getByText('Package numbers and balances are recounted for every group straight away.')
       expect(
-        screen.getByRole('textbox', { name: 'Lessons per package', description: /lessons$/ }),
+        screen.getByRole('textbox', {
+          name: 'Lessons per package',
+          description:
+            'A 2-hour lesson uses 2. Package numbers and balances are recounted for every group straight away.',
+        }),
       ).toBeTruthy()
       save()
       await savedAnnouncement()
@@ -511,7 +531,7 @@ describe('CoachSettingsPage', () => {
   it('asks before leaving with unsaved changes (walkthrough 10)', async () => {
     await logIn('herman', DEMO_PASSWORD)
     const { router } = await renderLoaded()
-    type('Travel gap', '30')
+    type('Travel gap (minutes)', '30')
     fireEvent.click(screen.getByRole('link', { name: 'Schedule' }))
     const dialog = await screen.findByRole('alertdialog', {
       name: 'Leave without saving?',
@@ -524,7 +544,7 @@ describe('CoachSettingsPage', () => {
     fireEvent.click(within(dialog).getByRole('button', { name: 'Keep editing' }))
     await waitFor(() => expect(screen.queryByRole('alertdialog')).toBeNull())
     expect(router.state.location.pathname).toBe('/coach/settings')
-    expect(textbox('Travel gap').value).toBe('30')
+    expect(textbox('Travel gap (minutes)').value).toBe('30')
 
     fireEvent.click(screen.getByRole('link', { name: 'Schedule' }))
     fireEvent.click(await screen.findByRole('button', { name: 'Leave without saving' }))
@@ -537,7 +557,7 @@ describe('CoachSettingsPage', () => {
     await logIn('herman', DEMO_PASSWORD)
     const { router } = await renderLoaded()
     try {
-      type('Travel gap', '30')
+      type('Travel gap (minutes)', '30')
       save()
       // Leaving while it saves: the question first…
       fireEvent.click(screen.getByRole('link', { name: 'Schedule' }))
@@ -555,12 +575,12 @@ describe('CoachSettingsPage', () => {
   it('keeps asking when a save that was running is refused', async () => {
     await logIn('herman', DEMO_PASSWORD)
     const { router } = await renderLoaded()
-    type('Travel gap', '500')
+    type('Travel gap (minutes)', '500')
     save()
     fireEvent.click(screen.getByRole('link', { name: 'Schedule' }))
     const dialog = await screen.findByRole('alertdialog', { name: 'Leave without saving?' })
     await waitFor(
-      () => expect(textbox('Travel gap').getAttribute('aria-invalid')).toBe('true'),
+      () => expect(textbox('Travel gap (minutes)').getAttribute('aria-invalid')).toBe('true'),
       SAVE_WAIT,
     )
     expect(screen.getByRole('alertdialog', { name: 'Leave without saving?' })).toBe(dialog)
@@ -580,24 +600,26 @@ describe('CoachSettingsPage', () => {
     await logIn('herman', DEMO_PASSWORD)
     await renderLoaded()
     try {
-      type('Booking window', '5')
+      type('Booking window (weeks)', '5')
       save()
       for (const button of saveButtons()) {
         expect(button.textContent).toBe('Saving…')
         expect(button.getAttribute('aria-disabled')).toBe('true')
         expect(button.getAttribute('aria-busy')).toBe('true')
       }
-      expect(textbox('Booking window').readOnly).toBe(true)
-      expect(textbox('Travel gap').readOnly).toBe(true)
+      expect(textbox('Booking window (weeks)').readOnly).toBe(true)
+      expect(textbox('Travel gap (minutes)').readOnly).toBe(true)
       expect(
         screen.getByRole('button', { name: 'Edit Monday hours' }).getAttribute('aria-disabled'),
       ).toBe('true')
-      expect(textbox('Travel gap').closest('form')?.getAttribute('aria-busy')).toBe('true')
+      expect(textbox('Travel gap (minutes)').closest('form')?.getAttribute('aria-busy')).toBe(
+        'true',
+      )
       // A change while saving is ignored.
-      type('Travel gap', '30')
-      expect(textbox('Travel gap').value).toBe('60')
+      type('Travel gap (minutes)', '30')
+      expect(textbox('Travel gap (minutes)').value).toBe('60')
       await savedAnnouncement()
-      expect(textbox('Booking window').readOnly).toBe(false)
+      expect(textbox('Booking window (weeks)').readOnly).toBe(false)
       expect((await saved())?.booking_window_weeks).toBe(5)
     } finally {
       await restoreSeed()
@@ -609,9 +631,9 @@ describe('CoachSettingsPage', () => {
     const { queryClient } = await renderLoaded()
     try {
       // Typed back to the saved value: nothing to save, so fresh data shows there too.
-      type('Travel gap', '45')
-      type('Travel gap', '60')
-      type('Cancel or reschedule', '8')
+      type('Travel gap (minutes)', '45')
+      type('Travel gap (minutes)', '60')
+      type('Cancel or reschedule (hours)', '8')
       fireEvent.click(screen.getByRole('button', { name: 'Edit Tuesday hours' }))
       fireEvent.click(screen.getByRole('button', { name: 'Remove 5:30 pm to 10:00 pm' }))
       fireEvent.click(screen.getByRole('button', { name: 'Add hours' }))
@@ -634,11 +656,11 @@ describe('CoachSettingsPage', () => {
         ),
       })
       await act(() => queryClient.invalidateQueries())
-      await waitFor(() => expect(textbox('Booking window').value).toBe('5'))
-      expect(textbox('Travel gap').value).toBe('30')
+      await waitFor(() => expect(textbox('Booking window (weeks)').value).toBe('5'))
+      expect(textbox('Travel gap (minutes)').value).toBe('30')
       expect(chips('Tue')).toEqual(['6:00–10:00 pm'])
       // The coach's own change stays, and is still the only thing to save.
-      expect(textbox('Cancel or reschedule').value).toBe('8')
+      expect(textbox('Cancel or reschedule (hours)').value).toBe('8')
       expect(saveButtons()[0].getAttribute('aria-disabled')).toBeNull()
       expect(screen.queryByText(/Changing open hours/)).toBeNull()
     } finally {
@@ -736,7 +758,7 @@ describe('CoachSettingsPage', () => {
     await logIn('herman', DEMO_PASSWORD)
     tryAgain.focus()
     fireEvent.click(tryAgain)
-    await screen.findByRole('textbox', { name: 'Travel gap' }, { timeout: 3000 })
+    await screen.findByRole('textbox', { name: 'Travel gap (minutes)' }, { timeout: 3000 })
     expect(screen.queryByRole('alert')).toBeNull()
     await waitFor(() =>
       expect(document.activeElement).toBe(

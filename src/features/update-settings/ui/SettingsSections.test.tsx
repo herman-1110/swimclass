@@ -72,7 +72,7 @@ function renderForm(ready: boolean, children: ReactNode) {
 describe('SettingsSections', () => {
   it('places what the page gives it after the four sections, inside the grid', () => {
     renderForm(true, <p>After the sections</p>)
-    const form = screen.getByRole('textbox', { name: 'Travel gap' }).closest('form')
+    const form = screen.getByRole('textbox', { name: 'Travel gap (minutes)' }).closest('form')
     const after = screen.getByText('After the sections')
     expect(form?.lastElementChild).toBe(after)
     expect(
