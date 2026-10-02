@@ -53,10 +53,13 @@ export function DemoTools() {
         // Placed where no drawing has a control or text at rest (360–1440 px), and it
         // never moves the page: the top-right corner on phones; from 768 px the top edge
         // at 40 % of the width, between the page title and the header's buttons (the tab
-        // bar's links fill their whole cells); beside the business name in the sidebar
-        // from 1024 px. z-[15]: above the tab bar (z-10), under the focused skip link
-        // (z-20) and anything a page opens over itself (conventions §7.7).
-        className="fixed top-2 right-2 z-[15] flex flex-col items-end gap-1 md:right-auto md:left-[40%] md:items-start lg:top-[15px] lg:left-[168px]"
+        // bar's links fill their whole cells), but the top-right corner on the card pages
+        // (log in, sign up …), where a tall card reaches the top; beside the business name
+        // in the sidebar from 1024 px. Absolute, not fixed: it scrolls away with the top of
+        // the page, so it never covers content or a focused control below it. z-[15]: above
+        // the tab bar (z-10), under the focused skip link (z-20) and anything a page opens
+        // over itself (conventions §7.7).
+        className="absolute top-2 right-2 z-[15] flex flex-col items-end gap-1 md:right-auto md:left-[40%] md:items-start md:max-lg:[:root:has([data-layout=card])_&]:right-2 md:max-lg:[:root:has([data-layout=card])_&]:left-auto md:max-lg:[:root:has([data-layout=card])_&]:items-end lg:top-[15px] lg:left-[168px]"
       >
         <button
           ref={buttonRef}

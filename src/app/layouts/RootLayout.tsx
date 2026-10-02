@@ -16,13 +16,14 @@ export function RootLayout() {
   useRouteFocus()
   return (
     <>
-      <Outlet />
-      <ScrollRestoration />
+      {/* First, so in demo builds its button is the first Tab stop (auth spec §7.1). */}
       {DemoTools && (
         <Suspense fallback={null}>
           <DemoTools />
         </Suspense>
       )}
+      <Outlet />
+      <ScrollRestoration />
     </>
   )
 }

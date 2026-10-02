@@ -16,7 +16,11 @@ type AuthLayoutProps = {
 // page's blocks (heading, form, foot) sit 40 px apart, 32 px from 768 px, as drawn.
 export function AuthLayout({ businessName = DEFAULT_BUSINESS_NAME }: AuthLayoutProps) {
   return (
-    <div className="flex min-h-dvh bg-white md:items-center md:justify-center md:bg-subtle md:p-10">
+    // data-layout="card": the demo build's Demo button keeps clear of the card (DemoTools).
+    <div
+      data-layout="card"
+      className="flex min-h-dvh bg-white md:items-center md:justify-center md:bg-subtle md:p-10"
+    >
       <div className="flex flex-1 flex-col gap-10 bg-white px-7 pt-18 pb-10 md:w-full md:max-w-[420px] md:flex-none md:gap-8 md:rounded-2xl md:border md:border-frame md:p-10">
         <div className="min-h-[1lh] text-sm leading-[normal] font-semibold text-accent">
           {businessName}
