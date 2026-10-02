@@ -5,7 +5,8 @@ import { lastLessonLabel, unpaidPackageLabel, useCoachBalances } from '@/entitie
 import { useCoachGroups } from '@/entities/group'
 import { ApproveAccountButton } from '@/features/approve-account'
 import { coachStudentsPay } from '@/shared/config/routes'
-import { formatDay } from '@/shared/lib/time'
+import { useNow } from '@/shared/lib/hooks/useNow'
+import { formatDayMonth } from '@/shared/lib/time'
 import { ButtonLink } from '@/shared/ui/ButtonLink'
 import { SectionTitle } from '@/shared/ui/SectionTitle'
 import { Skeleton } from '@/shared/ui/Skeleton'
@@ -33,6 +34,7 @@ export function NeedsAttention({ onApproved }: NeedsAttentionProps) {
   const balances = useCoachBalances()
   const groups = useCoachGroups()
   const waiting = usePendingAccounts({ order: 'name' })
+  const now = useNow()
   // Only a read that never loaded: when a refresh fails, the rows shown stay (the next
   // refresh tries again).
   const failed = [balances, groups, waiting].find((query) => query.isLoadingError)
@@ -100,7 +102,8 @@ export function NeedsAttention({ onApproved }: NeedsAttentionProps) {
               <div className="flex min-w-0 flex-col gap-px">
                 <span className={name}>{account.display_name}</span>{' '}
                 <span className="text-small text-muted">
-                  {`Waiting for approval · signed up ${formatDay(account.created_at)}`}
+                  {/* Past dates without the weekday, as on Students & payments ("2 Oct"). */}
+                  {`Waiting for approval · signed up ${formatDayMonth(account.created_at, now)}`}
                 </span>
               </div>
               <ApproveAccountButton account={account} onApproved={onApproved} />
