@@ -56,6 +56,11 @@ describe('Tabs', () => {
     expect(tab('All 13').getAttribute('aria-pressed')).toBe('false')
   })
 
+  it('gives every tab a target at least 44 px wide (CLAUDE.md UI rules)', () => {
+    render(<Filters />)
+    expect(tab('All 13').className).toContain('min-w-11')
+  })
+
   it('keeps every tab in the Tab order, as drawn', () => {
     render(<Filters />)
     for (const item of filters) {
@@ -152,6 +157,14 @@ describe('Tabs', () => {
       rerender(view(true))
       // "Waiting for approval 1" now ends at 360 px: scrolled 110 px, so all of it shows.
       expect(row.scrollLeft).toBe(110)
+
+      // A tab reached with Tab (focus only, not chosen) is scrolled into view too.
+      row.scrollLeft = 0
+      rerender(<Tabs label="Filter packages" items={items(true)} value="all" onChange={() => {}} />)
+      fireEvent.focus(screen.getByRole('button', { name: 'Waiting for approval 1' }))
+      expect(row.scrollLeft).toBe(110)
+      fireEvent.focus(screen.getByRole('button', { name: 'All 13' }))
+      expect(row.scrollLeft).toBe(0)
     } finally {
       for (const undo of restore) undo()
     }

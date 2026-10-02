@@ -146,6 +146,8 @@ describe('GroupPicker', () => {
     expect(within(group).getAllByRole('radio')).toHaveLength(8)
     const box = radio('Student 1 1-to-1').closest('label')?.parentElement
     expect(box?.className).toContain('overflow-y-auto')
+    // A row the arrow keys scroll into view keeps its focus ring inside the box.
+    expect(box?.className).toContain('scroll-py-8')
   })
 
   it('shows the empty text in place of the rows', () => {

@@ -169,7 +169,10 @@ describe('CoachDayView', () => {
         onSelectLesson={() => {}}
       />,
     )
-    expect(screen.getByRole('status').textContent).toBe('Loading the week')
+    const status = screen.getByRole('status')
+    expect(status.textContent).toBe('Loading the week')
+    // About a typical day's height (seven 44 px rows), so the page below moves little.
+    expect(status.parentElement?.querySelectorAll('.h-11')).toHaveLength(7)
     expect(screen.getByRole('button', { name: 'Saturday 3 Oct' })).toBeTruthy()
     rerender(
       <CoachDayView
