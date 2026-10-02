@@ -1,6 +1,7 @@
-import type { AuthError, Session } from '@supabase/supabase-js'
+import type { Session } from '@supabase/supabase-js'
 
 import type { AuthSession } from './auth'
+import { authError } from './authError'
 import type { Backend, Filter } from './backend'
 import { AppError } from './rpc'
 import { supabase } from './supabase'
@@ -61,15 +62,6 @@ function toSession(session: Session | null): AuthSession | null {
 }
 
 /** Supabase Auth's errors carry a code (`user_already_exists`, `weak_password` …). */
-function authError(error: AuthError): AppError {
-  if (error.name === 'AuthRetryableFetchError') return new AppError('network', {}, error)
-  // Any failure of the profile trigger (TECH_SPEC §9) comes back as this one message.
-  if (/database error saving new user/i.test(error.message)) {
-    return new AppError('signup_failed', {}, error)
-  }
-  return new AppError(error.code ?? 'unknown', {}, error)
-}
-
 /** An Edge Function's refusal: `{ "error": "<code>" }` with a 4xx status. */
 async function edgeError(error: unknown): Promise<never> {
   const response =
