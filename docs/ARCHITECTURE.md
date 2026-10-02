@@ -91,11 +91,14 @@ src/
 ├── main.tsx                      starts the app
 ├── app/
 │   ├── App.tsx                   providers + router
-│   ├── providers/                QueryProvider.tsx · SessionProvider.tsx · ErrorBoundary.tsx
+│   ├── providers/                QueryProvider.tsx · SessionProvider.tsx (a route's errors
+│   │                             go to router/RouteError.tsx, its errorElement)
 │   ├── router/                   routes.tsx (every route; the coach's pages lazy-loaded, §3.7)
 │   │                             guards.tsx · safeFrom.ts · router.ts · RouteError.tsx ·
-│   │                             RouteLoading.tsx
-│   ├── layouts/                  AuthLayout.tsx (a card from 768 px) · PendingLayout.tsx ·
+│   │                             RouteLoading.tsx · useRouteFocus.ts (a new page's h1 takes focus)
+│   ├── layouts/                  RootLayout.tsx (every route: Outlet, scroll restoration, route
+│   │                             focus, the demo tools) · AuthLayout.tsx (a card from 768 px) ·
+│   │                             PendingLayout.tsx ·
 │   │                             CustomerLayout.tsx · CoachLayout.tsx (bottom tab bar under
 │   │                             1024 px, sidebar from 1024 px; DESIGN §5), built from
 │   │                             TabBar.tsx · Sidebar.tsx · SkipLink.tsx · navigation.ts
@@ -130,7 +133,8 @@ src/
 │   ├── account/                  session, profile, role; accounts list (coach)
 │   ├── announcement/             the pinned coach message · CoachBanner
 │   ├── balance/                  packages: used, booked, left, paid · PackageSummary
-│   ├── booking/                  lessons: upcoming, past, "lesson 2 of 4" · LessonRow
+│   ├── booking/                  lessons: upcoming, past, "lesson 2 of 4" · LessonRowLayout,
+│   │                             PastLessonRow, HistoryLessonRow
 │   ├── email-log/                what the mailer sent (coach)
 │   ├── group/                    student groups: names, 1-to-1/2/3, location · GroupPicker
 │   ├── open-hours/               weekly hours and one-off exceptions
@@ -148,9 +152,14 @@ src/
     │                             business.ts (the business name on signed-out pages)
     │                             demo.ts (demo mode's clock and sample password)
     ├── lib/                      time/ (Malaysia time) · format/ (RM, plurals) · hooks/ · cn.ts
-    └── ui/                       Button, Field, Select, Checkbox, OptionRow, Segmented, Chip,
-                                  DayStrip, SegmentBar, Tag, Pill, Table, Tabs, Dialog, SidePanel,
-                                  WeekGrid, Skeleton, EmptyState, Banner, icons/
+    └── ui/                       the kit (UI kit spec), one component per file:
+                                  Button, ButtonLink, IconButton, BackLink (buttonClasses.ts);
+                                  Field, FieldRow, FieldList, Fieldset, Legend, Select, Textarea,
+                                  Checkbox, RadioGroup, OptionRow, Segmented, SegmentBar, Chip;
+                                  Card, CardFooter, PageHeader, SectionTitle, SectionLabel,
+                                  Figure, Tag, Pill, Banner, EmptyState, Skeleton, StickyBar;
+                                  DayStrip, WeekNav, WeekGrid (weekGridLayout.ts), Table, Tabs;
+                                  Dialog, SidePanel; icons/
 ```
 
 Folders appear when their first file is written; don't create empty ones.
