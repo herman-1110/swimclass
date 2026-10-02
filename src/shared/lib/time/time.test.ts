@@ -12,6 +12,7 @@ import {
   mytInstant,
   mytWeekStart,
   nowMyt,
+  parseDateKey,
   toMyt,
   weekDays,
 } from './time'
@@ -216,5 +217,22 @@ describe('toMyt and nowMyt', () => {
     expect(saturdayNoon.getHours()).toBe(12)
     expect(saturdayNoon.getDay()).toBe(6)
     expect(nowMyt().timeZone).toBe(MYT)
+  })
+})
+
+describe('parseDateKey', () => {
+  it('keeps a real "yyyy-MM-dd" date', () => {
+    expect(parseDateKey('2026-10-03')).toBe('2026-10-03')
+    expect(parseDateKey('2028-02-29')).toBe('2028-02-29')
+  })
+
+  it('gives null for a missing, empty, malformed or impossible date', () => {
+    expect(parseDateKey(null)).toBeNull()
+    expect(parseDateKey(undefined)).toBeNull()
+    expect(parseDateKey('')).toBeNull()
+    expect(parseDateKey('2026-2-3')).toBeNull()
+    expect(parseDateKey('3 Oct 2026')).toBeNull()
+    expect(parseDateKey('2026-02-30')).toBeNull()
+    expect(parseDateKey('2026-13-01')).toBeNull()
   })
 })

@@ -13,25 +13,19 @@ import { bookableWindow } from '@/entities/slot'
 import { ROUTES } from '@/shared/config/routes'
 import { useNow } from '@/shared/lib/hooks/useNow'
 import { useReadFailure } from '@/shared/lib/hooks/useReadFailure'
-import { addDays, type DateKey, mytDateKey, mytWeekStart } from '@/shared/lib/time'
+import { addDays, type DateKey, mytDateKey, mytWeekStart, parseDateKey } from '@/shared/lib/time'
 import { PageHeader } from '@/shared/ui/PageHeader'
 import { WeekNav } from '@/shared/ui/WeekNav'
 
 import { WeekError } from './ui/WeekError'
 
-const DATE_KEY = /^\d{4}-\d{2}-\d{2}$/
-
 /** ?week=YYYY-MM-DD as its Monday, never before this week; this week if missing or not a
  *  real date (customer-schedule §1). */
 function askedWeek(param: string | null, thisWeek: DateKey): DateKey {
-  if (!param || !DATE_KEY.test(param)) return thisWeek
-  try {
-    const week = mytWeekStart(param)
-    return week < thisWeek ? thisWeek : week
-  } catch {
-    // Not a real date ("2026-02-30").
-    return thisWeek
-  }
+  const day = parseDateKey(param)
+  if (day === null) return thisWeek
+  const week = mytWeekStart(day)
+  return week < thisWeek ? thisWeek : week
 }
 
 /** The last week a customer may book (TECH_SPEC §5.1); undefined while the settings load.

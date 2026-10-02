@@ -81,6 +81,21 @@ export function mytInstant(date: DateKey, time: string): Date {
   return new Date(result.getTime())
 }
 
+/**
+ * The value when it is a real date written "yyyy-MM-dd" ("2026-10-03"), otherwise null:
+ * missing, empty (a cleared date field), another format, or a day that doesn't exist
+ * ("2026-02-30"). For dates from the address or a form.
+ */
+export function parseDateKey(value: string | null | undefined): DateKey | null {
+  if (value == null || !DATE_KEY.test(value)) return null
+  try {
+    mytInstant(value, '12:00')
+    return value
+  } catch {
+    return null
+  }
+}
+
 /** The Monday (ISO week start) of the MYT week that contains the moment or date. */
 export function mytWeekStart(value: Instant | DateKey): DateKey {
   const day = typeof value === 'string' && DATE_KEY.test(value) ? mytInstant(value, '12:00') : value

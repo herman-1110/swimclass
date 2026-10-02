@@ -1,5 +1,5 @@
 import type { CoachSlotCheckArgs } from '@/entities/slot'
-import { addDays, type DateKey, mytInstant } from '@/shared/lib/time'
+import { addDays, type DateKey, mytInstant, parseDateKey } from '@/shared/lib/time'
 
 import type { CoachBookInput } from '../api/useCoachBook'
 
@@ -73,7 +73,7 @@ export function sameBooking(
 
 /** The start as a moment, or null while the date or time is missing or not real. */
 export function startOf(draft: Pick<BookingDraft, 'date' | 'start'>): Date | null {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(draft.date) || !/^\d{2}:\d{2}$/.test(draft.start)) return null
+  if (parseDateKey(draft.date) === null || !/^\d{2}:\d{2}$/.test(draft.start)) return null
   try {
     return mytInstant(draft.date, draft.start)
   } catch {
