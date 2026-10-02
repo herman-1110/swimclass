@@ -38,7 +38,8 @@ export function BookPage() {
 
   let body: ReactNode
   if (groups.data && !groups.data.some((group) => group.active)) {
-    body = <EmptyState>{NO_GROUPS_MESSAGE}</EmptyState>
+    // In a card, as it replaces whole sections (ui-kit §3.23), and as My classes shows it.
+    body = <EmptyState framed>{NO_GROUPS_MESSAGE}</EmptyState>
   } else if (failed) {
     const retry = () => {
       // "Try again" goes while the reads run again: focus waits on the page's title.

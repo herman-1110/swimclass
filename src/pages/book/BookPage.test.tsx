@@ -456,7 +456,9 @@ describe('BookPage', () => {
 describe('BookPage for the coach', () => {
   it('shows herman the empty state and reads no start times (book §6.2)', async () => {
     const { queryClient } = await renderBook('herman')
-    expect(await screen.findByText(NO_GROUPS_MESSAGE, {}, SLOW)).toBeTruthy()
+    const message = await screen.findByText(NO_GROUPS_MESSAGE, {}, SLOW)
+    // In a card, as My classes shows it (ui-kit §3.23: it replaces whole sections).
+    expect(message.closest('.rounded-frame.border-frame')).not.toBeNull()
     expect(screen.getByRole('heading', { level: 1, name: 'Book a lesson' })).toBeTruthy()
     expect(screen.getByText('Hi, Herman')).toBeTruthy()
     expect(screen.queryByRole('radio')).toBeNull()
