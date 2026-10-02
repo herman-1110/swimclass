@@ -19,7 +19,8 @@ import {
 } from '../model/outcome'
 import { lessonsPerBooking, repeatLabel, repeatWeeks } from '../model/repeatWeeks'
 import { bookingSummaryState, cancelPolicyNote } from '../model/summary'
-import { BookedActions, BookedText } from './BookedPanel'
+import { BookedActions } from './BookedActions'
+import { BookedText } from './BookedText'
 import { SummaryFrame } from './SummaryFrame'
 import { SummaryText } from './SummaryText'
 

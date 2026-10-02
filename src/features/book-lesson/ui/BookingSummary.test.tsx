@@ -210,11 +210,11 @@ describe('BookingSummary', () => {
   it('shows a free start with what it uses and "Repeat weekly", unchecked (C1, C3)', () => {
     const summary = renderSummary(TUE_730)
     expect(summary.getByText('Tue 29 Sep · 7:30–8:30 pm')).toBeTruthy()
-    expect(
-      summary.getByText(
-        '1-to-2 for Aiman & Sofia · uses 1 lesson from Package 4, 1 left to book after this',
-      ),
-    ).toBeTruthy()
+    const uses = summary.getByText(
+      '1-to-2 for Aiman & Sofia · uses 1 lesson from Package 4, 1 left to book after this',
+    )
+    // A one-word name of up to 100 characters breaks inside the card (book §6.6).
+    expect(uses.className).toContain('wrap-anywhere')
     const repeat = summary.getByRole<HTMLInputElement>('checkbox', {
       name: 'Repeat weekly for 4 weeks',
     })
@@ -283,6 +283,8 @@ describe('BookingSummary', () => {
       name: 'Booked 7:30 pm for Aiman & Sofia',
     })
     expect(document.activeElement).toBe(heading)
+    // A one-word name of up to 100 characters breaks inside the card (book §6.6).
+    expect(heading.className).toContain('wrap-anywhere')
     // The heading is on screen already: focusing it must not scroll the page (phones).
     expect(focus.mock.contexts).toContain(heading)
     expect(focus).toHaveBeenCalledWith({ preventScroll: true })
