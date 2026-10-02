@@ -208,7 +208,11 @@ const COACH_CASES: Case[] = [
   ['invalid_display_name', {}, 'Type their name (up to 100 characters).'],
   ['invalid_phone', {}, 'Shorten the phone number to 30 characters or fewer.'],
   ['invalid_email', {}, 'Type an email address, like name@example.com.'],
-  ['email_taken', {}, 'Another account already uses this email.'],
+  [
+    'email_taken',
+    {},
+    'Another account already uses this email. Choose that account under Account, or type a different email.',
+  ],
   // The coach's forms' checks before any call (proposed in the Add students, Students,
   // Settings and Schedule specs).
   ['account_required', {}, 'Choose an account, or create a new one.'],

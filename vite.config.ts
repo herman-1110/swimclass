@@ -3,7 +3,47 @@ import { fileURLToPath } from 'node:url'
 
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
-import { defineConfig, loadEnv } from 'vite'
+import { defineConfig, loadEnv, type Plugin } from 'vite'
+
+// The app's own modules (src/**/*.ts, *.tsx) do nothing when imported, apart from main.tsx
+// (it starts the app; the CSS files it imports are not .ts). Saying so lets the build drop
+// what a chunk doesn't use: the coach's week grid, day view and balances no longer travel
+// in the chunks every customer downloads because a front door (index.ts) re-exports them.
+const OWN_MODULE = /\/src\/(?!main\.tsx$)[^?]*\.tsx?$/
+
+/** A module id with forward slashes (Windows ids use backslashes). */
+const toPosix = (id: string) => id.replaceAll('\\', '/')
+
+/**
+ * Production builds load the Supabase backend with import() once the app asks for the
+ * session (src/shared/api/backend.ts), so the browser would only find it after the main
+ * chunks have run. A modulepreload link fetches it alongside them (about 0.6 s sooner on a
+ * slow 4G connection). Demo builds have no such chunk and are unchanged.
+ */
+function preloadSupabaseBackend(): Plugin {
+  return {
+    name: 'preload-supabase-backend',
+    apply: 'build',
+    transformIndexHtml: {
+      order: 'post',
+      handler(_html, context) {
+        const chunk = Object.values(context.bundle ?? {}).find(
+          (output) =>
+            output.type === 'chunk' &&
+            toPosix(output.facadeModuleId ?? '').endsWith('/src/shared/api/supabaseBackend.ts'),
+        )
+        if (!chunk) return []
+        return [
+          {
+            tag: 'link',
+            attrs: { rel: 'modulepreload', crossorigin: true, href: `/${chunk.fileName}` },
+            injectTo: 'head',
+          },
+        ]
+      },
+    },
+  }
+}
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
@@ -15,8 +55,15 @@ export default defineConfig(({ mode }) => {
   const demo = VITE_DEMO ? VITE_DEMO === 'true' : mode !== 'production'
 
   return {
-    plugins: [react(), tailwindcss()],
+    plugins: [react(), tailwindcss(), preloadSupabaseBackend()],
     define: { 'import.meta.env.VITE_DEMO': JSON.stringify(String(demo)) },
+    build: {
+      rolldownOptions: {
+        treeshake: {
+          moduleSideEffects: (id: string) => !OWN_MODULE.test(toPosix(id)),
+        },
+      },
+    },
     // PGlite loads its own WebAssembly and data files, so Vite must not pre-bundle it.
     optimizeDeps: { exclude: ['@electric-sql/pglite'] },
     // One path alias: @/ means src/ (ARCHITECTURE §8).

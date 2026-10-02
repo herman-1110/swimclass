@@ -1,5 +1,3 @@
-import { Fragment } from 'react'
-
 import { cn } from '@/shared/lib/cn'
 import { mytDateKey } from '@/shared/lib/time'
 
@@ -25,6 +23,11 @@ const override = { text: 'Gap override', className: cn(small, 'text-travel') }
  * for three lines, so there "Gap override" takes the place's line (§9 C4). The place, the
  * date and the payment flags that don't show are read out after the visible lines (§7.2):
  * "Kai, 9:00–10:00 pm, Gap override, Palm Court, Fri 2 Oct".
+ *
+ * Screen readers get one hidden line with all of it, the parts joined by ", ", and the
+ * visible lines are hidden from them: a comma of its own beside each truncated line was
+ * read with a space before it ("Kai , 9:00–10:00 pm"), and sat at the end of the uncut text,
+ * widening the page.
  */
 export function CoachLessonLines({ lesson }: CoachLessonLinesProps) {
   const place = lessonPlace(lesson)
@@ -52,17 +55,12 @@ export function CoachLessonLines({ lesson }: CoachLessonLinesProps) {
 
   return (
     <>
-      {/* The spaces between the lines aren't drawn (flex layout drops them), and the commas
-          are for screen readers only: the name reads as a list, not one run of words. */}
       {lines.map((line, index) => (
-        <Fragment key={index}>
-          <span className={line.className}>
-            {line.text}
-            <span className="sr-only">,</span>
-          </span>{' '}
-        </Fragment>
+        <span key={index} aria-hidden="true" className={line.className}>
+          {line.text}
+        </span>
       ))}
-      <span className="sr-only">{unseen.join(', ')}</span>
+      <span className="sr-only">{[...lines.map((line) => line.text), ...unseen].join(', ')}</span>
     </>
   )
 }

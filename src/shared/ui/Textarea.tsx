@@ -47,6 +47,7 @@ export function Textarea({
   className,
   'aria-describedby': describedByProp,
   'aria-invalid': ariaInvalid,
+  onFocus,
   ...rest
 }: TextareaProps) {
   const autoId = useId()
@@ -74,6 +75,14 @@ export function Textarea({
       {look === 'message' && helpText}
       <textarea
         {...rest}
+        // Browsers bring only the caret's line into view when a box takes focus, which can
+        // leave the rest of it and its focus ring under a bar stuck to the bottom of the page
+        // or a dialog. Show the whole box, inside the scroll padding that keeps those bars
+        // clear (DESIGN §5; WCAG 2.2 2.4.11). jsdom has no scrollIntoView.
+        onFocus={(event) => {
+          event.currentTarget.scrollIntoView?.({ block: 'nearest' })
+          onFocus?.(event)
+        }}
         id={id}
         rows={rows ?? defaultRows[look]}
         aria-describedby={describedBy}

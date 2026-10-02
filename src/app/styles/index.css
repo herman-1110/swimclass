@@ -120,6 +120,17 @@
     outline: 2px solid var(--accent);
     outline-offset: 2px;
   }
+
+  /* Below 1024 px the tab bar is stuck to the bottom of the window (TabBar.tsx: a 1px rule,
+     4px above the 52px items, max(16px, safe area) below them). A control reached with Tab
+     scrolls clear of it, with 8px more so its focus ring and the ring's offset clear it too
+     (DESIGN §5; WCAG 2.2 2.4.11). Book's summary and Settings' Save bar set more while they
+     are mounted. */
+  @media (width < 64rem) {
+    html:has([data-tab-bar]) {
+      scroll-padding-bottom: calc(57px + max(16px, env(safe-area-inset-bottom)) + 8px);
+    }
+  }
 }
 
 /* Respect "reduce motion": dialogs and state changes appear without animating. */

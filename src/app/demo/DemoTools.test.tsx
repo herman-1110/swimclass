@@ -76,6 +76,14 @@ describe('the Demo button', () => {
     expect(screen.getByRole('button', { name: 'Demo' })).toBeTruthy()
   })
 
+  it('sits at the top of the page and scrolls away with it, clear of the card pages’ card', () => {
+    renderTools({ status: 'signed-out' })
+    const spot = screen.getByRole('button', { name: 'Demo' }).parentElement
+    expect(spot?.className).toContain('absolute')
+    expect(spot?.className).not.toContain('fixed')
+    expect(spot?.className).toContain('md:max-lg:[:root:has([data-layout=card])_&]:right-2')
+  })
+
   it('opens a panel that says what demo mode is, and Esc or Close shuts it', async () => {
     await logIn('meiling', DEMO_PASSWORD)
     renderAt('/book')

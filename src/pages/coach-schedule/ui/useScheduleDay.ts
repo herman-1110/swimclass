@@ -1,18 +1,10 @@
 import { useSearchParams } from 'react-router'
 
 import { useNow } from '@/shared/lib/hooks/useNow'
-import { addDays, type DateKey, mytDateKey, mytInstant, mytWeekStart } from '@/shared/lib/time'
+import { addDays, type DateKey, mytDateKey, mytWeekStart, parseDateKey } from '@/shared/lib/time'
 
 /** ?day as a real MYT date ("2026-10-03"), or null when missing or not a date. */
-function dayFrom(param: string | null): DateKey | null {
-  if (param === null || !/^\d{4}-\d{2}-\d{2}$/.test(param)) return null
-  try {
-    mytInstant(param, '12:00')
-    return param
-  } catch {
-    return null
-  }
-}
+const dayFrom = parseDateKey
 
 export type ScheduleDay = {
   /** The chosen day: ?day, or today. On phones it is the day view's day. */

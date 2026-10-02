@@ -70,6 +70,24 @@ describe('PackageSummary on Book', () => {
     expect(screen.getByText('Unpaid').className).toContain('text-warn')
     expect(screen.queryByText('Paid')).toBeNull()
   })
+
+  it('says neither Paid nor Unpaid for a package no payment covers', () => {
+    // A new group the coach added with "First package already paid" left unticked.
+    const neverPaid: GroupBalance = {
+      ...aimanSofia,
+      paid_lessons: 0,
+      used_lessons: 0,
+      booked_lessons: 0,
+      package_no: 1,
+      booked_in_package: 0,
+      left_in_package: 4,
+    }
+    render(<PackageSummary balance={neverPaid} typeLabel="1-to-1" note={NOTE} />)
+    expect(screen.getByText('1-to-1 · Package 1')).toBeTruthy()
+    expect(screen.queryByText('Paid')).toBeNull()
+    expect(screen.queryByText('Unpaid')).toBeNull()
+    expect(screen.getByText('0 used · 0 booked · 4 left to book')).toBeTruthy()
+  })
 })
 
 describe('PackageSummary on My classes', () => {

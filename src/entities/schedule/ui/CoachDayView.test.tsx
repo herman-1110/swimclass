@@ -99,6 +99,8 @@ describe('CoachDayView', () => {
       'Wei Jie 7:30–8:30 pm · Palm Court Unpaid',
       'Kai 9:00–10:00 pm · Palm Court Gap override',
     ])
+    // Long names and places wrap inside the block, even inside a word (coach-schedule §6.7).
+    expect(lessons[0].className).toContain('wrap-anywhere')
     fireEvent.click(
       screen.getByRole('button', { name: 'Kai 9:00–10:00 pm · Palm Court Gap override' }),
     )
@@ -167,7 +169,10 @@ describe('CoachDayView', () => {
         onSelectLesson={() => {}}
       />,
     )
-    expect(screen.getByRole('status').textContent).toBe('Loading the week')
+    const status = screen.getByRole('status')
+    expect(status.textContent).toBe('Loading the week')
+    // About a typical day's height (seven 44 px rows), so the page below moves little.
+    expect(status.parentElement?.querySelectorAll('.h-11')).toHaveLength(7)
     expect(screen.getByRole('button', { name: 'Saturday 3 Oct' })).toBeTruthy()
     rerender(
       <CoachDayView

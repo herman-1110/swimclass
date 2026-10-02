@@ -1,12 +1,24 @@
-import { formatDay, formatRange, type Instant, toMyt } from '@/shared/lib/time'
+import { lessonDateRange, packagePosition } from '@/entities/booking'
+import { formatDay, type Instant, toMyt } from '@/shared/lib/time'
 
 import type { ExcusableLesson, ExcuseCandidate } from './types'
 
-type Timed = Pick<ExcuseCandidate, 'starts_at' | 'ends_at'>
-
-/** "Fri 25 Sep, 7:30–8:30 pm". */
-export function lessonWhen(lesson: Timed): string {
-  return `${formatDay(lesson.starts_at)}, ${formatRange(lesson.starts_at, lesson.ends_at)}`
+/**
+ * An option of "Excuse a missed lesson": the lesson's date and times, with the year when it
+ * isn't this year's ("Fri 12 Dec 2025, 7:30–8:30 pm", as History has it), over its place in
+ * its package ("Package 2 · lesson 2 of 4"; a line of its own, so it starts with a capital:
+ * "Last lesson of Package 2 and first of Package 3").
+ */
+export function excuseOption(
+  lesson: ExcusableLesson,
+  packageSize: number,
+  now: Instant,
+): { when: string; position: string } {
+  const position = packagePosition(lesson, packageSize, ' · ')
+  return {
+    when: lessonDateRange(lesson.starts_at, lesson.ends_at, now),
+    position: position.charAt(0).toUpperCase() + position.slice(1),
+  }
 }
 
 /**
@@ -28,7 +40,7 @@ export const ENDED_HINT =
 
 /** The lesson details' confirmation title (the Schedule spec §7.4, proposed). */
 export function excuseTitle(lesson: ExcuseCandidate): string {
-  return `Mark ${lessonWhen(lesson)} for ${lesson.display_names} as excused?`
+  return `Mark ${lessonDateRange(lesson.starts_at, lesson.ends_at)} for ${lesson.display_names} as excused?`
 }
 
 /** Under the title: what excusing does (the Schedule spec §7.4, proposed). */
@@ -55,19 +67,4 @@ export const LESSON_EXCUSED = 'Lesson excused'
 /** "Excuse Fri 25 Sep lesson", or "Excuse lesson" until one is picked. */
 export function excuseButtonLabel(lesson: Pick<ExcusableLesson, 'starts_at'> | undefined): string {
   return lesson ? `Excuse ${formatDay(lesson.starts_at)} lesson` : 'Excuse lesson'
-}
-
-/**
- * Where the lesson sits in its package: "Package 2 · lesson 2 of 4", "Package 3 · lessons
- * 1–2 of 4" for a 2-hour lesson, and "Last lesson of Package 2 and first of Package 3" for a
- * 2-hour lesson across two packages (the My classes spec §5.2's wording).
- */
-export function excusePosition(
-  lesson: Pick<ExcusableLesson, 'lessons' | 'package_no' | 'lesson_in_package'>,
-  packageSize: number,
-): string {
-  const { lessons, package_no: pkg, lesson_in_package: n } = lesson
-  if (lessons < 2) return `Package ${pkg} · lesson ${n} of ${packageSize}`
-  if (n < packageSize) return `Package ${pkg} · lessons ${n}–${n + 1} of ${packageSize}`
-  return `Last lesson of Package ${pkg} and first of Package ${pkg + 1}`
 }

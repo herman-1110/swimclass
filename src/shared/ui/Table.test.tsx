@@ -35,6 +35,14 @@ describe('Table', () => {
     expect(rows[2].hasAttribute('aria-current')).toBe(false)
   })
 
+  it('scrolls sideways inside its frame when it can’t fit, never hiding a column', () => {
+    render(<Table caption="Open hours" columns={columns} rows={[]} />)
+    const frame = screen.getByRole('table').parentElement
+    expect(frame?.className).toContain('overflow-x-auto')
+    // Holds the screen-reader-only text, which would otherwise widen the page.
+    expect(frame?.className).toContain('relative')
+  })
+
   it('can be named by a visible heading, with a header read only by screen readers', () => {
     render(
       <>

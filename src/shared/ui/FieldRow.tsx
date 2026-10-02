@@ -49,7 +49,8 @@ const line = 'flex flex-wrap items-center justify-between gap-x-4 gap-y-2.5'
 
 const controls: Record<FieldRowControl, string> = {
   auto: 'flex shrink-0 items-center gap-2',
-  options: 'flex shrink-0 items-center gap-4',
+  // On a line of their own and still too wide (large text on a phone), the options wrap.
+  options: 'flex min-w-0 flex-wrap items-center gap-x-4 gap-y-2',
   full: 'min-w-0 flex-[1_1_100%]',
   email: 'min-w-0 flex-[1_1_100%] md:flex-[0_0_240px]',
   prices: 'grid flex-[1_1_100%] grid-cols-3 gap-2.5 md:flex md:flex-none',

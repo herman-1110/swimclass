@@ -2,21 +2,27 @@ import { messageFor } from '@/shared/config/messages'
 import { formatRinggit, possessive } from '@/shared/lib/format'
 import { formatDayMonth, type Instant, toMyt } from '@/shared/lib/time'
 
-import { nextBookingPackageNo } from './packages'
+import { isNextLessonPaid, nextBookingPackageNo } from './packages'
 import type { GroupBalance } from './types'
 
 // The orange line under a package (DESIGN §4): what the customer should pay, and when. Display
 // only: the database decides the balance, and whether a booking may go ahead.
 
 /**
- * Book's line under the package bar (book spec §5.2.1), or null: once the package has no
- * lesson left to book, "New bookings start Package 3. Pay RM 240 before or at its first
- * lesson." Without a price for the group's type: "… Pay for it before or at its first lesson."
- * A group that can book nothing more (can_still_book 0 or less) gets DESIGN §6's
- * credit_exceeded words instead.
+ * Book's line under the package bar (book spec §5.2.1), or null while the next lesson booked is
+ * paid for (used + booked < paid, as on My classes; a free lesson counts). Once it isn't, and
+ * the package has no lesson left to book, or the next lesson starts a package no payment covers
+ * (a new group that hasn't paid, a package used up exactly): "New bookings start Package 3. Pay
+ * RM 240 before or at its first lesson." Without a price for the group's type: "… Pay for it
+ * before or at its first lesson." A group that can book nothing more (can_still_book 0 or less)
+ * gets DESIGN §6's credit_exceeded words instead.
  */
 export function bookPackageNote(balance: GroupBalance, priceCents: number | null): string | null {
-  if (balance.left_in_package > 0) return null
+  if (isNextLessonPaid(balance)) return null
+  const counted = balance.used_lessons + balance.booked_lessons
+  const startsUnpaidPackage =
+    counted === balance.paid_lessons && counted % balance.package_size === 0
+  if (balance.left_in_package > 0 && !startsUnpaidPackage) return null
   if (balance.can_still_book <= 0) return messageFor({ code: 'credit_exceeded' })
   const pay = priceCents === null ? 'Pay for it' : `Pay ${formatRinggit(priceCents)}`
   return `New bookings start Package ${nextBookingPackageNo(balance)}. ${pay} before or at its first lesson.`
@@ -50,11 +56,11 @@ export function accountPackageNote(
   balance: GroupBalance,
   { names, typeLabel, priceCents, now }: AccountNoteInput,
 ): string | null {
+  if (isNextLessonPaid(balance)) return null
   const paid = balance.paid_lessons
   const counted = balance.used_lessons + balance.booked_lessons
   const size = balance.package_size
   const price = priceCents === null ? '' : ` ${formatRinggit(priceCents)}`
-  if (counted < paid) return null
 
   if (counted === paid) {
     const after = balance.last_lesson_at

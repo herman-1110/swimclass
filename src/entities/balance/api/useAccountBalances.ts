@@ -28,15 +28,3 @@ function accountBalances(accountId: string | null) {
 export function useAccountBalances(accountId: string | null) {
   return useQuery(accountBalances(accountId))
 }
-
-/**
- * One of the account's groups (Book's package card): the same request as
- * useAccountBalances, so switching groups needs no new one. `data` is null when the account
- * has no such group.
- */
-export function useAccountBalance(accountId: string | null, groupId: string | null) {
-  return useQuery({
-    ...accountBalances(accountId),
-    select: (balances) => balances.find((balance) => balance.group_id === groupId) ?? null,
-  })
-}

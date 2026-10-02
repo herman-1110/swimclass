@@ -72,6 +72,8 @@ describe('FieldRow', () => {
     expect(document.getElementById(helpId)?.textContent).toBe('What customers can choose')
     expect(screen.getByText('Lesson lengths').tagName).toBe('SPAN')
     expect(screen.getAllByRole('checkbox')).toHaveLength(2)
+    // With large text the options wrap on their own line instead of leaving the frame.
+    expect(group.className).toContain('flex-wrap')
   })
 
   it('shows a note and an error under the row with ids the control can list', () => {

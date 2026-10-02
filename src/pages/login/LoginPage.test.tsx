@@ -5,7 +5,7 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 
 import { SessionContext } from '@/entities/account'
 import { getSession, logIn, logOut } from '@/shared/api/auth'
-import { demoDb } from '@/shared/api/demo/db'
+import { holdDemoDatabase } from '@/shared/api/demo/testing'
 import { DEMO_PASSWORD } from '@/shared/config/demo'
 import { ROUTES } from '@/shared/config/routes'
 
@@ -67,31 +67,6 @@ const logInButton = () => screen.getByRole('button', { name: /^Log(ging)? in/ })
 function fill(username: string, password: string) {
   fireEvent.change(input('Username'), { target: { value: username } })
   fireEvent.change(input('Password'), { target: { value: password } })
-}
-
-/**
- * Holds the demo database in an open transaction, so the next call waits (as it would on a
- * slow connection) until the returned function is called.
- */
-async function holdDatabase(): Promise<() => Promise<void>> {
-  const db = await demoDb()
-  let release = () => {}
-  const released = new Promise<void>((resolve) => {
-    release = resolve
-  })
-  let started = () => {}
-  const holding = new Promise<void>((resolve) => {
-    started = resolve
-  })
-  const held = db.transaction(async () => {
-    started()
-    await released
-  })
-  await holding
-  return async () => {
-    release()
-    await held
-  }
 }
 
 describe('LoginPage', () => {
@@ -181,7 +156,7 @@ describe('LoginPage', () => {
   it('says "Logging in…" and ignores more presses while it runs', async () => {
     renderLogin()
     fill('meiling', DEMO_PASSWORD)
-    const release = await holdDatabase()
+    const release = await holdDemoDatabase()
     try {
       fireEvent.click(logInButton())
       const button = await screen.findByRole('button', { name: 'Logging in…' })

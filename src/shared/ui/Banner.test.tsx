@@ -35,6 +35,18 @@ describe('Banner', () => {
     expect(document.activeElement).toBe(status)
   })
 
+  it('wraps its text inside a long word, with or without an action', () => {
+    const { container } = render(
+      <>
+        <Banner>https://example.com/a-very-long-link</Banner>
+        <Banner action={<button type="button">Try again</button>}>Couldn’t load.</Banner>
+      </>,
+    )
+    const [plain, withAction] = [...container.children]
+    expect(plain.className).toContain('wrap-anywhere')
+    expect(withAction.firstElementChild?.className).toContain('wrap-anywhere')
+  })
+
   it('shows an action beside the text', () => {
     const onRetry = vi.fn()
     render(

@@ -1,5 +1,5 @@
 export { type CancelLessonInput, useCancelLesson } from './api/useCancelLesson'
-export { cancelNote, type CancelState, cancelState } from './model/cancelWindow'
+export { cancelNote } from './model/cancelWindow'
 export type { CancelableLesson, CancelAudience } from './model/types'
 export { CancelLessonButton } from './ui/CancelLessonButton'
 export { CancelLessonDialog } from './ui/CancelLessonDialog'

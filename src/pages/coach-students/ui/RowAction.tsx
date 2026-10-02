@@ -10,10 +10,6 @@ type RowActionProps = {
   onHistory: (groupId: string) => void
 }
 
-// Below 1024 px the tab bar (73 px) is stuck to the bottom of the window: a button that takes
-// focus scrolls clear of it (the browser keeps this margin free when it scrolls to focus).
-const clearOfTabBar = 'shrink-0 scroll-mb-24 lg:scroll-mb-0'
-
 /**
  * A row's action (DESIGN §4): "Record payment" while the package is unpaid, otherwise
  * "History" (AdminStudents.dc.html:122, 138). The names follow the visible words for screen
@@ -23,12 +19,7 @@ export function RowAction({ row, id, onRecordPayment, onHistory }: RowActionProp
   const { group_id: groupId, display_names: names } = row.group
   if (row.balance.unpaid) {
     return (
-      <Button
-        id={id}
-        size="compact"
-        className={clearOfTabBar}
-        onClick={() => onRecordPayment(groupId)}
-      >
+      <Button id={id} size="compact" className="shrink-0" onClick={() => onRecordPayment(groupId)}>
         <span>
           Record payment <span className="sr-only">for {names}</span>
         </span>
@@ -39,7 +30,7 @@ export function RowAction({ row, id, onRecordPayment, onHistory }: RowActionProp
     <Button
       id={id}
       variant="underline"
-      className={clearOfTabBar}
+      className="shrink-0"
       aria-haspopup="dialog"
       onClick={() => onHistory(groupId)}
     >

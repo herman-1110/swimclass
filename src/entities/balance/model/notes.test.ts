@@ -63,11 +63,48 @@ const weiJie: GroupBalance = {
   can_still_book: 1,
 }
 const nurul: GroupBalance = { ...weiJie, used_lessons: 2, package_no: 1, unpaid: false }
+/** A group the coach has just added, with "First package already paid" left unticked. */
+const neverPaid: GroupBalance = {
+  ...aimanSofia,
+  paid_lessons: 0,
+  used_lessons: 0,
+  booked_lessons: 0,
+  package_no: 1,
+  used_in_package: 0,
+  booked_in_package: 0,
+  left_in_package: 4,
+  can_still_book: 4,
+  last_paid_on: null,
+  last_payment_method: null,
+}
+/** Every paid lesson used, none booked: the package card is empty again (left 4). */
+const usedUpExactly: GroupBalance = {
+  ...neverPaid,
+  paid_lessons: 4,
+  used_lessons: 4,
+  package_no: 2,
+  can_still_book: 4,
+}
 
 describe('bookPackageNote', () => {
   it('says nothing while the package has lessons left to book', () => {
     expect(bookPackageNote(aimanSofia, 40000)).toBeNull()
     expect(bookPackageNote(hana, 24000)).toBeNull()
+  })
+
+  it('says nothing while the next lesson is paid for, though the package is fully booked', () => {
+    // Priya after the coach adds a free lesson: 14 used + 2 booked of 17 paid.
+    const freeLesson = { ...sofia, paid_lessons: 17, used_lessons: 14, booked_lessons: 2 }
+    expect(bookPackageNote({ ...freeLesson, package_no: 4 }, 24000)).toBeNull()
+  })
+
+  it('asks for a payment when no payment covers the next lesson, as My classes does', () => {
+    expect(bookPackageNote(neverPaid, 24000)).toBe(
+      'New bookings start Package 1. Pay RM 240 before or at its first lesson.',
+    )
+    expect(bookPackageNote(usedUpExactly, null)).toBe(
+      'New bookings start Package 2. Pay for it before or at its first lesson.',
+    )
   })
 
   it('names the package new bookings start, and its price', () => {
@@ -98,6 +135,15 @@ describe('accountPackageNote', () => {
   it('says nothing while the next lesson is paid for', () => {
     expect(accountPackageNote(aimanSofia, { ...input, names: 'Aiman & Sofia' })).toBeNull()
     expect(accountPackageNote(nurul, { ...input, names: 'Nurul' })).toBeNull()
+  })
+
+  it('agrees with Book about a group no payment covers', () => {
+    expect(accountPackageNote(neverPaid, input)).toBe(
+      'Sofia’s next 1-to-1 lesson starts Package 1. Pay before or at its first lesson.',
+    )
+    expect(accountPackageNote(usedUpExactly, input)).toBe(
+      'Sofia’s next 1-to-1 lesson starts Package 2. Pay before or at its first lesson.',
+    )
   })
 
   it('names the next package after the last paid lesson (the drawing)', () => {

@@ -41,11 +41,13 @@ type GroupPickerProps = {
 // design/Main.dc.html:70-84 (.groups :30, :38): rows 8 px apart, from 768 px a grid of
 // columns at least 200 px wide. The legend sits 8 px above the rows and the help 8 px below.
 // scroll (not drawn; coach-schedule §7.4 "max-height about 5 rows with scrolling"): a half
-// row shows there is more; 4 px of padding keeps the rows' focus ring inside the box.
+// row shows there is more; 4 px of padding keeps the rows' focus ring inside the box. The
+// arrow keys focus the small radio, and Chrome scrolls only that into view: 32 px of scroll
+// padding makes it scroll before the rest of the row and its ring reach the box's edge.
 const layouts = {
   grid: 'flex flex-col gap-2 md:grid md:grid-cols-[repeat(auto-fill,minmax(200px,1fr))]',
   list: 'flex flex-col gap-2',
-  scroll: '-m-1 flex max-h-[312px] flex-col gap-2 overflow-y-auto p-1',
+  scroll: '-m-1 flex max-h-[312px] scroll-py-8 flex-col gap-2 overflow-y-auto p-1',
 }
 
 /**

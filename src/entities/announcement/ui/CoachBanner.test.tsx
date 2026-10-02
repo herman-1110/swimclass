@@ -24,6 +24,13 @@ describe('CoachBanner', () => {
     expect(message.className).toContain('whitespace-pre-line')
   })
 
+  it('wraps a pasted link inside the box instead of running out of it (DESIGN §5)', () => {
+    const link = `https://maps.google.com/maps/place/${'Kondominium+Seri+Permaisuri+'.repeat(7)}`
+    const { container } = render(<CoachBanner message={`Pool closed, see ${link}`} />)
+    expect(link.length).toBeGreaterThan(200)
+    expect(container.firstElementChild?.className).toContain('wrap-anywhere')
+  })
+
   it('takes a layout class for the page’s spacing', () => {
     const { container } = render(<CoachBanner message="Pool closed Friday." className="mt-5.5" />)
     expect(container.firstElementChild?.className).toContain('mt-5.5')

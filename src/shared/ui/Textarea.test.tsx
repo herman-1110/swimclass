@@ -1,9 +1,12 @@
-import { cleanup, render, screen } from '@testing-library/react'
-import { afterEach, describe, expect, it } from 'vitest'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { Textarea } from './Textarea'
 
-afterEach(cleanup)
+afterEach(() => {
+  cleanup()
+  Reflect.deleteProperty(HTMLElement.prototype, 'scrollIntoView')
+})
 
 describe('Textarea', () => {
   it('names the box with its label and gives the form look two rows', () => {
@@ -57,5 +60,21 @@ describe('Textarea', () => {
     const box = screen.getByRole('textbox', { name: 'Payment instructions' })
     expect(box.className).toContain('resize-y')
     expect(box.getAttribute('rows')).toBe('3')
+  })
+
+  it('shows the whole box when it takes focus, not only the caret’s line', () => {
+    // jsdom has no scrollIntoView: a stand-in that records the call.
+    const scrollIntoView = vi.fn()
+    Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', {
+      value: scrollIntoView,
+      configurable: true,
+    })
+    const onFocus = vi.fn()
+    render(<Textarea label="Payment instructions" look="row" onFocus={onFocus} />)
+    const box = screen.getByRole('textbox', { name: 'Payment instructions' })
+    fireEvent.focus(box)
+    expect(scrollIntoView).toHaveBeenCalledWith({ block: 'nearest' })
+    expect(scrollIntoView.mock.contexts).toEqual([box])
+    expect(onFocus).toHaveBeenCalledTimes(1)
   })
 })

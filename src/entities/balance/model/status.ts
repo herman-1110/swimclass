@@ -1,6 +1,6 @@
 import { formatDay, formatDayMonth, type Instant, mytDateKey, toMyt } from '@/shared/lib/time'
 
-import { nextPaymentPackageNo } from './packages'
+import { isPackagePaid, nextPaymentPackageNo } from './packages'
 import type { GroupBalance } from './types'
 
 // Paid or unpaid, and what needs the coach's attention (DESIGN §4 Students & payments; the
@@ -21,7 +21,12 @@ export function balanceBucket(
 
 /** The Students table's status: the pill's word and the note under it. */
 export type BalanceStatusInfo = {
-  label: 'Paid' | 'Unpaid'
+  /**
+   * null while no payment covers the current package and it isn't unpaid either (a new group
+   * that hasn't paid, a package used up exactly with nothing booked): no pill, as Book shows no
+   * word, until Herman settles one.
+   */
+  label: 'Paid' | 'Unpaid' | null
   /** "Starts today", "Since 18 Sep", "Last lesson 1 Oct", "New student", or null. */
   note: string | null
   /** warn only for "Last lesson …". */
@@ -35,6 +40,7 @@ export type BalanceStatusInfo = {
  *   lesson is in the starting balance
  * - paid, on the last paid lesson: "Last lesson 1 Oct" ("Last lesson today"), in orange
  * - paid, no lesson used yet: "New student"
+ * "Paid" only while payments cover the current package (isPackagePaid); otherwise no word.
  */
 export function balanceStatus(balance: GroupBalance, now: Instant): BalanceStatusInfo {
   const today = mytDateKey(now)
@@ -45,15 +51,16 @@ export function balanceStatus(balance: GroupBalance, now: Instant): BalanceStatu
       noteTone: 'muted',
     }
   }
+  const label = isPackagePaid(balance) ? 'Paid' : null
   if (balance.last_lesson_at !== null) {
     const day =
       mytDateKey(balance.last_lesson_at) === today
         ? 'today'
         : formatDayMonth(balance.last_lesson_at, now)
-    return { label: 'Paid', note: `Last lesson ${day}`, noteTone: 'warn' }
+    return { label, note: `Last lesson ${day}`, noteTone: 'warn' }
   }
   return {
-    label: 'Paid',
+    label,
     note: balance.used_lessons === 0 ? 'New student' : null,
     noteTone: 'muted',
   }

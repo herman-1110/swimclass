@@ -54,6 +54,30 @@ describe('BalanceStatus', () => {
     expect(container.textContent).toBe('Paid')
   })
 
+  it('shows no pill for a group no payment covers, only its note', () => {
+    const neverPaid: GroupBalance = {
+      ...aimanSofia,
+      paid_lessons: 0,
+      used_lessons: 0,
+      booked_lessons: 0,
+      package_no: 1,
+      booked_in_package: 0,
+      left_in_package: 4,
+      last_paid_on: null,
+      last_payment_method: null,
+    }
+    const { container } = render(
+      <>
+        <BalanceStatus balance={neverPaid} now={NOW} />
+        <BalanceStatus balance={neverPaid} now={NOW} lastPaid="no payments yet" />
+      </>,
+    )
+    expect(screen.queryByText('Paid')).toBeNull()
+    expect(screen.getByText('New student').className).toContain('text-muted')
+    expect(screen.getByText('New student · no payments yet')).toBeTruthy()
+    expect(container.querySelector('.rounded-full')).toBeNull()
+  })
+
   it('joins the last payment to the note on the phone cards, as drawn', () => {
     render(
       <>

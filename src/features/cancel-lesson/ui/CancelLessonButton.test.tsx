@@ -4,7 +4,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 
 import { bookingKeys } from '@/entities/booking'
 import { getSession, logIn, logOut } from '@/shared/api/auth'
-import { demoDb } from '@/shared/api/demo/db'
+import { holdDemoDatabase } from '@/shared/api/demo/testing'
 import { readRows } from '@/shared/api/rpc'
 import { DEMO_NOW, DEMO_PASSWORD } from '@/shared/config/demo'
 import { toMyt } from '@/shared/lib/time'
@@ -39,31 +39,6 @@ beforeAll(async () => {
 }, 60_000)
 
 afterEach(cleanup)
-
-/**
- * Holds the demo database in an open transaction, so the next call waits (as it would on a
- * slow connection) until the returned function is called.
- */
-async function holdDatabase(): Promise<() => Promise<void>> {
-  const db = await demoDb()
-  let release = () => {}
-  const released = new Promise<void>((resolve) => {
-    release = resolve
-  })
-  let started = () => {}
-  const holding = new Promise<void>((resolve) => {
-    started = resolve
-  })
-  const held = db.transaction(async () => {
-    started()
-    await released
-  })
-  await holding
-  return async () => {
-    release()
-    await held
-  }
-}
 
 /** A My classes row's right side and note, as the page puts them together. */
 function renderRow(lesson: CancelableLesson, onCancelled = vi.fn()) {
@@ -127,7 +102,7 @@ describe('CancelLessonButton', () => {
     const { onCancelled, invalidate } = renderRow(SAT_3_OCT)
     fireEvent.click(screen.getByRole('button', { name: /^Cancel Sat 3 Oct/ }))
     // The demo database answers at once; hold it, as a slow connection would.
-    const release = await holdDatabase()
+    const release = await holdDemoDatabase()
     fireEvent.click(screen.getByRole('button', { name: 'Cancel lesson' }))
 
     const running = await screen.findByRole('button', { name: 'Cancelling…' })

@@ -111,8 +111,11 @@ describe('SidePanel below 1280 px', () => {
       description: 'Hana · Farah’s account',
     })
     expect(panel.getAttribute('aria-modal')).toBe('true')
-    expect(within(panel).getByRole('button', { name: 'Close' })).toBeTruthy()
+    // A 44 px target, whatever the word's width.
+    expect(within(panel).getByRole('button', { name: 'Close' }).className).toContain('min-w-11')
     expect(document.activeElement).toBe(screen.getByRole('heading', { name: 'Record payment' }))
+    // Names and locations of any length wrap inside the panel (DESIGN §5).
+    expect(screen.getByText('Hana · Farah’s account').className).toContain('wrap-anywhere')
   })
 
   it('closes on Esc, Close or Cancel, and focus goes back to the opener', () => {

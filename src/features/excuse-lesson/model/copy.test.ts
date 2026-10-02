@@ -1,14 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
-import {
-  excuseButtonLabel,
-  excusePosition,
-  excuseTitle,
-  hasEnded,
-  hasStarted,
-  lessonWhen,
-} from './copy'
-import type { ExcuseCandidate } from './types'
+import { excuseButtonLabel, excuseOption, excuseTitle, hasEnded, hasStarted } from './copy'
+import type { ExcusableLesson, ExcuseCandidate } from './types'
 
 // Wei Jie's Fri 25 Sep 7:30 pm lesson (d0…07), as coach_week sends it.
 const WEI_JIE: ExcuseCandidate = {
@@ -22,7 +15,6 @@ const DEMO_NOW = '2026-09-26T12:00:00+08:00'
 
 describe('the excuse wording', () => {
   it('names the lesson by day and time', () => {
-    expect(lessonWhen(WEI_JIE)).toBe('Fri 25 Sep, 7:30–8:30 pm')
     expect(excuseTitle(WEI_JIE)).toBe('Mark Fri 25 Sep, 7:30–8:30 pm for Wei Jie as excused?')
   })
 
@@ -33,16 +25,35 @@ describe('the excuse wording', () => {
     )
   })
 
-  it('gives the lesson’s place in its package', () => {
-    expect(excusePosition({ lessons: 1, package_no: 2, lesson_in_package: 2 }, 4)).toBe(
-      'Package 2 · lesson 2 of 4',
-    )
-    expect(excusePosition({ lessons: 2, package_no: 3, lesson_in_package: 1 }, 4)).toBe(
-      'Package 3 · lessons 1–2 of 4',
-    )
-    expect(excusePosition({ lessons: 2, package_no: 2, lesson_in_package: 4 }, 4)).toBe(
-      'Last lesson of Package 2 and first of Package 3',
-    )
+  it('gives an option’s date, with the year when it isn’t this year’s, over its place', () => {
+    const lesson = (overrides: Partial<ExcusableLesson>): ExcusableLesson => ({
+      booking_id: WEI_JIE.booking_id,
+      starts_at: WEI_JIE.starts_at,
+      ends_at: WEI_JIE.ends_at,
+      lessons: 1,
+      package_no: 2,
+      lesson_in_package: 2,
+      ...overrides,
+    })
+    expect(excuseOption(lesson({}), 4, DEMO_NOW)).toEqual({
+      when: 'Fri 25 Sep, 7:30–8:30 pm',
+      position: 'Package 2 · lesson 2 of 4',
+    })
+    expect(
+      excuseOption(
+        lesson({ starts_at: '2025-12-12T19:30:00+08:00', ends_at: '2025-12-12T20:30:00+08:00' }),
+        4,
+        DEMO_NOW,
+      ).when,
+    ).toBe('Fri 12 Dec 2025, 7:30–8:30 pm')
+    expect(
+      excuseOption(lesson({ lessons: 2, package_no: 3, lesson_in_package: 1 }), 4, DEMO_NOW)
+        .position,
+    ).toBe('Package 3 · lessons 1–2 of 4')
+    expect(
+      excuseOption(lesson({ lessons: 2, package_no: 2, lesson_in_package: 4 }), 4, DEMO_NOW)
+        .position,
+    ).toBe('Last lesson of Package 2 and first of Package 3')
   })
 })
 

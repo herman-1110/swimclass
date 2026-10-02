@@ -42,7 +42,7 @@ export function LessonFacts({ lesson }: LessonFactsProps) {
     <dl className="m-0 flex flex-col gap-3.5">
       <div className={row}>
         <dt className={term}>Group</dt>
-        <dd className={cn(value, 'flex flex-wrap items-center gap-2')}>
+        <dd className={cn(value, 'flex flex-wrap items-center gap-2 wrap-anywhere')}>
           <Tag>{lesson.type_label}</Tag> {accountLabel(lesson, lesson.account_name)}
         </dd>
       </div>

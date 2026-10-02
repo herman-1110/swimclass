@@ -18,8 +18,6 @@ export type PackageRow = {
 export type StudentsFilter = 'all' | 'unpaid' | 'last-lesson' | 'paid' | 'waiting'
 export type PackageFilter = Exclude<StudentsFilter, 'waiting'>
 
-export const PACKAGE_FILTERS: readonly PackageFilter[] = ['all', 'unpaid', 'last-lesson', 'paid']
-
 const collator = new Intl.Collator('en', { sensitivity: 'base' })
 const BUCKETS: Record<BalanceBucket, number> = { unpaid: 0, 'last-lesson': 1, paid: 2 }
 

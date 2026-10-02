@@ -357,7 +357,9 @@ const COACH: Readonly<Record<string, Words>> = {
   invalid_display_name: 'Type their name (up to 100 characters).',
   invalid_phone: 'Shorten the phone number to 30 characters or fewer.',
   invalid_email: 'Type an email address, like name@example.com.',
-  email_taken: 'Another account already uses this email.',
+  // The next step added after the final review (CLAUDE.md copy rule; proposed, for Herman).
+  email_taken:
+    'Another account already uses this email. Choose that account under Account, or type a different email.',
   // The coach's forms' checks before any call (proposed wording). Add students: no account
   // chosen (its spec §5.3). Record payment and Add students: an amount parseRinggit can't read
   // (the Students spec §5.3 W1's words; the Add students spec proposed "Type the amount in

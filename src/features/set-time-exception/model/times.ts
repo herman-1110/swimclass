@@ -1,5 +1,5 @@
 import { formatTimeOfDay } from '@/entities/open-hours'
-import { addDays, type DateKey, mytInstant, mytWeekStart } from '@/shared/lib/time'
+import { addDays, type DateKey, mytInstant, mytWeekStart, parseDateKey } from '@/shared/lib/time'
 
 // The From and To choices of Block time and Open extra time (prompt 08 TASK 5; the Schedule
 // spec §7.4): every start step counted from midnight, so with a 30-minute step "12:00 am",
@@ -71,13 +71,7 @@ export function rangeOn(date: DateKey, from: number, to: number): DayRange {
 
 /** Whether a date is a real "yyyy-MM-dd" (a cleared date field gives ""). */
 export function isDateKey(value: string): boolean {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false
-  try {
-    mytInstant(value, '12:00')
-    return true
-  } catch {
-    return false
-  }
+  return parseDateKey(value) !== null
 }
 
 /** The dates from `first` to `last`, both included; just `first` when `last` is null. */

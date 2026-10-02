@@ -50,7 +50,9 @@ export function toMyt(instant: Instant): TZDate {
  * (`app_now()`), never the browser's. In demo mode both stand still at DEMO_NOW.
  */
 export function nowMyt(): TZDate {
-  return env.demo ? toMyt(DEMO_NOW) : TZDate.tz(MYT)
+  // The build-time constant first, so a production build folds this to the real clock and
+  // leaves DEMO_NOW out; env.demo after it lets the unit tests switch demo mode off.
+  return import.meta.env.VITE_DEMO === 'true' && env.demo ? toMyt(DEMO_NOW) : TZDate.tz(MYT)
 }
 
 /** The MYT calendar date of a moment: 2026-09-30T17:00Z → "2026-10-01". */
@@ -79,6 +81,21 @@ export function mytInstant(date: DateKey, time: string): Date {
     throw new RangeError(`"${date} ${time}" is not a real date and time.`)
   }
   return new Date(result.getTime())
+}
+
+/**
+ * The value when it is a real date written "yyyy-MM-dd" ("2026-10-03"), otherwise null:
+ * missing, empty (a cleared date field), another format, or a day that doesn't exist
+ * ("2026-02-30"). For dates from the address or a form.
+ */
+export function parseDateKey(value: string | null | undefined): DateKey | null {
+  if (value == null || !DATE_KEY.test(value)) return null
+  try {
+    mytInstant(value, '12:00')
+    return value
+  } catch {
+    return null
+  }
 }
 
 /** The Monday (ISO week start) of the MYT week that contains the moment or date. */

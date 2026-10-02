@@ -1,13 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import {
-  cancelDescription,
-  cancelLabel,
-  cancelledNotice,
-  cancelTitle,
-  lessonWhen,
-  reasonHelp,
-} from './copy'
+import { cancelDescription, cancelLabel, cancelledNotice, cancelTitle, reasonHelp } from './copy'
 import type { CancelableLesson } from './types'
 
 // meiling's Sat 3 Oct 9:00 am lesson (d0…02) as My classes has it (UTC columns).
@@ -29,11 +22,15 @@ const COACH_LESSON: CancelableLesson = {
 
 describe('the cancel confirmation’s words', () => {
   it('names the lesson by its date and times, never "Today"', () => {
-    expect(lessonWhen(CUSTOMER_LESSON)).toBe('Sat 3 Oct, 9:00–10:00 am')
-    expect(lessonWhen(COACH_LESSON)).toBe('Sun 4 Oct, 10:00 am–12:00 pm')
+    expect(cancelLabel(CUSTOMER_LESSON)).toBe('Cancel Sat 3 Oct, 9:00–10:00 am for Aiman & Sofia')
+    expect(cancelLabel(COACH_LESSON)).toBe('Cancel Sun 4 Oct, 10:00 am–12:00 pm for Chloe')
     expect(
-      lessonWhen({ starts_at: '2026-09-26T09:00:00+00:00', ends_at: '2026-09-26T10:00:00+00:00' }),
-    ).toBe('Sat 26 Sep, 5:00–6:00 pm')
+      cancelLabel({
+        ...CUSTOMER_LESSON,
+        starts_at: '2026-09-26T09:00:00+00:00',
+        ends_at: '2026-09-26T10:00:00+00:00',
+      }),
+    ).toBe('Cancel Sat 26 Sep, 5:00–6:00 pm for Aiman & Sofia')
   })
 
   it('asks about the lesson and its students (the My classes spec §2.6)', () => {

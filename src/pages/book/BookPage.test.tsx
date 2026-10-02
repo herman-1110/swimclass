@@ -6,7 +6,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 import { SessionContext } from '@/entities/account'
 import { getSession, logIn, logOut } from '@/shared/api/auth'
 import { getBackend } from '@/shared/api/backend'
-import { demoDb } from '@/shared/api/demo/db'
+import { holdDemoDatabase } from '@/shared/api/demo/testing'
 import { DEMO_PASSWORD } from '@/shared/config/demo'
 import { NO_GROUPS_MESSAGE } from '@/shared/config/messages'
 import { ROUTES } from '@/shared/config/routes'
@@ -67,31 +67,6 @@ const dayLabels = () =>
   within(screen.getByRole('group', { name: 'Day' }))
     .getAllByRole('button')
     .map((day) => day.getAttribute('aria-label'))
-
-/**
- * Holds the demo database in an open transaction, so the next calls wait (as on a slow
- * connection) until the returned function is called.
- */
-async function holdDatabase(): Promise<() => Promise<void>> {
-  const db = await demoDb()
-  let started = () => {}
-  const holding = new Promise<void>((resolve) => {
-    started = resolve
-  })
-  let release = () => {}
-  const released = new Promise<void>((resolve) => {
-    release = resolve
-  })
-  const held = db.transaction(async () => {
-    started()
-    await released
-  })
-  await holding
-  return async () => {
-    release()
-    await held
-  }
-}
 
 describe('BookPage', () => {
   it('shows the heading at once and the screen’s skeleton while it loads', async () => {
@@ -243,7 +218,7 @@ describe('BookPage', () => {
   it('goes straight to the new group’s lesson while its start times load (§6.6)', async () => {
     await renderBook('meiling', '/book?day=2026-09-29&length=60&time=19:30')
     await startTimes('Tue 29 Sep')
-    const release = await holdDatabase()
+    const release = await holdDemoDatabase()
     try {
       fireEvent.click(screen.getByRole('radio', { name: 'Sofia 1-to-1' }))
       // Only the chips wait; the summary keeps the picked time with Sofia's package.
@@ -434,7 +409,7 @@ describe('BookPage', () => {
   it('names the group booked when another group is chosen while it books', async () => {
     await renderBook('meiling', '/book?day=2026-10-15&length=60&time=19:30')
     await startTimes('Thu 15 Oct')
-    const release = await holdDatabase()
+    const release = await holdDemoDatabase()
     try {
       fireEvent.click(summary().getByRole('button', { name: 'Book 7:30 pm for Aiman & Sofia' }))
       expect(await summary().findByRole('button', { name: 'Booking…' })).toBeTruthy()

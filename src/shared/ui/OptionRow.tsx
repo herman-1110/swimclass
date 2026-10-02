@@ -27,7 +27,9 @@ type OptionRowProps =
 // Lay the rows out in a column 8 px apart, and from 768 px in a grid:
 // flex flex-col gap-2 md:grid md:grid-cols-[repeat(auto-fill,minmax(200px,1fr))]
 const row = 'flex min-h-12 items-center gap-2.5 rounded-control border px-3.5'
-const nameText = 'flex-1 text-body font-medium'
+// A name typed as one long word (up to 100 characters) breaks inside the row rather than
+// pushing the tag out of it and the page sideways (DESIGN §5; book spec §6.6).
+const nameText = 'min-w-0 flex-1 text-body font-medium wrap-anywhere'
 
 /**
  * One choice of a single-choice list with a trailing tag (UI kit spec §3.9): a native

@@ -1,5 +1,3 @@
-import { cn } from '@/shared/lib/cn'
-
 import { accountLine } from '../model/accountLabel'
 import type { Group } from '../model/types'
 
@@ -13,6 +11,8 @@ type GroupIdentityProps = {
 
 // AdminStudents.dc.html:117 (table cell) and :194 (card): a column 2 px apart, the names
 // in 600 over a 12 px muted account line. The drawings set no line height (Figtree's own).
+// Names and locations of any length wrap, even inside a word, so the Students column can
+// shrink and the table keeps its other columns in its frame (coach-students §6).
 const names = {
   table: 'text-sm leading-[normal] font-semibold',
   card: 'text-body font-semibold',
@@ -25,7 +25,7 @@ const names = {
  */
 export function GroupIdentity({ group, accountName, variant = 'table' }: GroupIdentityProps) {
   return (
-    <div className={cn('flex flex-col gap-0.5', variant === 'card' && 'min-w-0')}>
+    <div className="flex min-w-0 flex-col gap-0.5 wrap-anywhere">
       {/* The space keeps the two lines apart when the cell is read out as one name. */}
       <span className={names[variant]}>{group.display_names}</span>{' '}
       <span className="text-small text-muted">{accountLine(group, accountName)}</span>

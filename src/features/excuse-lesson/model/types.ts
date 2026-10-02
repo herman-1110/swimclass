@@ -26,11 +26,14 @@ export type ExcusableLesson = {
   lesson_in_package: number
 }
 
-/** What ExcuseMissedLesson needs of the lessons' query (a TanStack Query result has it). */
+/** What ExcuseMissedLesson needs of the lessons' query (a TanStack Query result has it).
+ *  isFetching and errorUpdatedAt keep "Try again" in place, busy, while it reads again. */
 export type ExcusableLessonsQuery = {
-  data?: readonly ExcusableLesson[]
+  data: readonly ExcusableLesson[] | undefined
   isPending: boolean
   isError: boolean
+  isFetching: boolean
   error: unknown
-  refetch: () => unknown
+  errorUpdatedAt: number
+  refetch: () => Promise<unknown>
 }

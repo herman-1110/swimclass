@@ -55,7 +55,7 @@ export function HistoryDrawer({ row, onClose, onRecordPayment, now }: HistoryDra
           <div className="flex flex-col gap-3">
             <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-label text-muted">
               <Tag>{row.group.type_label}</Tag>
-              <span>
+              <span className="min-w-0 wrap-anywhere">
                 {row.group.active ? row.group.location : `${row.group.location} · Inactive`}
               </span>
             </p>

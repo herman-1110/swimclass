@@ -1,4 +1,4 @@
-import { addDays, type DateKey, mytInstant } from '@/shared/lib/time'
+import { addDays, type DateKey, parseDateKey } from '@/shared/lib/time'
 
 // Book's address keeps its choices (ARCHITECTURE §3.6; book spec §1.4): ?group (a group id),
 // ?day (an MYT date), ?length (minutes) and ?time ("19:30", MYT). A value that doesn't fit
@@ -12,19 +12,10 @@ export type BookParams = {
   time: string | null
 }
 
-const DATE = /^\d{4}-\d{2}-\d{2}$/
 const TIME = /^([01]\d|2[0-3]):[0-5]\d$/
 const MINUTES = /^[1-9]\d{0,3}$/
 
-function realDate(value: string | null): DateKey | null {
-  if (value === null || !DATE.test(value)) return null
-  try {
-    mytInstant(value, '12:00')
-    return value
-  } catch {
-    return null
-  }
-}
+const realDate = parseDateKey
 
 /** Reads ?group, ?day, ?length and ?time, dropping any that are malformed. */
 export function readBookParams(params: URLSearchParams): BookParams {

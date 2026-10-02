@@ -7,13 +7,12 @@ import { getSession, logIn, logOut } from '@/shared/api/auth'
 import { DEMO_PASSWORD } from '@/shared/config/demo'
 
 import { balanceKeys } from './keys'
-import { useAccountBalance, useAccountBalances } from './useAccountBalances'
+import { useAccountBalances } from './useAccountBalances'
 
 // Runs in demo mode: the real migrations and seed in PGlite, clock at DEMO_NOW.
 
 const AIMAN_SOFIA = 'c0000000-0000-4000-8000-000000000001'
 const SOFIA = 'c0000000-0000-4000-8000-000000000002'
-const HANA = 'c0000000-0000-4000-8000-000000000003'
 
 beforeAll(async () => {
   // Load the demo database here (about 4 s in jsdom), not inside the first test's 5 s.
@@ -80,37 +79,7 @@ describe('useAccountBalances', () => {
   })
 })
 
-describe('useAccountBalance', () => {
-  it('picks one group from the account’s request, so switching groups asks for nothing new', async () => {
-    const meiling = await signIn('meiling')
-    const { queryClient, wrapper } = newClient()
-    const { result, rerender } = renderHook(({ groupId }) => useAccountBalance(meiling, groupId), {
-      wrapper,
-      initialProps: { groupId: AIMAN_SOFIA },
-    })
-    await waitFor(() => expect(result.current.isSuccess).toBe(true))
-    expect(result.current.data?.package_no).toBe(4)
-
-    rerender({ groupId: SOFIA })
-    expect(result.current.data).toMatchObject({
-      group_id: SOFIA,
-      package_no: 2,
-      left_in_package: 0,
-      last_lesson_at: '2026-10-04T09:00:00+00:00',
-      last_paid_on: '2026-08-29',
-      last_payment_method: 'transfer',
-    })
-    expect(queryClient.getQueryCache().findAll({ queryKey: balanceKeys.all })).toHaveLength(1)
-  })
-
-  it('gives null for a group that isn’t the account’s', async () => {
-    const meiling = await signIn('meiling')
-    const { wrapper } = newClient()
-    const { result } = renderHook(() => useAccountBalance(meiling, HANA), { wrapper })
-    await waitFor(() => expect(result.current.isSuccess).toBe(true))
-    expect(result.current.data).toBeNull()
-  })
-
+describe('balanceKeys', () => {
   it('keys every balance under balanceKeys.all, so a change can refresh them', () => {
     expect(balanceKeys.account('a').slice(0, 1)).toEqual([...balanceKeys.all])
     expect(balanceKeys.coach().slice(0, 1)).toEqual([...balanceKeys.all])
