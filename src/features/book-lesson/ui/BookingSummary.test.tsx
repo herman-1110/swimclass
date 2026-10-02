@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { MemoryRouter } from 'react-router'
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 
-import { type GroupBalance, useAccountBalance } from '@/entities/balance'
+import { type GroupBalance, useAccountBalances } from '@/entities/balance'
 import type { Group } from '@/entities/group'
 import { type Slot, startTimeKey } from '@/entities/slot'
 import { getSession, logIn, logOut } from '@/shared/api/auth'
@@ -86,8 +86,10 @@ type HarnessProps = {
 /** The summary as the page uses it: the page forgets the picked time once it is booked. */
 function Harness({ first, live = false, onBooked, onBookAnother }: HarnessProps) {
   const [picked, setPicked] = useState(first)
-  const fresh = useAccountBalance(live ? MEILING : null, AIMAN_AND_SOFIA.group_id)
-  const balance = live ? fresh.data : BALANCE
+  const fresh = useAccountBalances(live ? MEILING : null)
+  const balance = live
+    ? fresh.data?.find((group) => group.group_id === AIMAN_AND_SOFIA.group_id)
+    : BALANCE
   if (!balance) return null
   return (
     <>

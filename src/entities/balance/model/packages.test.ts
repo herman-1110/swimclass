@@ -4,7 +4,6 @@ import {
   isNextLessonPaid,
   isPackagePaid,
   isUnpaidAfter,
-  lessonsLeftAfter,
   nextBookingPackageNo,
   nextPaymentPackageNo,
   packageBarLabel,
@@ -45,7 +44,6 @@ const weiJie = {
   booked_in_package: 1,
   left_in_package: 1,
 }
-const nurul = { ...weiJie, paid_lessons: 4, used_lessons: 2, package_no: 1 }
 
 describe('package words', () => {
   it('titles the card with the type and the package number', () => {
@@ -80,20 +78,6 @@ describe('package numbers', () => {
     expect(nextPaymentPackageNo({ package_size: 4, paid_lessons: 20 })).toBe(6)
     expect(nextPaymentPackageNo(weiJie)).toBe(2)
     expect(nextPaymentPackageNo({ package_size: 4, paid_lessons: 16 })).toBe(5)
-  })
-})
-
-describe('lessonsLeftAfter', () => {
-  it('counts what a booking leaves in its package', () => {
-    expect(lessonsLeftAfter(aimanSofia, 1)).toBe(1)
-    expect(lessonsLeftAfter(aimanSofia, 2)).toBe(0)
-    // Sofia's package is full: a new lesson starts Package 3, which then has 3 left.
-    expect(lessonsLeftAfter(sofia, 1)).toBe(3)
-  })
-
-  it('goes below 0 when a 2-hour lesson spills into the next package', () => {
-    expect(lessonsLeftAfter(nurul, 2)).toBe(-1)
-    expect(lessonsLeftAfter(weiJie, 1)).toBe(0)
   })
 })
 

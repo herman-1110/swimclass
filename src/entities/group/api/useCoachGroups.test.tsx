@@ -7,15 +7,10 @@ import { getSession, logIn, logOut } from '@/shared/api/auth'
 import { DEMO_PASSWORD } from '@/shared/config/demo'
 
 import { groupKeys } from './keys'
-import { useCoachAccountGroups } from './useCoachAccountGroups'
-import { useCoachGroup } from './useCoachGroup'
 import { useCoachGroups } from './useCoachGroups'
 import { useGroupLocations } from './useGroupLocations'
 
 // Runs in demo mode: the real migrations and seed in PGlite, clock at DEMO_NOW.
-
-const MEILING = 'a0000000-0000-4000-8000-000000000002'
-const HANA = 'c0000000-0000-4000-8000-000000000003'
 
 beforeAll(async () => {
   // Load the demo database here (about 4 s in jsdom), not inside the first test's 5 s.
@@ -61,33 +56,14 @@ describe('useCoachGroups', () => {
     })
   })
 
-  it('selects one group, one account’s groups and the locations from that one read', async () => {
+  it('selects the locations from that one read', async () => {
     await logIn('herman', DEMO_PASSWORD)
     const { result, queryClient } = renderHooks(() => ({
-      hana: useCoachGroup(HANA),
-      missing: useCoachGroup('c0000000-0000-4000-8000-000000000099'),
-      none: useCoachGroup(null),
-      meiling: useCoachAccountGroups(MEILING),
-      nobody: useCoachAccountGroups(null),
+      groups: useCoachGroups(),
       locations: useGroupLocations(),
     }))
     await waitFor(() => expect(result.current.locations.isSuccess).toBe(true))
 
-    expect(result.current.hana.data).toMatchObject({
-      group_id: HANA,
-      display_names: 'Hana',
-      account_id: 'a0000000-0000-4000-8000-000000000003',
-      location: 'Sunrise Res.',
-      opening_used_lessons: 20,
-      opening_paid_lessons: 16,
-    })
-    expect(result.current.missing.data).toBeNull()
-    expect(result.current.none.data).toBeNull()
-    expect(result.current.meiling.data?.map((group) => group.display_names)).toEqual([
-      'Aiman & Sofia',
-      'Sofia',
-    ])
-    expect(result.current.nobody.data).toEqual([])
     expect(result.current.locations.data).toEqual([
       'Kiara Park',
       'Maple Condo',

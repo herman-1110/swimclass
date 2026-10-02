@@ -16,7 +16,6 @@ export type {
   PendingAccount,
   PendingAccountOrder,
   Profile,
-  Role,
   Student,
   StudentOrder,
 } from './model/types'
