@@ -1,7 +1,8 @@
-import { cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react'
+import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 
 import { getSession, logOut } from '@/shared/api/auth'
+import { getBackend } from '@/shared/api/backend'
 
 import {
   cardNames,
@@ -27,6 +28,7 @@ beforeAll(async () => {
 afterEach(() => {
   cleanup()
   vi.unstubAllGlobals()
+  vi.restoreAllMocks()
 })
 
 const ALL = [
@@ -386,6 +388,30 @@ describe('CoachStudentsPage', () => {
       null,
     ])
     expect(router.state.location.search).toBe('')
+  })
+
+  it('keeps the list when a refresh fails (coach-students §6: keep showing the current data)', async () => {
+    await renderAs('herman')
+    const table = await findTable()
+    const backend = await getBackend()
+    const read = backend.read.bind(backend)
+    const failing = vi
+      .spyOn(backend, 'read')
+      .mockImplementation((source, query) =>
+        source === 'group_details'
+          ? Promise.reject(new TypeError('Failed to fetch'))
+          : read(source, query),
+      )
+    // Back to the tab: TanStack reads everything on screen again, and the groups fail.
+    fireEvent(window, new Event('visibilitychange'))
+    await waitFor(() =>
+      expect(failing.mock.calls.some(([source]) => source === 'group_details')).toBe(true),
+    )
+    // TanStack tells the page on a timer: let it render what it now knows.
+    await act(() => new Promise((resolve) => setTimeout(resolve, 100)))
+    expect(screen.queryByRole('alert')).toBeNull()
+    expect(tableNames(table)).toEqual(ALL.slice(0, 9))
+    expect(screen.getByRole('group', { name: 'Filter packages' })).toBeTruthy()
   })
 
   it('says when the list can’t be read, in place of the figures and list, with Try again', async () => {

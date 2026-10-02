@@ -33,7 +33,9 @@ export function NeedsAttention({ onApproved }: NeedsAttentionProps) {
   const balances = useCoachBalances()
   const groups = useCoachGroups()
   const waiting = usePendingAccounts({ order: 'name' })
-  const failed = [balances, groups, waiting].find((query) => query.isError)
+  // Only a read that never loaded: when a refresh fails, the rows shown stay (the next
+  // refresh tries again).
+  const failed = [balances, groups, waiting].find((query) => query.isLoadingError)
   const loaded = balances.data && groups.data && waiting.data
   const { unpaid, lastLesson } = attentionGroups(balances.data ?? [], groups.data ?? [])
   const accounts = waiting.data ?? []
@@ -48,7 +50,9 @@ export function NeedsAttention({ onApproved }: NeedsAttentionProps) {
         <LoadError
           error={failed.error}
           onRetry={() => {
-            for (const query of [balances, groups, waiting]) if (query.isError) void query.refetch()
+            for (const query of [balances, groups, waiting]) {
+              if (query.isLoadingError) void query.refetch()
+            }
           }}
           focusAfter={section}
         />

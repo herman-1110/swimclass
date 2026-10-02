@@ -25,9 +25,16 @@ export type ReadFailure = {
 
 type Kept = { error: unknown; at: number } | null
 
+/** The read failed with nothing to show: it never loaded. A read whose refresh failed (after
+ *  a write, or the window getting focus back) still has its data, which stays on screen. */
+const failedToLoad = (read: RetryableRead) => read.isError && read.data === undefined
+
 /**
  * Reads shown with "Try again" in place of their data (a list, a week): the first failure,
  * or null while none of them has failed.
+ *
+ * Only a read that never loaded counts. When a refresh fails, the data already shown stays
+ * (TanStack keeps it), and the next refresh tries again.
  *
  * TanStack forgets the error of a query that has no data as soon as it reads again (its
  * status goes back to pending), which would swap "Try again" for the loading look mid-retry
@@ -48,12 +55,12 @@ export function useReadFailure(
   // Each read's last error, taken while it is the read's error (state derived while
   // rendering: React renders again at once, before anything is shown).
   const latest = reads.map((read, index): Kept =>
-    read.isError ? { error: read.error, at: read.errorUpdatedAt } : (kept[index] ?? null),
+    failedToLoad(read) ? { error: read.error, at: read.errorUpdatedAt } : (kept[index] ?? null),
   )
   if (latest.some((entry, index) => entry?.error !== kept[index]?.error)) setKept(latest)
 
   const failed = reads.flatMap((read, index) => {
-    if (read.isError) return [{ read, error: read.error, at: read.errorUpdatedAt }]
+    if (failedToLoad(read)) return [{ read, error: read.error, at: read.errorUpdatedAt }]
     const last = kept[index]
     // Read again after this very failure, with nothing to show instead yet.
     return read.data === undefined && last && last.at === read.errorUpdatedAt
