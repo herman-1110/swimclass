@@ -22,7 +22,9 @@ export const env = {
   /**
    * Demo mode: the site runs the repo's own migrations and seed in the browser
    * (`shared/api/demo`) instead of talking to Supabase, with the clock stopped at
-   * DEMO_NOW (`shared/config/demo`).
+   * DEMO_NOW (`shared/config/demo`). A property the minifier can't fold: code that only
+   * demo builds need tests `import.meta.env.VITE_DEMO === 'true'` (a constant) instead, or
+   * first, so a production build leaves it out.
    */
   demo: import.meta.env.VITE_DEMO === 'true',
 }

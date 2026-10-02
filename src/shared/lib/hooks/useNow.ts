@@ -20,7 +20,9 @@ export function useNow(intervalMs: number = DEFAULT_INTERVAL_MS): TZDate {
   const [now, setNow] = useState(nowMyt)
 
   useEffect(() => {
-    if (env.demo) return
+    // The build-time constant first, so a production build drops this line (useNow.test.ts
+    // switches env.demo off).
+    if (import.meta.env.VITE_DEMO === 'true' && env.demo) return
     const tick = () => setNow(nowMyt())
     const timer = window.setInterval(tick, intervalMs)
     // Phones pause timers in the background; catch up as soon as the page shows again.

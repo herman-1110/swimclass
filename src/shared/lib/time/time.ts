@@ -50,7 +50,9 @@ export function toMyt(instant: Instant): TZDate {
  * (`app_now()`), never the browser's. In demo mode both stand still at DEMO_NOW.
  */
 export function nowMyt(): TZDate {
-  return env.demo ? toMyt(DEMO_NOW) : TZDate.tz(MYT)
+  // The build-time constant first, so a production build folds this to the real clock and
+  // leaves DEMO_NOW out; env.demo after it lets the unit tests switch demo mode off.
+  return import.meta.env.VITE_DEMO === 'true' && env.demo ? toMyt(DEMO_NOW) : TZDate.tz(MYT)
 }
 
 /** The MYT calendar date of a moment: 2026-09-30T17:00Z → "2026-10-01". */

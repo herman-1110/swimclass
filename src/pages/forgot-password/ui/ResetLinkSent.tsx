@@ -1,5 +1,4 @@
 import { DEFAULT_BUSINESS_NAME } from '@/shared/config/business'
-import { env } from '@/shared/config/env'
 import { ROUTES } from '@/shared/config/routes'
 import { ButtonLink } from '@/shared/ui/ButtonLink'
 import { CardFooter } from '@/shared/ui/CardFooter'
@@ -32,7 +31,8 @@ export function ResetLinkSent({ email }: ResetLinkSentProps) {
         }
         focusOnMount
       />
-      {env.demo && (
+      {/* The build-time constant: a production build leaves the demo note out. */}
+      {import.meta.env.VITE_DEMO === 'true' && (
         <p className="rounded-control bg-subtle px-3.5 py-3 text-label leading-normal text-muted">
           Demo mode sends no email. Log in, then change the password on your Account page.
         </p>
