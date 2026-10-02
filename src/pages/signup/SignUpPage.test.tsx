@@ -69,7 +69,7 @@ const newbie = {
   Username: 'newbie',
   Name: 'New Person',
   Email: 'newbie@example.com',
-  Phone: '012-111 2222',
+  'Phone (optional)': '012-111 2222',
   Password: 'swim-new-2026',
   'Confirm password': 'swim-new-2026',
 }
@@ -107,7 +107,7 @@ describe('SignUpPage', () => {
         '3 to 30 small letters, numbers, dots or underscores. You’ll log in with it.',
       ),
     ).toBeTruthy()
-    expect(screen.getByText('Your own name. Your coach adds your swimmers.')).toBeTruthy()
+    expect(screen.getByText('Your own name. Your coach adds your students.')).toBeTruthy()
     expect(screen.getByText('We’ll email you a link to confirm it.')).toBeTruthy()
     expect(screen.getByText('At least 8 characters.')).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Create account' }).getAttribute('type')).toBe(

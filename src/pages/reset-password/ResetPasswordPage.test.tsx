@@ -198,7 +198,7 @@ describe('ResetPasswordPage', () => {
     save()
     const heading = await screen.findByRole('heading', { level: 1, name: 'New password saved' })
     expect(document.activeElement).toBe(heading)
-    expect(heading.nextElementSibling?.textContent).toBe('You’re logged in as daniel.')
+    expect(heading.nextElementSibling?.textContent).toBe('You’re signed in as daniel.')
     await waitFor(() => expect(document.title).toBe('New password saved · Swim Class'))
 
     // The new password works; the old one doesn't.

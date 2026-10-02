@@ -123,7 +123,7 @@ export function SignUpForm({ labelledBy, onSignedUp }: SignUpFormProps) {
         id="signup-name"
         label="Name"
         size="lg"
-        help="Your own name. Your coach adds your swimmers."
+        help="Your own name. Your coach adds your students."
         autoComplete="name"
         maxLength={100}
         required
@@ -150,7 +150,8 @@ export function SignUpForm({ labelledBy, onSignedUp }: SignUpFormProps) {
       <Field
         ref={phoneInput}
         id="signup-phone"
-        label="Phone"
+        // Optional, as every optional field says (auth Q3: until the owner makes it required).
+        label="Phone (optional)"
         type="tel"
         inputMode="tel"
         size="lg"

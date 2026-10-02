@@ -83,7 +83,8 @@ export function ProfileForm({ profile, labelledBy }: ProfileFormProps) {
       />
       <Field
         id="account-phone"
-        label="Phone"
+        // Optional, as every optional field says (auth Q3: until the owner makes it required).
+        label="Phone (optional)"
         type="tel"
         inputMode="tel"
         size="lg"
