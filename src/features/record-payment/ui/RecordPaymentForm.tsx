@@ -7,7 +7,13 @@ import { RadioGroup } from '@/shared/ui/RadioGroup'
 import { Select } from '@/shared/ui/Select'
 import { Textarea } from '@/shared/ui/Textarea'
 
-import { CUSTOM_LESSONS, notePlaceholder, PAYMENT_SAVED, SAVE_PAYMENT } from '../model/copy'
+import {
+  CUSTOM_LESSONS,
+  notePlaceholder,
+  PAYMENT_SAVED,
+  PAYMENT_SAVED_STATUS,
+  SAVE_PAYMENT,
+} from '../model/copy'
 import { packageOptionLabel, PAYMENT_METHODS, type PaymentMethodChoice } from '../model/paymentForm'
 import { type PaymentFormInput, usePaymentForm } from './usePaymentForm'
 
@@ -123,7 +129,7 @@ export function RecordPaymentForm({ accountName, ...input }: RecordPaymentFormPr
       </div>
       {/* The button's new label isn't always read out: say it here too. */}
       <p role="status" className="sr-only">
-        {form.saved ? PAYMENT_SAVED : ''}
+        {form.saved ? PAYMENT_SAVED_STATUS : ''}
       </p>
     </form>
   )

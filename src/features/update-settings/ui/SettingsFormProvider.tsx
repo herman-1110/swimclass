@@ -182,7 +182,7 @@ export function SettingsFormProvider({
       {children}
       {/* One polite announcement for a save that worked (§6.7); the line near Save is the alert. */}
       <p role="status" className="sr-only">
-        {form.ready && saved ? 'Settings saved' : ''}
+        {form.ready && saved ? 'Settings saved.' : ''}
       </p>
       <LeaveWithoutSavingDialog when={form.dirty || saving} />
     </SettingsFormContext>

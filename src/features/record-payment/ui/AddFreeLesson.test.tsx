@@ -58,7 +58,7 @@ describe('AddFreeLesson', () => {
     fireEvent.click(add())
     await waitFor(() => expect(add().textContent).toBe('Free lesson added'))
     expect(onAdded).toHaveBeenCalledTimes(1)
-    expect(screen.getByRole('status').textContent).toBe('Free lesson added')
+    expect(screen.getByRole('status').textContent).toBe('Free lesson added.')
     expect(add().getAttribute('aria-disabled')).toBe('true')
     const [latest] = await readRows('payments', {
       eq: { group_id: HANA, method: 'free' },

@@ -136,7 +136,7 @@ describe('CoachStudentsPage actions', () => {
       }),
     )
     fireEvent.click(within(panel).getByRole('button', { name: 'Excuse Fri 25 Sep lesson' }))
-    expect(await within(panel).findByText('Lesson excused')).toBeTruthy()
+    expect(await within(panel).findByText('Lesson excused.')).toBeTruthy()
     const weiJie = await rowOf('Wei Jie')
     await waitFor(() => expect(within(weiJie).getByText('1 used · 1 booked')).toBeTruthy())
     expect(within(weiJie).getByText('Since 18 Sep')).toBeTruthy()
@@ -200,7 +200,7 @@ describe('CoachStudentsPage actions', () => {
     })
     fireEvent.click(within(dialog).getByRole('button', { name: 'Save changes' }))
     const group = within(drawer).getByRole('region', { name: 'Group' })
-    expect(await within(group).findByText('Changes saved')).toBeTruthy()
+    expect(await within(group).findByText('Changes saved.')).toBeTruthy()
     expect(screen.queryByRole('dialog', { name: 'Edit group' })).toBeNull()
     expect(within(group).getByText('Sunrise Residence')).toBeTruthy()
     const lessons = within(drawer).getByRole('region', { name: 'Lessons' })
@@ -231,7 +231,7 @@ describe('CoachStudentsPage actions', () => {
     expect(within(nadia).getByRole('rowheader').textContent).toBe('Nadia Yusof nadia')
     // Approved, the account leaves the list: focus goes to the next one's Approve.
     press(within(siti).getByRole('button', { name: 'Approve Siti Rahman' }))
-    expect(await screen.findByText('Siti Rahman approved')).toBeTruthy()
+    expect(await screen.findByText('Siti Rahman approved.')).toBeTruthy()
     await waitFor(() =>
       expect(document.activeElement).toBe(
         within(table).getByRole('button', { name: 'Approve Nadia Yusof' }),
@@ -240,7 +240,7 @@ describe('CoachStudentsPage actions', () => {
     expect(screen.getByRole('button', { name: 'Waiting for approval 1' })).toBeTruthy()
     // The last one: focus goes to the notice, above the empty list.
     press(within(table).getByRole('button', { name: 'Approve Nadia Yusof' }))
-    const notice = await screen.findByText('Nadia Yusof approved')
+    const notice = await screen.findByText('Nadia Yusof approved.')
     expect(await screen.findByText('No accounts are waiting for approval.')).toBeTruthy()
     await waitFor(() => expect(document.activeElement).toBe(notice))
     expect(screen.getByRole('button', { name: 'Waiting for approval 0' })).toBeTruthy()

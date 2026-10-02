@@ -184,7 +184,7 @@ describe('RecordPaymentForm', () => {
     await waitFor(() => expect(save().textContent).toBe('Payment saved'))
     expect(onSaved).toHaveBeenCalledTimes(1)
     expect(save().getAttribute('aria-disabled')).toBe('true')
-    expect(screen.getByRole('status').textContent).toBe('Payment saved')
+    expect(screen.getByRole('status').textContent).toBe('Payment saved.')
     expect(amount().value).toBe('')
     expect(screen.getByRole<HTMLInputElement>('radio', { name: 'Cash' }).checked).toBe(true)
     fireEvent.change(amount(), { target: { value: '1' } })

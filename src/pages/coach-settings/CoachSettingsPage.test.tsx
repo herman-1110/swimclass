@@ -142,7 +142,7 @@ function save() {
 
 /** "Settings saved", announced once. */
 function savedAnnouncement() {
-  return screen.findByText('Settings saved', { selector: '[role="status"]' }, SAVE_WAIT)
+  return screen.findByText('Settings saved.', { selector: '[role="status"]' }, SAVE_WAIT)
 }
 
 function dayRow(day: string) {

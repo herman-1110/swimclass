@@ -3,8 +3,12 @@ import { formatRinggit, possessive } from '@/shared/lib/format'
 // The Record payment panel's words (DESIGN §6: "Save payment" → "Payment saved"; the rest
 // coach-students §5.2.8 and §5.3 W2, proposed).
 
+// A button keeps its name through the flow ("Save payment" → "Payment saved", DESIGN §6); the
+// status line that says the same under it is a sentence, with a full stop like every notice.
+
 export const SAVE_PAYMENT = 'Save payment'
 export const PAYMENT_SAVED = 'Payment saved'
+export const PAYMENT_SAVED_STATUS = 'Payment saved.'
 
 /** The second Package option, which opens "Number of lessons". */
 export const CUSTOM_LESSONS = 'Custom number of lessons'
@@ -21,3 +25,4 @@ export function freeLessonHelp(names: string): string {
 
 export const ADD_FREE_LESSON = 'Add 1 free lesson'
 export const FREE_LESSON_ADDED = 'Free lesson added'
+export const FREE_LESSON_ADDED_STATUS = 'Free lesson added.'

@@ -380,7 +380,7 @@ describe('CoachStudentsPage', () => {
   it('highlights a group just added and says so, then drops it from the address', async () => {
     const router = await renderAs('herman', `/coach/students?added=${GROUP.weiJie}`)
     await findTable()
-    expect((await screen.findByText('Student added')).closest('[role=status]')).toBeTruthy()
+    expect((await screen.findByText('Student added.')).closest('[role=status]')).toBeTruthy()
     const cards = within(
       screen.getByRole('list', { name: 'Packages, needs action first' }),
     ).getAllByRole('listitem')
@@ -400,19 +400,19 @@ describe('CoachStudentsPage', () => {
       state: { added },
     })
     await findTable()
-    const notice = await screen.findByText('Student added · Invite sent to siti@example.com')
+    const notice = await screen.findByText('Student added · Invite sent to siti@example.com.')
     expect(notice.closest('[role=status]')).toBeTruthy()
     // The address and its state go once shown; the notice stays.
     await waitFor(() => expect(router.state.location.search).toBe(''))
     expect(router.state.location.state).toBeNull()
-    expect(screen.getByText('Student added · Invite sent to siti@example.com')).toBeTruthy()
+    expect(screen.getByText('Student added · Invite sent to siti@example.com.')).toBeTruthy()
   })
 
   it('ignores router state about another group than ?added', async () => {
     const added = { groupId: GROUP.hana, size: 1, invitedEmail: 'siti@example.com' }
     await renderAs('herman', `/coach/students?added=${GROUP.weiJie}`, { state: { added } })
     await findTable()
-    expect(await screen.findByText('Student added')).toBeTruthy()
+    expect(await screen.findByText('Student added.')).toBeTruthy()
     expect(screen.queryByText(/Invite sent/)).toBeNull()
   })
 

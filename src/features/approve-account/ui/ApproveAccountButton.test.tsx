@@ -105,7 +105,7 @@ describe('ApproveAccountButton', () => {
     await logIn('herman', DEMO_PASSWORD)
     const { invalidate, onApproved } = renderButton()
     fireEvent.click(screen.getByRole('button', { name: 'Approve Siti Rahman' }))
-    await waitFor(() => expect(onApproved).toHaveBeenCalledWith('Siti Rahman approved'))
+    await waitFor(() => expect(onApproved).toHaveBeenCalledWith('Siti Rahman approved.'))
     await waitFor(() => expect(invalidate).toHaveBeenCalledWith({ queryKey: accountKeys.all }))
     const [profile] = await readRows('profiles', { eq: { id: siti.id } })
     expect(profile?.approved).toBe(true)
@@ -139,7 +139,7 @@ describe('ApproveAccountButton', () => {
       expect(approve.hasAttribute('data-disabled')).toBe(false)
       // The second press did nothing: one approval, one notice.
       expect(onApproved).toHaveBeenCalledTimes(1)
-      expect(onApproved).toHaveBeenCalledWith('Siti Rahman approved')
+      expect(onApproved).toHaveBeenCalledWith('Siti Rahman approved.')
     },
   )
 })

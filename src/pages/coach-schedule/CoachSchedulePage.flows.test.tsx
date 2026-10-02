@@ -101,7 +101,7 @@ describe('CoachSchedulePage actions (§8.3)', () => {
         /^Siti Aminah Waiting for approval · signed up \d+ \w{3}( \d{4})?Approve Siti Aminah$/,
       )
       fireEvent.click(approve)
-      const shown = await notice('Siti Aminah approved')
+      const shown = await notice('Siti Aminah approved.')
       // Its row goes, so focus goes to the notice.
       await waitFor(() => expect(document.activeElement?.contains(shown)).toBe(true))
       await waitFor(

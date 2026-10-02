@@ -81,7 +81,7 @@ describe('EditGroupButton', () => {
     fireEvent.change(field(dialog, 'Lessons already used'), { target: { value: '3' } })
     fireEvent.change(field(dialog, 'Lessons already paid'), { target: { value: '5' } })
     fireEvent.click(saveIn(dialog))
-    await waitFor(() => expect(onSaved).toHaveBeenCalledWith('Changes saved'))
+    await waitFor(() => expect(onSaved).toHaveBeenCalledWith('Changes saved.'))
     expect(screen.queryByRole('dialog')).toBeNull()
     const [nurul] = await readRows('group_details', { eq: { group_id: NURUL.group_id } })
     expect(nurul).toMatchObject({ opening_used_lessons: 3, opening_paid_lessons: 5 })
