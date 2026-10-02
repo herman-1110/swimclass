@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { useRouteError } from 'react-router'
 
 import { DEFAULT_BUSINESS_NAME } from '@/shared/config/business'
@@ -6,20 +6,29 @@ import { ROUTES } from '@/shared/config/routes'
 
 // Last-resort error screen for anything a page didn't handle itself, including a page's
 // code failing to download (a dropped connection, or an old file after a new release).
-// Reloading fetches the current files, so that is the first thing to offer.
+// Reloading fetches the current files, so that is the first thing to offer. It replaces
+// the page, so focus moves to its h1: a screen reader reads the error out and Tab goes on
+// from there, as on the other screens that swap a page for a result (auth spec §7.5).
 export function RouteError() {
   const error = useRouteError()
+  const heading = useRef<HTMLHeadingElement>(null)
 
   useEffect(() => {
     console.error(error)
   }, [error])
 
+  useEffect(() => {
+    heading.current?.focus()
+  }, [])
+
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-[480px] flex-col gap-3 px-7 pt-18 pb-10">
       <title>{`Something went wrong · ${DEFAULT_BUSINESS_NAME}`}</title>
-      <h1 className="text-title font-semibold">Something went wrong</h1>
+      <h1 ref={heading} tabIndex={-1} className="text-title font-semibold">
+        Something went wrong
+      </h1>
       <p className="text-muted">
-        This page couldn't load. Check your connection, then reload the page. If it still doesn't
+        This page couldn’t load. Check your connection, then reload the page. If it still doesn’t
         load, try again in a few minutes.
       </p>
       <button

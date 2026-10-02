@@ -529,7 +529,12 @@ describe('when a page fails to load', () => {
       await findPageHeading('Schedule')
       fireEvent.click(within(sidebarNav('Coach')).getByRole('link', { name: 'Settings' }))
     }
-    await findPageHeading('Something went wrong')
+    const heading = await findPageHeading('Something went wrong')
+    // It replaces the page, so focus moves to its heading and a screen reader reads it out.
+    await waitFor(() => expect(document.activeElement).toBe(heading))
+    expect(heading.nextElementSibling?.textContent).toBe(
+      'This page couldn’t load. Check your connection, then reload the page. If it still doesn’t load, try again in a few minutes.',
+    )
     expect(screen.getByRole('button', { name: 'Reload the page' })).toBeTruthy()
     expect(screen.getByRole('link', { name: 'Go to the start' }).getAttribute('href')).toBe('/')
     expect(screen.getAllByRole('main')).toHaveLength(1)
