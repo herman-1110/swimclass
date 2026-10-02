@@ -1,4 +1,4 @@
-import { type GroupBalance, isUnpaidAfter, nextBookingPackageNo } from '@/entities/balance'
+import { type GroupBalance, isUnpaidAfter, nextPaymentPackageNo } from '@/entities/balance'
 import type { Group } from '@/entities/group'
 import { formatDayKey } from '@/entities/schedule'
 import { clashMessage, type Slot, unavailableTitle } from '@/entities/slot'
@@ -7,6 +7,7 @@ import { messageFor, type MessageOptions } from '@/shared/config/messages'
 import { formatHours, plural } from '@/shared/lib/format'
 import { formatRange, formatTime, toMyt } from '@/shared/lib/time'
 
+import { newLessonPosition } from './position'
 import { lessonsPerBooking } from './repeatWeeks'
 
 // The booking summary's words (book spec §5.2.5; design/Main.dc.html's script, :341-370,
@@ -67,6 +68,11 @@ export type SummaryInput = {
     | 'booked_lessons'
     | 'can_still_book'
   >
+  /**
+   * Lessons of the group already booked that start before the picked one (lessonsBookedBefore),
+   * or null while they aren't known: the lesson is then taken to come after all of them.
+   */
+  bookedBefore: number | null
   /** How many weeks "Repeat weekly" would book (repeatWeeks). */
   repeatWeeks: number
   /** book_lesson's last refusal for this very selection, or null. */
@@ -86,28 +92,43 @@ export function lessonTitle(slot: Pick<Slot, 'day' | 'starts_at'>, minutes: numb
 }
 
 /**
- * What a free start uses (states C and D): "1-to-2 for Aiman & Sofia · uses 1 lesson from
- * Package 4, 1 left to book after this" (", completes the package" when it uses the last
- * one). Once the package is fully booked the next one is named, with ", not paid yet" when
- * the lessons go past what is paid. A 2-hour lesson with 1 left spans two packages (C18).
+ * What a free start uses (states C and D), in the package the ledger will put it in (it
+ * counts after the lessons used and the booked ones that start before it: newLessonPosition).
+ * "1-to-2 for Aiman & Sofia · uses 1 lesson from Package 4, 1 left to book after this" while
+ * the current package has room (", completes the package" when this booking fills it), or the
+ * later package it goes into; a 2-hour lesson across two packages: "uses 2 lessons: the last
+ * of Package 1 and the first of Package 2" (C18). ", not paid yet" when a lesson it uses isn't
+ * paid for, also in a package with room (a package used up exactly, or never paid); when it is
+ * paid but moves a lesson booked after it past what is paid, " · Package 3 isn’t paid yet"
+ * (that package's words on My classes). `bookedBefore` defaults to every booked lesson.
  */
 export function usageLine(
   group: SummaryInput['group'],
   balance: SummaryInput['balance'],
   lessons: number,
+  bookedBefore: number = balance.booked_lessons,
 ): string {
   const who = `${group.type_label} for ${group.display_names} · uses ${plural(lessons, 'lesson')}`
-  const left = balance.left_in_package
-  if (left > 0) {
-    const after = left - lessons
-    if (after < 0) {
-      return `${who}: the last of Package ${balance.package_no} and the first of Package ${balance.package_no + 1}`
-    }
-    const rest = after > 0 ? `, ${after} left to book after this` : ', completes the package'
-    return `${who} from Package ${balance.package_no}${rest}`
+  const size = balance.package_size
+  const place = newLessonPosition(balance, bookedBefore, lessons)
+  const lastLesson = (place.package_no - 1) * size + place.lesson_in_package + lessons - 1
+  const notPaid = lastLesson > balance.paid_lessons ? ', not paid yet' : ''
+  const later =
+    !notPaid && isUnpaidAfter(balance, lessons)
+      ? ` · Package ${nextPaymentPackageNo(balance)} isn’t paid yet`
+      : ''
+  if (place.lesson_in_package + lessons - 1 > size) {
+    return `${who}: the last of Package ${place.package_no} and the first of Package ${place.package_no + 1}${notPaid}${later}`
   }
-  const unpaid = isUnpaidAfter(balance, lessons) ? ', not paid yet' : ''
-  return `${who} from Package ${nextBookingPackageNo(balance)}${unpaid}`
+  // Lessons left to book in the current package once this one is in (book spec §5.2.5 C).
+  const roomBefore = place.package_no === balance.package_no && balance.left_in_package > 0
+  const after = place.package_no * size - balance.used_lessons - balance.booked_lessons - lessons
+  const rest = !roomBefore
+    ? ''
+    : after > 0
+      ? `, ${after} left to book after this`
+      : ', completes the package'
+  return `${who} from Package ${place.package_no}${notPaid}${rest}${later}`
 }
 
 /**
@@ -146,7 +167,7 @@ export function bookingSummaryState(input: SummaryInput): SummaryState {
     const reason = messageFor(refusal, messages)
     return { title, useLine: reason, useTone: 'warn', buttonLabel, canBook, showRepeat }
   }
-  const uses = usageLine(group, balance, lessons)
+  const uses = usageLine(group, balance, lessons, input.bookedBefore ?? balance.booked_lessons)
   return { title, useLine: uses, useTone: 'muted', buttonLabel, canBook: true, showRepeat }
 }
 

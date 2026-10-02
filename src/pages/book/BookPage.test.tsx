@@ -229,9 +229,11 @@ describe('BookPage', () => {
       screen.getByText('New bookings start Package 3. Pay for it before or at its first lesson.'),
     ).toBeTruthy()
     const box = summary()
+    // Tue 29 Sep comes before her lesson on Sun 4 Oct (lesson 4 of Package 2, the last paid):
+    // the ledger gives Tue 29 Sep that place and moves Sun 4 Oct on to Package 3, unpaid.
     expect(
       await box.findByText(
-        '1-to-1 for Sofia · uses 1 lesson from Package 3, not paid yet',
+        '1-to-1 for Sofia · uses 1 lesson from Package 2 · Package 3 isn’t paid yet',
         {},
         SLOW,
       ),
@@ -241,8 +243,10 @@ describe('BookPage', () => {
   })
 
   it('goes straight to the new group’s lesson while its start times load (§6.6)', async () => {
-    await renderBook('meiling', '/book?day=2026-09-29&length=60&time=19:30')
+    const { queryClient } = await renderBook('meiling', '/book?day=2026-09-29&length=60&time=19:30')
     await startTimes('Tue 29 Sep')
+    // Every read of the screen is in (the account's upcoming lessons too).
+    await waitFor(() => expect(queryClient.isFetching()).toBe(0), SLOW)
     const release = await holdDatabase()
     try {
       fireEvent.click(screen.getByRole('radio', { name: 'Sofia 1-to-1' }))
@@ -251,7 +255,7 @@ describe('BookPage', () => {
       const box = summary()
       expect(box.getByText('Tue 29 Sep · 7:30–8:30 pm')).toBeTruthy()
       expect(
-        box.getByText('1-to-1 for Sofia · uses 1 lesson from Package 3, not paid yet'),
+        box.getByText('1-to-1 for Sofia · uses 1 lesson from Package 2 · Package 3 isn’t paid yet'),
       ).toBeTruthy()
       expect(box.getByRole('button', { name: 'Book 7:30 pm for Sofia' })).toBeTruthy()
     } finally {

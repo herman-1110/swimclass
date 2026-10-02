@@ -1,6 +1,7 @@
 import { useState } from 'react'
 
 import type { GroupBalance } from '@/entities/balance'
+import type { UpcomingLesson } from '@/entities/booking'
 import type { Group } from '@/entities/group'
 import type { PublicSettings } from '@/entities/settings'
 import type { Slot } from '@/entities/slot'
@@ -17,6 +18,7 @@ import {
   type Outcome,
   sameChoice,
 } from '../model/outcome'
+import { lessonsBookedBefore } from '../model/position'
 import { lessonsPerBooking, repeatLabel, repeatWeeks } from '../model/repeatWeeks'
 import { bookingSummaryState, cancelPolicyNote } from '../model/summary'
 import { BookedActions } from './BookedActions'
@@ -29,6 +31,13 @@ type BookingSummaryProps = {
   group: Group
   /** That group's package balance. */
   balance: GroupBalance
+  /**
+   * The account's booked lessons that haven't ended (useUpcomingLessons), or undefined while
+   * they load: the summary names the package the picked lesson goes into as the ledger
+   * numbers it, among the group's lessons by start time. Until they are in, it is taken to
+   * come after all of them.
+   */
+  upcoming?: readonly Pick<UpcomingLesson, 'group_id' | 'starts_at' | 'position'>[]
   settings: Pick<
     PublicSettings,
     'travel_gap_minutes' | 'booking_window_weeks' | 'cancel_cutoff_hours'
@@ -112,6 +121,10 @@ export function BookingSummary(props: BookingSummaryProps) {
     minutes,
     group,
     balance,
+    bookedBefore:
+      lesson && props.upcoming
+        ? lessonsBookedBefore(props.upcoming, group.group_id, lesson.starts_at)
+        : null,
     repeatWeeks: weeks,
     refusal: refusal?.error ?? null,
     messages: {
