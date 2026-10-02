@@ -3,6 +3,69 @@
 Update this file at the end of every Claude Code session. Newest entry on top.
 Keep entries short; link to files instead of pasting code.
 
+## v0.9 · 2 Oct 2026 · Owner answers; anime.js and button hover motion
+**State**: `frontend-first` (not pushed; 106 commits ahead of `origin/main`, with this
+entry). At dbf225f: typecheck, lint, format and the build pass. The full unit run passed
+(1,807 tests, 241 files) just before the last change, which only touches
+`shared/lib/motion`; its tests and Button's then passed again (26). `test:db` wasn't run
+(nothing under `supabase/` changed). Herman's `npm run dev` runs on this checkout.
+**Done**
+- 91f58ae: Herman added anime.js 4.5.0 and the CLAUDE.md Animation section. The section
+  is now its own heading, says anime.js ignores reduce motion, and the Stack list names it.
+- Herman answered the seven owner questions from v0.6:
+  1. Business name: "Swim Class" (already the settings default and code). DESIGN §3 says
+     the drawings' "Swim Class Booking" is the old name.
+  2. Minimum password length 8 (already in messages.ts and the demo).
+  3. Phone not required at sign-up (already optional). PRD BR-1 now says so.
+  4. "Pay RM [price]" with no price set: still to be decided. The book spec's C10 wording
+     stays.
+  5. Add students starts as 1-to-1 with no account chosen (already built). His follow-on
+     wish is not decided yet (Open issues).
+  6. Log out ends the session on this device only: `supabaseBackend` now calls
+     `signOut({ scope: 'local' })`, as the demo does (auth C33).
+  7. "Coach view only me can see, my username, my password": kept as built. Only the
+     coach account sees the coach pages, "Back to coach view" and the coach's Log out.
+- dbf225f: hover is easy to see, and buttons move under the mouse (DESIGN §2, §3, §5).
+  - CSS: primaries darken and glow (`--shadow-lift`, `--shadow-press` while held). Quiet
+    and icon buttons get a hairline outline and a soft shadow (`--shadow-soft`). Links and
+    text buttons underline. Tailwind's `hover:` needs a mouse, so taps leave nothing on.
+  - Motion: `shared/lib/motion` (installed once by `App`) moves `data-motion` elements
+    with anime.js. Primaries lift 2 px, quiet and icon buttons 1 px, and both press to 97%
+    while held. Mouse only. Nothing moves under reduce motion, or on a disabled,
+    aria-disabled or busy button.
+  - Checked in Chrome on the coach pages: the lift and press happen, no inline style is
+    left afterwards, and under reduce motion the colour and shadow change but nothing
+    moves. Shots are in `frontend-plan/review/hover/`.
+  - Bundle: anime.js loads on the first mouse hover, never preloaded, as a 12.8 kB gzipped
+    chunk (`motion/anime.ts` names the three functions; `import('animejs')` was 40 kB).
+    The main chunk is unchanged at 111.9 kB.
+**Next**
+1. Herman answers the Add students question below, the 17 questions in
+   `frontend-plan/review/final/triage.json` and the copy list, then says whether to merge
+   `frontend-first` into `main` and push.
+2. Then v0.8 Next 2 and 3: clean up the worktrees and branches, and do the wiring
+   (prompts 05–11).
+**Decisions**
+- Hover motion only on the button-shaped looks (primary, quiet, IconButton). Chips, option
+  rows, tabs and segmented controls keep their hover as before.
+- anime.js is always loaded lazily, through a file of named re-exports (CLAUDE.md
+  Animation).
+**Open issues**
+- Add students (Q5): Herman wrote "after they create their account with the same
+  username I created it will automatically bind them to it". Today (BR-3) the coach types
+  the customer's email and Supabase emails them a link to set a password. The account is
+  approved and already holds the students; there is no second sign-up, and signing up with
+  that username says "That username is taken". Claiming a username by signing up would let
+  anyone who guesses it take the account and see the students. Before prompt 05 builds
+  `admin-accounts`: keep the email invite, or claim by username plus a check (the same
+  email the coach typed, or the coach approves the claim)?
+- Q4 ("Pay RM [price]") is still open.
+- v0.8's other open issues still apply.
+**Manual steps waiting on Herman**
+- v0.8's `npm ci` isn't needed: `node_modules` already has wrangler 4.146.0 and anime.js.
+- The rest are as in v0.8: Node 24, delete `D:\d`, the Supabase minimum password length
+  (8), the owner questions, and the OK to merge into `main` and push.
+
 ## v0.8 · 2 Oct 2026 · Frontend first: final review fixed and merged
 **State**: `frontend-first` (not pushed; 102 commits ahead of `origin/main`) has all 56
 final-review fixes. At 39dacb7, typecheck, lint, format, 1,794 unit tests (240 files) and
