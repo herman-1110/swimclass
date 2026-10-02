@@ -45,6 +45,10 @@ Put these in `src/app/styles/index.css` as CSS variables and expose them to Tail
   every width; only the layout changes.
 - Radius: 10 px buttons and inputs, 8 px small controls, 12 px frames, 6 px calendar blocks,
   999 px pills.
+- Shadows, for button hover only (§3): `--shadow-lift` 0 6px 16px -6px accent at 60%
+  (primary under the mouse), `--shadow-press` 0 1px 3px -1px accent at 50% (primary held
+  down), `--shadow-soft` a 1 px `--field` outline plus 0 4px 10px -4px ink at 25% (quiet
+  and icon buttons under the mouse).
 - Spacing: 8 px grid; page side padding 20 px on phones, 32 px from 768 px, 40–48 px
   from 1024 px.
 
@@ -56,7 +60,11 @@ them: `PackageSummary` (entity `balance`) uses SegmentBar, `TimeChipGrid` (entit
 uses Chip, `GroupPicker` (entity `group`) uses OptionRow. The tab bar and sidebar live in
 `src/app/layouts/`.
 - **Button**: primary (accent fill, white text, 46–52 px tall); quiet (text only, accent
-  or ink); disabled (#ECECE9 fill, muted text). Label says the action.
+  or ink); disabled (#ECECE9 fill, muted text). Label says the action. Hover is easy to
+  see (Herman, 2 Oct 2026): a primary darkens to `--accent-hover`, glows (`--shadow-lift`)
+  and lifts 2 px; a quiet or icon button gets `--subtle`, `--shadow-soft` and lifts 1 px;
+  both press down to 97% while held. Links and text buttons underline. Disabled and busy
+  buttons don't react.
 - **Segmented control** (`Segmented`): track `--subtle`, selected segment white with `--line` border.
   Used for 1 hour / 2 hours and lesson type.
 - **Option row** (`OptionRow`, a radio): 48 px, border `--field`; selected border accent and
@@ -236,7 +244,9 @@ toolbar), and on a real phone before going live.
   text alternative (the Book screen lists the same times).
 - 44 px touch targets at every width; visible focus ring (2 px accent outline, 2 px
   offset).
-- Respect `prefers-reduced-motion`; motion only for dialogs opening and state changes.
+- Respect `prefers-reduced-motion`; motion only for dialogs opening, state changes and
+  buttons under a mouse (§3). With reduce motion on, nothing moves, but hover still changes
+  colour and shadow. Touch never sees hover, so a tap leaves nothing behind.
 
 ## 6. Copy
 Sentence case, plain words, no exclamation marks. Buttons name the action and keep the

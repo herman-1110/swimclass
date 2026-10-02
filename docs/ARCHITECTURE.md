@@ -152,6 +152,7 @@ src/
     │                             business.ts (the business name on signed-out pages)
     │                             demo.ts (demo mode's clock and sample password)
     ├── lib/                      time/ (Malaysia time) · format/ (RM, plurals) · hooks/ · cn.ts
+    │                             motion/ (buttons lift under the mouse, with anime.js)
     └── ui/                       the kit (UI kit spec), one component per file:
                                   Button, ButtonLink, IconButton, BackLink (buttonClasses.ts);
                                   Field, FieldRow, FieldList, Fieldset, Legend, Select, Textarea,

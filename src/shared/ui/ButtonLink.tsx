@@ -3,7 +3,7 @@ import { Link } from 'react-router'
 
 import { cn } from '@/shared/lib/cn'
 
-import { buttonClasses, type ButtonLook } from './buttonClasses'
+import { buttonClasses, type ButtonLook, buttonMotion } from './buttonClasses'
 
 type ButtonLinkProps = ButtonLook & ComponentPropsWithRef<typeof Link>
 
@@ -26,6 +26,7 @@ export function ButtonLink({
   return (
     <Link
       {...rest}
+      data-motion={buttonMotion(variant)}
       className={cn(
         buttonClasses({ variant, size, tone, textSize, flush, weight, block }),
         className,

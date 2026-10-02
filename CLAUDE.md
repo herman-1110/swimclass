@@ -124,5 +124,11 @@ Keep this list current when you add scripts.
 - Before writing animation code, check the types in `node_modules/animejs`
 - Docs: https://animejs.com/documentation
 - anime.js ignores "reduce motion": the CSS rule in `src/app/styles/index.css` only reaches
-  CSS animations and transitions. Check `prefers-reduced-motion` before every anime.js
-  animation, and skip it when it is set.
+  CSS animations and transitions. Check `prefersReducedMotion()` (`@/shared/lib/motion`)
+  before every anime.js animation, and skip it when it is true.
+- Load it lazily, inside the handler, so phones don't download it for nothing (the PRD's
+  3 s first load). Import a small file that re-exports the functions you use by name
+  (`shared/lib/motion/anime.ts`): `import('animejs')` itself pulls in the whole library
+  (40 kB gzipped instead of about 13).
+- Button hover motion is already done: Button, ButtonLink and IconButton set `data-motion`,
+  and `App` installs one listener for the page (DESIGN §3, §5).

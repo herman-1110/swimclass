@@ -101,6 +101,21 @@ describe('Button', () => {
     expect(button.className.endsWith(' flex-1')).toBe(true)
     expect(button.className).toContain(buttonClasses())
   })
+
+  it('marks the buttons that lift under the mouse: primaries lift, quiet ones less', () => {
+    render(
+      <>
+        <Button>Save payment</Button>
+        <Button variant="quiet">Cancel</Button>
+        <Button variant="link">Log out</Button>
+      </>,
+    )
+    const motion = (name: string) =>
+      screen.getByRole('button', { name }).getAttribute('data-motion')
+    expect(motion('Save payment')).toBe('lift')
+    expect(motion('Cancel')).toBe('soft')
+    expect(motion('Log out')).toBeNull()
+  })
 })
 
 describe('ButtonLink', () => {
@@ -122,6 +137,7 @@ describe('ButtonLink', () => {
     const link = screen.getByRole('link', { name: 'Add students' })
     expect(link.getAttribute('href')).toBe('/coach/add-students')
     expect(link.className).toBe(buttonClasses({ size: 'sm' }))
+    expect(link.getAttribute('data-motion')).toBe('lift')
   })
 })
 
@@ -150,6 +166,32 @@ describe('buttonClasses', () => {
       ).toBe(true)
     }
     expect(classes({})).toEqual(expect.arrayContaining(['disabled:bg-line', 'disabled:text-muted']))
+  })
+
+  it('makes hover easy to see, and leaves it off unavailable buttons', () => {
+    expect(classes({})).toEqual(
+      expect.arrayContaining([
+        'hover:shadow-lift',
+        'disabled:shadow-none',
+        'data-disabled:shadow-none',
+      ]),
+    )
+    expect(classes({ variant: 'quiet' })).toEqual(
+      expect.arrayContaining([
+        'hover:shadow-soft',
+        'disabled:shadow-none',
+        'data-disabled:shadow-none',
+      ]),
+    )
+    for (const variant of ['link', 'text'] as const) {
+      expect(classes({ variant })).toEqual(
+        expect.arrayContaining([
+          'hover:underline',
+          'disabled:no-underline',
+          'data-disabled:no-underline',
+        ]),
+      )
+    }
   })
 
   it('never gives one element two classes for the same property', () => {

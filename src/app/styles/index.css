@@ -79,6 +79,12 @@
   --radius-small: 8px; /* small controls */
   --radius-frame: 12px; /* tables, settings frames, dialogs */
   --radius-block: 6px; /* calendar blocks */
+
+  /* Button hover (DESIGN §2, §5): an accent glow under filled buttons, smaller while
+     pressed; a hairline outline and a soft shadow round quiet and icon buttons. */
+  --shadow-lift: 0 6px 16px -6px rgb(11 94 122 / 0.6);
+  --shadow-press: 0 1px 3px -1px rgb(11 94 122 / 0.5);
+  --shadow-soft: 0 0 0 1px var(--field), 0 4px 10px -4px rgb(20 33 43 / 0.25);
 }
 
 @layer base {

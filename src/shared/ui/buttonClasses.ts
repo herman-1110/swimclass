@@ -1,4 +1,5 @@
 import { cn } from '@/shared/lib/cn'
+import type { MotionKind } from '@/shared/lib/motion'
 
 // The look of every button and every action-looking link (UI kit spec §3.1), shared by
 // Button and ButtonLink. Sizes never change with the window width (DESIGN §2); min-h-*
@@ -40,12 +41,17 @@ export type ButtonLook = {
 // drawn), and data-disabled, which Button sets for aria-disabled so the button keeps focus
 // (Settings' "Save changes"). Both get the same look. Tailwind emits disabled: and data-*:
 // after hover:, so a hovered disabled button keeps its disabled look.
+//
+// Hover is easy to see (Herman, 2 Oct 2026; DESIGN §5): primaries glow (shadow-lift) and
+// quiet buttons get an outline (shadow-soft); links and text buttons underline. Tailwind's
+// hover: only applies where there is a mouse, so a tap never leaves it on. The movement
+// on top comes from shared/lib/motion, through data-motion (buttonMotion below).
 const base =
-  'inline-flex items-center gap-1.5 text-center leading-[normal] wrap-anywhere cursor-pointer'
+  'inline-flex items-center gap-1.5 text-center leading-[normal] wrap-anywhere cursor-pointer transition-[background-color,color,box-shadow] duration-150'
 const inactive = 'disabled:cursor-default data-disabled:cursor-default aria-busy:cursor-progress'
 
 const primary =
-  'bg-accent font-semibold text-white hover:bg-accent-hover active:bg-accent-hover disabled:bg-line disabled:text-muted data-disabled:bg-line data-disabled:text-muted'
+  'bg-accent font-semibold text-white hover:bg-accent-hover hover:shadow-lift active:bg-accent-hover active:shadow-press disabled:bg-line disabled:text-muted disabled:shadow-none data-disabled:bg-line data-disabled:text-muted data-disabled:shadow-none'
 
 const primarySizes: Record<ButtonSize, string> = {
   xl: 'min-h-12.5 rounded-control px-5 text-body',
@@ -56,7 +62,7 @@ const primarySizes: Record<ButtonSize, string> = {
 }
 
 const quiet =
-  'bg-transparent font-medium hover:bg-subtle disabled:bg-transparent disabled:opacity-50 data-disabled:bg-transparent data-disabled:opacity-50'
+  'bg-transparent font-medium hover:bg-subtle hover:shadow-soft active:shadow-none disabled:bg-transparent disabled:opacity-50 disabled:shadow-none data-disabled:bg-transparent data-disabled:opacity-50 data-disabled:shadow-none'
 
 // Only md and sm are drawn; the others follow the primary sizes so every size exists.
 const quietSizes: Record<ButtonSize, string> = {
@@ -80,13 +86,31 @@ const textTones: Record<ButtonTone, string> = {
   accent: 'text-accent hover:text-accent-hover',
 }
 
-const link =
-  'min-h-11 min-w-11 bg-transparent font-semibold text-accent hover:text-accent-hover disabled:opacity-50 data-disabled:opacity-50'
+const underlineOnHover =
+  'underline-offset-3 hover:underline disabled:no-underline data-disabled:no-underline'
+
+const link = cn(
+  'min-h-11 min-w-11 bg-transparent font-semibold text-accent hover:text-accent-hover disabled:opacity-50 data-disabled:opacity-50',
+  underlineOnHover,
+)
 
 const underline =
   'min-h-11 min-w-11 bg-transparent px-1.5 text-label font-medium text-tag-ink underline underline-offset-3 hover:text-ink disabled:opacity-50 data-disabled:opacity-50'
 
-const text = 'min-h-11 bg-transparent px-2 text-sm disabled:opacity-50 data-disabled:opacity-50'
+const text = cn(
+  'min-h-11 bg-transparent px-2 text-sm disabled:opacity-50 data-disabled:opacity-50',
+  underlineOnHover,
+)
+
+/**
+ * How a button with this variant moves under the mouse (shared/lib/motion), for its
+ * data-motion attribute: primaries lift, quiet buttons lift less, links and text don't.
+ */
+export function buttonMotion(variant: ButtonVariant = 'primary'): MotionKind | undefined {
+  if (variant === 'primary') return 'lift'
+  if (variant === 'quiet') return 'soft'
+  return undefined
+}
 
 /** The class names for a button or link with this look (UI kit spec §3.1). */
 export function buttonClasses({

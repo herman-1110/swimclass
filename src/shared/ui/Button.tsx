@@ -2,7 +2,7 @@ import type { ComponentPropsWithRef } from 'react'
 
 import { cn } from '@/shared/lib/cn'
 
-import { buttonClasses, type ButtonLook } from './buttonClasses'
+import { buttonClasses, type ButtonLook, buttonMotion } from './buttonClasses'
 
 type ButtonProps = ButtonLook &
   ComponentPropsWithRef<'button'> & {
@@ -47,6 +47,7 @@ export function Button({
       aria-busy={pending || undefined}
       aria-disabled={ignoreClicks || undefined}
       data-disabled={softDisabled || undefined}
+      data-motion={buttonMotion(variant)}
       className={cn(
         buttonClasses({ variant, size, tone, textSize, flush, weight, block }),
         className,
