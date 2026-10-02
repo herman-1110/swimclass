@@ -17,7 +17,7 @@ changing anything and stop to report if a prerequisite is missing.
 
 ## Stack (do not change without asking)
 - Frontend: React + Vite + TypeScript (strict) + Tailwind CSS v4 + React Router +
-  TanStack Query. Built to static files.
+  TanStack Query. Built to static files. Animation: anime.js v4 (see Animation below).
 - Hosting: Cloudflare Workers static assets (free). No server-side rendering,
   no Next.js, no Node server.
 - Backend: Supabase free plan: Postgres, Auth, Row Level Security, database
@@ -117,3 +117,12 @@ Keep this list current when you add scripts.
 - Real buttons, links and labels. 44 px minimum touch targets. Visible focus.
   Sentence case. Buttons say what they do ("Book 7:30 pm for Aiman & Sofia",
   "Save payment"). Error messages say what happened and what to do next.
+
+## Animation: anime.js v4
+- Installed via npm (`animejs`). Import as modules: `import { animate, stagger } from 'animejs'`
+- Do NOT use the v3 style `anime({ targets: ... })`
+- Before writing animation code, check the types in `node_modules/animejs`
+- Docs: https://animejs.com/documentation
+- anime.js ignores "reduce motion": the CSS rule in `src/app/styles/index.css` only reaches
+  CSS animations and transitions. Check `prefers-reduced-motion` before every anime.js
+  animation, and skip it when it is set.
