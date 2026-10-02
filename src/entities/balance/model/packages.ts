@@ -74,6 +74,30 @@ export function lessonsLeftAfter(balance: Totals, lessons: number): number {
 }
 
 /**
+ * Whether the next lesson booked is already paid for: used + booked < paid, My classes' rule
+ * (my-classes spec §9 C5). Book's and My classes' notes ask for a payment only once it isn't,
+ * whatever is left in the package: a new group that hasn't paid has 4 left to book and nothing
+ * paid.
+ */
+export function isNextLessonPaid(
+  balance: Pick<Totals, 'paid_lessons' | 'used_lessons' | 'booked_lessons'>,
+): boolean {
+  return balance.used_lessons + balance.booked_lessons < balance.paid_lessons
+}
+
+/**
+ * Whether payments (with the starting balance and free lessons) cover every lesson of the current
+ * package: Book's "Paid" and the Students pill. A group can be neither this nor unpaid (the
+ * view's unpaid means used + booked > paid): a new group that hasn't paid, or one whose paid
+ * lessons are all used with none booked.
+ */
+export function isPackagePaid(
+  balance: Pick<GroupBalance, 'package_no' | 'package_size' | 'paid_lessons'>,
+): boolean {
+  return balance.paid_lessons >= balance.package_no * balance.package_size
+}
+
+/**
  * Whether booking `lessons` more would go past the lessons paid for: Book's "…, not paid yet".
  * A preview only: book_lesson decides with can_still_book.
  */

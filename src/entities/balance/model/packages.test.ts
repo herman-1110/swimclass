@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  isNextLessonPaid,
+  isPackagePaid,
   isUnpaidAfter,
   lessonsLeftAfter,
   nextBookingPackageNo,
@@ -92,6 +94,27 @@ describe('lessonsLeftAfter', () => {
   it('goes below 0 when a 2-hour lesson spills into the next package', () => {
     expect(lessonsLeftAfter(nurul, 2)).toBe(-1)
     expect(lessonsLeftAfter(weiJie, 1)).toBe(0)
+  })
+})
+
+describe('what payments cover', () => {
+  const neverPaid = { ...aimanSofia, paid_lessons: 0, used_lessons: 0, booked_lessons: 0 }
+
+  it('says whether the next lesson booked is paid for', () => {
+    expect(isNextLessonPaid(aimanSofia)).toBe(true)
+    expect(isNextLessonPaid(sofia)).toBe(false)
+    expect(isNextLessonPaid(weiJie)).toBe(false)
+    expect(isNextLessonPaid(neverPaid)).toBe(false)
+    // A free lesson pays for the next one, though the package is fully booked.
+    expect(isNextLessonPaid({ ...sofia, paid_lessons: 9 })).toBe(true)
+  })
+
+  it('says whether payments cover the whole current package', () => {
+    expect(isPackagePaid(aimanSofia)).toBe(true)
+    expect(isPackagePaid(sofia)).toBe(true)
+    expect(isPackagePaid({ ...neverPaid, package_no: 1 })).toBe(false)
+    // Every paid lesson used and none booked: the next package has begun, unpaid.
+    expect(isPackagePaid({ package_size: 4, paid_lessons: 4, package_no: 2 })).toBe(false)
   })
 })
 

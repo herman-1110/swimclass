@@ -3,6 +3,8 @@ export { useAccountBalance, useAccountBalances } from './api/useAccountBalances'
 export { useCoachBalance, useCoachBalances } from './api/useCoachBalances'
 export { type AccountNoteInput, accountPackageNote, bookPackageNote } from './model/notes'
 export {
+  isNextLessonPaid,
+  isPackagePaid,
   isUnpaidAfter,
   lessonsLeftAfter,
   nextBookingPackageNo,

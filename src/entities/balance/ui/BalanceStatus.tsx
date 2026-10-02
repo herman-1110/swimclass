@@ -1,3 +1,4 @@
+import { cn } from '@/shared/lib/cn'
 import type { Instant } from '@/shared/lib/time'
 import { Pill } from '@/shared/ui/Pill'
 
@@ -19,18 +20,24 @@ type BalanceStatusProps = {
 
 /**
  * Paid or Unpaid as a pill, with its note under it (DESIGN §3 Status pill; coach-students spec
- * §5.2.4): the Students table's Status cell and the phone cards.
+ * §5.2.4): the Students table's Status cell and the phone cards. A group no payment covers that
+ * isn't unpaid either (a new group that hasn't paid) gets the note alone, no pill.
  */
 export function BalanceStatus({ balance, now, lastPaid }: BalanceStatusProps) {
   const status = balanceStatus(balance, now)
   const words = balanceBucket(balance) === 'last-lesson' ? [status.note] : [status.note, lastPaid]
-  const note = words.filter(Boolean).join(' · ')
+  const joined = words.filter(Boolean).join(' · ')
+  const note = joined ? joined.charAt(0).toUpperCase() + joined.slice(1) : undefined
+  if (status.label === null) {
+    if (!note) return null
+    return (
+      <span className={cn('text-small', status.noteTone === 'warn' ? 'text-warn' : 'text-muted')}>
+        {note}
+      </span>
+    )
+  }
   return (
-    <Pill
-      tone={balance.unpaid ? 'warn' : 'accent'}
-      note={note ? note.charAt(0).toUpperCase() + note.slice(1) : undefined}
-      noteTone={status.noteTone}
-    >
+    <Pill tone={balance.unpaid ? 'warn' : 'accent'} note={note} noteTone={status.noteTone}>
       {status.label}
     </Pill>
   )
