@@ -10,6 +10,11 @@ import { safeFrom } from './safeFrom'
 // Route guards (TECH_SPEC §11), in this order: signed in → approved → role.
 // The database enforces every permission itself (CLAUDE.md rule 1); these only send
 // people to the page they can use. Every redirect replaces the address (auth spec §1.4).
+//
+// The profile guards throw to the error screen only when there is no profile to route on
+// (`isLoadingError`: the first read failed). A failed background read (refocus after the
+// 30 s staleTime, a refresh after a change, /pending's poll) keeps TanStack's last good
+// profile, so the guard keeps the page and anything typed in it; the next read recovers.
 
 /** Signed out → /login, remembering where they were going. */
 export function RequireSignedIn() {
@@ -61,7 +66,7 @@ function LogOutMissingProfile() {
 export function RequireApproved() {
   const profile = useMyProfile()
   if (profile.isPending) return <RouteLoading />
-  if (profile.isError) throw profile.error
+  if (profile.isLoadingError) throw profile.error
   if (!profile.data) return <LogOutMissingProfile />
   if (!profile.data.approved) return <Navigate to={ROUTES.pending} replace />
   return <Outlet />
@@ -71,7 +76,7 @@ export function RequireApproved() {
 export function RequirePending() {
   const profile = useMyProfile()
   if (profile.isPending) return <RouteLoading />
-  if (profile.isError) throw profile.error
+  if (profile.isLoadingError) throw profile.error
   if (!profile.data) return <LogOutMissingProfile />
   if (profile.data.approved) return <Navigate to={ROUTES.home} replace />
   return <Outlet />
@@ -81,7 +86,7 @@ export function RequirePending() {
 export function RequireCoach() {
   const profile = useMyProfile()
   if (profile.isPending) return <RouteLoading />
-  if (profile.isError) throw profile.error
+  if (profile.isLoadingError) throw profile.error
   if (profile.data?.role !== 'coach') return <Navigate to={ROUTES.book} replace />
   return <Outlet />
 }
@@ -93,7 +98,7 @@ export function HomeRedirect() {
   if (session.status === 'loading') return <RouteLoading />
   if (session.status === 'signed-out') return <Navigate to={ROUTES.login} replace />
   if (profile.isPending) return <RouteLoading />
-  if (profile.isError) throw profile.error
+  if (profile.isLoadingError) throw profile.error
   if (!profile.data) return <LogOutMissingProfile />
   if (!profile.data.approved) return <Navigate to={ROUTES.pending} replace />
   return (

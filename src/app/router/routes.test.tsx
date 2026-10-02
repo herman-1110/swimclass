@@ -4,8 +4,10 @@ import { createMemoryRouter, type RouteObject, RouterProvider, useBlocker } from
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { SessionProvider } from '@/app/providers/SessionProvider'
+import { accountKeys } from '@/entities/account'
 import { LOG_OUT_REQUEST } from '@/features/log-out'
 import { getSession, logIn, logOut, signUp } from '@/shared/api/auth'
+import { getBackend } from '@/shared/api/backend'
 import { demoDb } from '@/shared/api/demo/db'
 import { rpc } from '@/shared/api/rpc'
 import { DEMO_PASSWORD } from '@/shared/config/demo'
@@ -20,6 +22,9 @@ const WAITING = 'waiting'
 
 /** Accounts whose profile row each test deletes, as if the account was deleted meanwhile. */
 const GONE = ['gone.home', 'gone.book', 'gone.pending'] as const
+
+/** A waiting account that the coach approves during a test. */
+const APPROVED_LATER = 'approved.later'
 
 beforeAll(async () => {
   // jsdom has no scrolling; ScrollRestoration calls this on every navigation.
@@ -38,7 +43,7 @@ beforeAll(async () => {
     import('@/app/demo/DemoTools'),
   ])
   // Demo sign-up makes a confirmed account that waits for approval (auth spec §5.5).
-  for (const username of [WAITING, ...GONE]) {
+  for (const username of [WAITING, ...GONE, APPROVED_LATER]) {
     await signUp({
       username,
       displayName: username === WAITING ? 'Wai Ting' : username,
@@ -59,9 +64,12 @@ async function signIn(username: 'meiling' | 'herman' | typeof WAITING | null) {
 
 type Entry = string | { pathname: string; state: unknown }
 
-function renderAt(entry: Entry, routes = createRoutes()) {
+function newQueryClient() {
+  return new QueryClient({ defaultOptions: { queries: { retry: false } } })
+}
+
+function renderAt(entry: Entry, routes = createRoutes(), queryClient = newQueryClient()) {
   const router = createMemoryRouter(routes, { initialEntries: [entry] })
-  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   render(
     <QueryClientProvider client={queryClient}>
       <SessionProvider>
@@ -528,5 +536,114 @@ describe('when a page fails to load', () => {
     // RouteError logs in an effect, which may run just after the heading appears.
     await waitFor(() => expect(consoleError).toHaveBeenCalled())
     consoleError.mockRestore()
+  })
+})
+
+describe('when a background read of the profile fails', () => {
+  // TanStack keeps the last good profile when a refetch fails (the window regains focus
+  // after the 30 s staleTime, a change refreshes accountKeys.all, /pending's poll). The
+  // guards route on that profile, so the page stays, with anything typed in it.
+  let restoreReads = () => {}
+  afterEach(() => {
+    restoreReads()
+    vi.useRealTimers()
+  })
+
+  /** Reads of `profiles` fail as if the connection dropped, until restoreReads(). */
+  async function failProfileReads() {
+    const backend = await getBackend()
+    const read = backend.read.bind(backend)
+    const spy = vi
+      .spyOn(backend, 'read')
+      .mockImplementation((source, query) =>
+        source === 'profiles'
+          ? Promise.reject(new TypeError('Failed to fetch'))
+          : read(source, query),
+      )
+    restoreReads = () => spy.mockRestore()
+  }
+
+  /** Refetches the profile, as a refocus would, and lets the observers hear the answer. */
+  async function refetchProfile(queryClient: QueryClient) {
+    await act(async () => {
+      await queryClient.refetchQueries({ queryKey: accountKeys.all })
+      // TanStack tells its observers in a setTimeout(0) batch.
+      await new Promise((resolve) => setTimeout(resolve, 0))
+    })
+  }
+
+  function profileStatus(queryClient: QueryClient, userId: string) {
+    const state = queryClient.getQueryState(accountKeys.me(userId))
+    return { status: state?.status, hasData: state?.data !== undefined }
+  }
+
+  it('keeps a customer page', async () => {
+    const { userId } = await logIn('meiling', DEMO_PASSWORD)
+    const queryClient = newQueryClient()
+    const router = renderAt('/book', createRoutes(), queryClient)
+    await findPageHeading('Book a lesson')
+
+    await failProfileReads()
+    await refetchProfile(queryClient)
+    expect(profileStatus(queryClient, userId)).toEqual({ status: 'error', hasData: true })
+    expect(screen.getByRole('heading', { level: 1, name: 'Book a lesson' })).toBeTruthy()
+    expect(screen.queryByRole('heading', { name: 'Something went wrong' })).toBeNull()
+    expect(router.state.location.pathname).toBe('/book')
+  })
+
+  it('keeps a coach page and its unsaved edits', async () => {
+    const { userId } = await logIn('herman', DEMO_PASSWORD)
+    function SettingsWithAnEdit() {
+      return (
+        <>
+          <h1>Settings</h1>
+          <label>
+            Travel gap
+            <input defaultValue="60" />
+          </label>
+        </>
+      )
+    }
+    const queryClient = newQueryClient()
+    renderAt(
+      '/coach/settings',
+      routesWithSettings(() => Promise.resolve({ Component: SettingsWithAnEdit })),
+      queryClient,
+    )
+    await findPageHeading('Settings')
+    fireEvent.change(screen.getByLabelText('Travel gap'), { target: { value: '45' } })
+
+    await failProfileReads()
+    await refetchProfile(queryClient)
+    expect(profileStatus(queryClient, userId)).toEqual({ status: 'error', hasData: true })
+    expect(screen.getByLabelText<HTMLInputElement>('Travel gap').value).toBe('45')
+    expect(screen.queryByRole('heading', { name: 'Something went wrong' })).toBeNull()
+  })
+
+  it('keeps Waiting for approval polling, so an approval still shows', async () => {
+    // Only the polling timer is fake; the database and Testing Library keep real time.
+    vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] })
+    const { userId } = await logIn(APPROVED_LATER, DEMO_PASSWORD)
+    const queryClient = newQueryClient()
+    const router = renderAt('/pending', createRoutes(), queryClient)
+    await findPageHeading('Waiting for approval')
+
+    // The minute's poll fails.
+    await failProfileReads()
+    await act(() => vi.advanceTimersByTimeAsync(60_000))
+    await vi.waitFor(() =>
+      expect(profileStatus(queryClient, userId)).toEqual({ status: 'error', hasData: true }),
+    )
+    expect(screen.getByRole('heading', { level: 1, name: 'Waiting for approval' })).toBeTruthy()
+
+    // The connection comes back and the coach approves (as approve_account does): the
+    // next poll sends the account home.
+    restoreReads()
+    await (
+      await demoDb()
+    ).query('update public.profiles set approved = true where id = $1', [userId])
+    await act(() => vi.advanceTimersByTimeAsync(60_000))
+    await findPageHeading('Book a lesson')
+    expect(router.state.location.pathname).toBe('/book')
   })
 })
