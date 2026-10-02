@@ -11,7 +11,8 @@ function focusIsLost(): boolean {
 }
 
 /**
- * After a move to another page (not the first load, not a change of the search part only):
+ * After a move to another page that the person made (not the first load or its redirects,
+ * such as / to /book or a signed-out visit to /login; not a change of the search part only):
  * focus goes to the new page's h1, so a screen reader names the page and Tab goes on from
  * the top of its content. Only when focus would otherwise be lost: on <body> (the link that
  * was used left with the old page) or still on the tab bar or sidebar link. A page that
@@ -21,10 +22,25 @@ function focusIsLost(): boolean {
 export function useRouteFocus() {
   const { pathname } = useLocation()
   const previous = useRef(pathname)
+  // Set by the first key press or pointer press: until then every move is part of loading.
+  const interacted = useRef(false)
+
+  useEffect(() => {
+    const mark = () => {
+      interacted.current = true
+    }
+    document.addEventListener('keydown', mark, true)
+    document.addEventListener('pointerdown', mark, true)
+    return () => {
+      document.removeEventListener('keydown', mark, true)
+      document.removeEventListener('pointerdown', mark, true)
+    }
+  }, [])
 
   useEffect(() => {
     if (previous.current === pathname) return
     previous.current = pathname
+    if (!interacted.current) return
     const started = performance.now()
     let frame = 0
     const tryFocus = () => {
