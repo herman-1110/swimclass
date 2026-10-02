@@ -44,16 +44,32 @@ function renderPanel(
   return screen.getByRole('complementary', { name: 'Record payment' })
 }
 
+/** The prices' read as TanStack Query reports it. */
+function prices(state: Partial<Parameters<typeof PaymentPanel>[0]['settings']> = {}) {
+  return {
+    data: undefined,
+    error: null,
+    isError: false,
+    isFetching: false,
+    errorUpdatedAt: 0,
+    refetch: () => Promise.resolve(),
+    ...state,
+  }
+}
+
 describe('PaymentPanel', () => {
   it('asks for a row from 1280 px when there is no group to show', () => {
-    const panel = renderPanel(null, { isError: false, error: null, refetch: () => {} })
+    const panel = renderPanel(null, prices())
     expect(within(panel).getByText('Choose Record payment on a row to start.')).toBeTruthy()
     expect(within(panel).queryByRole('combobox')).toBeNull()
   })
 
   it('shows why the prices can’t be read instead of the form, with Try again', () => {
-    const refetch = vi.fn()
-    const panel = renderPanel(HANA, { isError: true, error: new AppError('network'), refetch })
+    const refetch = vi.fn(() => Promise.resolve())
+    const panel = renderPanel(
+      HANA,
+      prices({ isError: true, error: new AppError('network'), errorUpdatedAt: 1000, refetch }),
+    )
     expect(panel.getAttribute('aria-describedby')).toBeTruthy()
     expect(within(panel).getByText('Hana · Farah’s account')).toBeTruthy()
     const alert = within(panel).getByRole('alert')

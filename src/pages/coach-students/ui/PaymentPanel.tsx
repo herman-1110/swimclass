@@ -1,7 +1,8 @@
-import type { Ref } from 'react'
+import { type RefObject, useRef } from 'react'
 
 import { accountLabel } from '@/entities/group'
 import type { PublicSettings } from '@/entities/settings'
+import { type RetryableRead, useReadFailure } from '@/shared/lib/hooks/useReadFailure'
 import type { Instant } from '@/shared/lib/time'
 import { SidePanel } from '@/shared/ui/SidePanel'
 
@@ -16,7 +17,7 @@ type PaymentPanelProps = {
   /** The list is still loading. */
   loading: boolean
   /** get_public_settings: the prices that prefill the amount. */
-  settings: { data?: PublicSettings; isError: boolean; error: unknown; refetch: () => unknown }
+  settings: RetryableRead & { data?: PublicSettings }
   /** Below 1280 px the panel shows only while open; from 1280 px it is always there. */
   open: boolean
   /** From 1280 px Cancel only resets the form. */
@@ -25,15 +26,21 @@ type PaymentPanelProps = {
   onClose: () => void
   /** The coach worked on the group shown (from 1280 px it then stays in the panel). */
   onEngage: (groupId: string) => void
-  titleRef?: Ref<HTMLHeadingElement>
+  /** The panel's title (the page moves focus there from 1280 px). */
+  titleRef?: RefObject<HTMLHeadingElement | null>
 }
 
 /**
  * The Record payment panel (DESIGN §3 SidePanel; coach-students §2, §3.8): a 340 px column
- * from 1280 px, a 380 px drawer from 768 px and the full screen on phones.
+ * from 1280 px, a 380 px drawer from 768 px and the full screen on phones. If the prices
+ * never loaded, their message and "Try again" take the form's place (§6); once "Try again"
+ * has brought them, focus goes to the panel's title.
  */
 export function PaymentPanel(props: PaymentPanelProps) {
-  const { row, loading, settings, open, wide, now, onClose, onEngage, titleRef } = props
+  const { row, loading, settings, open, wide, now, onClose, onEngage } = props
+  const ownTitle = useRef<HTMLHeadingElement>(null)
+  const titleRef = props.titleRef ?? ownTitle
+  const failure = useReadFailure([settings], () => titleRef.current)
   const subtitle = row
     ? `${row.group.display_names} · ${accountLabel(row.group, row.accountName)}`
     : undefined
@@ -47,9 +54,7 @@ export function PaymentPanel(props: PaymentPanelProps) {
         </p>
       )
     }
-    if (settings.isError) {
-      return <LoadError error={settings.error} onRetry={() => void settings.refetch()} />
-    }
+    if (failure) return <LoadError failure={failure} />
     if (!settings.data) return <PanelSkeleton />
     return (
       <PaymentPanelContent

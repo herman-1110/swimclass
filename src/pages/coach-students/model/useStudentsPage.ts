@@ -111,7 +111,7 @@ export function useStudentsPage(refs: PageRefs) {
     wide,
     url,
     data,
-    loading: !loaded && data.error === null,
+    loading: !loaded && data.failure === null,
     view,
     query,
     announcement,

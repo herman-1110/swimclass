@@ -12,6 +12,11 @@ export function rowActionId(layout: RowLayout, groupId: string): string {
 /** The filter tabs' wrapper (StudentsList), where focus goes when a row has left the tab. */
 export const FILTER_TABS_ID = 'students-filter-tabs'
 
+/** The chosen filter tab, or null while the tabs aren't shown. */
+export function chosenTab(): HTMLElement | null {
+  return document.querySelector<HTMLElement>(`#${FILTER_TABS_ID} [aria-pressed="true"]`)
+}
+
 /** A waiting account's buttons (Remove, Approve): "waiting-table-<account id>". */
 export function waitingActionsId(layout: RowLayout, accountId: string): string {
   return `waiting-${layout}-${accountId}`
@@ -66,7 +71,5 @@ export function returnFocusToRow(groupId: string) {
     focusInView(action, 'nearest')
     return
   }
-  if (lost) {
-    document.querySelector<HTMLElement>(`#${FILTER_TABS_ID} [aria-pressed="true"]`)?.focus()
-  }
+  if (lost) chosenTab()?.focus()
 }

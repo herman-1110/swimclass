@@ -5,6 +5,7 @@ import { vi } from 'vitest'
 
 import { SessionContext } from '@/entities/account'
 import { logIn, logOut } from '@/shared/api/auth'
+import { getBackend } from '@/shared/api/backend'
 import { DEMO_PASSWORD } from '@/shared/config/demo'
 import { ROUTES } from '@/shared/config/routes'
 
@@ -54,6 +55,42 @@ export async function renderAs(
     </QueryClientProvider>,
   )
   return router
+}
+
+/**
+ * Reads of these sources (tables and views, or database functions) fail as on a lost
+ * connection. After `reconnect()` they go through again, but wait for `release()` (a slow
+ * connection), so "Try again" can be seen running. Undone by vi.restoreAllMocks().
+ */
+export async function loseReads(sources: readonly string[]) {
+  const backend = await getBackend()
+  const read = backend.read.bind(backend)
+  const rpc = backend.rpc.bind(backend)
+  let lost = true
+  let release = () => {}
+  let released = Promise.resolve()
+  const pass = async (source: string) => {
+    if (!sources.includes(source)) return
+    if (lost) throw new TypeError('Failed to fetch')
+    await released
+  }
+  vi.spyOn(backend, 'read').mockImplementation(async (source, query) => {
+    await pass(source)
+    return read(source, query)
+  })
+  vi.spyOn(backend, 'rpc').mockImplementation(async (fn, args) => {
+    await pass(fn)
+    return rpc(fn, args)
+  })
+  return {
+    reconnect() {
+      lost = false
+      released = new Promise((resolve) => {
+        release = resolve
+      })
+    },
+    release: () => release(),
+  }
 }
 
 /** jsdom has no CSS or matchMedia: a window this wide (SidePanel's column from 1280 px). */
