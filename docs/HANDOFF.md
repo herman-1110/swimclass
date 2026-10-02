@@ -4,7 +4,7 @@ Update this file at the end of every Claude Code session. Newest entry on top.
 Keep entries short; link to files instead of pasting code.
 
 ## v0.8 · 2 Oct 2026 · Frontend first: final review fixed and merged
-**State**: `frontend-first` (not pushed; 101 commits ahead of `origin/main`) has all 56
+**State**: `frontend-first` (not pushed; 102 commits ahead of `origin/main`) has all 56
 final-review fixes. At 39dacb7, typecheck, lint, format, 1,794 unit tests (240 files) and
 the build pass. `dist/` has no demo code (no demo clock, demo notes or PGlite).
 `npm run test:db` wasn't run because nothing under `supabase/` changed since v0.6.
@@ -29,6 +29,9 @@ needs.
     moves to the help line.
   - My classes after a refused cancel: focus moves to the Upcoming heading.
   - The Book summary's new paid notes, and My classes after booking.
+  - Failed reads on Book, My classes, Schedule and coach Students, at 390 and 1280: they
+    all show the same "Something went wrong" banner with "Try again", sections already
+    loaded stay, and nothing scrolls sideways.
 - Highlights of the fixes:
   - Guards keep the page when a background profile read fails.
   - Focused controls stay clear of the tab bar and of dialogs' sticky buttons.
@@ -82,6 +85,10 @@ needs.
   - In demo mode only, the Demo button covers the end of a very long "Hi, …" line at
     390 px.
 - wrangler 4.146.0 pulls in miniflare `5.20261001.0-alpha` (npm's choice).
+- The merge commit 7f5a073 ("Merge final review: customer fixes") has git's
+  `# Conflicts:` list after its Co-Authored-By line. It's cosmetic, but it can only be
+  fixed before the push to `main`, by rebuilding 7f5a073 and 39dacb7 with the same trees.
+  Herman decides whether that's worth a history rewrite.
 - v0.7's open issues still apply, except the `AuthSessionMissingError` mapping, which is
   done.
 **Manual steps waiting on Herman**
