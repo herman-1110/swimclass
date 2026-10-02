@@ -69,7 +69,7 @@ const newbie = {
   Username: 'newbie',
   Name: 'New Person',
   Email: 'newbie@example.com',
-  Phone: '012-111 2222',
+  'Phone (optional)': '012-111 2222',
   Password: 'swim-new-2026',
   'Confirm password': 'swim-new-2026',
 }
@@ -107,7 +107,7 @@ describe('SignUpPage', () => {
         '3 to 30 small letters, numbers, dots or underscores. You’ll log in with it.',
       ),
     ).toBeTruthy()
-    expect(screen.getByText('Your own name. Your coach adds your swimmers.')).toBeTruthy()
+    expect(screen.getByText('Your own name. Your coach adds your students.')).toBeTruthy()
     expect(screen.getByText('We’ll email you a link to confirm it.')).toBeTruthy()
     expect(screen.getByText('At least 8 characters.')).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Create account' }).getAttribute('type')).toBe(
@@ -188,6 +188,19 @@ describe('SignUpPage', () => {
       screen.getByText('The passwords don’t match. Type the same password twice.'),
     ).toBeTruthy()
     expect(document.activeElement).toBe(input('Email'))
+    expect(vi.mocked(signUp)).not.toHaveBeenCalled()
+  })
+
+  it('says the message when Enter is pressed in the very field that is wrong', () => {
+    renderSignUp()
+    fillIn({ ...newbie, Username: 'newbie.three', Name: '' })
+    // Enter in the empty name sends the form with focus already there: focus can't move,
+    // so the message is said as an alert.
+    input('Name').focus()
+    fireEvent.submit(screen.getByRole('form', { name: 'Create an account' }))
+    expect(document.activeElement).toBe(input('Name'))
+    expect(screen.getByRole('alert').textContent).toBe('Enter your name.')
+    expect(input('Name').getAttribute('aria-invalid')).toBe('true')
     expect(vi.mocked(signUp)).not.toHaveBeenCalled()
   })
 

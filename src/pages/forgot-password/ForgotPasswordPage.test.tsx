@@ -49,7 +49,12 @@ function renderForgot() {
 }
 
 const email = () => screen.getByLabelText<HTMLInputElement>('Email')
-const send = () => fireEvent.click(screen.getByRole('button', { name: /^Send/ }))
+/** Presses Send as a pointer does: focus moves to the button (jsdom's click leaves it). */
+function send() {
+  const button = screen.getByRole('button', { name: /^Send/ })
+  button.focus()
+  fireEvent.click(button)
+}
 
 describe('ForgotPasswordPage', () => {
   it('asks for the email, and says the link shows the username too', async () => {
@@ -83,6 +88,21 @@ describe('ForgotPasswordPage', () => {
     // The message goes as soon as the address changes.
     fireEvent.change(email(), { target: { value: 'meiling@example.co' } })
     expect(screen.queryByText('Enter an email address like name@example.com.')).toBeNull()
+    expect(sendPasswordReset).not.toHaveBeenCalled()
+  })
+
+  it('says the message when Enter is pressed in the empty email, where focus already is', () => {
+    renderForgot()
+    send()
+    // Focus moved to the field, so it is read with its message: no alert besides.
+    expect(document.activeElement).toBe(email())
+    expect(screen.queryByRole('alert')).toBeNull()
+    // Enter in the field: focus can't move, so the message is said as an alert.
+    fireEvent.submit(screen.getByRole('form', { name: 'Forgot your password?' }))
+    expect(document.activeElement).toBe(email())
+    expect(screen.getByRole('alert').textContent).toBe(
+      'Enter an email address like name@example.com.',
+    )
     expect(sendPasswordReset).not.toHaveBeenCalled()
   })
 

@@ -1,7 +1,3 @@
-import { ROUTES } from '@/shared/config/routes'
-import { Button } from '@/shared/ui/Button'
-import { ButtonLink } from '@/shared/ui/ButtonLink'
-
 /**
  * Moves focus to the success heading when it appears (book spec §7.2), which is only right
  * after a booking: a new choice dismisses the panel for good. The heading is already on
@@ -22,37 +18,24 @@ type BookedTextProps = {
 }
 
 // Book spec §5.3.2 (proposed; not drawn): the heading as the summary's title (16 px 600),
-// the lessons in 14 px ink, the package after the booking in 13 px muted.
+// the lessons in 14 px ink, the package after the booking in 13 px muted. A name can be one
+// word of up to 100 characters (DESIGN §6 invalid_name): the lines break inside words rather
+// than run out of the card (book spec §6.6).
 /** The success panel's text, inside the summary's live region. The heading takes focus. */
 export function BookedText({ heading, when, packageLine }: BookedTextProps) {
   return (
     <>
-      <h2 ref={focusOnMount} tabIndex={-1} className="text-base leading-[normal] font-semibold">
+      <h2
+        ref={focusOnMount}
+        tabIndex={-1}
+        className="text-base leading-[normal] font-semibold wrap-anywhere"
+      >
         {heading}
       </h2>
-      <p className="mt-0.5 text-sm leading-[1.4]">{when}</p>
+      <p className="mt-0.5 text-sm leading-[1.4] wrap-anywhere">{when}</p>
       {packageLine !== null && (
-        <p className="text-label leading-[1.45] text-muted">{packageLine}</p>
+        <p className="text-label leading-[1.45] wrap-anywhere text-muted">{packageLine}</p>
       )}
     </>
-  )
-}
-
-type BookedActionsProps = {
-  /** Clears the panel; the day, group and length stay. */
-  onBookAnother: () => void
-}
-
-/** "Book another lesson" and "See My classes", under the success panel's text. */
-export function BookedActions({ onBookAnother }: BookedActionsProps) {
-  return (
-    <div className="-ml-3.5 flex flex-wrap items-center gap-x-2">
-      <Button variant="quiet" onClick={onBookAnother}>
-        Book another lesson
-      </Button>
-      <ButtonLink variant="link" to={ROUTES.myClasses}>
-        See My classes
-      </ButtonLink>
-    </div>
   )
 }

@@ -5,6 +5,7 @@ import type { Group } from '@/entities/group'
 import { packagePriceCents } from '@/entities/settings'
 import { toAppError } from '@/shared/api/rpc'
 import { messageFor } from '@/shared/config/messages'
+import { focusProblem } from '@/shared/lib/focusProblem'
 import type { DateKey } from '@/shared/lib/time'
 
 import { useRecordPayment } from '../api/useRecordPayment'
@@ -66,7 +67,8 @@ export function usePaymentForm(
   const record = useRecordPayment()
   const pendingFocus = useRef<HTMLElement | null>(null)
   useEffect(() => {
-    pendingFocus.current?.focus()
+    // Said out loud also when Enter was pressed in that very field (the Amount).
+    if (error) focusProblem(pendingFocus.current, error.message)
     pendingFocus.current = null
   }, [error])
 

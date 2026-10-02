@@ -21,7 +21,8 @@ export function PasswordSaved({ username }: PasswordSavedProps) {
       <PageHeader
         size="auth"
         title={TITLE}
-        description={username ? `You’re logged in as ${username}.` : undefined}
+        // "Signed in", as the sidebar and Waiting for approval name the state ("Log in" is the action).
+        description={username ? `You’re signed in as ${username}.` : undefined}
         focusOnMount
       />
       <ButtonLink to={ROUTES.home} size="xl" block>

@@ -204,9 +204,11 @@ describe('BookPage', () => {
       screen.getByText('New bookings start Package 3. Pay for it before or at its first lesson.'),
     ).toBeTruthy()
     const box = summary()
+    // Tue 29 Sep comes before her lesson on Sun 4 Oct (lesson 4 of Package 2, the last paid):
+    // the ledger gives Tue 29 Sep that place and moves Sun 4 Oct on to Package 3, unpaid.
     expect(
       await box.findByText(
-        '1-to-1 for Sofia · uses 1 lesson from Package 3, not paid yet',
+        '1-to-1 for Sofia · uses 1 lesson from Package 2 · Package 3 isn’t paid yet',
         {},
         SLOW,
       ),
@@ -216,8 +218,10 @@ describe('BookPage', () => {
   })
 
   it('goes straight to the new group’s lesson while its start times load (§6.6)', async () => {
-    await renderBook('meiling', '/book?day=2026-09-29&length=60&time=19:30')
+    const { queryClient } = await renderBook('meiling', '/book?day=2026-09-29&length=60&time=19:30')
     await startTimes('Tue 29 Sep')
+    // Every read of the screen is in (the account's upcoming lessons too).
+    await waitFor(() => expect(queryClient.isFetching()).toBe(0), SLOW)
     const release = await holdDemoDatabase()
     try {
       fireEvent.click(screen.getByRole('radio', { name: 'Sofia 1-to-1' }))
@@ -226,7 +230,7 @@ describe('BookPage', () => {
       const box = summary()
       expect(box.getByText('Tue 29 Sep · 7:30–8:30 pm')).toBeTruthy()
       expect(
-        box.getByText('1-to-1 for Sofia · uses 1 lesson from Package 3, not paid yet'),
+        box.getByText('1-to-1 for Sofia · uses 1 lesson from Package 2 · Package 3 isn’t paid yet'),
       ).toBeTruthy()
       expect(box.getByRole('button', { name: 'Book 7:30 pm for Sofia' })).toBeTruthy()
     } finally {
@@ -264,7 +268,9 @@ describe('BookPage', () => {
     await startTimes('Sun 4 Oct')
     watch.disconnect()
     expect(shown).not.toContain('chips alone')
-    expect(screen.getByText('Already booked this day: Sofia, 5:00–6:00 pm')).toBeTruthy()
+    const alreadyBooked = screen.getByText('Already booked this day: Sofia, 5:00–6:00 pm')
+    // It names groups: a one-word name of up to 100 characters breaks inside (book §6.6).
+    expect(alreadyBooked.className).toContain('wrap-anywhere')
     expect(chipNames().filter((name) => name.endsWith(', available'))).toEqual([
       '9:00 pm, available',
     ])
@@ -431,7 +437,9 @@ describe('BookPage', () => {
 describe('BookPage for the coach', () => {
   it('shows herman the empty state and reads no start times (book §6.2)', async () => {
     const { queryClient } = await renderBook('herman')
-    expect(await screen.findByText(NO_GROUPS_MESSAGE, {}, SLOW)).toBeTruthy()
+    const message = await screen.findByText(NO_GROUPS_MESSAGE, {}, SLOW)
+    // In a card, as My classes shows it (ui-kit §3.23: it replaces whole sections).
+    expect(message.closest('.rounded-frame.border-frame')).not.toBeNull()
     expect(screen.getByRole('heading', { level: 1, name: 'Book a lesson' })).toBeTruthy()
     expect(screen.getByText('Hi, Herman')).toBeTruthy()
     expect(screen.queryByRole('radio')).toBeNull()

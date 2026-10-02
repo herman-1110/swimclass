@@ -3,6 +3,7 @@ import { flushSync } from 'react-dom'
 
 import { toAppError } from '@/shared/api/rpc'
 import { messageFor, MIN_PASSWORD_LENGTH } from '@/shared/config/messages'
+import { focusProblem } from '@/shared/lib/focusProblem'
 import { Button } from '@/shared/ui/Button'
 import { Field } from '@/shared/ui/Field'
 
@@ -37,8 +38,8 @@ export function ChangePasswordForm({ labelledBy }: ChangePasswordFormProps) {
   const change = useChangePassword()
 
   // Event handlers only: refs are never read while rendering.
-  const focus = (field: PasswordField) =>
-    (field === 'password' ? passwordInput : confirmInput).current?.focus()
+  const inputOf = (field: PasswordField) =>
+    (field === 'password' ? passwordInput : confirmInput).current
 
   function edit(field: PasswordField, value: string) {
     setValues((current) => ({ ...current, [field]: value }))
@@ -54,7 +55,8 @@ export function ChangePasswordForm({ labelledBy }: ChangePasswordFormProps) {
       if (onField) setProblems({ password: code })
       else setRefusal(messageFor(error))
     })
-    if (onField) focus('password')
+    // Said out loud also when Enter was pressed in that very field.
+    if (onField) focusProblem(inputOf('password'), messageFor({ code }))
   }
 
   function submit(event: FormEvent<HTMLFormElement>) {
@@ -68,7 +70,7 @@ export function ChangePasswordForm({ labelledBy }: ChangePasswordFormProps) {
     })
     const first = (['password', 'confirm'] as const).find((field) => found[field])
     if (first) {
-      focus(first)
+      focusProblem(inputOf(first), messageFor({ code: found[first] }))
       return
     }
     change.mutate(values.password, {

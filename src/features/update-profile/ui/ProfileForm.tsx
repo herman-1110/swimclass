@@ -3,6 +3,7 @@ import { flushSync } from 'react-dom'
 
 import type { Profile } from '@/entities/account'
 import { messageFor } from '@/shared/config/messages'
+import { focusProblem } from '@/shared/lib/focusProblem'
 import { Button } from '@/shared/ui/Button'
 import { Field } from '@/shared/ui/Field'
 
@@ -51,7 +52,8 @@ export function ProfileForm({ profile, labelledBy }: ProfileFormProps) {
       update.reset()
     })
     if (found) {
-      nameInput.current?.focus()
+      // Said out loud also when Enter was pressed in the name itself.
+      focusProblem(nameInput.current, messageFor({ code: found }))
       return
     }
     const details = profileUpdate(values)
@@ -83,7 +85,8 @@ export function ProfileForm({ profile, labelledBy }: ProfileFormProps) {
       />
       <Field
         id="account-phone"
-        label="Phone"
+        // Optional, as every optional field says (auth Q3: until the owner makes it required).
+        label="Phone (optional)"
         type="tel"
         inputMode="tel"
         size="lg"

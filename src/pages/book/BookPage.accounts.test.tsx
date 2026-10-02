@@ -107,10 +107,26 @@ describe('BookPage for the other seeded accounts (book §8.4)', () => {
   })
 
   it('nurul: a 2-hour lesson with one lesson left spans two packages (C18)', async () => {
+    // After her lesson on Sun 4 Oct: lessons 4 and 5, and 4 are paid (opening balance).
+    await renderBook('nurul', '/book?day=2026-10-06&length=120&time=19:30')
+    expect(
+      await summary().findByText(
+        '1-to-1 for Nurul · uses 2 lessons: the last of Package 1 and the first of Package 2, not paid yet',
+        {},
+        SLOW,
+      ),
+    ).toBeTruthy()
+  })
+
+  it('nurul: before her Sun 4 Oct lesson, 2 hours complete Package 1 and move that one on', async () => {
+    // The ledger numbers lessons by start time: Tue 29 Sep takes lessons 3 and 4, and
+    // Sun 4 Oct becomes Package 2's first, which isn't paid.
     await renderBook('nurul', '/book?day=2026-09-29&length=120&time=19:30')
     expect(
-      summary().getByText(
-        '1-to-1 for Nurul · uses 2 lessons: the last of Package 1 and the first of Package 2',
+      await summary().findByText(
+        '1-to-1 for Nurul · uses 2 lessons from Package 1, completes the package · Package 2 isn’t paid yet',
+        {},
+        SLOW,
       ),
     ).toBeTruthy()
   })

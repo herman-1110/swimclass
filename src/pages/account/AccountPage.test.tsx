@@ -97,12 +97,14 @@ describe('AccountPage', () => {
       within(details).getByText('To change your username or email, message your coach.'),
     ).toBeTruthy()
     expect(input('Name').value).toBe('Mei Ling')
-    expect(input('Phone').value).toBe('012-000 0002')
+    expect(input('Phone (optional)').value).toBe('012-000 0002')
     expect(
       ['id', 'autocomplete', 'maxlength'].map((name) => input('Name').getAttribute(name)),
     ).toEqual(['account-name', 'name', '100'])
     expect(
-      ['id', 'type', 'autocomplete', 'maxlength'].map((name) => input('Phone').getAttribute(name)),
+      ['id', 'type', 'autocomplete', 'maxlength'].map((name) =>
+        input('Phone (optional)').getAttribute(name),
+      ),
     ).toEqual(['account-phone', 'tel', 'tel', '30'])
     // Nothing to save until something changes.
     expect(saveDetails().getAttribute('aria-disabled')).toBe('true')
@@ -143,17 +145,37 @@ describe('AccountPage', () => {
   it('saves a cleared phone as none, and wants a name', async () => {
     const { session } = await renderAs('farah')
     await screen.findByRole('region', { name: 'Your details' })
-    type('Phone', '  ')
+    type('Phone (optional)', '  ')
     fireEvent.click(saveDetails())
     await screen.findByText('Details saved.')
     expect(await savedDetails(session.userId)).toEqual({ display_name: 'Farah', phone: null })
-    expect(input('Phone').value).toBe('')
+    expect(input('Phone (optional)').value).toBe('')
 
     type('Name', '   ')
     fireEvent.click(saveDetails())
     expect(screen.getByText('Enter your name.')).toBeTruthy()
     expect(document.activeElement).toBe(input('Name'))
+    // Focus moved to the name, which is read with its message: nothing is said twice.
+    expect(screen.queryByRole('alert')).toBeNull()
     expect(await savedDetails(session.userId)).toMatchObject({ display_name: 'Farah' })
+  })
+
+  it('says the message when Enter is pressed in the very field that is wrong', async () => {
+    await renderAs('kai')
+    await screen.findByRole('region', { name: 'Your details' })
+    // Enter in the blanked name: focus is already there, so the message is said as an alert.
+    type('Name', '')
+    input('Name').focus()
+    fireEvent.submit(input('Name').form as HTMLFormElement)
+    expect(document.activeElement).toBe(input('Name'))
+    expect(screen.getByRole('alert').textContent).toBe('Enter your name.')
+
+    // The same for a short new password, in the other form.
+    type('New password', 'short')
+    input('New password').focus()
+    fireEvent.submit(input('New password').form as HTMLFormElement)
+    expect(document.activeElement).toBe(input('New password'))
+    expect(screen.getByRole('alert').textContent).toBe('Use at least 8 characters.')
   })
 
   it('says "Saving…" while the details save', async () => {
@@ -282,7 +304,7 @@ describe('AccountPage', () => {
       'herman@example.com',
     ])
     expect(input('Name').value).toBe('Herman')
-    expect(input('Phone').value).toBe('012-000 0001')
+    expect(input('Phone (optional)').value).toBe('012-000 0001')
     const back = screen.getByRole('link', { name: 'Back to coach view' })
     expect(back.getAttribute('href')).toBe(ROUTES.coachSchedule)
     // Back to coach view, then Log out, after the password form (auth spec §7.1).

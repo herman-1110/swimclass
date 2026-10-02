@@ -63,6 +63,11 @@ const input = (label: string) => screen.getByLabelText<HTMLInputElement>(label)
 const attributes = (element: Element) =>
   Object.fromEntries([...element.attributes].map(({ name, value }) => [name, value]))
 const logInButton = () => screen.getByRole('button', { name: /^Log(ging)? in/ })
+/** Presses Log in as a pointer does: focus moves to the button (jsdom's click leaves it). */
+function pressLogIn() {
+  logInButton().focus()
+  fireEvent.click(logInButton())
+}
 
 function fill(username: string, password: string) {
   fireEvent.change(input('Username'), { target: { value: username } })
@@ -111,23 +116,43 @@ describe('LoginPage', () => {
 
   it('names the empty fields before any call, and focuses the first', async () => {
     renderLogin()
-    fireEvent.click(logInButton())
+    pressLogIn()
     expect(screen.getByText('Enter your username.')).toBeTruthy()
     expect(screen.getByText('Enter your password.')).toBeTruthy()
     expect(document.activeElement).toBe(input('Username'))
     expect(input('Username').getAttribute('aria-invalid')).toBe('true')
     expect(input('Username').getAttribute('aria-describedby')).toBe('login-username-error')
+    // Focus moved, so the field is read with its message: nothing is said twice.
+    expect(screen.queryByRole('alert')).toBeNull()
 
     // A username of spaces is still empty; the password's own message goes once it is typed.
     fill('  ', 'x')
-    fireEvent.click(logInButton())
+    pressLogIn()
     expect(screen.getByText('Enter your username.')).toBeTruthy()
     expect(screen.queryByText('Enter your password.')).toBeNull()
 
     fill('meiling', '')
-    fireEvent.click(logInButton())
+    pressLogIn()
     expect(screen.queryByText('Enter your username.')).toBeNull()
     expect(document.activeElement).toBe(input('Password'))
+    expect(await getSession()).toBeNull()
+  })
+
+  it('says the message when Enter is pressed in the very field that is empty', async () => {
+    renderLogin()
+    // Enter in the empty username sends the form with focus already there.
+    input('Username').focus()
+    fireEvent.submit(screen.getByRole('form', { name: 'Welcome back' }))
+    expect(document.activeElement).toBe(input('Username'))
+    expect(input('Username').getAttribute('aria-describedby')).toBe('login-username-error')
+    expect(screen.getByRole('alert').textContent).toBe('Enter your username.')
+
+    // The same in the password, once a username is typed.
+    fill('meiling', '')
+    input('Password').focus()
+    fireEvent.submit(screen.getByRole('form', { name: 'Welcome back' }))
+    expect(document.activeElement).toBe(input('Password'))
+    expect(screen.getByRole('alert').textContent).toBe('Enter your password.')
     expect(await getSession()).toBeNull()
   })
 

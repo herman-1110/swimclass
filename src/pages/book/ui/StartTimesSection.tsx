@@ -78,7 +78,8 @@ export function StartTimesSection({
           {!daySlots.some((slot) => slot.ok) && (
             <p className="text-label text-ink">{DAY_FULLY_BOOKED_MESSAGE}</p>
           )}
-          {alreadyBooked && <p className="text-label text-accent">{alreadyBooked}</p>}
+          {/* It names groups: a one-word name of up to 100 characters breaks inside (§6.6). */}
+          {alreadyBooked && <p className="text-label wrap-anywhere text-accent">{alreadyBooked}</p>}
           <TimeChipGrid slots={daySlots} selected={selected} onSelect={onSelect} />
         </>
       )}

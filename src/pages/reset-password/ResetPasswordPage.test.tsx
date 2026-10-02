@@ -142,6 +142,16 @@ describe('ResetPasswordPage', () => {
     expect(input('New password').getAttribute('aria-invalid')).toBe('true')
   })
 
+  it('says the message when Enter is pressed in the very field that is wrong', async () => {
+    await renderSignedIn('meiling')
+    typePasswords('swim-26')
+    // Enter in the new password: focus is already there, so the message is said as an alert.
+    input('New password').focus()
+    fireEvent.submit(screen.getByRole('form', { name: 'Set a new password' }))
+    expect(document.activeElement).toBe(input('New password'))
+    expect(screen.getByRole('alert').textContent).toBe('Use at least 8 characters.')
+  })
+
   it('shows the expired page if the session ends before saving, and focuses it', async () => {
     await renderSignedIn('meiling')
     // Signed out meanwhile (another tab): demo mode answers not_signed_in.
@@ -198,7 +208,7 @@ describe('ResetPasswordPage', () => {
     save()
     const heading = await screen.findByRole('heading', { level: 1, name: 'New password saved' })
     expect(document.activeElement).toBe(heading)
-    expect(heading.nextElementSibling?.textContent).toBe('You’re logged in as daniel.')
+    expect(heading.nextElementSibling?.textContent).toBe('You’re signed in as daniel.')
     await waitFor(() => expect(document.title).toBe('New password saved · Swim Class'))
 
     // The new password works; the old one doesn't.

@@ -1,6 +1,7 @@
 import { useId } from 'react'
 
 import { bookPackageNote, type GroupBalance, PackageSummary } from '@/entities/balance'
+import { useUpcomingLessons } from '@/entities/booking'
 import { type Group, GroupPicker } from '@/entities/group'
 import { useOwnLessonsOnDay } from '@/entities/schedule'
 import { packagePriceCents, type PublicSettings } from '@/entities/settings'
@@ -33,6 +34,9 @@ export function BookScreen({ settings, groups, balances }: BookScreenProps) {
   const book = useBookSelection(settings, groups)
   const startTimesId = useId()
   const own = useOwnLessonsOnDay(book.weekStart, book.day ?? book.weekStart)
+  // Every group's, as My classes reads them (one request for them all, so changing the group
+  // reads nothing): the summary places the new lesson among its group's by start time.
+  const upcoming = useUpcomingLessons(groups.map((row) => row.group_id))
   const group = book.group
   const balance = group && balances.find((row) => row.group_id === group.group_id)
   if (!group || !balance) return null
@@ -107,6 +111,7 @@ export function BookScreen({ settings, groups, balances }: BookScreenProps) {
       <BookingSummary
         group={group}
         balance={balance}
+        upcoming={upcoming.data}
         settings={settings}
         day={book.day}
         slot={book.picked}

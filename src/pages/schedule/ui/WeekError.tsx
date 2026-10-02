@@ -5,6 +5,7 @@ import { accountKeys } from '@/entities/account'
 import { toAppError } from '@/shared/api/rpc'
 import { messageFor } from '@/shared/config/messages'
 import type { ReadFailure } from '@/shared/lib/hooks/useReadFailure'
+import { Banner } from '@/shared/ui/Banner'
 import { Button } from '@/shared/ui/Button'
 
 type WeekErrorProps = {
@@ -14,10 +15,11 @@ type WeekErrorProps = {
 }
 
 /**
- * The timetable's error panel (customer-schedule §6.3, not drawn): over the empty grid, the
- * DESIGN §6 words for what went wrong in 14 px ink, and "Try again" when trying again can
- * help (the server was out of reach, or something unexpected). An account that is no longer
- * approved gets its profile read again, so the guard sends it to Waiting for approval.
+ * The timetable's error (customer-schedule §6.3, not drawn), over the empty grid: the kit
+ * Banner with the DESIGN §6 words for what went wrong, the way every screen shows a failed
+ * read, and a quiet accent "Try again" at its right when trying again can help (the server
+ * was out of reach, or something unexpected). An account that is no longer approved gets
+ * its profile read again, so the guard sends it to Waiting for approval.
  */
 export function WeekError({ failure }: WeekErrorProps) {
   const queryClient = useQueryClient()
@@ -28,24 +30,27 @@ export function WeekError({ failure }: WeekErrorProps) {
   }, [code, queryClient])
 
   return (
-    <div className="m-2 flex flex-col items-start gap-1 rounded-control border border-line bg-white px-3.5 py-3">
-      {/* A new alert for each failure: one that fails again is read out again. */}
-      <p key={failure.failedAt} role="alert" className="text-sm leading-normal text-ink">
+    <Banner
+      className="m-2"
+      action={
+        (code === 'network' || code === 'unknown') && (
+          <Button
+            variant="quiet"
+            size="sm"
+            tone="accent"
+            pending={failure.retrying}
+            onClick={failure.retry}
+          >
+            Try again
+          </Button>
+        )
+      }
+    >
+      {/* A new alert for each failure: one that fails again is read out again. The button
+          stays, so it keeps focus. */}
+      <p key={failure.failedAt} role="alert">
         {messageFor(failure.error)}
       </p>
-      {(code === 'network' || code === 'unknown') && (
-        <Button
-          variant="quiet"
-          size="sm"
-          tone="accent"
-          // The quiet button's own padding: line its text up with the message's.
-          className="-ml-3.5"
-          pending={failure.retrying}
-          onClick={failure.retry}
-        >
-          Try again
-        </Button>
-      )}
-    </div>
+    </Banner>
   )
 }

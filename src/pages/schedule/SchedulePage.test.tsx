@@ -263,6 +263,12 @@ describe('SchedulePage', () => {
     expect(alert.textContent).toBe('Something went wrong. Refresh the page and try again.')
     expect(screen.getByRole('img', { name: PICTURE }).getAttribute('aria-busy')).toBeNull()
     expect(screen.queryByText('Loading the timetable')).toBeNull()
+    // As every screen shows a failed read: the kit Banner, "Try again" quiet in accent.
+    const banner = alert.closest('.bg-subtle')
+    expect(banner).not.toBeNull()
+    expect(
+      within(banner as HTMLElement).getByRole('button', { name: 'Try again' }).className,
+    ).toContain('text-accent')
     // Without the settings only this week is known to be in the window: the week asked for
     // gives way to it, and Next waits.
     expect(weekLabel()?.textContent).toBe('21 Sep – 27 Sep')

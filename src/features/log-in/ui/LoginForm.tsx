@@ -4,6 +4,7 @@ import { flushSync } from 'react-dom'
 import { toAppError } from '@/shared/api/rpc'
 import { messageFor } from '@/shared/config/messages'
 import { ROUTES } from '@/shared/config/routes'
+import { focusProblem } from '@/shared/lib/focusProblem'
 import { Button } from '@/shared/ui/Button'
 import { ButtonLink } from '@/shared/ui/ButtonLink'
 import { Field } from '@/shared/ui/Field'
@@ -36,8 +37,8 @@ export function LoginForm({ labelledBy }: LoginFormProps) {
   const logIn = useLogIn()
 
   // Event handlers only: refs are never read while rendering.
-  const focus = (field: LogInField) =>
-    (field === 'username' ? usernameInput : passwordInput).current?.focus()
+  const inputOf = (field: LogInField) =>
+    (field === 'username' ? usernameInput : passwordInput).current
 
   function change(field: LogInField, value: string) {
     setValues((current) => ({ ...current, [field]: value }))
@@ -51,7 +52,8 @@ export function LoginForm({ labelledBy }: LoginFormProps) {
       if (wrongDetails) setValues((current) => ({ ...current, password: '' }))
       setRefusal({ message: messageFor(error), wrongDetails })
     })
-    if (wrongDetails) focus('password')
+    // The refusal is an alert of its own: focus only needs to reach the cleared password.
+    if (wrongDetails) inputOf('password')?.focus()
   }
 
   function submit(event: FormEvent<HTMLFormElement>) {
@@ -64,7 +66,8 @@ export function LoginForm({ labelledBy }: LoginFormProps) {
     })
     const first = (['username', 'password'] as const).find((field) => found[field])
     if (first) {
-      focus(first)
+      // Said out loud also when Enter was pressed in that very field.
+      focusProblem(inputOf(first), messageFor({ code: found[first] }))
       return
     }
     logIn.mutate(values, { onError: refused })

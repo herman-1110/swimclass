@@ -232,6 +232,12 @@ describe('MyClassesPage', () => {
     )
     expect(section('Upcoming').getAttribute('aria-busy')).toBeNull()
     expect(screen.queryByText('Loading your lessons…')).toBeNull()
+    // As every screen shows a failed read: the kit Banner, "Try again" quiet in accent.
+    const banner = within(section('Upcoming')).getByRole('alert').closest('.bg-subtle')
+    expect(banner).not.toBeNull()
+    expect(
+      within(banner as HTMLElement).getByRole('button', { name: 'Try again' }).className,
+    ).toContain('text-accent')
 
     // The name couldn't be read either: the line under the title is left out, not loading.
     expect(screen.getByRole('heading', { level: 1 }).previousElementSibling).toBeNull()

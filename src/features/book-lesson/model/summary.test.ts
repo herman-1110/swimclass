@@ -85,6 +85,7 @@ function state(input: Partial<SummaryInput> & Pick<SummaryInput, 'group' | 'bala
   return bookingSummaryState({
     slot: FREE_730,
     minutes: 60,
+    bookedBefore: null,
     repeatWeeks: 4,
     refusal: null,
     messages,
@@ -137,8 +138,13 @@ describe('bookingSummaryState', () => {
   })
 
   it('names both packages when a 2-hour lesson takes the last lesson of one (C18)', () => {
-    expect(state({ ...NURUL, minutes: 120 }).useLine).toBe(
-      '1-to-1 for Nurul · uses 2 lessons: the last of Package 1 and the first of Package 2',
+    // After Nurul's lesson on Sun 4 Oct: lessons 4 and 5, and only 4 are paid.
+    expect(state({ ...NURUL, minutes: 120, bookedBefore: 1 }).useLine).toBe(
+      '1-to-1 for Nurul · uses 2 lessons: the last of Package 1 and the first of Package 2, not paid yet',
+    )
+    // Before it (Tue 29 Sep): lessons 3 and 4, and Sun 4 Oct moves on to Package 2.
+    expect(state({ ...NURUL, minutes: 120, bookedBefore: 0 }).useLine).toBe(
+      '1-to-1 for Nurul · uses 2 lessons from Package 1, completes the package · Package 2 isn’t paid yet',
     )
   })
 
@@ -146,9 +152,65 @@ describe('bookingSummaryState', () => {
     expect(state(SOFIA).useLine).toBe(
       '1-to-1 for Sofia · uses 1 lesson from Package 3, not paid yet',
     )
+    expect(state({ ...SOFIA, bookedBefore: 1 }).useLine).toBe(
+      '1-to-1 for Sofia · uses 1 lesson from Package 3, not paid yet',
+    )
     const paidAhead = { ...SOFIA.balance, paid_lessons: 12 }
     expect(state({ ...SOFIA, balance: paidAhead }).useLine).toBe(
       '1-to-1 for Sofia · uses 1 lesson from Package 3',
+    )
+  })
+
+  it('numbers a lesson before one already booked as the ledger will (Sofia, Sat 3 Oct)', () => {
+    // Sofia's seed balance: 7 used, Sun 4 Oct 5:00 pm booked (lesson 8, the last one paid).
+    // Sat 3 Oct comes first, so it takes lesson 4 of Package 2 and Sun 4 Oct moves on to
+    // Package 3, which isn't paid (My classes: "lesson 4 of 4", "Package 3, lesson 1 of 4").
+    const sat700 = { ...FREE_730, day: '2026-10-03', starts_at: '2026-10-03T11:00:00+00:00' }
+    expect(state({ ...SOFIA, slot: sat700, bookedBefore: 0 })).toMatchObject({
+      title: 'Sat 3 Oct · 7:00–8:00 pm',
+      useLine: '1-to-1 for Sofia · uses 1 lesson from Package 2 · Package 3 isn’t paid yet',
+      buttonLabel: 'Book 7:00 pm for Sofia',
+    })
+    // Two hours: the last lesson of Package 2 and the first of Package 3, which isn't paid
+    // (My classes: "last lesson of Package 2 and first of Package 3").
+    expect(state({ ...SOFIA, slot: sat700, minutes: 120, bookedBefore: 0 }).useLine).toBe(
+      '1-to-1 for Sofia · uses 2 lessons: the last of Package 2 and the first of Package 3, not paid yet',
+    )
+    // Paid ahead, moving Sun 4 Oct on costs nothing.
+    const paidAhead = { ...SOFIA.balance, paid_lessons: 12 }
+    expect(state({ ...SOFIA, balance: paidAhead, slot: sat700, bookedBefore: 0 }).useLine).toBe(
+      '1-to-1 for Sofia · uses 1 lesson from Package 2',
+    )
+  })
+
+  it('says a lesson isn’t paid yet while its package still has room (states-14)', () => {
+    // Every paid lesson used, none booked: Package 2 has 4 to book, and none is paid.
+    const exact = {
+      group: { display_names: 'Elena', type_label: '1-to-1' as const },
+      balance: {
+        package_size: 4,
+        package_no: 2,
+        left_in_package: 4,
+        paid_lessons: 4,
+        used_lessons: 4,
+        booked_lessons: 0,
+        can_still_book: 4,
+      },
+    }
+    expect(state({ ...exact, bookedBefore: 0 }).useLine).toBe(
+      '1-to-1 for Elena · uses 1 lesson from Package 2, not paid yet, 3 left to book after this',
+    )
+    // A group nothing has paid for yet.
+    const neverPaid = {
+      group: { display_names: 'Aiman', type_label: '1-to-1' as const },
+      balance: { ...exact.balance, package_no: 1, paid_lessons: 0, used_lessons: 0 },
+    }
+    expect(state(neverPaid).useLine).toBe(
+      '1-to-1 for Aiman · uses 1 lesson from Package 1, not paid yet, 3 left to book after this',
+    )
+    // Wei Jie has used more than is paid: his last lesson of Package 2 isn't paid either.
+    expect(state({ ...WEI_JIE, bookedBefore: 0 }).useLine).toBe(
+      '1-to-1 for Wei Jie · uses 1 lesson from Package 2, not paid yet, completes the package',
     )
   })
 
@@ -215,9 +277,19 @@ describe('bookingSummaryState', () => {
 
 describe('usageLine', () => {
   it('counts the lessons left after this one', () => {
-    expect(
-      usageLine(AIMAN_AND_SOFIA.group, { ...AIMAN_AND_SOFIA.balance, left_in_package: 3 }, 1),
-    ).toBe('1-to-2 for Aiman & Sofia · uses 1 lesson from Package 4, 2 left to book after this')
+    const oneBooked = { ...AIMAN_AND_SOFIA.balance, booked_lessons: 1, left_in_package: 3 }
+    expect(usageLine(AIMAN_AND_SOFIA.group, oneBooked, 1)).toBe(
+      '1-to-2 for Aiman & Sofia · uses 1 lesson from Package 4, 2 left to book after this',
+    )
+  })
+
+  it('counts the same before or after the lessons already booked while the package has room', () => {
+    // Aiman & Sofia's two booked lessons are Sat 26 Sep and Sat 3 Oct.
+    for (const bookedBefore of [0, 1, 2]) {
+      expect(usageLine(AIMAN_AND_SOFIA.group, AIMAN_AND_SOFIA.balance, 1, bookedBefore)).toBe(
+        '1-to-2 for Aiman & Sofia · uses 1 lesson from Package 4, 1 left to book after this',
+      )
+    }
   })
 })
 
