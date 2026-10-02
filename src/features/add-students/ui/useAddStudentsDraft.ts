@@ -3,10 +3,11 @@ import { flushSync } from 'react-dom'
 
 import { type CustomerAccount, useAccountStudents, useUsernameAvailable } from '@/entities/account'
 import { type CoachSettings, packagePriceCents } from '@/entities/settings'
+import { useReadFailure } from '@/shared/lib/hooks/useReadFailure'
 
 import { chosenAccount } from '../model/account'
 import { amountPrefill } from '../model/amount'
-import { firstProblem, focusSelector, withoutProblems } from '../model/fields'
+import { FIELD_IDS, firstProblem, focusSelector, withoutProblems } from '../model/fields'
 import { resolveStudents } from '../model/students'
 import {
   type FieldKey,
@@ -39,6 +40,9 @@ export const EMPTY_NEW_ACCOUNT: NewAccountDraft = { name: '', username: '', emai
 
 /** Student rows kept: the most a lesson can take (settings allow 1 to 3, CLAUDE.md rule 5). */
 const ROWS = 3
+
+/** Where focus goes once "Try again" has brought the chosen account's students. */
+const accountSelect = () => document.getElementById(FIELD_IDS.account)
 
 // The spec C1: 1-to-1 (10 of the 13 seed groups), no account chosen (C2), Cash (as drawn).
 const START: AddStudentsDraft = {
@@ -102,6 +106,9 @@ export function useAddStudentsDraft({
   // new student, a duplicate (the spec §5.3). Students already read stay good enough while
   // a later refresh fails.
   const studentsMissing = accountId !== null && students.data === undefined
+  // They never loaded: the problem and "Try again" under Account, kept while they are read
+  // again; focus then goes back to Account.
+  const studentsFailure = useReadFailure([students], accountSelect)
 
   /**
    * Changes the draft from its latest state (autofill can change several fields at once);
@@ -189,7 +196,6 @@ export function useAddStudentsDraft({
     amount: draft.amount ?? amountPrefill(priceCents),
     studentsMissing,
     /** The chosen account's students couldn't be read: show it, with Try again. */
-    studentsError: studentsMissing && students.isError ? students.error : null,
-    retryStudents: () => void students.refetch(),
+    studentsFailure: accountId === null ? null : studentsFailure,
   }
 }

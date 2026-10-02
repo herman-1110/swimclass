@@ -26,7 +26,7 @@ describe('AccountField', () => {
         value=""
         onChange={() => {}}
         notice={null}
-        studentsError={null}
+        studentsFailure={null}
       />,
     )
     const select = screen.getByRole<HTMLSelectElement>('combobox', {
@@ -48,7 +48,7 @@ describe('AccountField', () => {
         value={meiling.id}
         onChange={() => {}}
         notice="Account created for Mei Ling."
-        studentsError={null}
+        studentsFailure={null}
       />,
     )
     const status = screen.getByRole('status')
@@ -66,7 +66,7 @@ describe('AccountField', () => {
         value={meiling.id}
         onChange={() => {}}
         notice={null}
-        studentsError={{ error: new AppError('network'), retry }}
+        studentsFailure={{ error: new AppError('network'), failedAt: 1000, retrying: false, retry }}
       />,
     )
     const alert = screen.getByRole('alert')
