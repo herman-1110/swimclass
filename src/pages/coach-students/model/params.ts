@@ -1,10 +1,13 @@
+import type { STUDENTS_PARAMS } from '@/shared/config/routes'
+
 import type { StudentsFilter } from './rows'
 
 // The page's address (coach-students §1): what is worth keeping on refresh or sharing. The
 // search is not here: it is a person's name (TECH_SPEC §13).
 
-/** The search params this page reads. */
-export type StudentsParam = 'filter' | 'pay' | 'history' | 'added'
+/** The search params this page reads, named once in shared/config/routes.ts with the links
+ *  into the page. */
+export type StudentsParam = (typeof STUDENTS_PARAMS)[keyof typeof STUDENTS_PARAMS]
 
 const FILTERS: readonly StudentsFilter[] = ['unpaid', 'last-lesson', 'paid', 'waiting']
 

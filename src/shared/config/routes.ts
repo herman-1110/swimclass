@@ -27,9 +27,45 @@ export const ROUTES = {
 } as const
 
 /**
+ * The search params Students & payments reads (coach-students §1): the filter tab, the group
+ * in the Record payment panel, the group whose History is open, and a group just added.
+ * Written once, for the links below and for the page that reads them.
+ */
+export const STUDENTS_PARAMS = {
+  filter: 'filter',
+  pay: 'pay',
+  history: 'history',
+  added: 'added',
+} as const
+
+/** Students & payments with one search param set to a group's id. */
+function coachStudentsWith(
+  param: (typeof STUDENTS_PARAMS)[keyof typeof STUDENTS_PARAMS],
+  groupId: string,
+) {
+  return `${ROUTES.coachStudents}?${new URLSearchParams({ [param]: groupId }).toString()}`
+}
+
+/**
  * Students & payments with one group's Record payment panel open (`?pay=<group id>`):
  * where the coach Schedule's Needs attention sends "Record payment" (prompt 09 DIAGNOSE 3).
  */
 export function coachStudentsPay(groupId: string): string {
-  return `${ROUTES.coachStudents}?${new URLSearchParams({ pay: groupId }).toString()}`
+  return coachStudentsWith(STUDENTS_PARAMS.pay, groupId)
+}
+
+/**
+ * Students & payments with one group's History open (`?history=<group id>`): the "that
+ * group" links of Add students' and Reactivate's refusals (DESIGN §6).
+ */
+export function coachStudentsHistory(groupId: string): string {
+  return coachStudentsWith(STUDENTS_PARAMS.history, groupId)
+}
+
+/**
+ * Students & payments after Add students (`?added=<group id>`): the new group's row is
+ * highlighted, with "3 students added" (coach-add-students §5.2.1).
+ */
+export function coachStudentsAdded(groupId: string): string {
+  return coachStudentsWith(STUDENTS_PARAMS.added, groupId)
 }

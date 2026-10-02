@@ -95,11 +95,13 @@ describe('CoachSchedulePage actions (§8.3)', () => {
         { name: 'Approve Siti Aminah' },
         SLOW,
       )
+      // The date as Students & payments writes it ("2 Oct"), with the year only when it isn't
+      // this one (the demo's sign-ups carry the real date).
       expect(approve.closest('li')?.textContent).toMatch(
-        /^Siti Aminah Waiting for approval · signed up \w{3} \d+ \w{3}Approve Siti Aminah$/,
+        /^Siti Aminah Waiting for approval · signed up \d+ \w{3}( \d{4})?Approve Siti Aminah$/,
       )
       fireEvent.click(approve)
-      const shown = await notice('Siti Aminah approved')
+      const shown = await notice('Siti Aminah approved.')
       // Its row goes, so focus goes to the notice.
       await waitFor(() => expect(document.activeElement?.contains(shown)).toBe(true))
       await waitFor(

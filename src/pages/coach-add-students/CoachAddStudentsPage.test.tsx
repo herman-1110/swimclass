@@ -1,15 +1,17 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider, useLocation } from 'react-router'
-import { afterEach, beforeAll, describe, expect, it } from 'vitest'
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 
 import { accountKeys, SessionContext } from '@/entities/account'
 import { settingsKeys } from '@/entities/settings'
 import { type AuthSession, getSession, logIn, logOut } from '@/shared/api/auth'
+import { getBackend } from '@/shared/api/backend'
 import { demoDb } from '@/shared/api/demo/db'
 import { holdDemoDatabase } from '@/shared/api/demo/testing'
 import { readRows, rpc } from '@/shared/api/rpc'
 import { DEMO_PASSWORD } from '@/shared/config/demo'
+import { NETWORK_MESSAGE } from '@/shared/config/messages'
 import { ROUTES } from '@/shared/config/routes'
 
 import { CoachAddStudentsPage } from './CoachAddStudentsPage'
@@ -31,7 +33,38 @@ beforeAll(async () => {
   await getSession()
 }, 60_000)
 
-afterEach(cleanup)
+afterEach(() => {
+  cleanup()
+  vi.restoreAllMocks()
+})
+
+/**
+ * Reads of these tables fail as on a lost connection. After `reconnect()` they go through
+ * again, but wait for `release()` (a slow connection), so "Try again" can be seen running.
+ */
+async function loseReads(sources: readonly string[]) {
+  const backend = await getBackend()
+  const read = backend.read.bind(backend)
+  let lost = true
+  let release = () => {}
+  let released = Promise.resolve()
+  vi.spyOn(backend, 'read').mockImplementation(async (source, query) => {
+    if (sources.includes(source)) {
+      if (lost) throw new TypeError('Failed to fetch')
+      await released
+    }
+    return read(source, query)
+  })
+  return {
+    reconnect() {
+      lost = false
+      released = new Promise((resolve) => {
+        release = resolve
+      })
+    },
+    release: () => release(),
+  }
+}
 
 // Students & payments, as far as these tests need it: where Add students sends the coach.
 function StudentsStub() {
@@ -641,5 +674,45 @@ describe('CoachAddStudentsPage', () => {
     expect(alert.textContent).toContain('Something went wrong. Refresh the page and try again.')
     expect(within(alert).getByRole('button', { name: 'Try again' })).toBeTruthy()
     expect(screen.getByRole('heading', { level: 1, name: 'Add students' })).toBeTruthy()
+  })
+
+  it('keeps Try again busy and focused while the form’s reads run again, then focus goes to Account', async () => {
+    const settings = await loseReads(['settings'])
+    await renderPage('herman')
+    const alert = await screen.findByRole('alert', {}, { timeout: 4000 })
+    expect(alert.textContent).toContain(NETWORK_MESSAGE)
+
+    settings.reconnect()
+    const retry = within(alert).getByRole('button', { name: 'Try again' })
+    retry.focus()
+    fireEvent.click(retry)
+    await waitFor(() => expect(retry.getAttribute('aria-busy')).toBe('true'))
+    expect(document.activeElement).toBe(retry)
+    expect(screen.queryByText('Loading…')).toBeNull()
+
+    settings.release()
+    await formReady()
+    expect(screen.queryByRole('alert')).toBeNull()
+    await waitFor(() => expect(document.activeElement).toBe(account()))
+  })
+
+  it('keeps the students’ Try again focused while they are read again, then focus goes to Account', async () => {
+    const students = await loseReads(['students'])
+    await renderPage('herman', `${ROUTES.coachAddStudents}?account=${MEILING}`)
+    await formReady()
+    const alert = await screen.findByRole('alert', {}, { timeout: 4000 })
+    expect(alert.textContent).toContain(NETWORK_MESSAGE)
+
+    students.reconnect()
+    const retry = within(alert).getByRole('button', { name: 'Try again' })
+    retry.focus()
+    fireEvent.click(retry)
+    await waitFor(() => expect(retry.getAttribute('aria-busy')).toBe('true'))
+    expect(document.activeElement).toBe(retry)
+
+    students.release()
+    await addReady('Add student')
+    expect(screen.queryByRole('alert')).toBeNull()
+    await waitFor(() => expect(document.activeElement).toBe(account()))
   })
 })

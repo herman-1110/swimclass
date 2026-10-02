@@ -72,7 +72,7 @@ describe('GroupActiveButton', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Deactivate group' }))
     const dialog = screen.getByRole('alertdialog', { name: 'Deactivate Hakim?' })
     fireEvent.click(within(dialog).getByRole('button', { name: 'Deactivate group' }))
-    await waitFor(() => expect(onChanged).toHaveBeenCalledWith('Group deactivated'))
+    await waitFor(() => expect(onChanged).toHaveBeenCalledWith('Group deactivated.'))
     expect(screen.queryByRole('alertdialog')).toBeNull()
     const [group] = await readRows('group_details', { eq: { group_id: groupId } })
     expect(group?.active).toBe(false)
@@ -84,7 +84,7 @@ describe('GroupActiveButton', () => {
     await rpc('set_group_active', { p_group_id: groupId, p_active: false })
     const { onChanged } = renderButton({ group_id: groupId, display_names: 'Zara', active: false })
     fireEvent.click(screen.getByRole('button', { name: 'Reactivate group' }))
-    await waitFor(() => expect(onChanged).toHaveBeenCalledWith('Group reactivated'))
+    await waitFor(() => expect(onChanged).toHaveBeenCalledWith('Group reactivated.'))
     expect(screen.queryByRole('alertdialog')).toBeNull()
   })
 

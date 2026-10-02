@@ -1,11 +1,12 @@
 import { Checkbox } from '@/shared/ui/Checkbox'
 import { FieldRow } from '@/shared/ui/FieldRow'
 
+import { rowDescriptionId } from '../model/description'
 import { FIELD_IDS } from '../model/fields'
 import { settingNote } from '../model/notes'
 import type { SwitchField } from '../model/types'
 import type { ReadySettingsForm } from './formContext'
-import { rowDescription } from './rowDescription'
+import { RowDescription } from './RowDescription'
 
 type SwitchRowProps = {
   form: ReadySettingsForm
@@ -30,15 +31,18 @@ export function SwitchRow({ form, field, label, help }: SwitchRowProps) {
       note={note}
       error={error}
       control={
-        <Checkbox
-          id={id}
-          look="standalone"
-          checked={form.draft[field]}
-          onChange={(event) => form.setField(field, event.target.checked)}
-          aria-readonly={form.saving || undefined}
-          aria-invalid={error ? true : undefined}
-          aria-describedby={rowDescription(id, { note, error })}
-        />
+        <>
+          <Checkbox
+            id={id}
+            look="standalone"
+            checked={form.draft[field]}
+            onChange={(event) => form.setField(field, event.target.checked)}
+            aria-readonly={form.saving || undefined}
+            aria-invalid={error ? true : undefined}
+            aria-describedby={rowDescriptionId(id)}
+          />
+          <RowDescription id={id} parts={[help, note, error]} />
+        </>
       }
     />
   )

@@ -56,6 +56,27 @@ describe('useReadFailure', () => {
     expect(result.current).toBeNull()
   })
 
+  it('leaves out a read whose refresh failed while its data is still there', () => {
+    // A background refresh (after a write, or the window getting focus back) failed: the
+    // data on screen stays, and nothing offers "Try again" for it.
+    const refreshFailed = read({
+      data: ['a row'],
+      isError: true,
+      error: offline,
+      errorUpdatedAt: 2000,
+    })
+    const { result, rerender } = renderReads([answered(), refreshFailed])
+    expect(result.current).toBeNull()
+
+    // Another read that never loaded still fails, and only it is read again.
+    const groups = failed(3000, new Error('groups'))
+    rerender({ reads: [refreshFailed, groups] })
+    expect(result.current).toMatchObject({ error: new Error('groups'), failedAt: 3000 })
+    act(() => result.current?.retry())
+    expect(refreshFailed.refetch).not.toHaveBeenCalled()
+    expect(groups.refetch).toHaveBeenCalledOnce()
+  })
+
   it('never shows another read’s failure in its place', () => {
     const { result, rerender } = renderReads([failed(1000)])
     // Another week: read for the first time, or failed earlier and now read again.

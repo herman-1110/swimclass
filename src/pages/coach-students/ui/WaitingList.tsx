@@ -1,6 +1,7 @@
 import { useEffect, useEffectEvent, useRef } from 'react'
 
 import type { PendingAccount } from '@/entities/account'
+import type { ReadFailure } from '@/shared/lib/hooks/useReadFailure'
 import type { Instant } from '@/shared/lib/time'
 import { Button } from '@/shared/ui/Button'
 import { EmptyState } from '@/shared/ui/EmptyState'
@@ -14,9 +15,8 @@ import { WaitingAccounts } from './WaitingAccounts'
 type WaitingListProps = {
   /** The waiting accounts that match the search; null while loading. */
   accounts: readonly PendingAccount[] | null
-  /** The read's failure, if it failed. */
-  error: unknown
-  onRetry: () => void
+  /** The read never loaded: its message and "Try again" (useReadFailure). */
+  failure: ReadFailure | null
   query: string
   onClearSearch: () => void
   now: Instant
@@ -33,8 +33,7 @@ type WaitingListProps = {
  */
 export function WaitingList({
   accounts,
-  error,
-  onRetry,
+  failure,
   query,
   onClearSearch,
   now,
@@ -54,7 +53,7 @@ export function WaitingList({
     else emptied()
   }, [accounts])
 
-  if (error) return <LoadError error={error} onRetry={onRetry} />
+  if (failure) return <LoadError failure={failure} />
   if (!accounts) return <StudentsLoading />
   if (accounts.length > 0) {
     return (

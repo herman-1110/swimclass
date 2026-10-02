@@ -62,7 +62,7 @@ export const NO_LESSONS_TO_EXCUSE =
   'No lessons to excuse. Only lessons that have started can be excused.'
 
 /** The status after "Excuse a missed lesson" worked. */
-export const LESSON_EXCUSED = 'Lesson excused'
+export const LESSON_EXCUSED = 'Lesson excused.'
 
 /** "Excuse Fri 25 Sep lesson", or "Excuse lesson" until one is picked. */
 export function excuseButtonLabel(lesson: Pick<ExcusableLesson, 'starts_at'> | undefined): string {

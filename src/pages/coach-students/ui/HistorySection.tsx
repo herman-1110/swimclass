@@ -1,5 +1,6 @@
 import { type ReactNode, useId } from 'react'
 
+import { type RetryableRead, useReadFailure } from '@/shared/lib/hooks/useReadFailure'
 import { SectionLabel } from '@/shared/ui/SectionLabel'
 import { Skeleton } from '@/shared/ui/Skeleton'
 
@@ -9,21 +10,29 @@ type HistorySectionProps = {
   /** "Payments", "Lessons", "Group". */
   title: string
   /** The section's read: grey rows while it loads, the message and "Try again" if it fails. */
-  read?: { isPending: boolean; isError: boolean; error: unknown; refetch: () => unknown }
+  read?: RetryableRead & { isPending: boolean }
   children: ReactNode
 }
 
 /** The look of a row in the History lists (coach-students §3.9): 12 px above and below, a rule. */
 export const historyRow = 'flex flex-col gap-0.5 border-b border-line py-3 break-words'
 
+const NO_READS: readonly RetryableRead[] = []
+
 /**
  * A section of the History drawer (coach-students §3.9, proposed): a 13 px muted label, then
- * its rows.
+ * its rows. If its read never loaded, the message and "Try again" take the rows' place, and
+ * stay while the read runs again; once the rows are in, focus goes to the section's heading.
+ * A refresh that fails keeps the rows shown.
  */
 export function HistorySection({ title, read, children }: HistorySectionProps) {
   const titleId = useId()
+  const failure = useReadFailure(read ? [read] : NO_READS, () => document.getElementById(titleId))
+  const loading = !failure && read?.isPending === true
+
   const body = () => {
-    if (read?.isPending) {
+    if (failure) return <LoadError className="mt-2" failure={failure} />
+    if (loading) {
       return (
         <div aria-hidden="true">
           {[0, 1].map((key) => (
@@ -35,21 +44,15 @@ export function HistorySection({ title, read, children }: HistorySectionProps) {
         </div>
       )
     }
-    if (read?.isError) {
-      return <LoadError className="mt-2" error={read.error} onRetry={() => void read.refetch()} />
-    }
     return children
   }
   return (
-    <section
-      aria-labelledby={titleId}
-      aria-busy={read?.isPending || undefined}
-      className="flex flex-col"
-    >
-      <SectionLabel as="h3" id={titleId}>
+    <section aria-labelledby={titleId} aria-busy={loading || undefined} className="flex flex-col">
+      {/* Focusable, so "Try again" can hand focus to the rows it brought. */}
+      <SectionLabel as="h3" id={titleId} tabIndex={-1}>
         {title}
       </SectionLabel>
-      {read?.isPending && (
+      {loading && (
         <p role="status" className="sr-only">
           {`Loading ${title.toLowerCase()}…`}
         </p>

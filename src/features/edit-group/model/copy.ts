@@ -8,8 +8,8 @@ export const EDIT_GROUP = 'Edit group'
 export const SAVE_CHANGES = 'Save changes'
 /** Under Pool location: update_group moves the upcoming lessons too (coach-students §5.3 W4). */
 export const LOCATION_HELP = 'Upcoming lessons move to the new location.'
-/** The History drawer's notice after Save changes. */
-export const CHANGES_SAVED = 'Changes saved'
+/** The History drawer's notice after Save changes (a sentence, so it ends with a full stop). */
+export const CHANGES_SAVED = 'Changes saved.'
 
 /** The dialog's subtitle: "Hana · Farah’s account", "Wei Jie · Own account". */
 export function groupSubtitle(group: EditableGroup, accountName: string): string {
@@ -18,8 +18,9 @@ export function groupSubtitle(group: EditableGroup, accountName: string): string
 
 export const DEACTIVATE_GROUP = 'Deactivate group'
 export const REACTIVATE_GROUP = 'Reactivate group'
-export const GROUP_DEACTIVATED = 'Group deactivated'
-export const GROUP_REACTIVATED = 'Group reactivated'
+/** The History drawer's notices after Deactivate and Reactivate. */
+export const GROUP_DEACTIVATED = 'Group deactivated.'
+export const GROUP_REACTIVATED = 'Group reactivated.'
 
 /** The confirmation's title: "Deactivate Hana?". */
 export function deactivateTitle(group: Pick<EditableGroup, 'display_names'>): string {

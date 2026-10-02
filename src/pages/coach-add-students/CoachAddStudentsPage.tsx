@@ -1,25 +1,19 @@
 import { useNavigate, useSearchParams } from 'react-router'
 
 import { DocumentTitle } from '@/entities/settings'
-import { type AddedResult, AddStudentsForm } from '@/features/add-students'
-import { ROUTES } from '@/shared/config/routes'
+import { type AddedState, AddStudentsForm } from '@/features/add-students'
+import { coachStudentsAdded, ROUTES } from '@/shared/config/routes'
 import { BackLink } from '@/shared/ui/BackLink'
 import { PageHeader } from '@/shared/ui/PageHeader'
 
 const TITLE = 'Add students'
 
 /**
- * What Students & payments may show after a group is added (its `?added=` highlights the row;
- * the Add students spec §5.2.1 proposes "3 students added · Invite sent to {email}"). Router
- * state, not the URL, so no email goes in an address (TECH_SPEC §13).
- */
-type AddedState = { added: AddedResult }
-
-/**
  * Add students (`/coach/add-students`; AdminAddStudents.dc.html, AdminAddStudentsPhone.dc.html):
  * a new group of 1 to 3 students for a customer account, or for a new account. `?account=`
  * picks the account at first. Once the group exists it goes back to Students & payments with
- * the new row highlighted (`?added=<group id>`).
+ * the new row highlighted (`?added=<group id>`), and tells it in router state whom a new
+ * account's invite went to ("3 students added · Invite sent to {email}").
  */
 export function CoachAddStudentsPage() {
   const [params] = useSearchParams()
@@ -42,7 +36,7 @@ export function CoachAddStudentsPage() {
         initialAccountId={params.get('account') ?? undefined}
         onAdded={(added) => {
           const state: AddedState = { added }
-          void navigate(`${ROUTES.coachStudents}?added=${added.groupId}`, { state })
+          void navigate(coachStudentsAdded(added.groupId), { state })
         }}
       />
     </div>

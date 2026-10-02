@@ -1,13 +1,12 @@
 import type { ReactNode } from 'react'
 
 import { accountOptionLabel, type CustomerAccount } from '@/entities/account'
-import { messageFor } from '@/shared/config/messages'
-import { Banner } from '@/shared/ui/Banner'
-import { Button } from '@/shared/ui/Button'
+import type { ReadFailure } from '@/shared/lib/hooks/useReadFailure'
 import { Select, type SelectOption } from '@/shared/ui/Select'
 
 import { FIELD_IDS } from '../model/fields'
 import { NEW_ACCOUNT } from '../model/types'
+import { ReadError } from './ReadError'
 
 type AccountFieldProps = {
   accounts: readonly CustomerAccount[]
@@ -17,8 +16,8 @@ type AccountFieldProps = {
   error?: string
   /** "Account created for Siti Rahman." while the account this visit created is chosen. */
   notice: string | null
-  /** The chosen account's students failed to load: their error, and how to ask again. */
-  studentsError: { error: unknown; retry: () => void } | null
+  /** The chosen account's students never loaded: their error, and "Try again". */
+  studentsFailure: ReadFailure | null
   /** The New account fields, while "Create a new account…" is chosen. */
   children?: ReactNode
 }
@@ -36,7 +35,7 @@ export function AccountField({
   onChange,
   error,
   notice,
-  studentsError,
+  studentsFailure,
   children,
 }: AccountFieldProps) {
   const options: SelectOption[] = [
@@ -68,18 +67,7 @@ export function AccountField({
           {notice}
         </p>
       </div>
-      {studentsError && (
-        <Banner
-          role="alert"
-          action={
-            <Button variant="link" onClick={studentsError.retry}>
-              Try again
-            </Button>
-          }
-        >
-          {messageFor(studentsError.error, { audience: 'coach' })}
-        </Banner>
-      )}
+      {studentsFailure && <ReadError failure={studentsFailure} />}
       {children}
     </div>
   )

@@ -44,7 +44,9 @@ export function TodayPanel({ today }: TodayPanelProps) {
             Loading…
           </p>
         </div>
-      ) : day.isError ? (
+      ) : day.isLoadingError ? (
+        // Only a day that never loaded: when a refresh fails, the lessons shown stay, as the
+        // week grid's do (the next refresh tries again).
         <LoadError error={day.error} onRetry={() => void day.refetch()} focusAfter={section} />
       ) : lessons.length === 0 ? (
         <p className="text-label text-muted">No lessons today.</p>

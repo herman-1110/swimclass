@@ -3,26 +3,25 @@ import type { ReadFailure } from '@/shared/lib/hooks/useReadFailure'
 import { Banner } from '@/shared/ui/Banner'
 import { Button } from '@/shared/ui/Button'
 
-type LoadErrorProps = {
-  /** The read that failed (useReadFailure): its words come from messages.ts (DESIGN §6). */
+type ReadErrorProps = {
+  /** The read that never loaded (useReadFailure): its words come from messages.ts. */
   failure: ReadFailure
-  /** Layout only (margins). */
+  /** Layout only. */
   className?: string
 }
 
 /**
- * A read that failed, in place of what it would show (coach-students §6): the network or
- * generic message, and "Try again". While the read runs again the message stays, and the
- * button keeps its place and focus, busy; useReadFailure then hands focus on to what
- * replaces it.
+ * A read the form needs that failed (the spec §6): DESIGN §6's words and "Try again". While
+ * the read runs again the message stays and the button keeps its place and focus, busy;
+ * useReadFailure then hands focus to the Account select.
  */
-export function LoadError({ failure, className }: LoadErrorProps) {
+export function ReadError({ failure, className }: ReadErrorProps) {
   return (
     <Banner
       role="alert"
       className={className}
       action={
-        <Button variant="link" textSize="label" pending={failure.retrying} onClick={failure.retry}>
+        <Button variant="link" pending={failure.retrying} onClick={failure.retry}>
           Try again
         </Button>
       }

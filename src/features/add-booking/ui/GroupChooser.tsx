@@ -1,15 +1,14 @@
-import type { Ref } from 'react'
+import { type Ref, useId } from 'react'
 
 import { useAccountNames } from '@/entities/account'
 import { accountLine, type Group, GroupPicker, useCoachGroups } from '@/entities/group'
-import { messageFor } from '@/shared/config/messages'
-import { Banner } from '@/shared/ui/Banner'
-import { Button } from '@/shared/ui/Button'
+import { useReadFailure } from '@/shared/lib/hooks/useReadFailure'
 import { Field } from '@/shared/ui/Field'
 import { Skeleton } from '@/shared/ui/Skeleton'
 
 import { NO_GROUPS, noMatch, SEARCH_PLACEHOLDER } from '../model/copy'
 import { searchGroups } from '../model/groupSearch'
+import { ReadError } from './ReadError'
 
 type GroupChooserProps = {
   /** What the search box holds. */
@@ -46,7 +45,11 @@ export function GroupChooser({
   searchRef,
   readOnly,
 }: GroupChooserProps) {
+  const searchId = useId()
   const groups = useCoachGroups()
+  // The groups never loaded: the problem and "Try again" in place of the list, kept while
+  // they are read again. Once they are in, focus goes to the search box above them.
+  const failure = useReadFailure([groups], () => document.getElementById(searchId))
   const names = useAccountNames().data ?? NO_NAMES
 
   // The label sits 6 px above the search box, as every label in the dialog (§3.10), and the
@@ -59,6 +62,7 @@ export function GroupChooser({
       </p>
       <Field
         ref={searchRef}
+        id={searchId}
         type="search"
         label="Search groups"
         hideLabel
@@ -82,18 +86,8 @@ export function GroupChooser({
             layout="scroll"
           />
         </fieldset>
-      ) : groups.isError ? (
-        <Banner
-          className="mt-0.5"
-          role="alert"
-          action={
-            <Button variant="quiet" size="sm" tone="accent" onClick={() => void groups.refetch()}>
-              Try again
-            </Button>
-          }
-        >
-          {messageFor(groups.error, { audience: 'coach' })}
-        </Banner>
+      ) : failure ? (
+        <ReadError className="mt-0.5" failure={failure} />
       ) : (
         <div aria-busy="true" className="mt-0.5 flex flex-col gap-2">
           {[0, 1, 2].map((row) => (

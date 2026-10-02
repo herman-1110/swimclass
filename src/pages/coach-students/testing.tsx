@@ -5,6 +5,7 @@ import { vi } from 'vitest'
 
 import { SessionContext } from '@/entities/account'
 import { logIn, logOut } from '@/shared/api/auth'
+import { getBackend } from '@/shared/api/backend'
 import { DEMO_PASSWORD } from '@/shared/config/demo'
 import { ROUTES } from '@/shared/config/routes'
 
@@ -31,19 +32,21 @@ export function listAnnouncer(): HTMLElement {
 }
 
 /**
- * The page alone at `path`, signed in as a seeded account. With `readsFail`, the session
- * ends before the page renders, so every read fails (the database refuses anon).
+ * The page alone at `path`, signed in as a seeded account, with `state` as the entry's
+ * router state (what another page navigated with). With `readsFail`, the session ends
+ * before the page renders, so every read fails (the database refuses anon).
  */
 export async function renderAs(
   username: string,
   path: string = ROUTES.coachStudents,
-  { readsFail = false }: { readsFail?: boolean } = {},
+  { readsFail = false, state }: { readsFail?: boolean; state?: unknown } = {},
 ) {
   const session = await logIn(username, DEMO_PASSWORD)
   if (readsFail) await logOut()
+  const { pathname, search } = new URL(path, 'http://localhost')
   const router = createMemoryRouter(
     [{ path: ROUTES.coachStudents, Component: CoachStudentsPage }],
-    { initialEntries: [path] },
+    { initialEntries: [{ pathname, search, state }] },
   )
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   render(
@@ -54,6 +57,42 @@ export async function renderAs(
     </QueryClientProvider>,
   )
   return router
+}
+
+/**
+ * Reads of these sources (tables and views, or database functions) fail as on a lost
+ * connection. After `reconnect()` they go through again, but wait for `release()` (a slow
+ * connection), so "Try again" can be seen running. Undone by vi.restoreAllMocks().
+ */
+export async function loseReads(sources: readonly string[]) {
+  const backend = await getBackend()
+  const read = backend.read.bind(backend)
+  const rpc = backend.rpc.bind(backend)
+  let lost = true
+  let release = () => {}
+  let released = Promise.resolve()
+  const pass = async (source: string) => {
+    if (!sources.includes(source)) return
+    if (lost) throw new TypeError('Failed to fetch')
+    await released
+  }
+  vi.spyOn(backend, 'read').mockImplementation(async (source, query) => {
+    await pass(source)
+    return read(source, query)
+  })
+  vi.spyOn(backend, 'rpc').mockImplementation(async (fn, args) => {
+    await pass(fn)
+    return rpc(fn, args)
+  })
+  return {
+    reconnect() {
+      lost = false
+      released = new Promise((resolve) => {
+        release = resolve
+      })
+    },
+    release: () => release(),
+  }
 }
 
 /** jsdom has no CSS or matchMedia: a window this wide (SidePanel's column from 1280 px). */

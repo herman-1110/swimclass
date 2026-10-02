@@ -112,9 +112,9 @@ describe('ExcuseMissedLesson', () => {
     fireEvent.click(screen.getByRole('radio', { name: /^Fri 25 Sep/ }))
     fireEvent.click(screen.getByRole('button', { name: 'Excuse Fri 25 Sep lesson' }))
     await waitFor(() =>
-      expect(screen.getByText('Lesson excused').getAttribute('role')).toBe('status'),
+      expect(screen.getByText('Lesson excused.').getAttribute('role')).toBe('status'),
     )
-    expect(onExcused).toHaveBeenCalledWith('Lesson excused')
+    expect(onExcused).toHaveBeenCalledWith('Lesson excused.')
     await waitFor(() => expect(invalidate).toHaveBeenCalledWith({ queryKey: bookingKeys.all }))
     // Nothing is picked any more; the lesson leaves the list when it refreshes.
     expect(screen.getByRole('button', { name: 'Excuse lesson' })).toBeTruthy()

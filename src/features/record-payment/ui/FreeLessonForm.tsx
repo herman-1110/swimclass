@@ -6,7 +6,12 @@ import { Button } from '@/shared/ui/Button'
 import { Textarea } from '@/shared/ui/Textarea'
 
 import { useAddFreeLesson } from '../api/useAddFreeLesson'
-import { ADD_FREE_LESSON, FREE_LESSON_ADDED, freeLessonHelp } from '../model/copy'
+import {
+  ADD_FREE_LESSON,
+  FREE_LESSON_ADDED,
+  FREE_LESSON_ADDED_STATUS,
+  freeLessonHelp,
+} from '../model/copy'
 
 type FreeLessonFormProps = {
   id: string
@@ -95,7 +100,7 @@ export function FreeLessonForm({ id, groupId, names, onAdded, onCancel }: FreeLe
         </Button>
       </div>
       <p role="status" className="sr-only">
-        {added ? FREE_LESSON_ADDED : ''}
+        {added ? FREE_LESSON_ADDED_STATUS : ''}
       </p>
     </form>
   )

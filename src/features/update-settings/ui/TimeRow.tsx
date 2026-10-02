@@ -1,10 +1,11 @@
 import { Field } from '@/shared/ui/Field'
 import { FieldRow } from '@/shared/ui/FieldRow'
 
+import { rowDescriptionId } from '../model/description'
 import { FIELD_IDS } from '../model/fields'
 import type { TimeField } from '../model/types'
 import type { ReadySettingsForm } from './formContext'
-import { rowDescription } from './rowDescription'
+import { RowDescription } from './RowDescription'
 
 type TimeRowProps = {
   form: ReadySettingsForm
@@ -28,20 +29,23 @@ export function TimeRow({ form, field, label, help }: TimeRowProps) {
       htmlFor={id}
       error={error}
       control={
-        <Field
-          id={id}
-          size="row"
-          width="time"
-          align="end"
-          inputMode="text"
-          autoComplete="off"
-          value={form.draft[field]}
-          onChange={(event) => form.setField(field, event.target.value)}
-          onBlur={() => form.tidyTime(field)}
-          readOnly={form.saving}
-          aria-invalid={error ? true : undefined}
-          aria-describedby={rowDescription(id, { error })}
-        />
+        <>
+          <Field
+            id={id}
+            size="row"
+            width="time"
+            align="end"
+            inputMode="text"
+            autoComplete="off"
+            value={form.draft[field]}
+            onChange={(event) => form.setField(field, event.target.value)}
+            onBlur={() => form.tidyTime(field)}
+            readOnly={form.saving}
+            aria-invalid={error ? true : undefined}
+            aria-describedby={rowDescriptionId(id)}
+          />
+          <RowDescription id={id} parts={[help, error]} />
+        </>
       }
     />
   )

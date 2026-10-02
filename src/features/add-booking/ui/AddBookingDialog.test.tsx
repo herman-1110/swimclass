@@ -6,6 +6,7 @@ import { getSession, logIn, logOut } from '@/shared/api/auth'
 import { getBackend } from '@/shared/api/backend'
 import { readRows } from '@/shared/api/rpc'
 import { DEMO_PASSWORD } from '@/shared/config/demo'
+import { NETWORK_MESSAGE } from '@/shared/config/messages'
 
 import { AddBookingDialog } from './AddBookingDialog'
 
@@ -48,6 +49,62 @@ async function holdBooking() {
     return rpc(fn, args)
   })
   return () => release()
+}
+
+/**
+ * Reads of these sources (tables, or database functions) fail as on a lost connection.
+ * After `reconnect()` they go through again, but wait for `release()` (a slow connection),
+ * so "Try again" can be seen running.
+ */
+async function loseReads(sources: readonly string[]) {
+  const backend = await getBackend()
+  const read = backend.read.bind(backend)
+  const rpc = backend.rpc.bind(backend)
+  let lost = true
+  let release = () => {}
+  let released = Promise.resolve()
+  const pass = async (source: string) => {
+    if (!sources.includes(source)) return
+    if (lost) throw new TypeError('Failed to fetch')
+    await released
+  }
+  vi.spyOn(backend, 'read').mockImplementation(async (source, query) => {
+    await pass(source)
+    return read(source, query)
+  })
+  vi.spyOn(backend, 'rpc').mockImplementation(async (fn, args) => {
+    await pass(fn)
+    return rpc(fn, args)
+  })
+  return {
+    reconnect() {
+      lost = false
+      released = new Promise((resolve) => {
+        release = resolve
+      })
+    },
+    release: () => release(),
+  }
+}
+
+/** The dialog open on Tue 29 Sep, before anything is read. */
+async function openDialog() {
+  await logIn('herman', DEMO_PASSWORD)
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  render(
+    <QueryClientProvider client={queryClient}>
+      <AddBookingDialog open onClose={vi.fn()} defaultDate="2026-09-29" onBooked={vi.fn()} />
+    </QueryClientProvider>,
+  )
+  return screen.findByRole('dialog', { name: 'Add booking' })
+}
+
+/** Presses the focused "Try again" in `alert`, as Enter does. */
+function retryFrom(alert: HTMLElement) {
+  const retry = within(alert).getByRole('button', { name: 'Try again' })
+  retry.focus()
+  fireEvent.click(retry)
+  return retry
 }
 
 function radioOf(dialog: HTMLElement, value: string) {
@@ -128,6 +185,49 @@ describe('AddBookingDialog', () => {
     const button = primary(dialog)
     expect(button.textContent).toBe('Pick a group')
     expect(button.getAttribute('aria-disabled')).toBe('true')
+  })
+
+  it('keeps the group list’s Try again focused while the groups are read again, then focus goes to the search', async () => {
+    const groups = await loseReads(['group_details'])
+    const dialog = await openDialog()
+    const alert = await within(dialog).findByRole('alert', {}, CHECKED)
+    expect(alert.textContent).toContain(NETWORK_MESSAGE)
+
+    groups.reconnect()
+    const retry = retryFrom(alert)
+    await waitFor(() => expect(retry.getAttribute('aria-busy')).toBe('true'))
+    expect(document.activeElement).toBe(retry)
+
+    groups.release()
+    await within(dialog).findByRole(
+      'radio',
+      { name: 'Aiman & Sofia Mei Ling’s account · Palm Court 1-to-2' },
+      CHECKED,
+    )
+    expect(within(dialog).queryByRole('alert')).toBeNull()
+    await waitFor(() =>
+      expect(document.activeElement).toBe(
+        within(dialog).getByRole('searchbox', { name: 'Search groups' }),
+      ),
+    )
+  })
+
+  it('keeps Length’s Try again focused while the lengths are read again, then focus goes to the chosen length', async () => {
+    const settings = await loseReads(['get_public_settings'])
+    const dialog = await openDialog()
+    const alert = await within(dialog).findByRole('alert', {}, CHECKED)
+    expect(alert.textContent).toContain(NETWORK_MESSAGE)
+
+    settings.reconnect()
+    const retry = retryFrom(alert)
+    await waitFor(() => expect(retry.getAttribute('aria-busy')).toBe('true'))
+    expect(document.activeElement).toBe(retry)
+
+    settings.release()
+    const hour = await within(dialog).findByRole('radio', { name: '1 hour' }, CHECKED)
+    expect(within(dialog).queryByRole('alert')).toBeNull()
+    await waitFor(() => expect(document.activeElement).toBe(hour))
+    expect((hour as HTMLInputElement).checked).toBe(true)
   })
 
   it('lists the active groups with whose account they are, and searches them', async () => {

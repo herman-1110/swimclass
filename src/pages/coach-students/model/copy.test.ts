@@ -4,8 +4,18 @@ import { listAnnouncement, noMatchText, studentsAdded } from './copy'
 
 describe('studentsAdded', () => {
   it('counts the students of the group just added', () => {
-    expect(studentsAdded(1)).toBe('Student added')
-    expect(studentsAdded(3)).toBe('3 students added')
+    expect(studentsAdded(1)).toBe('Student added.')
+    expect(studentsAdded(3)).toBe('3 students added.')
+    expect(studentsAdded(2, null)).toBe('2 students added.')
+  })
+
+  it('says whom a new account’s invite went to', () => {
+    expect(studentsAdded(1, 'siti@example.com')).toBe(
+      'Student added · Invite sent to siti@example.com.',
+    )
+    expect(studentsAdded(3, 'farah@example.com')).toBe(
+      '3 students added · Invite sent to farah@example.com.',
+    )
   })
 })
 

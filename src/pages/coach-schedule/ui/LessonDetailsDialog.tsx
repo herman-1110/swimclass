@@ -8,8 +8,8 @@ import { useNow } from '@/shared/lib/hooks/useNow'
 import { Button } from '@/shared/ui/Button'
 import { Dialog } from '@/shared/ui/Dialog'
 
+import { staleLessonMessage } from '../model/staleLesson'
 import { LessonFacts } from './LessonFacts'
-import { staleLessonMessage } from './staleLesson'
 
 type LessonDetailsDialogProps = {
   /** The lesson chosen in the grid or the day view. Render one per lesson (key it). */

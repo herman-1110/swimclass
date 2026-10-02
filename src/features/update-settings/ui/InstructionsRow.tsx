@@ -1,9 +1,12 @@
 import { FieldRow } from '@/shared/ui/FieldRow'
 import { Textarea } from '@/shared/ui/Textarea'
 
+import { rowDescriptionId } from '../model/description'
 import { FIELD_IDS } from '../model/fields'
 import type { ReadySettingsForm } from './formContext'
-import { rowDescription } from './rowDescription'
+import { RowDescription } from './RowDescription'
+
+const HELP = 'Shown to customers under their packages'
 
 type InstructionsRowProps = {
   form: ReadySettingsForm
@@ -20,22 +23,25 @@ export function InstructionsRow({ form }: InstructionsRowProps) {
   return (
     <FieldRow
       label="Payment instructions"
-      help="Shown to customers under their packages"
+      help={HELP}
       htmlFor={id}
       layout="stack"
       controlLayout="full"
       error={error}
       control={
-        <Textarea
-          id={id}
-          look="row"
-          placeholder="e.g. Bank transfer or DuitNow to your account, or cash to your coach."
-          value={form.draft.payment_instructions}
-          onChange={(event) => form.setField('payment_instructions', event.target.value)}
-          readOnly={form.saving}
-          aria-invalid={error ? true : undefined}
-          aria-describedby={rowDescription(id, { error })}
-        />
+        <>
+          <Textarea
+            id={id}
+            look="row"
+            placeholder="e.g. Bank transfer or DuitNow to your account, or cash to your coach."
+            value={form.draft.payment_instructions}
+            onChange={(event) => form.setField('payment_instructions', event.target.value)}
+            readOnly={form.saving}
+            aria-invalid={error ? true : undefined}
+            aria-describedby={rowDescriptionId(id)}
+          />
+          <RowDescription id={id} parts={[HELP, error]} />
+        </>
       }
     />
   )

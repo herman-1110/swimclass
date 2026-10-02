@@ -2,7 +2,7 @@ import { useId, useState } from 'react'
 import { Link } from 'react-router'
 
 import { messageParts } from '@/shared/config/messages'
-import { ROUTES } from '@/shared/config/routes'
+import { coachStudentsHistory } from '@/shared/config/routes'
 import { Button } from '@/shared/ui/Button'
 
 import { useSetGroupActive } from '../api/useSetGroupActive'
@@ -64,7 +64,7 @@ export function GroupActiveButton({ group, onChanged }: GroupActiveButtonProps) 
               // Underlined: accent beside the warn words is too close a colour to mark a link.
               <Link
                 key={part.groupId}
-                to={`${ROUTES.coachStudents}?history=${part.groupId}`}
+                to={coachStudentsHistory(part.groupId)}
                 preventScrollReset
                 className="underline underline-offset-[3px]"
               >

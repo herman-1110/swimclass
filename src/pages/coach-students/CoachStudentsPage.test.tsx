@@ -1,7 +1,8 @@
-import { cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react'
+import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 
 import { getSession, logOut } from '@/shared/api/auth'
+import { getBackend } from '@/shared/api/backend'
 
 import {
   cardNames,
@@ -27,6 +28,7 @@ beforeAll(async () => {
 afterEach(() => {
   cleanup()
   vi.unstubAllGlobals()
+  vi.restoreAllMocks()
 })
 
 const ALL = [
@@ -144,6 +146,10 @@ describe('CoachStudentsPage', () => {
     ).toBeTruthy()
     const waiting = screen.getByRole('button', { name: 'Waiting for approval 0' })
     expect(waiting.getAttribute('aria-pressed')).toBe('true')
+    // It lists accounts, not packages: the packages' note isn't beside it.
+    expect(screen.queryByText('One row per package · needs action first')).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Unpaid 2' }))
+    expect(screen.getByText('One row per package · needs action first')).toBeTruthy()
   })
 
   it('searches students and account holders, and says when nothing matches', async () => {
@@ -374,7 +380,7 @@ describe('CoachStudentsPage', () => {
   it('highlights a group just added and says so, then drops it from the address', async () => {
     const router = await renderAs('herman', `/coach/students?added=${GROUP.weiJie}`)
     await findTable()
-    expect((await screen.findByText('Student added')).closest('[role=status]')).toBeTruthy()
+    expect((await screen.findByText('Student added.')).closest('[role=status]')).toBeTruthy()
     const cards = within(
       screen.getByRole('list', { name: 'Packages, needs action first' }),
     ).getAllByRole('listitem')
@@ -386,6 +392,52 @@ describe('CoachStudentsPage', () => {
       null,
     ])
     expect(router.state.location.search).toBe('')
+  })
+
+  it('says whom the invite went to when Add students created the account (its router state)', async () => {
+    const added = { groupId: GROUP.weiJie, size: 1, invitedEmail: 'siti@example.com' }
+    const router = await renderAs('herman', `/coach/students?added=${GROUP.weiJie}`, {
+      state: { added },
+    })
+    await findTable()
+    const notice = await screen.findByText('Student added · Invite sent to siti@example.com.')
+    expect(notice.closest('[role=status]')).toBeTruthy()
+    // The address and its state go once shown; the notice stays.
+    await waitFor(() => expect(router.state.location.search).toBe(''))
+    expect(router.state.location.state).toBeNull()
+    expect(screen.getByText('Student added · Invite sent to siti@example.com.')).toBeTruthy()
+  })
+
+  it('ignores router state about another group than ?added', async () => {
+    const added = { groupId: GROUP.hana, size: 1, invitedEmail: 'siti@example.com' }
+    await renderAs('herman', `/coach/students?added=${GROUP.weiJie}`, { state: { added } })
+    await findTable()
+    expect(await screen.findByText('Student added.')).toBeTruthy()
+    expect(screen.queryByText(/Invite sent/)).toBeNull()
+  })
+
+  it('keeps the list when a refresh fails (coach-students §6: keep showing the current data)', async () => {
+    await renderAs('herman')
+    const table = await findTable()
+    const backend = await getBackend()
+    const read = backend.read.bind(backend)
+    const failing = vi
+      .spyOn(backend, 'read')
+      .mockImplementation((source, query) =>
+        source === 'group_details'
+          ? Promise.reject(new TypeError('Failed to fetch'))
+          : read(source, query),
+      )
+    // Back to the tab: TanStack reads everything on screen again, and the groups fail.
+    fireEvent(window, new Event('visibilitychange'))
+    await waitFor(() =>
+      expect(failing.mock.calls.some(([source]) => source === 'group_details')).toBe(true),
+    )
+    // TanStack tells the page on a timer: let it render what it now knows.
+    await act(() => new Promise((resolve) => setTimeout(resolve, 100)))
+    expect(screen.queryByRole('alert')).toBeNull()
+    expect(tableNames(table)).toEqual(ALL.slice(0, 9))
+    expect(screen.getByRole('group', { name: 'Filter packages' })).toBeTruthy()
   })
 
   it('says when the list can’t be read, in place of the figures and list, with Try again', async () => {

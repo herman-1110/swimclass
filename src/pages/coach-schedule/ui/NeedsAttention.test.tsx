@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 
@@ -27,8 +27,10 @@ afterEach(() => {
   vi.restoreAllMocks()
 })
 
+let queryClient: QueryClient
+
 function renderSection() {
-  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   const router = createMemoryRouter([
     { path: '/', element: <NeedsAttention onApproved={() => {}} /> },
   ])
@@ -68,6 +70,27 @@ describe('NeedsAttention', () => {
     ])
     // Not dropped to the page with the button: the section the rows are in has it.
     expect(document.activeElement).toBe(section)
+  })
+
+  it('keeps its rows when a refresh fails (after a write, or the window getting focus back)', async () => {
+    const section = renderSection()
+    expect(await within(section).findAllByRole('listitem', {}, SLOW)).toHaveLength(4)
+    const backend = await getBackend()
+    const read = backend.read.bind(backend)
+    const failing = vi
+      .spyOn(backend, 'read')
+      .mockImplementation((source, query) =>
+        source === 'group_balance'
+          ? Promise.reject(new TypeError('Failed to fetch'))
+          : read(source, query),
+      )
+    // A refresh after a write, or the window getting focus back: the balances fail.
+    await queryClient.invalidateQueries()
+    // TanStack tells the section on a timer: let it render what it now knows.
+    await act(() => new Promise((resolve) => setTimeout(resolve, 50)))
+    expect(failing.mock.calls.some(([source]) => source === 'group_balance')).toBe(true)
+    expect(within(section).queryByRole('alert')).toBeNull()
+    expect(within(section).getAllByRole('listitem')).toHaveLength(4)
   })
 
   it('says so when nothing needs attention (§6.2)', async () => {

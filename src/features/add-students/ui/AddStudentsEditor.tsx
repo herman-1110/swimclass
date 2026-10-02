@@ -89,11 +89,7 @@ export function AddStudentsEditor({
           onChange={change.account}
           error={words('account')}
           notice={form.createdName === null ? null : accountCreatedNotice(form.createdName)}
-          studentsError={
-            form.studentsError === null
-              ? null
-              : { error: form.studentsError, retry: form.retryStudents }
-          }
+          studentsFailure={form.studentsFailure}
         >
           {form.isNew && (
             <NewAccountFields

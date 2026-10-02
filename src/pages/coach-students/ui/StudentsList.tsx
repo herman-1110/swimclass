@@ -1,6 +1,7 @@
 import { useRef } from 'react'
 
 import type { PendingAccount } from '@/entities/account'
+import type { ReadFailure } from '@/shared/lib/hooks/useReadFailure'
 import type { Instant } from '@/shared/lib/time'
 import { Banner } from '@/shared/ui/Banner'
 import { Tabs } from '@/shared/ui/Tabs'
@@ -18,7 +19,7 @@ type StudentsListProps = {
   /** The search matches no package at all (not just none under this tab). */
   noMatch: boolean
   /** The waiting accounts that match the search (null while loading), or the read's failure. */
-  waiting: { accounts: readonly PendingAccount[] | null; error: unknown; retry: () => void }
+  waiting: { accounts: readonly PendingAccount[] | null; failure: ReadFailure | null }
   filter: StudentsFilter
   onFilter: (filter: StudentsFilter) => void
   query: string
@@ -69,14 +70,14 @@ export function StudentsList(props: StudentsListProps) {
           ]}
           value={filter}
           onChange={(value) => props.onFilter(readFilter(value))}
-          note="One row per package · needs action first"
+          // The Waiting tab lists accounts, oldest sign-up first: the note is the packages'.
+          note={filter === 'waiting' ? undefined : 'One row per package · needs action first'}
         />
       </div>
       {filter === 'waiting' ? (
         <WaitingList
           accounts={waiting.accounts}
-          error={waiting.error}
-          onRetry={waiting.retry}
+          failure={waiting.failure}
           query={query}
           onClearSearch={props.onClearSearch}
           now={now}

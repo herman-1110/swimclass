@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 
 import { getSession, logIn, logOut } from '@/shared/api/auth'
@@ -25,8 +25,10 @@ afterEach(() => {
   vi.restoreAllMocks()
 })
 
+let queryClient: QueryClient
+
 function renderPanel(today: string) {
-  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   render(
     <QueryClientProvider client={queryClient}>
       <TodayPanel today={today} />
@@ -72,5 +74,19 @@ describe('TodayPanel', () => {
     // Not dropped to the page with the button: the section the lessons are in has it.
     expect(document.activeElement).toBe(today)
     await waitFor(() => expect(within(today).queryByRole('alert')).toBeNull())
+  })
+
+  it('keeps the lessons when a refresh fails, as the week grid does', async () => {
+    renderPanel('2026-09-26')
+    const today = screen.getByRole('region', { name: 'Today, Sat 26 Sep' })
+    expect(await within(today).findAllByRole('listitem', {}, SLOW)).toHaveLength(3)
+    await loseConnection()
+    // A refresh after a write, or the window getting focus back: it fails.
+    await queryClient.invalidateQueries()
+    // TanStack tells the panel on a timer: let it render what it now knows.
+    await act(() => new Promise((resolve) => setTimeout(resolve, 50)))
+    expect(queryClient.getQueryCache().getAll()[0]?.state.status).toBe('error')
+    expect(within(today).queryByRole('alert')).toBeNull()
+    expect(within(today).getAllByRole('listitem')).toHaveLength(3)
   })
 })

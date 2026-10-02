@@ -21,6 +21,8 @@ export function PackagesSection({ form }: PackagesSectionProps) {
       note="Students booked together share one package. A lesson counts when its end time passes."
     >
       <FieldList>
+        {/* Their labels already say the unit: the drawn "lessons" and "packages" aren't
+            said again in the boxes' names. */}
         <CountRow
           form={form}
           field="lessons_per_package"
