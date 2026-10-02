@@ -1,6 +1,8 @@
 import { lazy, Suspense } from 'react'
 import { Outlet, ScrollRestoration } from 'react-router'
 
+import { useRouteFocus } from '@/app/router/useRouteFocus'
+
 // Demo mode's tools (app/demo): never part of the real site. The check is on the build-time
 // constant, not env.demo, so a production build leaves them out entirely, like the demo
 // database (shared/api/backend.ts).
@@ -10,6 +12,8 @@ const DemoTools =
     : null
 
 export function RootLayout() {
+  // A new page's h1 takes focus when the link that opened it leaves (or is in the nav).
+  useRouteFocus()
   return (
     <>
       <Outlet />

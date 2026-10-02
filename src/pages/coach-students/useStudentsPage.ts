@@ -43,7 +43,10 @@ export function useStudentsPage(refs: PageRefs) {
   const settled = useDebouncedValue(announced, 500)
   // From 1280 px, the group whose "Record payment" was pressed: the panel's title takes focus
   // once the address shows that group (a later render than the press).
-  const focusPanelFor = useRef<string | null>(null)
+  // Arriving with ?pay (the coach Schedule's "Record payment for …") counts as a press.
+  const focusPanelFor = useRef<string | null>(
+    wide && url.pay !== null && url.history === null ? url.pay : null,
+  )
   const [panelFocus, setPanelFocus] = useState(0)
 
   const { rows } = data
@@ -76,10 +79,11 @@ export function useStudentsPage(refs: PageRefs) {
   // on closing gives it back to the button that opened it).
   useEffect(() => {
     const groupId = focusPanelFor.current
-    if (groupId === null || url.pay !== groupId || url.history !== null) return
+    const title = refs.panelTitle.current
+    if (groupId === null || url.pay !== groupId || url.history !== null || !title) return
     focusPanelFor.current = null
-    refs.panelTitle.current?.focus()
-  }, [panelFocus, url.pay, url.history, refs.panelTitle])
+    title.focus()
+  }, [panelFocus, url.pay, url.history, refs.panelTitle, loaded])
   // The payment panel (a modal below 1280 px) or History has closed: focus goes back to the
   // row's button, which `kept` keeps on screen.
   const modalOpen = url.history !== null || (!wide && url.pay !== null)
