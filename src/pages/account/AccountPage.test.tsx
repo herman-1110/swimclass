@@ -6,7 +6,7 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 import { accountKeys, SessionContext } from '@/entities/account'
 import { isLogOutRequest } from '@/features/log-out'
 import { type AuthSession, getSession, logIn, logOut } from '@/shared/api/auth'
-import { demoDb } from '@/shared/api/demo/db'
+import { holdDemoDatabase } from '@/shared/api/demo/testing'
 import { AppError, readRows, updateRows } from '@/shared/api/rpc'
 import { DEMO_PASSWORD } from '@/shared/config/demo'
 import { ROUTES } from '@/shared/config/routes'
@@ -79,31 +79,6 @@ async function savedDetails(accountId: string) {
     columns: ['display_name', 'phone'],
   })
   return profile
-}
-
-/**
- * Holds the demo database in an open transaction, so the next call waits (as it would on a
- * slow connection) until the returned function is called.
- */
-async function holdDatabase(): Promise<() => Promise<void>> {
-  const db = await demoDb()
-  let release = () => {}
-  const released = new Promise<void>((resolve) => {
-    release = resolve
-  })
-  let started = () => {}
-  const holding = new Promise<void>((resolve) => {
-    started = resolve
-  })
-  const held = db.transaction(async () => {
-    started()
-    await released
-  })
-  await holding
-  return async () => {
-    release()
-    await held
-  }
 }
 
 describe('AccountPage', () => {
@@ -185,7 +160,7 @@ describe('AccountPage', () => {
     await renderAs('grace')
     await screen.findByRole('region', { name: 'Your details' })
     type('Name', 'Grace Lim')
-    const release = await holdDatabase()
+    const release = await holdDemoDatabase()
     try {
       fireEvent.click(saveDetails())
       await waitFor(() => expect(saveDetails().textContent).toBe('Saving…'))
@@ -265,7 +240,7 @@ describe('AccountPage', () => {
     const savePassword = () => screen.getByRole('button', { name: /^(Save new password|Saving…)$/ })
     type('New password', 'swim-new-2026')
     type('Confirm new password', 'swim-new-2026')
-    const release = await holdDatabase()
+    const release = await holdDemoDatabase()
     try {
       fireEvent.click(savePassword())
       await waitFor(() => expect(savePassword().textContent).toBe('Saving…'))
@@ -319,7 +294,7 @@ describe('AccountPage', () => {
 
   it('keeps its place while the profile loads', async () => {
     const session = await logIn('meiling', DEMO_PASSWORD)
-    const release = await holdDatabase()
+    const release = await holdDemoDatabase()
     try {
       renderAccount(session)
       expect(screen.getByRole('heading', { level: 1, name: 'Account' })).toBeTruthy()

@@ -9,6 +9,7 @@ import type { Group } from '@/entities/group'
 import { type Slot, startTimeKey } from '@/entities/slot'
 import { getSession, logIn, logOut } from '@/shared/api/auth'
 import { demoDb } from '@/shared/api/demo/db'
+import { holdDemoDatabase, holdDemoDatabaseNow } from '@/shared/api/demo/testing'
 import { DEMO_PASSWORD } from '@/shared/config/demo'
 
 import { BookingSummary } from './BookingSummary'
@@ -72,48 +73,6 @@ afterEach(() => {
   cleanup()
   vi.restoreAllMocks()
 })
-
-type DemoDb = Awaited<ReturnType<typeof demoDb>>
-
-/**
- * Holds the demo database in an open transaction, from this very moment, so the calls made
- * after it wait (as on a slow connection) until `release` is called.
- */
-function holdNow(db: DemoDb): () => Promise<void> {
-  let open = () => {}
-  const released = new Promise<void>((resolve) => {
-    open = resolve
-  })
-  const held = db.transaction(async () => {
-    await released
-  })
-  return async () => {
-    open()
-    await held
-  }
-}
-
-/** holdNow, once the transaction has started (the calls already queued go first). */
-async function holdDatabase(): Promise<() => Promise<void>> {
-  const db = await demoDb()
-  let started = () => {}
-  const holding = new Promise<void>((resolve) => {
-    started = resolve
-  })
-  let release = () => {}
-  const released = new Promise<void>((resolve) => {
-    release = resolve
-  })
-  const held = db.transaction(async () => {
-    started()
-    await released
-  })
-  await holding
-  return async () => {
-    release()
-    await held
-  }
-}
 
 type HarnessProps = {
   first: Slot | null
@@ -266,11 +225,11 @@ describe('BookingSummary', () => {
     let releaseRefresh = async () => {}
     const summary = await renderLive(TUE_730, {
       onBooked: () => {
-        releaseRefresh = holdNow(db)
+        releaseRefresh = holdDemoDatabaseNow(db)
       },
       onBookAnother,
     })
-    const releaseBooking = await holdDatabase()
+    const releaseBooking = await holdDemoDatabase()
     fireEvent.click(summary.getByRole('button', { name: 'Book 7:30 pm for Aiman & Sofia' }))
     const busy = await summary.findByRole('button', { name: 'Booking…' })
     expect(busy.getAttribute('aria-busy')).toBe('true')

@@ -4,7 +4,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 
 import { accountKeys } from '@/entities/account'
 import { getSession, logIn, logOut, signUp } from '@/shared/api/auth'
-import { demoDb } from '@/shared/api/demo/db'
+import { holdDemoDatabase } from '@/shared/api/demo/testing'
 import { readRows } from '@/shared/api/rpc'
 import { DEMO_PASSWORD } from '@/shared/config/demo'
 
@@ -31,31 +31,6 @@ beforeAll(async () => {
 }, 60_000)
 
 afterEach(cleanup)
-
-/**
- * Holds the demo database in an open transaction, so the next call waits (as it would on a
- * slow connection) until the returned function is called.
- */
-async function holdDatabase(): Promise<() => Promise<void>> {
-  const db = await demoDb()
-  let release = () => {}
-  const released = new Promise<void>((resolve) => {
-    release = resolve
-  })
-  let started = () => {}
-  const holding = new Promise<void>((resolve) => {
-    started = resolve
-  })
-  const held = db.transaction(async () => {
-    started()
-    await released
-  })
-  await holding
-  return async () => {
-    release()
-    await held
-  }
-}
 
 function renderButton(look?: 'link' | 'compact') {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
@@ -121,7 +96,7 @@ describe('ApproveAccountButton', () => {
       approve.focus()
       // The demo database answers at once; hold it, as a slow connection would. Released
       // even if a check fails, so the next test isn't left waiting for it.
-      const release = await holdDatabase()
+      const release = await holdDemoDatabase()
       try {
         fireEvent.click(approve)
         await waitFor(() => expect(approve.getAttribute('aria-busy')).toBe('true'))

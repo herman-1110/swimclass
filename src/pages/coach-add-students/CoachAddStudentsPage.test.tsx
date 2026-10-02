@@ -7,6 +7,7 @@ import { accountKeys, SessionContext } from '@/entities/account'
 import { settingsKeys } from '@/entities/settings'
 import { type AuthSession, getSession, logIn, logOut } from '@/shared/api/auth'
 import { demoDb } from '@/shared/api/demo/db'
+import { holdDemoDatabase } from '@/shared/api/demo/testing'
 import { readRows, rpc } from '@/shared/api/rpc'
 import { DEMO_PASSWORD } from '@/shared/config/demo'
 import { ROUTES } from '@/shared/config/routes'
@@ -41,31 +42,6 @@ function StudentsStub() {
 // Another page the coach can go to while a save runs.
 function SettingsStub() {
   return <p>Settings page</p>
-}
-
-/**
- * Holds the demo database in an open transaction, so every call waits (as on a slow
- * connection) until the returned function is called.
- */
-async function holdDatabase(): Promise<() => Promise<void>> {
-  const db = await demoDb()
-  let release = () => {}
-  const released = new Promise<void>((resolve) => {
-    release = resolve
-  })
-  let started = () => {}
-  const holding = new Promise<void>((resolve) => {
-    started = resolve
-  })
-  const held = db.transaction(async () => {
-    started()
-    await released
-  })
-  await holding
-  return async () => {
-    release()
-    await held
-  }
 }
 
 /** The page alone at `path` for a signed-in account (pages may not import app/). */
@@ -504,7 +480,7 @@ describe('CoachAddStudentsPage', () => {
       accountKeys.customers(),
       await readRows('profiles', { eq: { role: 'customer' } }),
     )
-    const release = await holdDatabase()
+    const release = await holdDemoDatabase()
     try {
       mount(session, `${ROUTES.coachAddStudents}?account=${ZULAIKHA}`, queryClient)
       await formReady()
@@ -533,7 +509,7 @@ describe('CoachAddStudentsPage', () => {
     type('Student 1', 'Twice')
     type('Pool location', 'Palm Court')
     const button = screen.getByRole('button', { name: 'Add student' })
-    const release = await holdDatabase()
+    const release = await holdDemoDatabase()
     try {
       // Two presses before React draws again, then one more while it saves.
       act(() => {
@@ -640,7 +616,7 @@ describe('CoachAddStudentsPage', () => {
     await addReady('Add student')
     type('Student 1', 'Dan Two')
     type('Pool location', 'Kiara Park')
-    const release = await holdDatabase()
+    const release = await holdDemoDatabase()
     try {
       add('Add student')
       await act(() => router.navigate(ROUTES.coachSettings))
