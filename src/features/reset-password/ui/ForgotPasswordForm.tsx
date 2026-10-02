@@ -3,6 +3,7 @@ import { flushSync } from 'react-dom'
 
 import { toAppError } from '@/shared/api/rpc'
 import { messageFor } from '@/shared/config/messages'
+import { focusProblem } from '@/shared/lib/focusProblem'
 import { Button } from '@/shared/ui/Button'
 import { Field } from '@/shared/ui/Field'
 
@@ -34,7 +35,8 @@ export function ForgotPasswordForm({ labelledBy, onSent }: ForgotPasswordFormPro
       if (onField) setProblem('email_address_invalid')
       else setRefusal(messageFor(error))
     })
-    if (onField) input.current?.focus()
+    // Said out loud also when Enter was pressed in the field.
+    if (onField) focusProblem(input.current, messageFor(error))
   }
 
   function submit(event: FormEvent<HTMLFormElement>) {
@@ -46,7 +48,7 @@ export function ForgotPasswordForm({ labelledBy, onSent }: ForgotPasswordFormPro
       setRefusal(null)
     })
     if (found) {
-      input.current?.focus()
+      focusProblem(input.current, messageFor({ code: found }))
       return
     }
     const address = email.trim()

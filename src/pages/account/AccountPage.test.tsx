@@ -180,7 +180,27 @@ describe('AccountPage', () => {
     fireEvent.click(saveDetails())
     expect(screen.getByText('Enter your name.')).toBeTruthy()
     expect(document.activeElement).toBe(input('Name'))
+    // Focus moved to the name, which is read with its message: nothing is said twice.
+    expect(screen.queryByRole('alert')).toBeNull()
     expect(await savedDetails(session.userId)).toMatchObject({ display_name: 'Farah' })
+  })
+
+  it('says the message when Enter is pressed in the very field that is wrong', async () => {
+    await renderAs('kai')
+    await screen.findByRole('region', { name: 'Your details' })
+    // Enter in the blanked name: focus is already there, so the message is said as an alert.
+    type('Name', '')
+    input('Name').focus()
+    fireEvent.submit(input('Name').form as HTMLFormElement)
+    expect(document.activeElement).toBe(input('Name'))
+    expect(screen.getByRole('alert').textContent).toBe('Enter your name.')
+
+    // The same for a short new password, in the other form.
+    type('New password', 'short')
+    input('New password').focus()
+    fireEvent.submit(input('New password').form as HTMLFormElement)
+    expect(document.activeElement).toBe(input('New password'))
+    expect(screen.getByRole('alert').textContent).toBe('Use at least 8 characters.')
   })
 
   it('says "Saving…" while the details save', async () => {

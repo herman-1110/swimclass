@@ -4,6 +4,7 @@ import { flushSync } from 'react-dom'
 import { useUsernameAvailable } from '@/entities/account'
 import { toAppError } from '@/shared/api/rpc'
 import { messageFor, MIN_PASSWORD_LENGTH } from '@/shared/config/messages'
+import { focusProblem } from '@/shared/lib/focusProblem'
 import { Button } from '@/shared/ui/Button'
 import { Field } from '@/shared/ui/Field'
 
@@ -51,7 +52,7 @@ export function SignUpForm({ labelledBy, onSignedUp }: SignUpFormProps) {
   const signUp = useSignUp()
 
   // Event handlers only: refs are never read while rendering.
-  function focus(field: SignUpField) {
+  function inputOf(field: SignUpField) {
     const input = {
       username: usernameInput,
       name: nameInput,
@@ -60,7 +61,7 @@ export function SignUpForm({ labelledBy, onSignedUp }: SignUpFormProps) {
       password: passwordInput,
       confirm: confirmInput,
     }[field]
-    input.current?.focus()
+    return input.current
   }
 
   function change(field: SignUpField, value: string) {
@@ -76,7 +77,10 @@ export function SignUpForm({ labelledBy, onSignedUp }: SignUpFormProps) {
       if (field) setProblems({ [field]: code })
       else setRefusal(messageFor(error))
     })
-    if (field) focus(field)
+    // A taken username is said by the username's own live line (the answer lands in its
+    // check); the other fields' messages are said even when Enter was pressed in that field.
+    if (field === 'username') inputOf(field)?.focus()
+    else if (field) focusProblem(inputOf(field), messageFor({ code }))
   }
 
   function submit(event: FormEvent<HTMLFormElement>) {
@@ -90,7 +94,8 @@ export function SignUpForm({ labelledBy, onSignedUp }: SignUpFormProps) {
     })
     const first = SIGN_UP_FIELDS.find((field) => found[field])
     if (first) {
-      focus(first)
+      // Said out loud also when Enter was pressed in that very field.
+      focusProblem(inputOf(first), messageFor({ code: found[first] }))
       return
     }
     const input = signUpInput(values)

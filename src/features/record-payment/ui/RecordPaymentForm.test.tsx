@@ -112,6 +112,17 @@ describe('RecordPaymentForm', () => {
     expect(document.activeElement).toBe(amount())
   })
 
+  it('says the message when Enter is pressed in the amount itself, where focus already is', () => {
+    renderForm()
+    fireEvent.change(amount(), { target: { value: '240.505' } })
+    amount().focus()
+    fireEvent.submit(amount().form as HTMLFormElement)
+    expect(document.activeElement).toBe(amount())
+    expect(screen.getByRole('alert').textContent).toBe(
+      'Enter the amount in RM, like 240 or 240.50.',
+    )
+  })
+
   it('shows the database’s refusals under their field, with focus there', async () => {
     await logIn('herman', DEMO_PASSWORD)
     renderForm()

@@ -191,6 +191,19 @@ describe('SignUpPage', () => {
     expect(vi.mocked(signUp)).not.toHaveBeenCalled()
   })
 
+  it('says the message when Enter is pressed in the very field that is wrong', () => {
+    renderSignUp()
+    fillIn({ ...newbie, Username: 'newbie.three', Name: '' })
+    // Enter in the empty name sends the form with focus already there: focus can't move,
+    // so the message is said as an alert.
+    input('Name').focus()
+    fireEvent.submit(screen.getByRole('form', { name: 'Create an account' }))
+    expect(document.activeElement).toBe(input('Name'))
+    expect(screen.getByRole('alert').textContent).toBe('Enter your name.')
+    expect(input('Name').getAttribute('aria-invalid')).toBe('true')
+    expect(vi.mocked(signUp)).not.toHaveBeenCalled()
+  })
+
   it('makes the account and says to confirm the email (scenario 6)', async () => {
     renderSignUp()
     fillIn(newbie)
