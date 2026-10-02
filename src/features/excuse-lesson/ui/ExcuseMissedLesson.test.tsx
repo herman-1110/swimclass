@@ -41,20 +41,34 @@ beforeAll(async () => {
 
 afterEach(cleanup)
 
+function query(state: Partial<ExcusableLessonsQuery>): ExcusableLessonsQuery {
+  return {
+    data: undefined,
+    isPending: false,
+    isError: false,
+    isFetching: false,
+    error: null,
+    errorUpdatedAt: 0,
+    refetch: vi.fn(() => Promise.resolve()),
+    ...state,
+  }
+}
+
 function loaded(data: ExcusableLesson[]): ExcusableLessonsQuery {
-  return { data, isPending: false, isError: false, error: null, refetch: vi.fn() }
+  return query({ data })
 }
 
 function renderBlock(lessons: ExcusableLessonsQuery) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   const invalidate = vi.spyOn(queryClient, 'invalidateQueries')
   const onExcused = vi.fn()
-  render(
+  const view = (next: ExcusableLessonsQuery) => (
     <QueryClientProvider client={queryClient}>
-      <ExcuseMissedLesson lessons={lessons} packageSize={4} onExcused={onExcused} />
-    </QueryClientProvider>,
+      <ExcuseMissedLesson lessons={next} packageSize={4} onExcused={onExcused} />
+    </QueryClientProvider>
   )
-  return { invalidate, onExcused }
+  const { rerender } = render(view(lessons))
+  return { invalidate, onExcused, update: (next: ExcusableLessonsQuery) => rerender(view(next)) }
 }
 
 function openBlock() {
@@ -125,21 +139,51 @@ describe('ExcuseMissedLesson', () => {
   })
 
   it('shows a skeleton while the lessons load', () => {
-    renderBlock({ isPending: true, isError: false, error: null, refetch: vi.fn() })
+    renderBlock(query({ isPending: true }))
     openBlock()
     expect(screen.getByText('Loading lessons…').getAttribute('role')).toBe('status')
     expect(screen.queryByRole('radio')).toBeNull()
   })
 
   it('says why the lessons didn’t load, and tries again', () => {
-    const refetch = vi.fn()
-    renderBlock({ isPending: false, isError: true, error: new AppError('network'), refetch })
+    const refetch = vi.fn(() => Promise.resolve())
+    renderBlock(query({ isError: true, error: new AppError('network'), refetch }))
     openBlock()
     expect(screen.getByRole('alert').textContent).toContain(
       'Couldn’t reach the server. Check your connection and try again.',
     )
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }))
     expect(refetch).toHaveBeenCalledOnce()
+  })
+
+  it('keeps “Try again” focused and busy while it reads, then focuses the help line', () => {
+    const failed = { error: new AppError('network'), errorUpdatedAt: 1000 }
+    const { update } = renderBlock(query({ isError: true, ...failed }))
+    openBlock()
+    const retry = screen.getByRole('button', { name: 'Try again' })
+    retry.focus()
+    fireEvent.click(retry)
+    // TanStack puts a query with no data back to pending while it reads again.
+    update(query({ isPending: true, isFetching: true, errorUpdatedAt: 1000 }))
+    expect(screen.getByRole('button', { name: 'Try again' })).toBe(retry)
+    expect(document.activeElement).toBe(retry)
+    expect(retry.getAttribute('aria-busy')).toBe('true')
+    update(query({ data: WEI_JIE_STARTED, errorUpdatedAt: 1000 }))
+    expect(document.activeElement?.textContent).toBe(
+      'Excused lessons don’t count. Only lessons that have started can be excused.',
+    )
+  })
+
+  it('moves focus to the line above when the list empties under the focused button', () => {
+    const { update } = renderBlock(loaded(WEI_JIE_STARTED.slice(0, 1)))
+    openBlock()
+    fireEvent.click(screen.getByRole('radio', { name: /^Fri 18 Sep/ }))
+    screen.getByRole('button', { name: 'Excuse Fri 18 Sep lesson' }).focus()
+    // The lesson was excused in another tab: the refreshed list is empty.
+    update(loaded([]))
+    expect(document.activeElement?.textContent).toBe(
+      'No lessons to excuse. Only lessons that have started can be excused.',
+    )
   })
 
   it('says when there is nothing to excuse', () => {

@@ -7,6 +7,7 @@ import type { Group } from '@/entities/group'
 import type { PublicSettings } from '@/entities/settings'
 import { ROUTES } from '@/shared/config/routes'
 import { cn } from '@/shared/lib/cn'
+import { useFocusFallback } from '@/shared/lib/hooks/useFocusFallback'
 import { useReadFailure } from '@/shared/lib/hooks/useReadFailure'
 import { Banner } from '@/shared/ui/Banner'
 import { ButtonLink } from '@/shared/ui/ButtonLink'
@@ -59,6 +60,9 @@ export function UpcomingSection({
   const failure = useReadFailure([settings, groups, upcoming], () =>
     document.getElementById(HEADING_ID),
   )
+  // A lesson cancelled elsewhere leaves the list when it refreshes, its focused Cancel with
+  // it: focus goes to the heading (my-classes §7).
+  const fallback = useFocusFallback(() => document.getElementById(HEADING_ID))
   // The balances only name a later package: the rows wait for their first answer, but not
   // for a failure, nor for reading them again after one (Packages shows that).
   const ready =
@@ -125,6 +129,7 @@ export function UpcomingSection({
     <section
       aria-labelledby={HEADING_ID}
       aria-busy={loading || undefined}
+      {...fallback}
       className={cn('flex flex-col', className)}
     >
       <SectionLabel as="h2" id={HEADING_ID} tabIndex={-1} className="mb-1">

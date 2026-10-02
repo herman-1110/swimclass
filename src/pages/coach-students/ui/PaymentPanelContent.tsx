@@ -36,7 +36,9 @@ export function PaymentPanelContent({
     data: excusable.data?.map(toExcuseOption),
     isPending: excusable.isPending,
     isError: excusable.isError,
+    isFetching: excusable.isFetching,
     error: excusable.error,
+    errorUpdatedAt: excusable.errorUpdatedAt,
     refetch: excusable.refetch,
   }
 

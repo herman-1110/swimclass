@@ -18,7 +18,16 @@ const ROW: EmailLogRow = {
 }
 
 function query(state: Partial<EmailLogQueryState>): EmailLogQueryState {
-  return { isPending: false, isError: false, error: null, refetch: vi.fn(), ...state }
+  return {
+    data: undefined,
+    isPending: false,
+    isError: false,
+    isFetching: false,
+    error: null,
+    errorUpdatedAt: 0,
+    refetch: vi.fn(() => Promise.resolve()),
+    ...state,
+  }
 }
 
 describe('EmailLogView', () => {
@@ -38,7 +47,7 @@ describe('EmailLogView', () => {
   })
 
   it('says what went wrong and tries again', () => {
-    const refetch = vi.fn()
+    const refetch = vi.fn(() => Promise.resolve())
     render(
       <EmailLogView
         limit={50}
@@ -50,6 +59,26 @@ describe('EmailLogView', () => {
     )
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }))
     expect(refetch).toHaveBeenCalledOnce()
+  })
+
+  it('keeps “Try again” focused and busy while it reads, then focuses the title', () => {
+    const failed = { error: new AppError('network'), errorUpdatedAt: 1000 }
+    const { rerender } = render(
+      <EmailLogView limit={50} query={query({ isError: true, ...failed })} />,
+    )
+    const retry = screen.getByRole('button', { name: 'Try again' })
+    retry.focus()
+    fireEvent.click(retry)
+    rerender(
+      <EmailLogView
+        limit={50}
+        query={query({ isPending: true, isFetching: true, errorUpdatedAt: 1000 })}
+      />,
+    )
+    expect(document.activeElement).toBe(retry)
+    expect(retry.getAttribute('aria-busy')).toBe('true')
+    rerender(<EmailLogView limit={50} query={query({ data: [ROW], errorUpdatedAt: 1000 })} />)
+    expect(document.activeElement).toBe(screen.getByRole('heading', { name: 'Email log' }))
   })
 
   it('counts a smaller log naturally', () => {
