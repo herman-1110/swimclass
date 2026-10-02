@@ -1,4 +1,4 @@
-import { type ReactNode, type RefObject, useId, useRef } from 'react'
+import { type ReactNode, type RefObject, useId, useLayoutEffect, useRef } from 'react'
 
 import { cn } from '@/shared/lib/cn'
 import { useModalDialog } from '@/shared/lib/hooks/useModalDialog'
@@ -8,6 +8,42 @@ const widths = {
   sm: 'md:max-w-[420px]', // confirmations and short forms
   md: 'md:max-w-[440px]', // ui-kit §3.25
   lg: 'md:max-w-[520px]', // long forms (Add booking)
+}
+
+// Kept between the sticky button row and a control scrolled up to it: the 2 px focus ring,
+// its 2 px offset and 4 px of air (DESIGN §5).
+const RING_ROOM_PX = 8
+
+/**
+ * While a dialog with a sticky button row is open, its scroll padding follows the row's height,
+ * so a control reached with Tab scrolls clear of the row, focus ring and all (WCAG 2.2 2.4.11;
+ * coach-schedule §2.7); and data-overflowing marks a dialog whose content scrolls, which draws
+ * the row's top rule (coach-schedule §3.10). jsdom has no ResizeObserver.
+ */
+function useStickyActions(
+  dialogRef: RefObject<HTMLDialogElement | null>,
+  rowRef: RefObject<HTMLDivElement | null>,
+  active: boolean,
+) {
+  useLayoutEffect(() => {
+    const dialog = dialogRef.current
+    const row = rowRef.current
+    if (!active || !dialog || !row || typeof ResizeObserver !== 'function') return
+    const update = () => {
+      dialog.style.setProperty('scroll-padding-bottom', `${row.offsetHeight + RING_ROOM_PX}px`)
+      dialog.toggleAttribute('data-overflowing', dialog.scrollHeight > dialog.clientHeight)
+    }
+    const resized = new ResizeObserver(update)
+    resized.observe(dialog)
+    resized.observe(row)
+    // Content that grows or shrinks inside (an error, a list that arrives) changes what scrolls.
+    const changed = new MutationObserver(update)
+    changed.observe(dialog, { childList: true, subtree: true, characterData: true })
+    return () => {
+      resized.disconnect()
+      changed.disconnect()
+    }
+  }, [dialogRef, rowRef, active])
 }
 
 type DialogProps = {
@@ -61,6 +97,7 @@ export function Dialog({
 }: DialogProps) {
   const ref = useRef<HTMLDialogElement>(null)
   const titleRef = useRef<HTMLHeadingElement>(null)
+  const actionsRef = useRef<HTMLDivElement>(null)
   const id = useId()
   const handlers = useModalDialog(ref, {
     open,
@@ -68,6 +105,7 @@ export function Dialog({
     dismissible,
     initialFocus: initialFocus ?? titleRef,
   })
+  useStickyActions(ref, actionsRef, open && Boolean(actions))
   if (!open) return null
 
   const describedBy =
@@ -84,7 +122,7 @@ export function Dialog({
       aria-describedby={describedBy}
       aria-busy={busy || undefined}
       className={cn(
-        'fixed inset-0 m-0 h-dvh max-h-none w-full max-w-none flex-col gap-4.5 overflow-y-auto overscroll-contain bg-white px-5 pt-6 text-ink backdrop:bg-ink/40 open:flex',
+        'group/dialog fixed inset-0 m-0 h-dvh max-h-none w-full max-w-none flex-col gap-4.5 overflow-y-auto overscroll-contain bg-white px-5 pt-6 text-ink backdrop:bg-ink/40 open:flex',
         'md:m-auto md:h-fit md:max-h-[calc(100dvh_-_80px)] md:rounded-frame md:px-6 md:pt-6',
         widths[size],
         !actions && 'pb-[max(32px,env(safe-area-inset-bottom))] md:pb-6',
@@ -93,18 +131,20 @@ export function Dialog({
       )}
       {...handlers}
     >
-      <div className="flex items-start justify-between gap-3">
+      {/* Close sits on the title's line; with a subtitle, at the top of the two lines, as
+          the drawn Record payment panel has it. Names and words of any length wrap. */}
+      <div className={cn('flex justify-between gap-3', subtitle ? 'items-start' : 'items-center')}>
         <div className="flex min-w-0 flex-col gap-0.5">
           <h2
             ref={titleRef}
             id={`${id}-title`}
             tabIndex={-1}
-            className="m-0 text-[1.125rem] font-semibold"
+            className="m-0 text-[1.125rem] font-semibold wrap-anywhere"
           >
             {title}
           </h2>
           {subtitle && (
-            <p id={`${id}-subtitle`} className="m-0 text-label text-muted">
+            <p id={`${id}-subtitle`} className="m-0 text-label text-muted wrap-anywhere">
               {subtitle}
             </p>
           )}
@@ -116,7 +156,7 @@ export function Dialog({
             onClick={() => {
               if (dismissible) onClose()
             }}
-            className="inline-flex min-h-11 shrink-0 items-center px-1 text-sm font-semibold text-accent hover:text-accent-hover aria-disabled:cursor-default aria-disabled:text-muted"
+            className="inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center px-1 text-sm font-semibold text-accent hover:text-accent-hover aria-disabled:cursor-default aria-disabled:text-muted"
           >
             Close
           </button>
@@ -130,8 +170,12 @@ export function Dialog({
       {children}
       {actions && (
         // Sticky at the bottom, white, so a long form's buttons stay reachable; the negative
-        // top margin keeps the drawn 18 px gap when it isn't stuck.
-        <div className="sticky bottom-0 -mx-5 -mt-3 flex items-center gap-2 bg-white px-5 pt-3 pb-[max(32px,env(safe-area-inset-bottom))] md:-mx-6 md:px-6 md:pb-6">
+        // top margin keeps the drawn 18 px gap when it isn't stuck. While the content scrolls,
+        // a --line rule on top shows where it goes under the buttons (coach-schedule §3.10).
+        <div
+          ref={actionsRef}
+          className="sticky bottom-0 -mx-5 -mt-3 flex items-center gap-2 border-t border-transparent bg-white px-5 pt-3 pb-[max(32px,env(safe-area-inset-bottom))] group-data-overflowing/dialog:border-line md:-mx-6 md:px-6 md:pb-6"
+        >
           {actions}
         </div>
       )}

@@ -1,10 +1,14 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { useRef, useState } from 'react'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { Dialog } from './Dialog'
 
-afterEach(cleanup)
+afterEach(() => {
+  cleanup()
+  vi.restoreAllMocks()
+  vi.unstubAllGlobals()
+})
 
 const TITLE = 'Cancel Sat 3 Oct, 9:00–10:00 am for Aiman & Sofia?'
 
@@ -186,6 +190,47 @@ describe('Dialog', () => {
     fireEvent(dialog, new Event('close'))
     expect(document.querySelector('dialog')).toBeNull()
     expect(document.activeElement).toBe(opener)
+  })
+
+  it('puts Close on the title’s line, and makes it a 44 px target', () => {
+    render(<Page />)
+    openFrom('Cancel')
+    const close = screen.getByRole('button', { name: 'Close' })
+    expect(close.className).toContain('min-w-11')
+    expect(close.className).toContain('min-h-11')
+    // No subtitle: the title and Close share one centre line.
+    expect(close.parentElement?.className).toContain('items-center')
+    // Names of any length wrap rather than run out of the dialog (DESIGN §5).
+    expect(screen.getByRole('heading', { level: 2 }).className).toContain('wrap-anywhere')
+  })
+
+  it('keeps a focused control clear of the sticky buttons, and rules them off while it scrolls', () => {
+    // jsdom has no layout and no ResizeObserver: stand-ins for a long form (916 px of content
+    // in an 820 px dialog) over an 82 px button row.
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        callback: () => void
+        constructor(callback: () => void) {
+          this.callback = callback
+        }
+        observe() {
+          this.callback()
+        }
+        disconnect() {}
+      },
+    )
+    vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockReturnValue(82)
+    vi.spyOn(Element.prototype, 'scrollHeight', 'get').mockReturnValue(916)
+    vi.spyOn(Element.prototype, 'clientHeight', 'get').mockReturnValue(820)
+    render(<Page />)
+    openFrom('Cancel')
+    const dialog = screen.getByRole('dialog')
+    // The row's height plus 8 px, so the 2 px focus ring and its offset clear it too.
+    expect(dialog.style.getPropertyValue('scroll-padding-bottom')).toBe('90px')
+    expect(dialog.hasAttribute('data-overflowing')).toBe(true)
+    const row = screen.getByRole('button', { name: 'Keep lesson' }).parentElement
+    expect(row?.className).toContain('group-data-overflowing/dialog:border-line')
   })
 
   it('stops the page scrolling while open', () => {

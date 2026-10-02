@@ -68,12 +68,13 @@ export function SidePanel({
           }}
           id={`${id}-title`}
           tabIndex={-1}
-          className="m-0 text-[1.125rem] font-semibold"
+          className="m-0 text-[1.125rem] font-semibold wrap-anywhere"
         >
           {title}
         </h2>
+        {/* Names and locations of any length wrap (DESIGN §5). */}
         {subtitle && (
-          <p id={`${id}-subtitle`} className="m-0 text-label text-muted">
+          <p id={`${id}-subtitle`} className="m-0 text-label text-muted wrap-anywhere">
             {subtitle}
           </p>
         )}
@@ -82,7 +83,7 @@ export function SidePanel({
         <button
           type="button"
           onClick={onClose}
-          className="inline-flex min-h-11 shrink-0 items-center px-1 text-sm font-semibold text-accent hover:text-accent-hover"
+          className="inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center px-1 text-sm font-semibold text-accent hover:text-accent-hover"
         >
           Close
         </button>
