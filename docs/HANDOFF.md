@@ -3,6 +3,100 @@
 Update this file at the end of every Claude Code session. Newest entry on top.
 Keep entries short; link to files instead of pasting code.
 
+## v0.7 · 2 Oct 2026 · Frontend first: every screen built in demo mode; final review half fixed
+**State**: `frontend-first` (not pushed; about 60 commits ahead of `origin/main`) has every
+route as a real page, built from the drawings and working in demo mode. At 29ca1a1:
+typecheck, lint, format, 1,734 unit tests (234 files) and the build pass. The main chunk
+is 99.7 kB gzipped and each coach page is its own chunk of 8–13 kB. `dist/` has no demo
+code. `npm run test:db` wasn't run: no migration changed. The final whole-app review
+stopped at the usage limit partway through its fixes (below). Herman's `npm run dev`
+runs on this checkout.
+**Done**
+- The build ran from `D:\DOWNLOAD\Swimming\frontend-plan\`. Its README has the details and
+  each script. The tools moved out of the temporary folder: the portable Node 24 is in
+  `frontend-plan\node24`, and `tools/app.mjs` drives the running app from a script.
+- Each wave: builders in worktrees, then 2–3 read-only reviewers per branch, then a
+  fixer.
+  - Wave 1: the UI kit (`src/shared/ui`), `messages.ts`, `shared/lib/format`, and the app
+    shell with the Demo panel, the new guards and `features/log-out`. 31 findings,
+    30 fixed.
+  - Wave 2: every entity, plus `cancel-lesson`, `excuse-lesson` and `approve-account`.
+    14 findings, all fixed.
+  - Wave 3: every screen and its features. 81 findings, all fixed.
+- e375c77 keeps one copy of the shared helpers (`addDays`, `weekDays`, `formatDayMonth`,
+  `useDebouncedValue`; `accountLabel` in entities/group). 29ca1a1 removes
+  `PlaceholderPage`.
+- Docs changed by the builders: ARCHITECTURE §3.2–§3.5; DESIGN §2 (the `--seg-free-table`
+  token). The demo's minimum password length is now 8, as in messages.ts.
+- Final review (`frontend-plan/final-review.js`):
+  - Seven reviewers, one per dimension (customer journeys, coach journeys, visual,
+    accessibility, code, states, copy), all finished with 78 findings
+    (`frontend-plan/review/final/<dimension>/`).
+  - Triage kept 56 (`review/final/triage.json`): foundation 37 (5 high), customer 10 and
+    coach 9. The highs include the known guard and tab-bar problems, and Book showing a
+    never-paid new group as "Paid".
+  - Fix branches, not merged yet:
+    - `fe/final-customer` (worktree `w3-book`): 10/10 outcomes recorded, final checks not
+      confirmed.
+    - `fe/final-coach` (worktree `w3-customer`): 9/9 outcomes recorded, final checks not
+      confirmed.
+    - `fe/final-foundation` (worktree `w3-auth`): 9/37 outcomes recorded, 22 files of
+      uncommitted work in progress.
+  - Each fixer logs `review/final/fix-<group>/outcomes.jsonl`.
+**Next** (a new session picks up the final review here):
+1. Re-run `frontend-plan/final-review.js` with args
+   `{ "finders": [], "triage": false, "fix": ["foundation", "customer", "coach"] }`. Each
+   fixer skips the findings already in its outcomes.jsonl and carries on with its branch,
+   including foundation's uncommitted changes. Customer and coach only need their final
+   checks.
+2. Merge `fe/final-*` on a scratch branch in a worktree first (Herman's dev server runs on
+   this checkout). Run every check, then fast-forward `frontend-first`.
+3. Herman answers the owner questions and approves the proposed copy. Then merge into
+   `main`, push and check CI.
+4. The wiring (prompts 05–11): auth and the Edge Functions (`login`, `admin-accounts` with
+   `create_account` and `delete_account`), `pending_accounts()`, `email_log()`. Then
+   `VITE_DEMO=false` against `swimclass-dev`.
+**Decisions**
+- Each spec's open questions got its recommended default (spec §10; the builders' reports
+  in `frontend-plan/review/w3-*/builder-report.json`).
+- Log out opens Log in first and ends the session there, so a page's leave guard can stop
+  it. The coach has Log out in his sidebar and "Back to coach view" on customer pages.
+  Not found sits inside AuthLayout.
+- Entity types keep snake_case; one query per scope, with narrower hooks using `select`.
+  `usePublicSettings` keeps data fresh for 5 min. History and payments read the latest
+  200 rows (`hasMore`).
+- The email log and Remove sign-up are switched off (`EMAIL_LOG_AVAILABLE`,
+  `REMOVE_SIGN_UP_AVAILABLE`) until `email_log()` and `delete_account` exist. Add students'
+  new account goes through `admin-accounts` `create_account`, which the demo emulates.
+**Open issues**
+- The 56 final-review findings that aren't fixed or merged yet (above).
+- Owner questions: 17 in `review/final/triage.json` (`owner_questions`), and every
+  proposed string, by screen, in `review/final/copy/proposed-copy.md`. The business name
+  ("Swim Class" or "Swim Class Booking") is still open.
+- The real `admin-accounts` must answer `{ account_id }` and the codes Add students places
+  (`invalid_username`, `username_taken`, `invalid_display_name`, `invalid_phone`,
+  `invalid_email`, `email_taken`, `not_coach`). `supabaseBackend` should map
+  `AuthSessionMissingError` to `not_signed_in` (auth C29). Both are prompt 05.
+- Block time over a long date range makes one `add_exception` call per day, outside a
+  transaction (coach-schedule Q8): Herman to choose a cap, or a range function.
+- Demo differences from v0.6 still apply (rows get the real `created_at`, so "signed up" and
+  "posted" dates can read later than the demo clock).
+**Manual steps waiting on Herman**
+- Node 24:
+  - Install it, then make it win: remove `D:\DOWNLOAD\` from the system PATH, or rename
+    `D:\DOWNLOAD\node.exe`, which is v20.
+  - Or use the portable copy: in PowerShell,
+    `$env:Path = "D:\DOWNLOAD\Swimming\frontend-plan\node24\node-v24.21.0-win-x64;$env:Path"`,
+    then `npm run dev`.
+- Delete `D:\d`: 21 duplicate screenshots a reviewer saved to the wrong path. The tools
+  can't remove top-level folders.
+- Supabase dashboard: set Auth's minimum password length to 8.
+- Answer the owner questions and the copy list, then say whether to push `frontend-first`
+  to `main`.
+- Still open from v0.6: `npx supabase login` and `link`; `db reset --linked` plus
+  `test:db`; Cloudflare; package prices; Google 2-Step Verification; the CA certificate
+  check.
+
 ## v0.6 · 30 Sep 2026 · Frontend first: demo mode, the data door, the session (paused)
 **State**: Merged into `main` and pushed on 30 Sep: a fast-forward from `frontend-first`
 (8 commits, with this entry), and GitHub CI passed. Herman asked
