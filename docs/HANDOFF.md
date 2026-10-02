@@ -3,6 +3,94 @@
 Update this file at the end of every Claude Code session. Newest entry on top.
 Keep entries short; link to files instead of pasting code.
 
+## v0.8 · 2 Oct 2026 · Frontend first: final review fixed and merged
+**State**: `frontend-first` (not pushed; 101 commits ahead of `origin/main`) has all 56
+final-review fixes. At 39dacb7, typecheck, lint, format, 1,794 unit tests (240 files) and
+the build pass. `dist/` has no demo code (no demo clock, demo notes or PGlite).
+`npm run test:db` wasn't run because nothing under `supabase/` changed since v0.6.
+Herman's `npm run dev` runs on this checkout. See "Manual steps" for the `npm ci` it now
+needs.
+**Done**
+- The final review's fix stage finished (`frontend-plan/final-review.js`, run
+  wf_9d9bf734-7ac). 56 of 56 findings were fixed and none rejected: foundation 37,
+  customer 10, coach 9. Each fix is listed in
+  `frontend-plan/review/final/fix-<group>/outcomes.jsonl`.
+- The three `fe/final-*` branches were merged on `fe/final-merge` (worktree
+  `w3-coach-students`), then `frontend-first` was fast-forwarded. One conflict, in
+  `BookPage.test.tsx`: it keeps customer's wait for every read and foundation's shared
+  `holdDemoDatabase`.
+- The merged app was checked on its own dev server. Scripts and shots are in
+  `frontend-plan/review/final/merge/`.
+  - 10 routes at 360, 390, 768, 1024 and 1280 px: no sideways scroll, and no word broken
+    mid-word in buttons, links or headings.
+  - Book with three 100-character one-word names: 0 px sideways at 390 and 1280. Each
+    branch on its own had left part of this overflow.
+  - "Try again" in the Excuse picker keeps focus while the read runs again, then focus
+    moves to the help line.
+  - My classes after a refused cancel: focus moves to the Upcoming heading.
+  - The Book summary's new paid notes, and My classes after booking.
+- Highlights of the fixes:
+  - Guards keep the page when a background profile read fails.
+  - Focused controls stay clear of the tab bar and of dialogs' sticky buttons.
+  - Book's "Paid" is judged from paid lessons (`entities/balance`
+    `isNextLessonPaid`/`isPackagePaid`).
+  - Long one-word names wrap everywhere.
+  - Route focus moves to the new page's h1 (`useRouteFocus`), and `useFocusFallback`
+    catches focus when its control disappears.
+  - One `parseDateKey`; dead code and unused exports are gone.
+  - `authError` maps `AuthSessionMissingError` to `not_signed_in` (auth C29, done).
+  - Production builds drop the demo clock and demo notes. The Supabase backend chunk is
+    preloaded, and app modules are marked side-effect free.
+  - wrangler 4.146.0, so `npm audit` is clean.
+- Bundle: the main chunk is 111 kB gzipped (was 99.7). The side-effects change moved code
+  out of the shared Fieldset chunk into it. Static first-load JS is about 160 kB gzipped
+  (was about 163), plus the 56 kB Supabase backend chunk, which now preloads in parallel
+  instead of loading after. Coach pages are 8–15 kB each.
+- Docs: ARCHITECTURE §3.2 matches `src` again (code-4).
+**Next**
+1. Herman answers the owner questions and approves the proposed copy (Open issues). Then
+   merge `frontend-first` into `main`, push and check CI.
+2. After that merge, remove the worktrees `D:\DOWNLOAD\Swimming\worktrees\w3-*` and the
+   branches `fe/w3-*`, `fe/final-*` and `fe/final-merge` (`frontend-plan/README.md` has
+   the commands).
+3. The wiring (prompts 05–11), as in v0.7 Next 4. Signed-in production routes haven't been
+   smoke-tested against Supabase yet.
+**Decisions**
+- Fixes that wanted a word Herman hasn't approved use the proposed copy, or no word. Book
+  and Students show no pill for a package that isn't fully paid; the "New bookings start
+  Package n" note still shows.
+- The Demo button comes first in the Tab order (auth §7.1). It is `absolute`, so it scrolls
+  away with the page.
+**Open issues**
+- Owner questions:
+  - The 17 in `frontend-plan/review/final/triage.json` (`owner_questions`).
+  - The copy list in `review/final/copy/proposed-copy.md`.
+  - From the fixers:
+    - The `email_taken` wording.
+    - A word for a package that isn't fully paid.
+    - The Book summary's "Package N isn't paid yet" and ", not paid yet".
+    - The Banner style for read errors on customer screens (visual-10).
+    - Which network the PRD's 3 s first-load budget assumes.
+- Small leftovers, all optional:
+  - Book's StartTimesSection builds `?week=` by hand (code-14).
+  - The Lesson lengths and Package prices groups still repeat FieldRow's help text while
+    a note shows (copy-6).
+  - At large text, OpenHoursSection's Edit is reached by scrolling inside the table frame
+    (accessibility-11).
+  - A 12-lesson day still grows about 300 px when the coach's day view loads (states-10).
+  - The QueryClient test wrapper isn't shared yet (code-2).
+  - In demo mode only, the Demo button covers the end of a very long "Hi, …" line at
+    390 px.
+- wrangler 4.146.0 pulls in miniflare `5.20261001.0-alpha` (npm's choice).
+- v0.7's open issues still apply, except the `AuthSessionMissingError` mapping, which is
+  done.
+**Manual steps waiting on Herman**
+- wrangler changed in `package-lock.json`, so stop `npm run dev`, run `npm ci` with
+  Node 24, then start `npm run dev` again. Until then, only `npx wrangler` uses the old
+  version; the dev server and the app are unaffected.
+- The rest are as in v0.7: Node 24, delete `D:\d`, the Supabase minimum password length,
+  the owner questions, and the OK to merge into `main` and push.
+
 ## v0.7 · 2 Oct 2026 · Frontend first: every screen built in demo mode; final review half fixed
 **State**: `frontend-first` (not pushed; about 60 commits ahead of `origin/main`) has every
 route as a real page, built from the drawings and working in demo mode. At 29ca1a1:
