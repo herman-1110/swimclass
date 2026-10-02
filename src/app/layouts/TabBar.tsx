@@ -11,14 +11,17 @@ type TabBarProps = {
 }
 
 // Below 1024 px: icons with their labels, stuck to the bottom of the screen (DESIGN §3).
-// It follows <main> in the page, so it never covers the last content; the bottom padding
-// clears the home bar on phones that have one (DESIGN §5).
+// It follows <main> in the page, so at the end of the page it sits below the last content;
+// higher up it covers the bottom 73 px of the window, so index.css reserves that height
+// (data-tab-bar) for anything scrolled into view, such as a control reached with Tab. The
+// bottom padding clears the home bar on phones that have one (DESIGN §5).
 export function TabBar({ label, items }: TabBarProps) {
   const isCurrent = useIsCurrent()
 
   return (
     <nav
       aria-label={label}
+      data-tab-bar=""
       className="sticky bottom-0 z-10 grid grid-cols-4 border-t border-line bg-white px-2 pt-1 pb-[max(16px,env(safe-area-inset-bottom))] lg:hidden"
     >
       {items.map((item) => {

@@ -1,4 +1,3 @@
-import { cn } from '@/shared/lib/cn'
 import { Button } from '@/shared/ui/Button'
 
 import { footerCaption } from '../model/rows'
@@ -27,13 +26,7 @@ export function PackagesFooter({ count, hiding, onShowAll }: PackagesFooterProps
     <div className="flex min-h-11 items-center justify-between gap-3 text-label text-muted">
       <span>{footerCaption(count)}</span>
       {showAllAt !== null && (
-        <Button
-          variant="link"
-          textSize="label"
-          // Focused, it scrolls clear of the tab bar below 1024 px, like the row actions.
-          className={cn(showAllAt, 'scroll-mb-24 lg:scroll-mb-0')}
-          onClick={onShowAll}
-        >
+        <Button variant="link" textSize="label" className={showAllAt} onClick={onShowAll}>
           Show all
         </Button>
       )}
