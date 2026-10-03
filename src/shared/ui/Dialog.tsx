@@ -172,9 +172,11 @@ export function Dialog({
         // Sticky at the bottom, white, so a long form's buttons stay reachable; the negative
         // top margin keeps the drawn 18 px gap when it isn't stuck. While the content scrolls,
         // a --line rule on top shows where it goes under the buttons (coach-schedule §3.10).
+        // On phones it keeps 16 px under the buttons, or the safe area when that is larger, as
+        // the tab bar does (triage 13).
         <div
           ref={actionsRef}
-          className="sticky bottom-0 -mx-5 -mt-3 flex items-center gap-2 border-t border-transparent bg-white px-5 pt-3 pb-[max(32px,env(safe-area-inset-bottom))] group-data-overflowing/dialog:border-line md:-mx-6 md:px-6 md:pb-6"
+          className="sticky bottom-0 -mx-5 -mt-3 flex items-center gap-2 border-t border-transparent bg-white px-5 pt-3 pb-[max(16px,env(safe-area-inset-bottom))] group-data-overflowing/dialog:border-line md:-mx-6 md:px-6 md:pb-6"
         >
           {actions}
         </div>
