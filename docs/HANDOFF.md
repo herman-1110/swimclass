@@ -3,6 +3,77 @@
 Update this file at the end of every Claude Code session. Newest entry on top.
 Keep entries short; link to files instead of pasting code.
 
+## v0.11 · 3 Oct 2026 · Triage 7–17, the copy list and Q4, decided for Herman
+**State**: `frontend-first` (not pushed; 128 commits ahead of `origin/main`, with this
+entry). At 7402d81: typecheck, lint, format, 1,822 unit tests (243 files) and the build pass.
+The main chunk is 112.1 kB gzipped. `test:db` wasn't run (nothing under `supabase/` changed). Herman's `npm run dev`
+runs on this checkout. Node 24.19 is now the system Node (`D:\DOWNLOAD\node.exe`).
+**Done** (Herman: "for the rest … help me think and reason it then do it". Each choice
+and its reason is below; "triage" is `frontend-plan/review/final/triage.json`
+`owner_questions`, numbered in order.)
+- 7, 8d41480: Log in and Sign up say "Your coach may need to approve your account before
+  you can book.", and the sign-up result "Check your email to confirm, then log in. Your
+  coach may need to approve your account first." Signed-out pages can't read
+  `require_approval`; neutral words cost nothing, while exposing the setting needs a
+  database change. `/pending` is unchanged (it only shows when approval applies).
+- 8, the copy list: approved as built, apart from the changes in this entry. 9e3f0ce adds
+  the messages to DESIGN §6. edd45b9: excusing says "Lesson excused. It no longer counts."
+  from both places (§0 item 5). 4ae7e56: the Forgot page's heading is "Forgot your username
+  or password?", like the link that opens it, which reverses the build's choice (copy-8;
+  conventions §12.3 in the plan updated). §0 items 6 and 7 were already fixed in the final
+  review. Reset password's "Continue" stays: where it goes depends on the account.
+- 9, e506b02: one wording per rule. Add students uses Sign up's "small letters" (plainer)
+  and "Enter an email address like name@example.com.". Settings' own checks say what to
+  type under the box ("Enter the amount in RM, like 240 or 240.50.", "Enter a whole
+  number.", "Enter a time like 8:00 pm."), and near Save with the box's label first
+  ("Booking window: enter a whole number."). The database's `invalid_setting` keeps
+  DESIGN §6's words.
+- 10, 9d9a0c7: customers' one-month weeks read "21–27 Sep", the coach's pattern without the
+  year. Weeks across months stay "28 Sep – 4 Oct".
+- 11, 40a24a0: through View as customer, Book and My classes tell the coach "Customers see
+  their lessons here. Your coach account has no lessons of its own.", and Account leaves out
+  "message your coach". "Message your coach" made no sense to him.
+- 12, d8024a9: My classes' panel heading is "Past and cancelled lessons" (it lists lessons
+  cancelled before they happened). The drawn button "Past lessons and receipts" stays.
+- 13, 89c02e7: a full-screen dialog's sticky buttons have `max(16px, safe area)` under them
+  on phones, as the tab bar and the coach-schedule spec do (was 32 px).
+- 14, 22068df: every coach page has 32 px sides from 768 px, so the title stays put between
+  tabs. Schedule and Students need the room; Add students and Settings are narrow anyway.
+  DESIGN §2 says so.
+- 15, 494e4b3: the chosen segment has an `--accent` border and the current sidebar link a
+  3 px `--accent` bar on its left; the drawn markers were about 1.1:1 (DESIGN §3).
+- 16, 444f1da: kept as built. At 360 px, seven 44 px day links would leave the time column
+  12 px. DESIGN §5 records the exception (41 × 44 px, above WCAG AA's 24 px).
+- 17, dba3347: PRD §8's budget is Chrome's "Fast 4G" with a 4× slower CPU (a mid-range
+  phone on normal Malaysian 4G), largest paint under 3 s with an empty cache. Measured on a
+  production build with `frontend-plan/tools/perf.mjs` (median of 5): Log in 0.99 s; on
+  "Slow 4G" 2.85 s. No more bundle cuts are needed now.
+- Q4: with no price set, "Pay RM [price]" reads "Pay for it" (as built; DESIGN §6).
+- v0.8's fixers' word questions are settled: `email_taken` as built, "Unpaid" (v0.10), the
+  Book summary's notes as built, and one read-error banner (fixed in the final review).
+- Checked in Chrome on the demo database (`frontend-plan/review/answers-7-17/check.mjs`, shots
+  beside it): the approval note, the Forgot heading and tab title, "21–27 Sep" on Book and
+  Schedule, the accent border on "1 hour", "Past and cancelled lessons", 16 px under the
+  cancel dialog's buttons at 390 px, the 3 px bar on the current sidebar link, the coach's
+  empty state and Account, the h1 at x 252 on all four coach pages at 1280 px, and
+  Settings' "Booking window: enter a whole number." with "Enter a whole number." under the
+  box. No page errors.
+**Next**
+1. Herman says whether to merge `frontend-first` into `main` and push.
+2. Then v0.8 Next 2 and 3: remove the worktrees and branches, and do the wiring (prompts
+   05–11). Measure the signed-in pages' first load once they talk to Supabase (PRD §8).
+**Decisions**
+- All of the above were Herman's to make; he delegated them, so they can be revisited by
+  number.
+**Open issues**
+- The v0.7/v0.8 leftovers not asked here still stand: Block time over a long range
+  (coach-schedule Q8), and v0.8's optional small leftovers.
+**Manual steps waiting on Herman**
+- Node 24: done. Still open: delete `D:\d`; set Auth's minimum password length to 8 in the
+  Supabase dashboard; the OK to merge into `main` and push; v0.6's Supabase CLI link, `db
+  reset --linked` and `test:db`, Cloudflare, package prices, Google 2-Step Verification
+  and the CA certificate check.
+
 ## v0.10 · 3 Oct 2026 · Owner answers to triage questions 1–6
 **State**: `frontend-first` (not pushed; 113 commits ahead of `origin/main`, with this
 entry). At eae90e1: typecheck, lint, format, 1,817 unit tests (243 files) and the build
