@@ -64,8 +64,8 @@ export function coachAwayMessage(ranges: readonly string[]): string {
 export const OPEN_HOURS_SAVED_LEAD = 'Your open hours were saved, but your other changes weren’t.'
 
 /**
- * The shortest password `weak_password`'s message asks for (Herman chose 8, the auth spec.s
- * its open question 2). The sign-up and password forms check the same number.
+ * The shortest password `weak_password`'s message asks for (Herman chose 8: the auth spec's
+ * open question 2). The sign-up and password forms check the same number.
  */
 export const MIN_PASSWORD_LENGTH = 8
 
