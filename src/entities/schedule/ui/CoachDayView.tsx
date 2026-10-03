@@ -1,6 +1,5 @@
 import { type ReactNode, useId } from 'react'
 
-import { cn } from '@/shared/lib/cn'
 import { plural } from '@/shared/lib/format'
 import { type DateKey, weekDays } from '@/shared/lib/time'
 import { DayStrip } from '@/shared/ui/DayStrip'
@@ -18,7 +17,7 @@ type CoachDayViewProps = {
   weekStart: DateKey
   /**
    * useCoachWeek(weekStart).data: undefined while the first week loads or after it failed.
-   * While another week loads it is still the last week, shown dimmed (coach-schedule §6.1).
+   * While another week loads it is still the last week: the day view shows placeholders.
    */
   week: CoachWeek | undefined
   /** The chosen day, in weekStart's week (the page's ?day). */
@@ -47,13 +46,15 @@ export function CoachDayView({
   error,
 }: CoachDayViewProps) {
   const titleId = useId()
-  const shown = error ? undefined : week
-  const current = shown && isWeekOf(shown, weekStart) ? shown : undefined
+  // Only this week's lessons ever sit under this week's dates: while another week loads,
+  // the list is placeholders, as on the customer Schedule (Herman, 2 Oct 2026). The grid
+  // from 768 px still keeps the last week, dimmed.
+  const current = !error && week && isWeekOf(week, weekStart) ? week : undefined
   const dates = weekDays(weekStart)
   const index = dates.indexOf(day)
-  const shownDay = shown && index >= 0 ? shown[index] : undefined
+  const currentDay = current && index >= 0 ? current[index] : undefined
   // The same hours as the grid (coach-schedule §3.4).
-  const items = shown && shownDay ? coachDayTimeline(shownDay, coachWeekHours(shown)) : []
+  const items = current && currentDay ? coachDayTimeline(currentDay, coachWeekHours(current)) : []
 
   return (
     <div className="flex flex-col gap-3.5 md:hidden">
@@ -71,23 +72,19 @@ export function CoachDayView({
       <h2 id={titleId} className="mt-1 text-body font-semibold">
         {formatDayLong(day)}
       </h2>
-      {shown ? (
+      {current ? (
         <ol
           role="list"
           aria-labelledby={titleId}
-          aria-busy={current ? undefined : true}
-          className={cn(
-            'm-0 flex list-none flex-col gap-1.5 p-0 transition-opacity',
-            !current && 'opacity-60',
-          )}
+          className="m-0 flex list-none flex-col gap-1.5 p-0"
         >
-          {shownDay &&
+          {currentDay &&
             items.map((item) => (
               <DayViewItem
                 key={item.start}
-                day={shownDay.day}
+                day={currentDay.day}
                 item={item}
-                onSelectLesson={current && onSelectLesson}
+                onSelectLesson={onSelectLesson}
               />
             ))}
         </ol>

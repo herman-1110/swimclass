@@ -14,7 +14,10 @@ import { LoadError } from './LoadError'
 type ScheduleWeekProps = {
   /** The Monday of the week shown. */
   weekStart: DateKey
-  /** useCoachWeek(weekStart): the last week stays, dimmed, while the next one loads. */
+  /**
+   * useCoachWeek(weekStart): while the next week loads, the grid keeps the last one, dimmed,
+   * and the day view shows placeholders.
+   */
   week: UseQueryResult<CoachWeek>
   /** The chosen day: the phone's day view shows it. */
   day: DateKey

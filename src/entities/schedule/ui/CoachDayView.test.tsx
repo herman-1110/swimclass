@@ -142,7 +142,7 @@ describe('CoachDayView', () => {
     expect(onSelectDay).toHaveBeenCalledWith('2026-10-01')
   })
 
-  it('keeps the last week’s day on screen, dimmed and busy, while the next week loads', () => {
+  it('shows placeholders, never the last week’s lessons, while the next week loads', () => {
     render(
       <CoachDayView
         weekStart="2026-10-05"
@@ -153,9 +153,10 @@ describe('CoachDayView', () => {
       />,
     )
     expect(screen.getByRole('heading', { level: 2, name: 'Saturday 10 Oct' })).toBeTruthy()
-    const list = screen.getByRole('list', { name: 'Saturday 10 Oct' })
-    expect(list.getAttribute('aria-busy')).toBe('true')
-    expect(within(list).queryAllByRole('button')).toHaveLength(0)
+    // The last week (28 Sep) is still the query's data, but none of it shows under 10 Oct.
+    expect(screen.queryByRole('list', { name: 'Saturday 10 Oct' })).toBeNull()
+    expect(screen.getByRole('status').textContent).toBe('Loading the week')
+    expect(screen.queryByText(/Kiara Park|Palm Court|Vista Heights/)).toBeNull()
     expect(screen.getByRole('button', { name: 'Saturday 10 Oct' })).toBeTruthy()
   })
 
