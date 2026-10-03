@@ -136,7 +136,7 @@ describe('CoachStudentsPage actions', () => {
       }),
     )
     fireEvent.click(within(panel).getByRole('button', { name: 'Excuse Fri 25 Sep lesson' }))
-    expect(await within(panel).findByText('Lesson excused.')).toBeTruthy()
+    expect(await within(panel).findByText('Lesson excused. It no longer counts.')).toBeTruthy()
     const weiJie = await rowOf('Wei Jie')
     await waitFor(() => expect(within(weiJie).getByText('1 used · 1 booked')).toBeTruthy())
     expect(within(weiJie).getByText('Since 18 Sep')).toBeTruthy()

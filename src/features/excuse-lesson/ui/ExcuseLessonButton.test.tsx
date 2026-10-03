@@ -103,7 +103,7 @@ describe('ExcuseLessonButton', () => {
     const dialog = openConfirm()
     fireEvent.click(within(dialog).getByRole('button', { name: 'Mark as excused' }))
     await waitFor(() =>
-      expect(onExcused).toHaveBeenCalledWith('Lesson marked as excused. It no longer counts.'),
+      expect(onExcused).toHaveBeenCalledWith('Lesson excused. It no longer counts.'),
     )
     await waitFor(() => expect(invalidate).toHaveBeenCalledTimes(4))
     for (const queryKey of [balanceKeys.all, bookingKeys.all, scheduleKeys.all, slotKeys.all]) {

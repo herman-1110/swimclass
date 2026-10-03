@@ -307,7 +307,7 @@ describe('CoachSchedulePage actions (§8.3)', () => {
         name: 'Mark Fri 25 Sep, 7:30–8:30 pm for Wei Jie as excused?',
       })
       fireEvent.click(within(confirm).getByRole('button', { name: 'Mark as excused' }))
-      await notice('Lesson marked as excused. It no longer counts.')
+      await notice('Lesson excused. It no longer counts.')
       await within(attention).findByText('Package 2 unpaid · 1 used', {}, SLOW)
       await waitFor(
         () => expect(within(region).queryByRole('button', { name: /^Wei Jie/ })).toBeNull(),

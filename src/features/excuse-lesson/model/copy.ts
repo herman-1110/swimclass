@@ -50,9 +50,6 @@ export const EXCUSE_DESCRIPTION =
 /** In the lesson details, in place of "Mark as excused" before the lesson starts. */
 export const NOT_STARTED_HINT = 'You can mark it as excused once it has started.'
 
-/** The page's notice after "Mark as excused" (the Schedule spec §6.6, proposed). */
-export const EXCUSED_NOTICE = 'Lesson marked as excused. It no longer counts.'
-
 /** "Excuse a missed lesson": the rule, above the lessons (the Students spec §5.3 W3). */
 export const EXCUSE_HELP =
   'Excused lessons don’t count. Only lessons that have started can be excused.'
@@ -61,8 +58,11 @@ export const EXCUSE_HELP =
 export const NO_LESSONS_TO_EXCUSE =
   'No lessons to excuse. Only lessons that have started can be excused.'
 
-/** The status after "Excuse a missed lesson" worked. */
-export const LESSON_EXCUSED = 'Lesson excused.'
+/**
+ * After excusing, from either place: Schedule's "Mark as excused" (the page's notice) and
+ * "Excuse a missed lesson" (its status). One wording for one result (copy list §0 item 5).
+ */
+export const LESSON_EXCUSED = 'Lesson excused. It no longer counts.'
 
 /** "Excuse Fri 25 Sep lesson", or "Excuse lesson" until one is picked. */
 export function excuseButtonLabel(lesson: Pick<ExcusableLesson, 'starts_at'> | undefined): string {

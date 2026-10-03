@@ -4,7 +4,7 @@ import { Button } from '@/shared/ui/Button'
 import { Dialog } from '@/shared/ui/Dialog'
 
 import { useExcuseLesson, useRefreshAfterExcuse } from '../api/useExcuseLesson'
-import { EXCUSE_DESCRIPTION, EXCUSED_NOTICE, excuseTitle } from '../model/copy'
+import { EXCUSE_DESCRIPTION, excuseTitle, LESSON_EXCUSED } from '../model/copy'
 import { excuseErrorOutcome, refreshesAfter } from '../model/errorOutcome'
 import type { ExcuseCandidate } from '../model/types'
 
@@ -21,7 +21,7 @@ type ExcuseLessonConfirmProps = {
 export function ExcuseLessonConfirm({ lesson, onClose, onExcused }: ExcuseLessonConfirmProps) {
   const keep = useRef<HTMLButtonElement>(null)
   const refresh = useRefreshAfterExcuse()
-  const excuse = useExcuseLesson({ onExcused: () => onExcused(EXCUSED_NOTICE) })
+  const excuse = useExcuseLesson({ onExcused: () => onExcused(LESSON_EXCUSED) })
   const outcome = excuse.isError ? excuseErrorOutcome(excuse.error) : null
   // Nothing more to try: "Mark as excused" goes and "Keep lesson" reads "Close".
   const final = outcome !== null && !outcome.canRetry
