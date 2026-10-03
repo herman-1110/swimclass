@@ -212,7 +212,7 @@ Coach (desktop)
 - Customer pages usable on a mid-range phone over 4G; first load under 3 s. Measured on a
   production build with Chrome's "Fast 4G" network and a 4× CPU slowdown, which stands for
   a mid-range phone on normal Malaysian 4G. The largest paint must come within 3 s with an
-  empty cache. On 3 Oct 2026, Log in took 1.0 s, and 2.9 s even on Lighthouse's slower
+  empty cache. On 3 Oct 2026, Log in took 1.0 s, and 2.9 s even on Chrome's slower
   "Slow 4G". Signed-in pages are measured once they talk to Supabase.
 - Accessible: labels, focus states, 44 px touch targets, WCAG AA contrast.
 - Security: RLS on every table; secrets never in the browser; login rate limit.
