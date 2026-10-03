@@ -253,7 +253,9 @@ toolbar), and on a real phone before going live.
 - Every input has a label; icon-only buttons have `aria-label`; the week grids have a
   text alternative (the Book screen lists the same times).
 - 44 px touch targets at every width; visible focus ring (2 px accent outline, 2 px
-  offset).
+  offset). One exception: on the customer Schedule below about 380 px, each day's "Book on
+  …" link is narrower (41 × 44 px at 360 px). Seven 44 px days would leave the time column
+  12 px, too narrow for its times. It stays well above WCAG AA's 24 px.
 - Respect `prefers-reduced-motion`; motion only for dialogs opening, state changes and
   buttons under a mouse (§3). With reduce motion on, nothing moves, but hover still changes
   colour and shadow. Touch never sees hover, so a tap leaves nothing behind.
