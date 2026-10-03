@@ -59,12 +59,12 @@ export function coachAwayMessage(ranges: readonly string[]): string {
 
 /**
  * Settings: put before the refusal's own words when the open hours were saved and the other
- * changes then weren't (prompt 10 TASK 7; the Settings spec §5.4, proposed).
+ * changes then weren't (prompt 10 TASK 7; the Settings spec §5.4; DESIGN §6).
  */
 export const OPEN_HOURS_SAVED_LEAD = 'Your open hours were saved, but your other changes weren’t.'
 
 /**
- * The shortest password `weak_password`'s message asks for (the auth spec's proposed 8,
+ * The shortest password `weak_password`'s message asks for (Herman chose 8, the auth spec.s
  * its open question 2). The sign-up and password forms check the same number.
  */
 export const MIN_PASSWORD_LENGTH = 8
@@ -252,7 +252,7 @@ const CUSTOMER: Readonly<Record<string, Words>> = {
   invalid_length: GENERIC_MESSAGE,
   invalid_reason: GENERIC_MESSAGE,
   not_found: GENERIC_MESSAGE,
-  // Signing up and changing a password (the auth spec §5.4, proposed wording).
+  // Signing up and changing a password (the auth spec §5.4; DESIGN §6).
   weak_password: `Use at least ${MIN_PASSWORD_LENGTH} characters.`,
   same_password: 'That’s your current password. Choose a different one.',
   user_already_exists:
@@ -262,7 +262,7 @@ const CUSTOMER: Readonly<Record<string, Words>> = {
     'We can’t send another email just yet. Wait a few minutes and try again.',
   // The words of the sign-up username check (DESIGN §4); admin-accounts refuses with it.
   username_taken: 'That username is taken.',
-  // The auth forms' checks before any call (the auth spec §5.4, proposed). The format check
+  // The auth forms' checks before any call (the auth spec §5.4; DESIGN §6). The format check
   // mirrors the sign-up trigger's rule, so it has the trigger's code. An empty or malformed
   // email uses email_address_invalid, and a short password weak_password (both above).
   // Add students' new account (admin-accounts) uses the same username words (triage 9).

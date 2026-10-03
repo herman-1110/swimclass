@@ -283,14 +283,28 @@ Reason codes (from the database) → messages. `{gap}` is formatted from setting
 | not_approved | Your coach hasn't approved your account yet. |
 | invalid_login | Wrong username or password. |
 | too_many_attempts | Too many tries. Wait 15 minutes and try again. |
+| weak_password | Use at least 8 characters. |
+| same_password | That's your current password. Choose a different one. |
+| user_already_exists | An account already uses that email. Log in, or use Forgot username or password. |
+| email_address_invalid | Enter an email address like name@example.com. |
+| over_email_send_rate_limit | We can't send another email just yet. Wait a few minutes and try again. |
+| username_taken | That username is taken. |
+| invalid_username | Use 3 to 30 small letters, numbers, dots or underscores. |
+| username_required, password_required, name_required | Enter your username. / Enter your password. / Enter your name. |
+| password_mismatch | The passwords don't match. Type the same password twice. |
 | (network) | Couldn't reach the server. Check your connection and try again. |
 | not_your_group, not_your_booking, invalid_repeat, invalid_length, invalid_reason, not_found (and any code not listed) | Something went wrong. Refresh the page and try again. |
 
 Empty states: no groups yet → "Your coach hasn't set up your lessons yet. Message your
-coach to get started." No times this day → "This day is fully booked. Try another day."
+coach to get started." The coach, through View as customer → "Customers see their lessons
+here. Your coach account has no lessons of its own." No times this day → "This day is
+fully booked. Try another day."
 Book, when the coach blocked time on the day (Herman, 2 Oct 2026): all of it → "Your coach
 isn't available on this day. Try another day." (in place of fully booked); part of it →
 "Your coach isn't available 9:00 am–12:00 pm." above the times.
+
+Paying: with no price set for the group's type, "Pay RM {price}" reads "Pay for it" ("New
+bookings start Package 3. Pay for it before or at its first lesson.").
 
 Coach screens (Add booking, lesson details, Students & payments, Add students, Settings,
 Message all customers) use this table first, then the table above. Braces come from the
@@ -315,7 +329,7 @@ message needs gets the generic message.
 | invalid_date | The payment date is in the future. Pick today or an earlier date. |
 | invalid_note | The note is too long. Shorten it to 500 characters. |
 | duplicate_group | These students already have an active group. Use that group, or deactivate it first. ("That group" links to {group_id}.) |
-| has_upcoming_lessons | This group has {count} upcoming lessons. Cancel them first, then deactivate it. Each cancellation emails the customer. |
+| has_upcoming_lessons | This group has {count} upcoming lessons. Cancel them first, then deactivate it. Each cancellation emails the customer. (One lesson: "1 upcoming lesson. Cancel it first".) |
 | group_full | A lesson can have up to {max} students. Remove one, or change "Students per lesson" in Settings. |
 | invalid_students | Student {index} is already in the list or can't be found. Pick another student or type a new name. |
 | invalid_name | Type a name for student {index} (up to 100 characters). |
@@ -327,7 +341,27 @@ message needs gets the generic message.
 | overlapping_rules | Two ranges on {weekday} overlap. Change one and save again. |
 | invalid_setting | {field} has a value that isn't allowed. Check it and save again. ({field} is shown as the form's label, such as "Travel gap".) |
 | invalid_message | The message must be 1 to 1000 characters. Change it and send again. |
+| invalid_display_name | Type their name (up to 100 characters). |
+| invalid_phone | Shorten the phone number to 30 characters or fewer. |
+| email_taken | Another account already uses this email. Choose that account under Account, or type a different email. |
+| invalid_username, invalid_email | The customer table's words (invalid_email reads as email_address_invalid). |
+| account_required | Choose an account, or create a new one. |
+| amount_format | Enter the amount in RM, like 240 or 240.50. |
+| count_format | Enter a whole number. |
+| time_format | Enter a time like 8:00 pm. |
+| hours_incomplete | Choose a start and an end time. |
+| hours_out_of_range | Open hours must be between 5:00 am and 11:00 pm. |
+| last_day_before_first | The last day must be on or after the first day. |
 | not_coach, not_found, invalid_settings, unknown_setting, invalid_kind, invalid_active, not_customer, group_inactive | Something went wrong. Refresh the page and try again. |
+
+The codes from `account_required` down are the forms' own checks; no server sends them.
+Settings shows them under the box, and near Save with the box's label first ("Booking
+window: enter a whole number."). When Settings saved the open hours but not the rest, the
+line near Save starts "Your open hours were saved, but your other changes weren't."
+
+Every other string on the screens (headings, labels, help lines, notices, buttons' busy
+words, names only screen readers hear) was approved as built on 3 Oct 2026, and the code
+is where they live.
 
 ## 7. Using the reference files
 The files in `design/` come from the design canvas. They are plain HTML with inline
