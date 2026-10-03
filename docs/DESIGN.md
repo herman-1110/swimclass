@@ -67,7 +67,8 @@ uses Chip, `GroupPicker` (entity `group`) uses OptionRow. The tab bar and sideba
   and lifts 2 px; a quiet or icon button gets `--subtle`, `--shadow-soft` and lifts 1 px;
   both press down to 97% while held. Links and text buttons underline. Disabled and busy
   buttons don't react.
-- **Segmented control** (`Segmented`): track `--subtle`, selected segment white with `--line` border.
+- **Segmented control** (`Segmented`): track `--subtle`, selected segment white with an
+  `--accent` border (the drawings' light grey border was too faint to show which is chosen).
   Used for 1 hour / 2 hours and lesson type.
 - **Option row** (`OptionRow`, a radio): 48 px, border `--field`; selected border accent and
   `--accent-soft` background; name left, type tag right.
@@ -95,8 +96,8 @@ uses Chip, `GroupPicker` (entity `group`) uses OptionRow. The tab bar and sideba
   bottom (4 items, icons 22 px stroke 1.6 with the label under, 52 px tall, active in
   accent, plus the phone's safe-area inset). From 1024 px a 220 px sidebar instead:
   business name at the top ("Swim Class", from settings; the drawings' "Swim Class
-  Booking" is the old name), text links (current one on `--subtle`), "Signed in as …"
-  at the bottom.
+  Booking" is the old name), text links (current one on `--subtle` with a 3 px `--accent`
+  bar at its left edge, so it reads at a glance), "Signed in as …" at the bottom.
   - Customer: Book, Schedule, My classes, Account.
   - Coach: Schedule, Students & payments ("Students" in the tab bar), Settings, and
     View as customer ("Customer view" in the tab bar; at the bottom of the sidebar).

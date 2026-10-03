@@ -22,8 +22,9 @@ type SidebarProps = {
 const linkBase = 'flex min-h-11 items-center rounded-small px-3 text-sm no-underline hover:text-ink'
 
 // From 1024 px, in place of the tab bar: a 220 px column with the business name at the
-// top, text links (the current one on --subtle) and "Signed in as …" at the bottom
-// (DESIGN §3; the drawings' .side).
+// top, text links (the current one on --subtle, with a 3 px --accent bar at its left edge)
+// and "Signed in as …" at the bottom (DESIGN §3; the drawings' .side). The drawn --subtle
+// alone was about 1.1:1 on white; the bar gives the state 3:1 (WCAG 1.4.11; triage 15).
 export function Sidebar({
   label,
   businessName,
@@ -52,7 +53,9 @@ export function Sidebar({
               aria-current={current ? 'page' : undefined}
               className={cn(
                 linkBase,
-                current ? 'bg-subtle font-semibold text-ink' : 'font-medium text-muted',
+                current
+                  ? 'relative bg-subtle font-semibold text-ink before:absolute before:inset-y-2.5 before:left-0 before:w-[3px] before:rounded-full before:bg-accent'
+                  : 'font-medium text-muted',
               )}
             >
               {item.label}

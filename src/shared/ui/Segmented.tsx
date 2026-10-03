@@ -30,11 +30,11 @@ type SegmentedProps = {
 }
 
 // UI kit spec §3.10: Main.dc.html:115-117, :331-337; AdminAddStudents.dc.html:76-79,
-// :159-169. The chosen segment's border is --line as DESIGN §3 says (the drawings use
-// #E4E4E0, which is not a token).
+// :159-169. The chosen segment's border is --accent (DESIGN §3): the drawn #E4E4E0 on the
+// --subtle track was about 1.1:1, and a state needs 3:1 (WCAG 1.4.11; triage 15).
 const segment = cn(
   'relative flex h-11 flex-1 cursor-pointer items-center justify-center rounded-small border border-transparent text-sm leading-[normal] font-medium text-muted',
-  'has-checked:border-line has-checked:bg-white has-checked:font-semibold has-checked:text-ink',
+  'has-checked:border-accent has-checked:bg-white has-checked:font-semibold has-checked:text-ink',
   'has-disabled:cursor-default has-disabled:opacity-50',
   // The radio is visually hidden, so its focus ring goes on the segment.
   'has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-accent',
