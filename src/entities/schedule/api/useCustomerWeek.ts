@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import type { DateKey } from '@/shared/lib/time'
 
 import { ownLessonsOn } from '../model/select'
+import type { CustomerDay } from '../model/types'
 import { customerWeekQuery } from './weekQueries'
 
 /**
@@ -22,4 +23,19 @@ export function useCustomerWeek(weekStart: DateKey | null) {
  */
 export function useOwnLessonsOnDay(weekStart: DateKey, day: DateKey) {
   return useQuery({ ...customerWeekQuery(weekStart), select: (week) => ownLessonsOn(week, day) })
+}
+
+/**
+ * The coach's hours on `day` from the same week_busy query: `open` (what's left to book in)
+ * and `closed` (Block time, cut to the day), for Book's "Your coach isn’t available …".
+ * Null when the week has no such day.
+ */
+export function useCoachHoursOnDay(weekStart: DateKey, day: DateKey) {
+  return useQuery({
+    ...customerWeekQuery(weekStart),
+    select: (week): Pick<CustomerDay, 'open' | 'closed'> | null => {
+      const found = week.find((d) => d.day === day)
+      return found ? { open: found.open, closed: found.closed } : null
+    },
+  })
 }

@@ -7,6 +7,7 @@ import type { DateKey } from '@/shared/lib/time'
 import { ButtonLink } from '@/shared/ui/ButtonLink'
 import { SectionLabel } from '@/shared/ui/SectionLabel'
 
+import type { CoachAway } from '../model/coachAway'
 import { RetryMessage } from './RetryMessage'
 
 type StartTimesSectionProps = {
@@ -28,15 +29,17 @@ type StartTimesSectionProps = {
   onSelect: (slot: Slot) => void
   /** "Already booked this day: …", or null. */
   alreadyBooked: string | null
+  /** "Your coach isn’t available …" for Block time on the day (coachAwayText), or null. */
+  coachAway: CoachAway | null
   /** Layout only: the page's grid area. */
   className?: string
 }
 
 /**
  * "Start time · Tue 29 Sep" (DESIGN §4 item 6; design/Main.dc.html:119-148): "See the week",
- * the empty-day and already-booked lines, the Morning and Evening chips and the help line,
- * 14 px apart. Grey chips while the week's start times load; the message and "Try again"
- * if they fail.
+ * the coach-away, empty-day and already-booked lines, the Morning and Evening chips and the
+ * help line, 14 px apart. Grey chips while the week's start times load; the message and "Try
+ * again" if they fail.
  */
 export function StartTimesSection({
   headingId,
@@ -47,6 +50,7 @@ export function StartTimesSection({
   selected,
   onSelect,
   alreadyBooked,
+  coachAway,
   className,
 }: StartTimesSectionProps) {
   return (
@@ -75,7 +79,8 @@ export function StartTimesSection({
         </div>
       ) : (
         <>
-          {!daySlots.some((slot) => slot.ok) && (
+          {coachAway && <p className="text-label text-ink">{coachAway.text}</p>}
+          {!coachAway?.wholeDay && !daySlots.some((slot) => slot.ok) && (
             <p className="text-label text-ink">{DAY_FULLY_BOOKED_MESSAGE}</p>
           )}
           {/* It names groups: a one-word name of up to 100 characters breaks inside (§6.6). */}

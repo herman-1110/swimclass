@@ -280,6 +280,9 @@ Reason codes (from the database) → messages. `{gap}` is formatted from setting
 
 Empty states: no groups yet → "Your coach hasn't set up your lessons yet. Message your
 coach to get started." No times this day → "This day is fully booked. Try another day."
+Book, when the coach blocked time on the day (Herman, 2 Oct 2026): all of it → "Your coach
+isn't available on this day. Try another day." (in place of fully booked); part of it →
+"Your coach isn't available 9:00 am–12:00 pm." above the times.
 
 Coach screens (Add booking, lesson details, Students & payments, Add students, Settings,
 Message all customers) use this table first, then the table above. Braces come from the

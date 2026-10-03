@@ -1,6 +1,6 @@
 export { scheduleKeys } from './api/keys'
 export { useCoachDay, useCoachWeek } from './api/useCoachWeek'
-export { useCustomerWeek, useOwnLessonsOnDay } from './api/useCustomerWeek'
+export { useCoachHoursOnDay, useCustomerWeek, useOwnLessonsOnDay } from './api/useCustomerWeek'
 export { coachWeekQuery, customerWeekQuery } from './api/weekQueries'
 export { minutesIntoDay } from './model/days'
 export { lessonLine, lessonNotes, lessonPlace } from './model/describe'

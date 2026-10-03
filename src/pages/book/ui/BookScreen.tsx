@@ -3,7 +3,7 @@ import { useId } from 'react'
 import { bookPackageNote, type GroupBalance, PackageSummary } from '@/entities/balance'
 import { useUpcomingLessons } from '@/entities/booking'
 import { type Group, GroupPicker } from '@/entities/group'
-import { useOwnLessonsOnDay } from '@/entities/schedule'
+import { useCoachHoursOnDay, useOwnLessonsOnDay } from '@/entities/schedule'
 import { packagePriceCents, type PublicSettings } from '@/entities/settings'
 import { freeCountByDay } from '@/entities/slot'
 import { BookingSummary } from '@/features/book-lesson'
@@ -12,6 +12,7 @@ import { Card } from '@/shared/ui/Card'
 import { Segmented } from '@/shared/ui/Segmented'
 
 import { alreadyBookedText } from '../model/alreadyBooked'
+import { coachAwayText } from '../model/coachAway'
 import { useBookSelection } from '../model/useBookSelection'
 import { AREA, BOOK_GRID } from './bookGrid'
 import { DaySection } from './DaySection'
@@ -34,6 +35,8 @@ export function BookScreen({ settings, groups, balances }: BookScreenProps) {
   const book = useBookSelection(settings, groups)
   const startTimesId = useId()
   const own = useOwnLessonsOnDay(book.weekStart, book.day ?? book.weekStart)
+  // The same week_busy query: the day's blocked time, for "Your coach isn’t available …".
+  const hours = useCoachHoursOnDay(book.weekStart, book.day ?? book.weekStart)
   // Every group's, as My classes reads them (one request for them all, so changing the group
   // reads nothing): the summary places the new lesson among its group's by start time.
   const upcoming = useUpcomingLessons(groups.map((row) => row.group_id))
@@ -106,6 +109,7 @@ export function BookScreen({ settings, groups, balances }: BookScreenProps) {
         selected={book.picked?.starts_at ?? null}
         onSelect={book.selectTime}
         alreadyBooked={book.day && own.data ? alreadyBookedText(own.data, groups) : null}
+        coachAway={book.day && hours.data ? coachAwayText(hours.data) : null}
         className={AREA.times}
       />
       <BookingSummary

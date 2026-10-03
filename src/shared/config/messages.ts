@@ -29,6 +29,17 @@ export const NO_GROUPS_MESSAGE =
 export const DAY_FULLY_BOOKED_MESSAGE = 'This day is fully booked. Try another day.'
 
 /**
+ * Book, for a day the coach blocked all of with Block time (Herman, 2 Oct 2026: "Coach is not
+ * available on this day"). It takes the fully-booked line's place.
+ */
+export const COACH_AWAY_DAY_MESSAGE = 'Your coach isn’t available on this day. Try another day.'
+
+/** Book, for blocked time inside a day: "Your coach isn’t available 9:00 am–12:00 pm." */
+export function coachAwayMessage(ranges: readonly string[]): string {
+  return `Your coach isn’t available ${ranges.join(' and ')}.`
+}
+
+/**
  * Settings: put before the refusal's own words when the open hours were saved and the other
  * changes then weren't (prompt 10 TASK 7; the Settings spec §5.4, proposed).
  */
