@@ -116,10 +116,10 @@ describe('validate', () => {
       )
       expect(messageFor(problems.newName, coach)).toBe('Type their name (up to 100 characters).')
       expect(messageFor(problems.newUsername, coach)).toBe(
-        'Use 3 to 30 lowercase letters, numbers, dots or underscores.',
+        'Use 3 to 30 small letters, numbers, dots or underscores.',
       )
       expect(messageFor(problems.newEmail, coach)).toBe(
-        'Type an email address, like name@example.com.',
+        'Enter an email address like name@example.com.',
       )
       expect(messageFor(problems.newPhone, coach)).toBe(
         'Shorten the phone number to 30 characters or fewer.',

@@ -363,13 +363,16 @@ describe('CoachSettingsPage', () => {
       { target: { value: '-5' } },
     )
     save()
-    const window = 'Booking window has a value that isn’t allowed. Check it and save again.'
-    // At once, with no call: the first one near Save and focused, each under its row.
-    expect(screen.getAllByRole('alert').map((alert) => alert.textContent)).toEqual([window, window])
-    screen.getByText('1-to-2 price has a value that isn’t allowed. Check it and save again.')
-    screen.getByText(
-      'Lesson reminder to customers has a value that isn’t allowed. Check it and save again.',
-    )
+    // At once, with no call: the first one near Save, named, and focused; under each row,
+    // what to type there (triage 9).
+    const summary = 'Booking window: enter a whole number.'
+    expect(screen.getAllByRole('alert').map((alert) => alert.textContent)).toEqual([
+      summary,
+      summary,
+    ])
+    screen.getByText('Enter a whole number.')
+    screen.getByText('Enter the amount in RM, like 240 or 240.50.')
+    screen.getByText('Enter a time like 8:00 pm.')
     await waitFor(() => expect(document.activeElement).toBe(textbox('Booking window (weeks)')))
     expect(textbox('Lesson reminder to customers').getAttribute('aria-invalid')).toBe('true')
     expect((await saved())?.reminder_time).toBe('20:00:00')

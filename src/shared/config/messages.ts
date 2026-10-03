@@ -25,6 +25,12 @@ export const NETWORK_MESSAGE = 'Couldn’t reach the server. Check your connecti
 export const NO_GROUPS_MESSAGE =
   'Your coach hasn’t set up your lessons yet. Message your coach to get started.'
 
+/**
+ * A malformed email: Sign up and Forgot password (Supabase's email_address_invalid) and Add
+ * students (admin-accounts' invalid_email) use the same words (triage 9).
+ */
+const EMAIL_FORMAT_MESSAGE = 'Enter an email address like name@example.com.'
+
 /** DESIGN §6's empty state for a day on Book with no free start time. */
 export const DAY_FULLY_BOOKED_MESSAGE = 'This day is fully booked. Try another day.'
 
@@ -239,7 +245,7 @@ const CUSTOMER: Readonly<Record<string, Words>> = {
   same_password: 'That’s your current password. Choose a different one.',
   user_already_exists:
     'An account already uses that email. Log in, or use Forgot username or password.',
-  email_address_invalid: 'Enter an email address like name@example.com.',
+  email_address_invalid: EMAIL_FORMAT_MESSAGE,
   over_email_send_rate_limit:
     'We can’t send another email just yet. Wait a few minutes and try again.',
   // The words of the sign-up username check (DESIGN §4); admin-accounts refuses with it.
@@ -247,6 +253,7 @@ const CUSTOMER: Readonly<Record<string, Words>> = {
   // The auth forms' checks before any call (the auth spec §5.4, proposed). The format check
   // mirrors the sign-up trigger's rule, so it has the trigger's code. An empty or malformed
   // email uses email_address_invalid, and a short password weak_password (both above).
+  // Add students' new account (admin-accounts) uses the same username words (triage 9).
   invalid_username: 'Use 3 to 30 small letters, numbers, dots or underscores.',
   username_required: 'Enter your username.',
   password_required: 'Enter your password.',
@@ -361,24 +368,24 @@ const COACH: Readonly<Record<string, Words>> = {
   invalid_active: GENERIC_MESSAGE,
   not_customer: GENERIC_MESSAGE,
   group_inactive: GENERIC_MESSAGE,
-  // A new account from Add students (admin-accounts; the Add students spec §5.2.2, proposed),
-  // and the same form's checks before the call (its §5.3). The username words are that
-  // spec's; sign-up's check (customer table) says “small letters”.
-  invalid_username: 'Use 3 to 30 lowercase letters, numbers, dots or underscores.',
+  // A new account from Add students (admin-accounts; the Add students spec §5.2.2), and the
+  // same form's checks before the call (its §5.3). invalid_username has Sign up's words
+  // (customer table), and invalid_email Sign up's email words (triage 9).
   invalid_display_name: 'Type their name (up to 100 characters).',
   invalid_phone: 'Shorten the phone number to 30 characters or fewer.',
-  invalid_email: 'Type an email address, like name@example.com.',
-  // The next step added after the final review (CLAUDE.md copy rule; proposed, for Herman).
+  invalid_email: EMAIL_FORMAT_MESSAGE,
   email_taken:
     'Another account already uses this email. Choose that account under Account, or type a different email.',
-  // The coach's forms' checks before any call (proposed wording). Add students: no account
-  // chosen (its spec §5.3). Record payment and Add students: an amount parseRinggit can't read
-  // (the Students spec §5.3 W1's words; the Add students spec proposed "Type the amount in
-  // ringgit, like 240 or 240.50.", and one check gets one wording). Settings' Edit hours
-  // dialog: a range left on “Choose”, or a time outside the form's 5:00 am–11:00 pm (its spec
-  // §7.3). Block time: an end date before the start date (the Schedule spec §6.5).
+  // The coach's forms' checks before any call. Add students: no account chosen (its spec
+  // §5.3). Record payment, Add students and Settings' prices: an amount parseRinggit can't
+  // read. Settings: a count that isn't a whole number, or a time it can't read (triage 9;
+  // under the box, so the box's label says which). Settings' Edit hours dialog: a range left
+  // on “Choose”, or a time outside the form's 5:00 am–11:00 pm (its spec §7.3). Block time: an
+  // end date before the start date (the Schedule spec §6.5).
   account_required: 'Choose an account, or create a new one.',
   amount_format: 'Enter the amount in RM, like 240 or 240.50.',
+  count_format: 'Enter a whole number.',
+  time_format: 'Enter a time like 8:00 pm.',
   hours_incomplete: 'Choose a start and an end time.',
   hours_out_of_range: 'Open hours must be between 5:00 am and 11:00 pm.',
   last_day_before_first: 'The last day must be on or after the first day.',

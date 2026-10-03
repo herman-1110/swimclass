@@ -80,7 +80,7 @@ describe('usernameStatus', () => {
     expect(usernameStatus('available', now)).toEqual({ text: 'Available', warn: false })
     expect(usernameStatus('taken', now)).toEqual({ text: 'That username is taken.', warn: true })
     expect(usernameStatus('invalid', now)).toEqual({
-      text: 'Use 3 to 30 lowercase letters, numbers, dots or underscores.',
+      text: 'Use 3 to 30 small letters, numbers, dots or underscores.',
       warn: true,
     })
   })

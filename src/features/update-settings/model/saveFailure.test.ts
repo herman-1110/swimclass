@@ -114,10 +114,20 @@ describe('describeSaveFailure', () => {
 })
 
 describe('describeInvalidFields', () => {
-  it('words every setting the form couldn’t read', () => {
-    expect(describeInvalidFields(['travel_gap_minutes', 'price_1to3_cents'])).toEqual({
-      travel_gap_minutes: GAP_REFUSED,
-      price_1to3_cents: '1-to-3 price has a value that isn’t allowed. Check it and save again.',
+  it('says what to type under each box the form couldn’t read, and names the first', () => {
+    expect(
+      describeInvalidFields(['travel_gap_minutes', 'price_1to3_cents', 'reminder_time']),
+    ).toEqual({
+      fields: {
+        travel_gap_minutes: 'Enter a whole number.',
+        price_1to3_cents: 'Enter the amount in RM, like 240 or 240.50.',
+        reminder_time: 'Enter a time like 8:00 pm.',
+      },
+      summary: 'Travel gap: enter a whole number.',
     })
+    expect(describeInvalidFields(['digest_time']).summary).toBe(
+      'Tomorrow’s schedule for you: enter a time like 8:00 pm.',
+    )
+    expect(describeInvalidFields([])).toEqual({ fields: {}, summary: null })
   })
 })

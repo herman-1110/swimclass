@@ -2,7 +2,7 @@ import { type Weekday, WEEKDAYS } from '@/entities/open-hours'
 import { toAppError } from '@/shared/api/rpc'
 import { messageFor, OPEN_HOURS_SAVED_LEAD } from '@/shared/config/messages'
 
-import { FIELD_LABELS, isSettingsField } from './fields'
+import { FIELD_LABELS, isSettingsField, PRICE_FIELDS, TIME_FIELDS } from './fields'
 import type { DayErrors, FieldErrors, SaveRequest, SettingsField } from './types'
 
 /** Where a refused save shows its words (coach-settings §6.8), and what gets focus. */
@@ -67,14 +67,29 @@ export function describeSaveFailure(
   return failure
 }
 
-/** The form's own checks (§5.3): every setting whose text isn't a number, an amount or a time. */
-export function describeInvalidFields(invalid: readonly SettingsField[]): FieldErrors {
+/** What a box the form couldn't read asks for: an amount, a time or a whole number. */
+function formatCode(field: SettingsField): string {
+  if ((PRICE_FIELDS as readonly SettingsField[]).includes(field)) return 'amount_format'
+  if ((TIME_FIELDS as readonly SettingsField[]).includes(field)) return 'time_format'
+  return 'count_format'
+}
+
+/**
+ * The form's own checks (§5.3): every setting whose text isn't a number, an amount or a time,
+ * with what to type under its box ("Enter a time like 8:00 pm."), and the first one near Save,
+ * where the label says which box ("Lesson reminder to customers: enter a time like 8:00 pm.").
+ */
+export function describeInvalidFields(invalid: readonly SettingsField[]): {
+  fields: FieldErrors
+  summary: string | null
+} {
   const fields: FieldErrors = {}
   for (const field of invalid) {
-    fields[field] = messageFor(
-      { code: 'invalid_setting', detail: { field } },
-      { audience: 'coach', fieldLabels: FIELD_LABELS },
-    )
+    fields[field] = messageFor({ code: formatCode(field) }, { audience: 'coach' })
   }
-  return fields
+  const [first] = invalid
+  const words = first === undefined ? undefined : fields[first]
+  if (first === undefined || words === undefined) return { fields, summary: null }
+  const summary = `${FIELD_LABELS[first]}: ${words.charAt(0).toLowerCase()}${words.slice(1)}`
+  return { fields, summary }
 }

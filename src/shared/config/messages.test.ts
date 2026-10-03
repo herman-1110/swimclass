@@ -202,12 +202,13 @@ const COACH_CASES: Case[] = [
     'Travel gap has a value that isn’t allowed. Check it and save again.',
   ],
   ['invalid_message', {}, 'The message must be 1 to 1000 characters. Change it and send again.'],
-  // admin-accounts, for a new account on Add students (its spec §5.2.2, proposed).
-  ['invalid_username', {}, 'Use 3 to 30 lowercase letters, numbers, dots or underscores.'],
+  // admin-accounts, for a new account on Add students (its spec §5.2.2), in Sign up's words
+  // (triage 9).
+  ['invalid_username', {}, 'Use 3 to 30 small letters, numbers, dots or underscores.'],
   ['username_taken', {}, 'That username is taken.'],
   ['invalid_display_name', {}, 'Type their name (up to 100 characters).'],
   ['invalid_phone', {}, 'Shorten the phone number to 30 characters or fewer.'],
-  ['invalid_email', {}, 'Type an email address, like name@example.com.'],
+  ['invalid_email', {}, 'Enter an email address like name@example.com.'],
   [
     'email_taken',
     {},
@@ -217,6 +218,8 @@ const COACH_CASES: Case[] = [
   // Settings and Schedule specs).
   ['account_required', {}, 'Choose an account, or create a new one.'],
   ['amount_format', {}, 'Enter the amount in RM, like 240 or 240.50.'],
+  ['count_format', {}, 'Enter a whole number.'],
+  ['time_format', {}, 'Enter a time like 8:00 pm.'],
   ['hours_incomplete', {}, 'Choose a start and an end time.'],
   ['hours_out_of_range', {}, 'Open hours must be between 5:00 am and 11:00 pm.'],
   ['last_day_before_first', {}, 'The last day must be on or after the first day.'],
@@ -561,9 +564,9 @@ describe('what messageFor accepts', () => {
       'Use 3 to 30 small letters, numbers, dots or underscores.',
     )
     expect(messageFor({ code: 'name_required' }, COACH)).toBe('Enter your name.')
-    // Add students' new account: the same rule in the coach's words.
+    // Add students' new account: the same rule in the same words (triage 9).
     expect(messageFor({ code: 'invalid_username' }, COACH)).toBe(
-      'Use 3 to 30 lowercase letters, numbers, dots or underscores.',
+      'Use 3 to 30 small letters, numbers, dots or underscores.',
     )
     // Record payment, Settings' hours, Block time.
     expect(messageFor({ code: 'amount_format' }, COACH)).toBe(

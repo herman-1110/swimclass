@@ -122,10 +122,10 @@ export function SettingsFormProvider({
       // The form's own checks first: every setting that isn't a number, an amount or a
       // time is marked at once, and nothing is sent (§5.3).
       if (check.invalid.length > 0) {
-        const errors = describeInvalidFields(check.invalid)
+        const { fields, summary } = describeInvalidFields(check.invalid)
         const [first] = check.invalid
-        setFieldErrors(errors)
-        setSummary(errors[first] ?? null)
+        setFieldErrors(fields)
+        setSummary(summary)
         focus(FIELD_IDS[first])
         return
       }

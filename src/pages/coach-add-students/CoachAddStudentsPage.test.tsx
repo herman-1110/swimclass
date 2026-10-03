@@ -423,7 +423,7 @@ describe('CoachAddStudentsPage', () => {
     type('Username', 'ab')
     expect(
       await screen.findByText(
-        'Use 3 to 30 lowercase letters, numbers, dots or underscores.',
+        'Use 3 to 30 small letters, numbers, dots or underscores.',
         {},
         { timeout: 3000 },
       ),
