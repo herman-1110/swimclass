@@ -106,7 +106,7 @@ describe('BookPage', () => {
       screen.getByRole<HTMLButtonElement>('button', { name: 'Mon 21 Sep, past' }).disabled,
     ).toBe(true)
     const week = within(screen.getByRole('group', { name: 'Week' }))
-    expect(week.getByText('21 Sep – 27 Sep')).toBeTruthy()
+    expect(week.getByText('21–27 Sep')).toBeTruthy()
     expect(week.getByRole('button', { name: 'Previous week' }).getAttribute('aria-disabled')).toBe(
       'true',
     )
@@ -286,7 +286,7 @@ describe('BookPage', () => {
     await renderBook('meiling', '/book?day=2026-10-25')
     await startTimes('Sun 25 Oct')
     const week = within(screen.getByRole('group', { name: 'Week' }))
-    expect(week.getByText('19 Oct – 25 Oct')).toBeTruthy()
+    expect(week.getByText('19–25 Oct')).toBeTruthy()
     expect(week.getByRole('button', { name: 'Next week' }).getAttribute('aria-disabled')).toBe(
       'true',
     )

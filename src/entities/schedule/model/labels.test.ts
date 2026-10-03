@@ -38,7 +38,7 @@ describe('days', () => {
 describe('week labels', () => {
   it('gives the customer the drawn pattern, also inside one month', () => {
     expect(formatWeekLabel('2026-09-28')).toBe('28 Sep – 4 Oct')
-    expect(formatWeekLabel('2026-09-21')).toBe('21 Sep – 27 Sep')
+    expect(formatWeekLabel('2026-09-21')).toBe('21–27 Sep')
   })
 
   it('gives the coach the year, once', () => {

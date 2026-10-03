@@ -21,7 +21,7 @@ describe('WeekNav', () => {
 
   it('keeps a disabled arrow focusable but lets it do nothing (the end of the booking window)', () => {
     const onNext = vi.fn()
-    render(<WeekNav label="19 Oct – 25 Oct" onPrevious={() => {}} onNext={onNext} nextDisabled />)
+    render(<WeekNav label="19–25 Oct" onPrevious={() => {}} onNext={onNext} nextDisabled />)
     const next = screen.getByRole('button', { name: 'Next week' })
     next.focus()
     fireEvent.click(next)

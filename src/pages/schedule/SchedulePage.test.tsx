@@ -152,8 +152,8 @@ describe('SchedulePage', () => {
 
   it('opens on this week, with past days as plain text, and writes the week in the address', async () => {
     const router = await renderAs('meiling', ROUTES.schedule)
-    expect(weekLabel()?.textContent).toBe('21 Sep – 27 Sep')
-    expect(await weekInWords('21 Sep – 27 Sep')).toEqual([
+    expect(weekLabel()?.textContent).toBe('21–27 Sep')
+    expect(await weekInWords('21–27 Sep')).toEqual([
       'Mon 21 Sep: free 5:30 pm to 10:00 pm',
       'Tue 22 Sep: free 5:30 pm to 10:00 pm',
       'Wed 23 Sep: free 5:30 pm to 10:00 pm',
@@ -181,7 +181,7 @@ describe('SchedulePage', () => {
     expect(previous().getAttribute('aria-disabled')).toBe('true')
     previous().focus()
     fireEvent.click(previous())
-    expect(weekLabel()?.textContent).toBe('21 Sep – 27 Sep')
+    expect(weekLabel()?.textContent).toBe('21–27 Sep')
     expect(document.activeElement).toBe(previous())
   })
 
@@ -189,36 +189,36 @@ describe('SchedulePage', () => {
     const router = await renderAs('meiling', `${ROUTES.schedule}?week=2026-09-28`)
     await waitFor(() => expect(next().getAttribute('aria-disabled')).toBeNull())
     fireEvent.click(next())
-    expect(weekLabel()?.textContent).toBe('5 Oct – 11 Oct')
+    expect(weekLabel()?.textContent).toBe('5–11 Oct')
     expect(router.state.location.search).toBe('?week=2026-10-05')
     expect(router.state.historyAction).toBe('REPLACE')
     // A week with no lessons: the weekly hours only (customer-schedule §8.3).
-    const words = await weekInWords('5 Oct – 11 Oct')
+    const words = await weekInWords('5–11 Oct')
     expect(words[0]).toBe('Mon 5 Oct: free 5:30 pm to 10:00 pm')
     expect(words[5]).toBe('Sat 10 Oct: free 7:00 am to 12:00 pm, free 4:00 pm to 10:00 pm')
     expect(screen.queryByText('You')).toBeNull()
 
     fireEvent.click(next())
     fireEvent.click(next())
-    expect(weekLabel()?.textContent).toBe('19 Oct – 25 Oct')
+    expect(weekLabel()?.textContent).toBe('19–25 Oct')
     // The last week of the window: Next keeps focus and does nothing.
     expect(next().getAttribute('aria-disabled')).toBe('true')
     next().focus()
     fireEvent.click(next())
-    expect(weekLabel()?.textContent).toBe('19 Oct – 25 Oct')
+    expect(weekLabel()?.textContent).toBe('19–25 Oct')
     expect(document.activeElement).toBe(next())
 
     fireEvent.click(previous())
-    expect(weekLabel()?.textContent).toBe('12 Oct – 18 Oct')
+    expect(weekLabel()?.textContent).toBe('12–18 Oct')
     expect(router.state.location.search).toBe('?week=2026-10-12')
   })
 
   it.each([
-    ['2026-11-02', '19 Oct – 25 Oct', '2026-10-19'],
+    ['2026-11-02', '19–25 Oct', '2026-10-19'],
     ['2026-10-01', '28 Sep – 4 Oct', '2026-09-28'],
-    ['2026-09-01', '21 Sep – 27 Sep', '2026-09-21'],
-    ['2026-02-30', '21 Sep – 27 Sep', '2026-09-21'],
-    ['soon', '21 Sep – 27 Sep', '2026-09-21'],
+    ['2026-09-01', '21–27 Sep', '2026-09-21'],
+    ['2026-02-30', '21–27 Sep', '2026-09-21'],
+    ['soon', '21–27 Sep', '2026-09-21'],
   ])('shows ?week=%s as %s and corrects the address', async (asked, label, monday) => {
     const router = await renderAs('meiling', `${ROUTES.schedule}?week=${asked}`)
     await waitFor(() => expect(weekLabel()?.textContent).toBe(label))
@@ -241,8 +241,8 @@ describe('SchedulePage', () => {
 
     // 2 Nov is past the window's last week: that week is shown instead, and only it is read.
     settings.release()
-    await waitFor(() => expect(weekLabel()?.textContent).toBe('19 Oct – 25 Oct'))
-    await weekInWords('19 Oct – 25 Oct')
+    await waitFor(() => expect(weekLabel()?.textContent).toBe('19–25 Oct'))
+    await weekInWords('19–25 Oct')
     expect(router.state.location.search).toBe('?week=2026-10-19')
     expect(settings.weeksRead()).toEqual(['2026-10-19'])
     expect(screen.getAllByRole('link')).toHaveLength(7)
@@ -271,7 +271,7 @@ describe('SchedulePage', () => {
     ).toContain('text-accent')
     // Without the settings only this week is known to be in the window: the week asked for
     // gives way to it, and Next waits.
-    expect(weekLabel()?.textContent).toBe('21 Sep – 27 Sep')
+    expect(weekLabel()?.textContent).toBe('21–27 Sep')
     await waitFor(() => expect(router.state.location.search).toBe('?week=2026-09-21'))
     expect(next().getAttribute('aria-disabled')).toBe('true')
     // The headers and their links stay.
@@ -295,7 +295,7 @@ describe('SchedulePage', () => {
     // Signed in, Try again brings the week, and focus goes on to it.
     await logIn('meiling', DEMO_PASSWORD)
     fireEvent.click(retry)
-    expect(await weekInWords('21 Sep – 27 Sep')).toHaveLength(7)
+    expect(await weekInWords('21–27 Sep')).toHaveLength(7)
     expect(screen.queryByRole('alert')).toBeNull()
     expect(retry.isConnected).toBe(false)
     const focused = document.activeElement

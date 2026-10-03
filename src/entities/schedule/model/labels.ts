@@ -64,12 +64,13 @@ export function formatDayLong(day: DateKey): string {
 }
 
 /**
- * The customer's week (design/Schedule.dc.html, Main.dc.html): "28 Sep – 4 Oct", and the
- * same pattern inside one month, "21 Sep – 27 Sep" (customer-schedule Q12, book Q2).
+ * The customer's week (design/Schedule.dc.html, Main.dc.html): "28 Sep – 4 Oct", and inside
+ * one month "21–27 Sep", the coach's pattern without the year (triage 10).
  */
 export function formatWeekLabel(weekStart: DateKey): string {
   const first = parts(weekStart)
   const last = parts(addDays(weekStart, 6))
+  if (first.month === last.month) return `${first.date}–${last.date} ${last.month}`
   return `${first.date} ${first.month} – ${last.date} ${last.month}`
 }
 
