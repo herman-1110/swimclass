@@ -3,6 +3,58 @@
 Update this file at the end of every Claude Code session. Newest entry on top.
 Keep entries short; link to files instead of pasting code.
 
+## v0.10 · 3 Oct 2026 · Owner answers to triage questions 1–6
+**State**: `frontend-first` (not pushed; 113 commits ahead of `origin/main`, with this
+entry). At eae90e1: typecheck, lint, format, 1,817 unit tests (243 files) and the build
+pass. The main chunk is 112.0 kB gzipped (+0.1). `test:db` wasn't run (nothing under
+`supabase/` changed). Herman's `npm run dev` runs on this checkout.
+**Done** (Herman's answers; "triage" is `frontend-plan/review/final/triage.json`
+`owner_questions`)
+- Add students, the v0.9 question: keep today's email invite (BR-3). Nothing to build, and
+  the v0.9 open issue is closed.
+- Triage 1 and 2, in 2ef1e9e and 23b1ce1: Unpaid is the group's status (PRD BR-22, DESIGN
+  §3, §4).
+  - `entities/balance` `owesPayment`: the view's unpaid, or an active group whose current
+    package no payment covers yet (a new group that hasn't paid, or a package used up with
+    nothing booked). A paused group that used up what it paid owes nothing.
+  - Students & payments (pill, tabs, figures, Record payment), Needs attention and My
+    classes' pill all use it.
+  - Book's card says Paid or Unpaid for the package it names. In Sofia's case Package 2
+    stays Paid and the note asks for Package 3.
+  - Lessons carry no Unpaid anywhere: the day view's flag, the grid's spoken "unpaid", the
+    lesson details' pill, and Today's drawn "Unpaid, collect today" and "first lesson of
+    Package 6" are gone.
+- Triage 3, d07d288: Book says why a blocked day has no times, from week_busy's `closed`
+  (no new request). A fully blocked day reads "Your coach isn’t available on this day. Try
+  another day." in place of fully booked; part of a day reads "Your coach isn’t available
+  7:00 am–12:00 pm." (DESIGN §6).
+- Triage 4, eae90e1: Schedule keeps "Tap a day to book it". Needs attention lists each
+  approved customer with no group ("No group yet · can’t book") with "Add students", which
+  opens on that account. Booking without a group is impossible in the database, so this
+  comes before any attempt. An email when they try would need a database function and the
+  outbox (wiring).
+- Triage 5, f913826: the phone day view shows placeholders while the next week loads. The
+  grid keeps the last week, dimmed (coach-schedule §6.1 changed for phones).
+- Triage 6, e57a36e (Herman left it to us): from 1280 px the payment column opens on a group
+  just added, so only that row is highlighted.
+- Checked in Chrome on the demo database: the blocked days on Book at 390 and 1280; a new
+  sign-up, once approved, appears in Needs attention, and "Add students" opens on it. Shots
+  are in `frontend-plan/review/answers-1-6/`.
+**Next**
+1. Herman answers triage 7–17 and the copy list (`review/final/copy/proposed-copy.md`), then
+   says whether to merge `frontend-first` into `main` and push.
+2. Then v0.8 Next 2 and 3: clean up the worktrees and branches, and do the wiring
+   (prompts 05–11).
+**Decisions**
+- Unpaid lives on groups only. `coach_week` still returns each lesson's `unpaid`, but the
+  UI no longer reads it. The coach digest email (BR-33) lists unpaid groups, which fits.
+**Open issues**
+- Triage 7–17, the copy list and the fixers' word questions (v0.8) are still open. The word
+  for a package that isn't paid is now "Unpaid".
+- Q4 ("Pay RM [price]") is still open.
+**Manual steps waiting on Herman**
+- As in v0.9.
+
 ## v0.9 · 2 Oct 2026 · Owner answers; anime.js and button hover motion
 **State**: `frontend-first` (not pushed; 106 commits ahead of `origin/main`, with this
 entry). At dbf225f: typecheck, lint, format and the build pass. The full unit run passed
