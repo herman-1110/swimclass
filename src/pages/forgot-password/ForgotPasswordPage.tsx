@@ -9,10 +9,10 @@ import { PageHeader } from '@/shared/ui/PageHeader'
 
 import { ResetLinkSent } from './ui/ResetLinkSent'
 
-// The link that opens this page says "Forgot username or password?"; the heading keeps the
-// route test's "Forgot your password?" (conventions §12.3), and the text says the link shows
-// the username too (auth spec C9).
-const TITLE = 'Forgot your password?'
+// The heading matches the link that opens this page, "Forgot username or password?", since
+// the emailed link shows the username too (auth spec C9; copy-8, 3 Oct 2026, in place of
+// conventions §12.3's "Forgot your password?").
+const TITLE = 'Forgot your username or password?'
 
 /**
  * Forgot password (auth spec §2.4; not drawn, so in Log in's card and style). Once the link

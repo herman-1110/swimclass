@@ -39,7 +39,7 @@ function renderReset(session: SessionState) {
   const router = createMemoryRouter(
     [
       { path: ROUTES.resetPassword, Component: ResetPasswordPage },
-      { path: ROUTES.forgotPassword, element: <h1>Forgot your password?</h1> },
+      { path: ROUTES.forgotPassword, element: <h1>Forgot your username or password?</h1> },
       { path: ROUTES.login, element: <h1>Welcome back</h1> },
       { path: ROUTES.home, element: <h1>Start</h1> },
     ],

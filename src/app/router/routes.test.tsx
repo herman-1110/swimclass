@@ -104,7 +104,7 @@ function routesWithSettings(lazy: RouteObject['lazy']): RouteObject[] {
 const pages = [
   ['/login', null, 'Welcome back'],
   ['/signup', null, 'Create an account'],
-  ['/forgot-password', null, 'Forgot your password?'],
+  ['/forgot-password', null, 'Forgot your username or password?'],
   // Signed out, the reset link has nothing to work with (auth spec §2.5)
   ['/reset-password', null, 'This link has expired'],
   ['/pending', WAITING, 'Waiting for approval'],
@@ -504,7 +504,7 @@ describe('sign-in pages', () => {
     fireEvent.click(screen.getByRole('link', { name: 'Already have an account? Log in' }))
     await findPageHeading('Welcome back')
     fireEvent.click(screen.getByRole('link', { name: 'Forgot username or password?' }))
-    await findPageHeading('Forgot your password?')
+    await findPageHeading('Forgot your username or password?')
     expect(router.state.location.pathname).toBe('/forgot-password')
   })
 })

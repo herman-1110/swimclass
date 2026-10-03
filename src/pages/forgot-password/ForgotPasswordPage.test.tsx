@@ -59,11 +59,14 @@ function send() {
 describe('ForgotPasswordPage', () => {
   it('asks for the email, and says the link shows the username too', async () => {
     renderForgot()
-    const heading = screen.getByRole('heading', { level: 1, name: 'Forgot your password?' })
+    const heading = screen.getByRole('heading', {
+      level: 1,
+      name: 'Forgot your username or password?',
+    })
     expect(heading.nextElementSibling?.textContent).toBe(
       'Enter the email you signed up with. We’ll send you a link that shows your username and lets you set a new password.',
     )
-    expect(screen.getByRole('form', { name: 'Forgot your password?' })).toBeTruthy()
+    expect(screen.getByRole('form', { name: 'Forgot your username or password?' })).toBeTruthy()
     expect(
       ['id', 'type', 'inputmode', 'autocomplete', 'autocapitalize'].map((name) =>
         email().getAttribute(name),
@@ -73,7 +76,9 @@ describe('ForgotPasswordPage', () => {
     expect(screen.getByRole('link', { name: 'Back to log in' }).getAttribute('href')).toBe(
       ROUTES.login,
     )
-    await waitFor(() => expect(document.title).toBe('Forgot your password? · Swim Class'))
+    await waitFor(() =>
+      expect(document.title).toBe('Forgot your username or password? · Swim Class'),
+    )
   })
 
   it('names an empty or malformed address before any call', () => {
@@ -98,7 +103,7 @@ describe('ForgotPasswordPage', () => {
     expect(document.activeElement).toBe(email())
     expect(screen.queryByRole('alert')).toBeNull()
     // Enter in the field: focus can't move, so the message is said as an alert.
-    fireEvent.submit(screen.getByRole('form', { name: 'Forgot your password?' }))
+    fireEvent.submit(screen.getByRole('form', { name: 'Forgot your username or password?' }))
     expect(document.activeElement).toBe(email())
     expect(screen.getByRole('alert').textContent).toBe(
       'Enter an email address like name@example.com.',
@@ -145,6 +150,8 @@ describe('ForgotPasswordPage', () => {
       'We can’t send another email just yet. Wait a few minutes and try again.',
     )
     expect(screen.getByRole('button', { name: 'Send reset link' })).toBeTruthy()
-    expect(screen.getByRole('heading', { level: 1, name: 'Forgot your password?' })).toBeTruthy()
+    expect(
+      screen.getByRole('heading', { level: 1, name: 'Forgot your username or password?' }),
+    ).toBeTruthy()
   })
 })
