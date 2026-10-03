@@ -76,7 +76,7 @@ describe('CoachDayView', () => {
       ['11:00 am', 'Adam, Alya & Amir', '11:00 am–12:00 pm · 1-to-3 · Maple Condo'],
       ['12:00 pm', 'Closed', '12:00–4:00 pm'],
       ['4:00 pm', 'Travel', '4:00–5:00 pm'],
-      ['5:00 pm', 'Hana', '5:00–6:00 pm · Sunrise Res.', 'Unpaid'],
+      ['5:00 pm', 'Hana', '5:00–6:00 pm · Sunrise Res.'],
       ['6:00 pm', 'Travel', '6:00–7:00 pm'],
       ['7:00 pm', 'Free', '7:00–10:00 pm'],
     ])
@@ -96,7 +96,7 @@ describe('CoachDayView', () => {
     const list = screen.getByRole('list', { name: 'Friday 2 Oct' })
     const lessons = within(list).getAllByRole('button')
     expect(lessons.map((button) => button.textContent)).toEqual([
-      'Wei Jie 7:30–8:30 pm · Palm Court Unpaid',
+      'Wei Jie 7:30–8:30 pm · Palm Court',
       'Kai 9:00–10:00 pm · Palm Court Gap override',
     ])
     // Long names and places wrap inside the block, even inside a word (coach-schedule §6.7).

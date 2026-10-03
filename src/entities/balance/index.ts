@@ -8,6 +8,7 @@ export {
   isUnpaidAfter,
   nextBookingPackageNo,
   nextPaymentPackageNo,
+  owesPayment,
   packageBarLabel,
   packageCaption,
   packageCounts,

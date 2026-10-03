@@ -6,7 +6,13 @@ import { Pill } from '@/shared/ui/Pill'
 import { SegmentBar } from '@/shared/ui/SegmentBar'
 import { Tag } from '@/shared/ui/Tag'
 
-import { isPackagePaid, packageCaption, packageCounts, packageTitle } from '../model/packages'
+import {
+  isPackagePaid,
+  owesPayment,
+  packageCaption,
+  packageCounts,
+  packageTitle,
+} from '../model/packages'
 import type { GroupBalance } from '../model/types'
 
 type PackageSummaryProps = {
@@ -23,16 +29,17 @@ type PackageSummaryProps = {
       /**
        * book (default): Book's package card and the coach's lesson details. "1-to-2 ·
        * Package 4" with "Paid" or "Unpaid" (orange) beside it, the bar, "0 used · 2 booked ·
-       * 2 left to book". "Paid" only while payments cover the package; a package no payment
-       * covers that isn't unpaid either (a new group that hasn't paid) has no word, as My
-       * classes shows no paid line without a payment.
+       * 2 left to book". "Paid" only while payments cover that package, otherwise "Unpaid"
+       * (Herman, 2 Oct 2026), including a new group that hasn't paid. A later unpaid package
+       * is the note's to say ("Package 3 isn’t paid yet …").
        */
       variant?: 'book'
     }
   | {
       /**
        * account: a block of My classes' Packages list. The names and type tag, the Unpaid pill
-       * or `lastPaid` beside them, the bar, "Package 4 · 0 used · 2 booked · 2 left to book".
+       * while the group owes a payment (owesPayment) or `lastPaid` beside them, the bar,
+       * "Package 4 · 0 used · 2 booked · 2 left to book".
        */
       variant: 'account'
       /** The group's names: "Aiman & Sofia". */
@@ -60,7 +67,8 @@ export function PackageSummary(props: PackageSummaryProps) {
   const { balance, typeLabel, note } = props
   const account = props.variant === 'account'
   const instructions = account ? props.howToPay?.trim() : undefined
-  const status = balance.unpaid ? 'Unpaid' : isPackagePaid(balance) ? 'Paid' : null
+  // Book's word is about the package it names; My classes' pill is about the group.
+  const status = isPackagePaid(balance) ? 'Paid' : 'Unpaid'
 
   return (
     <div className="flex flex-col gap-2">
@@ -70,16 +78,14 @@ export function PackageSummary(props: PackageSummaryProps) {
             <span className="min-w-0 text-body font-semibold break-words">{props.names}</span>
             <Tag>{typeLabel}</Tag>
           </span>
-          {balance.unpaid ? <Pill tone="warn">Unpaid</Pill> : props.lastPaid}
+          {owesPayment(balance) ? <Pill tone="warn">Unpaid</Pill> : props.lastPaid}
         </div>
       ) : (
         <div className="flex items-baseline justify-between gap-2">
           <span className="text-body font-semibold">{packageTitle(typeLabel, balance)}</span>
-          {status && (
-            <span className={cn('text-label', balance.unpaid ? 'text-warn' : 'text-muted')}>
-              {status}
-            </span>
-          )}
+          <span className={cn('text-label', status === 'Unpaid' ? 'text-warn' : 'text-muted')}>
+            {status}
+          </span>
         </div>
       )}
       <SegmentBar

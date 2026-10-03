@@ -88,7 +88,7 @@ export function accountMatches(
 export function inFilter(row: PackageRow, filter: PackageFilter): boolean {
   if (filter === 'unpaid') return row.bucket === 'unpaid'
   if (filter === 'last-lesson') return row.bucket === 'last-lesson'
-  if (filter === 'paid') return !row.balance.unpaid
+  if (filter === 'paid') return row.bucket !== 'unpaid'
   return true
 }
 

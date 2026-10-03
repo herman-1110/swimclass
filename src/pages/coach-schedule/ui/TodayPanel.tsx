@@ -16,9 +16,10 @@ type TodayPanelProps = {
 /**
  * "Today, Sat 26 Sep" (design/AdminSchedule.dc.html L204-218; the Schedule spec §3.5): each
  * of today's lessons in start order with its time, names, "Kiara Park · done" or "Palm
- * Court · 1-to-2, lesson 1 of 4", and "Unpaid, collect today" for a group that owes.
- * Cancelled lessons are left out; excused ones say so. It reads today's week, the same query
- * as the grid when that week is shown.
+ * Court · 1-to-2, lesson 1 of 4". Cancelled lessons are left out; excused ones say so. It
+ * reads today's week, the same query as the grid when that week is shown. No "Unpaid, collect
+ * today" (drawn): paying is the group's status, shown on Students & payments and in Needs
+ * attention, not on each lesson (Herman, 2 Oct 2026).
  */
 export function TodayPanel({ today }: TodayPanelProps) {
   const titleId = useId()
@@ -66,14 +67,6 @@ export function TodayPanel({ today }: TodayPanelProps) {
                 <span className="text-small text-muted">
                   {`${lesson.location} · ${formatLessonPosition(lesson)}`}
                 </span>
-                {lesson.unpaid && (
-                  <>
-                    {' '}
-                    <span className="text-small font-semibold text-warn">
-                      Unpaid, collect today
-                    </span>
-                  </>
-                )}
               </div>
             </li>
           ))}

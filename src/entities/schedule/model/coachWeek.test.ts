@@ -194,8 +194,11 @@ describe('the coach’s words for a day and a lesson', () => {
     expect(lessonLine(chloe)).toBe('10:00 am–12:00 pm · Vista Heights · 2 lessons')
   })
 
-  it('lists a lesson’s flags in the drawing’s order', () => {
-    expect(lessonNotes(saturday.lessons[3])).toEqual(['Unpaid'])
+  it('lists a lesson’s flags in the drawing’s order, never Unpaid', () => {
+    // An unpaid group's lesson: paying is the group's status, not each lesson's (Herman,
+    // 2 Oct 2026).
+    expect(saturday.lessons[3].unpaid).toBe(true)
+    expect(lessonNotes(saturday.lessons[3])).toEqual([])
     expect(lessonNotes(saturday.lessons[0])).toEqual([])
     expect(
       lessonNotes(
@@ -205,7 +208,7 @@ describe('the coach’s words for a day and a lesson', () => {
           last_lesson: true,
         }),
       ),
-    ).toEqual(['Unpaid', 'Last paid lesson', 'Gap override'])
+    ).toEqual(['Last paid lesson', 'Gap override'])
   })
 })
 

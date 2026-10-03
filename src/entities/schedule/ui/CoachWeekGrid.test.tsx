@@ -59,11 +59,11 @@ describe('CoachWeekGrid', () => {
     for (const name of [
       'Jun Hao, 7:30–8:30 pm, Vista Heights, Mon 28 Sep',
       'Priya, 5:30–6:30 pm, Seri Maya, Thu 1 Oct, last paid lesson',
-      'Wei Jie, 7:30–8:30 pm, Palm Court, Fri 2 Oct, unpaid',
+      'Wei Jie, 7:30–8:30 pm, Palm Court, Fri 2 Oct',
       'Kai, 9:00–10:00 pm, Gap override, Palm Court, Fri 2 Oct',
       'Aiman & Sofia, 9:00–10:00 am, 1-to-2 · Palm Court, Sat 3 Oct',
       'Adam, Alya & Amir, 11 am–12 pm, 1-to-3 · Maple Condo, Sat 3 Oct',
-      'Hana, 5:00–6:00 pm, Sunrise Res., Sat 3 Oct, unpaid',
+      'Hana, 5:00–6:00 pm, Sunrise Res., Sat 3 Oct',
       'Chloe, 10 am–12 pm, Vista Heights, 2 lessons, Sun 4 Oct',
     ]) {
       expect(screen.getByRole('button', { name })).toBeTruthy()
@@ -76,7 +76,7 @@ describe('CoachWeekGrid', () => {
     // One line for screen readers, so no comma sits apart ("Wei Jie , 7:30–8:30 pm") or at
     // the end of a cut-off line, beyond the block (coach-schedule §7.2).
     const spoken = [...weiJie.querySelectorAll('.sr-only')].map((span) => span.textContent)
-    expect(spoken).toEqual(['Wei Jie, 7:30–8:30 pm, Palm Court, Fri 2 Oct, unpaid'])
+    expect(spoken).toEqual(['Wei Jie, 7:30–8:30 pm, Palm Court, Fri 2 Oct'])
     const drawn = [...weiJie.children].filter((child) => !child.classList.contains('sr-only'))
     expect(drawn.map((line) => line.textContent)).toEqual(['Wei Jie', '7:30–8:30 pm', 'Palm Court'])
     expect(drawn.every((line) => line.getAttribute('aria-hidden') === 'true')).toBe(true)

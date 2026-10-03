@@ -73,9 +73,12 @@ describe('BalanceStatus', () => {
       </>,
     )
     expect(screen.queryByText('Paid')).toBeNull()
+    // Unpaid in orange until the payment comes in (Herman, 2 Oct 2026).
+    const pills = [...container.querySelectorAll('.rounded-full')]
+    expect(pills.map((pill) => pill.textContent)).toEqual(['Unpaid', 'Unpaid'])
+    expect(pills[0].className).toContain('text-warn')
     expect(screen.getByText('New student').className).toContain('text-muted')
     expect(screen.getByText('New student · no payments yet')).toBeTruthy()
-    expect(container.querySelector('.rounded-full')).toBeNull()
   })
 
   it('joins the last payment to the note on the phone cards, as drawn', () => {

@@ -6,6 +6,7 @@ import {
   isUnpaidAfter,
   nextBookingPackageNo,
   nextPaymentPackageNo,
+  owesPayment,
   packageBarLabel,
   packageCaption,
   packageCounts,
@@ -99,6 +100,19 @@ describe('what payments cover', () => {
     expect(isPackagePaid({ ...neverPaid, package_no: 1 })).toBe(false)
     // Every paid lesson used and none booked: the next package has begun, unpaid.
     expect(isPackagePaid({ package_size: 4, paid_lessons: 4, package_no: 2 })).toBe(false)
+  })
+
+  it('says a group owes while lessons pass what’s paid or its package isn’t paid yet', () => {
+    // Herman, 2 Oct 2026: if it isn't paid yet, it says Unpaid.
+    expect(owesPayment({ ...aimanSofia, unpaid: false })).toBe(false)
+    expect(owesPayment({ ...weiJie, unpaid: true })).toBe(true)
+    // A paid package with a lesson booked past it (the view's unpaid).
+    expect(owesPayment({ ...sofia, unpaid: true })).toBe(true)
+    // A new group that hasn't paid, and a package used up with nothing booked.
+    expect(owesPayment({ ...neverPaid, package_no: 1, unpaid: false })).toBe(true)
+    expect(owesPayment({ package_size: 4, paid_lessons: 4, package_no: 2, unpaid: false })).toBe(
+      true,
+    )
   })
 })
 

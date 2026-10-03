@@ -70,8 +70,6 @@ export type ScheduleLessonPosition = {
   status: BookingStatus
   /** Ended, by the database clock; null unless booked. */
   used: boolean | null
-  /** The group has lessons past what it has paid for. */
-  unpaid: boolean
   package_no: number | null
   lesson_in_package: number | null
   lessons: number
@@ -82,10 +80,11 @@ export type ScheduleLessonPosition = {
 }
 
 /**
- * The coach's Today list (coach-schedule spec §3.5): "done" once ended, "excused", "first
- * lesson of Package 6" for an unpaid group's first lesson of a package, otherwise
+ * The coach's Today list (coach-schedule spec §3.5): "done" once ended, "excused", otherwise
  * lessonNumbers ("lesson 2 of 4", "lessons 1–2 of 4"). Groups of two or three put their type
  * first: "1-to-2, lesson 1 of 4". A cancelled lesson reads "cancelled" (Today leaves them out).
+ * The drawn "first lesson of Package 6" for an unpaid group went with "Unpaid, collect today":
+ * paying isn't shown on each lesson (Herman, 2 Oct 2026).
  */
 export function formatLessonPosition(lesson: ScheduleLessonPosition): string {
   const type = lesson.size > 1 ? `${lesson.type_label}, ` : ''
@@ -96,9 +95,6 @@ export function formatLessonPosition(lesson: ScheduleLessonPosition): string {
     package_no: lesson.package_no,
     lesson_in_package: lesson.lesson_in_package,
     lessons: lesson.lessons,
-  }
-  if (lesson.unpaid && lesson.lesson_in_package === 1) {
-    return `${type}first lesson of Package ${lesson.package_no}`
   }
   return `${type}${lessonNumbers(position, lesson.package_size)}`
 }

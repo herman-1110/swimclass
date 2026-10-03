@@ -70,13 +70,12 @@ export function lessonLine(lesson: CoachLesson): string {
 }
 
 /**
- * A lesson's flags, in the drawing's order (coach-schedule §3.4): "Unpaid" (the group owes
- * for its package), "Last paid lesson", "Gap override". Join them with " · ".
+ * A lesson's flags, in the drawing's order (coach-schedule §3.4): "Last paid lesson", "Gap
+ * override". Join them with " · ". No "Unpaid": paying is the group's status, shown on
+ * Students & payments, not on each lesson (Herman, 2 Oct 2026).
  */
 export function lessonNotes(lesson: CoachLesson): string[] {
-  return [
-    lesson.unpaid && 'Unpaid',
-    lesson.last_lesson && 'Last paid lesson',
-    lesson.gap_override && 'Gap override',
-  ].filter((note) => note !== false)
+  return [lesson.last_lesson && 'Last paid lesson', lesson.gap_override && 'Gap override'].filter(
+    (note) => note !== false,
+  )
 }

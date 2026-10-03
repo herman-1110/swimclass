@@ -78,7 +78,8 @@ uses Chip, `GroupPicker` (entity `group`) uses OptionRow. The tab bar and sideba
   used accent, booked `--seg-booked`, free `--seg-free`. Always paired with text
   ("0 used · 2 booked · 2 left to book").
 - **Tag** (`Tag`): small neutral pill for 1-to-1 / 1-to-2 / 1-to-3. **Status pill** (`Pill`): Paid
-  (`--accent-tint` / accent), Unpaid (`--warn-tint` / `--warn`).
+  (`--accent-tint` / accent), Unpaid (`--warn-tint` / `--warn`). It belongs to a group, never
+  to a lesson (PRD BR-22).
 - **Table**: 1 px `--frame` border, radius 12, header `--table-head`, zebra rows,
   row divider `--line-row`, selected row `--accent-soft`. Where a table would be too
   cramped on a phone it becomes a list of cards with the same fields (§5).
@@ -116,7 +117,8 @@ their script block is the reference algorithm for slots and messages):
 1. Greeting and title; coach banner (latest pinned announcement) in `--subtle`.
 2. "Who's this lesson for?": option rows for the account's active groups, each with
    its type tag. Help text: "Your coach sets up who books together."
-3. Package status for the selected group: "1-to-2 · Package 4", Paid/Unpaid, bar,
+3. Package status for the selected group: "1-to-2 · Package 4", Paid/Unpaid (for that
+   package; a new group that hasn't paid reads Unpaid), bar,
    "0 used · 2 booked · 2 left to book". If none left: orange "New bookings start
    Package 3. Pay RM [price] before or at its first lesson."
 4. Day strip for the week, with previous/next week.
@@ -157,8 +159,10 @@ lessons fall outside it) with lesson blocks (name(s), time, type
 and location), travel blocks, closed blocks, and a "Gap override" note where used. On
 phones the week grid becomes a day view: a day strip with the number of lessons under
 each date, then the chosen day as a list of blocks (time on the left; lesson, travel,
-free and closed blocks in the grid's colours). Side column: Today (time, group,
-location, lesson number, unpaid warning), Needs attention (unpaid with "Record
+free and closed blocks in the grid's colours). Lessons carry no Unpaid flag, and Today
+drops the drawing's "Unpaid, collect today" and "first lesson of Package 6" (Herman,
+2 Oct 2026: paying shows on Students & payments). Side column: Today (time, group,
+location, lesson number), Needs attention (unpaid with "Record
 payment", last lesson, accounts waiting for approval), Message all customers (textarea,
 "Pin as a banner until I remove it", "Send to all customers"). Clicking a lesson opens
 details: group, package position, balance, Cancel lesson (lesson goes back to the

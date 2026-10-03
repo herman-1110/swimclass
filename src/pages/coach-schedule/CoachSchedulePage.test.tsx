@@ -80,10 +80,10 @@ describe('CoachSchedulePage, opening on today’s week (§8.1)', () => {
     const region = await grid('21–27 Sep 2026')
     expect(texts(within(region).getAllByRole('button'))).toHaveLength(4)
     for (const name of [
-      'Wei Jie, 7:30–8:30 pm, Palm Court, Fri 25 Sep, unpaid',
+      'Wei Jie, 7:30–8:30 pm, Palm Court, Fri 25 Sep',
       'Ethan, 9:00–10:00 am, Kiara Park, Sat 26 Sep',
       'Aiman & Sofia, 5:00–6:00 pm, 1-to-2 · Palm Court, Sat 26 Sep',
-      'Hana, 7:30–8:30 pm, Sunrise Res., Sat 26 Sep, unpaid',
+      'Hana, 7:30–8:30 pm, Sunrise Res., Sat 26 Sep',
     ]) {
       expect(within(region).getByRole('button', { name })).toBeTruthy()
     }
@@ -122,7 +122,7 @@ describe('CoachSchedulePage, opening on today’s week (§8.1)', () => {
       '4:00 pm Travel 4:00–5:00 pm',
       '5:00 pm Aiman & Sofia 5:00–6:00 pm · 1-to-2 · Palm Court',
       '6:00 pm Travel 6:00–7:30 pm',
-      '7:30 pm Hana 7:30–8:30 pm · Sunrise Res. Unpaid',
+      '7:30 pm Hana 7:30–8:30 pm · Sunrise Res.',
       '8:30 pm Travel 8:30–9:30 pm',
       '9:30 pm Free 9:30–10:00 pm',
     ])
@@ -136,7 +136,8 @@ describe('CoachSchedulePage, opening on today’s week (§8.1)', () => {
     expect(texts(rows)).toEqual([
       '9:00 am Ethan Kiara Park · done',
       '5:00 pm Aiman & Sofia Palm Court · 1-to-2, lesson 1 of 4',
-      '7:30 pm Hana Sunrise Res. · first lesson of Package 6 Unpaid, collect today',
+      // No "Unpaid, collect today": paying shows on Students & payments (Herman, 2 Oct 2026).
+      '7:30 pm Hana Sunrise Res. · lesson 1 of 4',
     ])
   })
 
@@ -215,7 +216,7 @@ describe('CoachSchedulePage, moving through the weeks (§8.2)', () => {
     // Each lesson's name is its one screen-reader line (the drawn lines are aria-hidden).
     const lessons = within(region).getAllByRole('button')
     expect(lessons.map((lesson) => lesson.querySelector('.sr-only')?.textContent)).toEqual([
-      'Wei Jie, 7:30–8:30 pm, Palm Court, Fri 18 Sep, unpaid',
+      'Wei Jie, 7:30–8:30 pm, Palm Court, Fri 18 Sep',
       'Adam, Alya & Amir, 11 am–12 pm, 1-to-3 · Maple Condo, Sat 19 Sep',
     ])
     fireEvent.click(screen.getByRole('button', { name: 'Today' }))
@@ -281,7 +282,8 @@ describe('CoachSchedulePage, a lesson’s details (§7.4)', () => {
     const dialog = screen.getByRole('dialog', { name: 'Wei Jie' })
     const facts = within(dialog).getAllByRole('definition')
     expect(facts[2].textContent).toBe('Package 2 · lesson 2 of 4 · done')
-    expect(facts[3].textContent).toBe('Unpaid')
+    // Wei Jie's group owes, but the lesson has no Unpaid pill (Herman, 2 Oct 2026).
+    expect(within(dialog).queryByText('Unpaid', { selector: '.rounded-full' })).toBeNull()
     expect(within(dialog).getByRole('button', { name: 'Mark as excused' })).toBeTruthy()
     expect(
       within(dialog).getByText(

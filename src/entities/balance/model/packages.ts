@@ -77,14 +77,27 @@ export function isNextLessonPaid(
 
 /**
  * Whether payments (with the starting balance and free lessons) cover every lesson of the current
- * package: Book's "Paid" and the Students pill. A group can be neither this nor unpaid (the
- * view's unpaid means used + booked > paid): a new group that hasn't paid, or one whose paid
- * lessons are all used with none booked.
+ * package: Book's "Paid" or "Unpaid" beside the package's number. A group can be neither this
+ * nor the view's unpaid (used + booked > paid): a new group that hasn't paid, or one whose
+ * paid lessons are all used with none booked. owesPayment counts those as unpaid.
  */
 export function isPackagePaid(
   balance: Pick<GroupBalance, 'package_no' | 'package_size' | 'paid_lessons'>,
 ): boolean {
   return balance.paid_lessons >= balance.package_no * balance.package_size
+}
+
+/**
+ * Whether the group owes a payment: the one "Unpaid" of the coach's Students list (its pill,
+ * tabs, counts and Record payment), Needs attention and My classes. Herman, 2 Oct 2026: if it
+ * isn't paid yet, it says Unpaid; it's the group's status, not each lesson's. That is lessons
+ * used or booked past what's paid (the view's unpaid), or a current package no payment covers
+ * yet (a new group that hasn't paid; a package used up with nothing booked).
+ */
+export function owesPayment(
+  balance: Pick<GroupBalance, 'unpaid' | 'package_no' | 'package_size' | 'paid_lessons'>,
+): boolean {
+  return balance.unpaid || !isPackagePaid(balance)
 }
 
 /**

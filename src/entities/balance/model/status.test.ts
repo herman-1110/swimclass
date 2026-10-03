@@ -82,18 +82,20 @@ describe('balanceStatus', () => {
     expect(balanceStatus(paid, NOW)).toEqual({ label: 'Paid', note: null, noteTone: 'muted' })
   })
 
-  it('doesn’t call a group Paid when no payment covers its package', () => {
+  it('calls a group Unpaid, and sorts it with them, while no payment covers its package', () => {
+    // Herman, 2 Oct 2026: if it isn't paid yet, it says Unpaid.
     // A new group added with "First package already paid" left unticked.
     const neverPaid = { ...paid, paid_lessons: 0, used_lessons: 0, booked_lessons: 0 }
     expect(balanceStatus(neverPaid, NOW)).toEqual({
-      label: null,
+      label: 'Unpaid',
       note: 'New student',
       noteTone: 'muted',
     })
     // Every paid lesson used, none booked.
     const usedUp = { ...paid, used_lessons: 4, booked_lessons: 0, package_no: 2 }
-    expect(balanceStatus(usedUp, NOW)).toEqual({ label: null, note: null, noteTone: 'muted' })
-    expect(balanceBucket(neverPaid)).toBe('paid')
+    expect(balanceStatus(usedUp, NOW)).toEqual({ label: 'Unpaid', note: null, noteTone: 'muted' })
+    expect(balanceBucket(neverPaid)).toBe('unpaid')
+    expect(balanceBucket(usedUp)).toBe('unpaid')
   })
 
   it('shows the year of a date in another year', () => {

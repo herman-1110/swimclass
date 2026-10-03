@@ -17,7 +17,7 @@ type RowActionProps = {
  */
 export function RowAction({ row, id, onRecordPayment, onHistory }: RowActionProps) {
   const { group_id: groupId, display_names: names } = row.group
-  if (row.balance.unpaid) {
+  if (row.bucket === 'unpaid') {
     return (
       <Button id={id} size="compact" className="shrink-0" onClick={() => onRecordPayment(groupId)}>
         <span>

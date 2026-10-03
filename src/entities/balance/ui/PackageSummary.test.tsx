@@ -71,7 +71,20 @@ describe('PackageSummary on Book', () => {
     expect(screen.queryByText('Paid')).toBeNull()
   })
 
-  it('says neither Paid nor Unpaid for a package no payment covers', () => {
+  it('says Paid for a paid package even when a lesson booked past it isn’t paid', () => {
+    // TECH_SPEC §10's Sofia case: Package 2 is paid and full, and an extra booking starts
+    // Package 3, which isn't. The card names Package 2; the note speaks for Package 3. My
+    // classes' pill, which is about the group, says Unpaid.
+    const extra: GroupBalance = { ...sofia, booked_lessons: 2, unpaid: true }
+    render(<PackageSummary balance={extra} typeLabel="1-to-1" note={NOTE} />)
+    expect(screen.getByText('1-to-1 · Package 2')).toBeTruthy()
+    expect(screen.getByText('Paid').className).toContain('text-muted')
+    cleanup()
+    render(<PackageSummary variant="account" balance={extra} typeLabel="1-to-1" names="Sofia" />)
+    expect(screen.getByText('Unpaid').className).toContain('bg-warn-tint')
+  })
+
+  it('says Unpaid for a package no payment covers', () => {
     // A new group the coach added with "First package already paid" left unticked.
     const neverPaid: GroupBalance = {
       ...aimanSofia,
@@ -85,7 +98,8 @@ describe('PackageSummary on Book', () => {
     render(<PackageSummary balance={neverPaid} typeLabel="1-to-1" note={NOTE} />)
     expect(screen.getByText('1-to-1 · Package 1')).toBeTruthy()
     expect(screen.queryByText('Paid')).toBeNull()
-    expect(screen.queryByText('Unpaid')).toBeNull()
+    // Herman, 2 Oct 2026: not paid yet says Unpaid, in orange.
+    expect(screen.getByText('Unpaid').className).toContain('text-warn')
     expect(screen.getByText('0 used · 0 booked · 4 left to book')).toBeTruthy()
   })
 })

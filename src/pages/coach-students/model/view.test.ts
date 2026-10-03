@@ -15,7 +15,15 @@ function row(id: string, names: string, unpaid: boolean) {
     active: true,
     student_ids: [id],
   } as Group
-  const balance = { group_id: id, unpaid, last_lesson_at: null } as GroupBalance
+  // Package 1 is paid; `unpaid` is lessons booked past it.
+  const balance = {
+    group_id: id,
+    unpaid,
+    package_no: 1,
+    package_size: 4,
+    paid_lessons: 4,
+    last_lesson_at: null,
+  } as GroupBalance
   return { group, balance }
 }
 

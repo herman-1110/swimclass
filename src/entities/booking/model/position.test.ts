@@ -60,7 +60,6 @@ describe('formatLessonPosition (the coach’s Today list)', () => {
   const lesson = {
     status: 'booked' as const,
     used: false,
-    unpaid: false,
     package_no: 4,
     lesson_in_package: 1,
     lessons: 1,
@@ -69,14 +68,13 @@ describe('formatLessonPosition (the coach’s Today list)', () => {
     type_label: '1-to-1',
   }
 
-  it('reads as drawn: done, a group’s type first, an unpaid package’s first lesson', () => {
+  it('reads as drawn: done, a group’s type first; a package’s first lesson is lesson 1', () => {
     expect(formatLessonPosition({ ...lesson, used: true, package_no: 7 })).toBe('done')
     expect(formatLessonPosition({ ...lesson, size: 2, type_label: '1-to-2' })).toBe(
       '1-to-2, lesson 1 of 4',
     )
-    expect(formatLessonPosition({ ...lesson, unpaid: true, package_no: 6 })).toBe(
-      'first lesson of Package 6',
-    )
+    // Not "first lesson of Package 6": paying isn't shown on each lesson (Herman, 2 Oct 2026).
+    expect(formatLessonPosition({ ...lesson, package_no: 6 })).toBe('lesson 1 of 4')
   })
 
   it('numbers other lessons, and says when one was excused', () => {

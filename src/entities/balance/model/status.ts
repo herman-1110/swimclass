@@ -1,32 +1,32 @@
 import { formatDay, formatDayMonth, type Instant, mytDateKey, toMyt } from '@/shared/lib/time'
 
-import { isPackagePaid, nextPaymentPackageNo } from './packages'
+import { nextPaymentPackageNo, owesPayment } from './packages'
 import type { GroupBalance } from './types'
 
 // Paid or unpaid, and what needs the coach's attention (DESIGN §4 Students & payments; the
-// coach-students spec §5.2; the coach-schedule spec §3.6). The flags are the database's own.
+// coach-students spec §5.2; the coach-schedule spec §3.6). Unpaid is owesPayment: the
+// database's flag, or a current package no payment covers yet.
 
 /**
  * Where a group sorts on the coach's screens: unpaid first, then on its last paid lesson,
- * then the rest (the view never sets both flags).
+ * then the rest.
  */
 export type BalanceBucket = 'unpaid' | 'last-lesson' | 'paid'
 
 export function balanceBucket(
-  balance: Pick<GroupBalance, 'unpaid' | 'last_lesson_at'>,
+  balance: Pick<
+    GroupBalance,
+    'unpaid' | 'package_no' | 'package_size' | 'paid_lessons' | 'last_lesson_at'
+  >,
 ): BalanceBucket {
-  if (balance.unpaid) return 'unpaid'
+  if (owesPayment(balance)) return 'unpaid'
   return balance.last_lesson_at === null ? 'paid' : 'last-lesson'
 }
 
 /** The Students table's status: the pill's word and the note under it. */
 export type BalanceStatusInfo = {
-  /**
-   * null while no payment covers the current package and it isn't unpaid either (a new group
-   * that hasn't paid, a package used up exactly with nothing booked): no pill, as Book shows no
-   * word, until Herman settles one.
-   */
-  label: 'Paid' | 'Unpaid' | null
+  /** Unpaid while the group owes a payment (owesPayment), otherwise Paid. */
+  label: 'Paid' | 'Unpaid'
   /** "Starts today", "Since 18 Sep", "Last lesson 1 Oct", "New student", or null. */
   note: string | null
   /** warn only for "Last lesson …". */
@@ -38,9 +38,10 @@ export type BalanceStatusInfo = {
  * - unpaid: "Since 18 Sep" once the first unpaid lesson's day has passed, "Starts today" /
  *   "Since today" on its day, "Starts 3 Oct" before it, "From starting balance" when that
  *   lesson is in the starting balance
- * - paid, on the last paid lesson: "Last lesson 1 Oct" ("Last lesson today"), in orange
- * - paid, no lesson used yet: "New student"
- * "Paid" only while payments cover the current package (isPackagePaid); otherwise no word.
+ * - on the last paid lesson: "Last lesson 1 Oct" ("Last lesson today"), in orange
+ * - no lesson used yet: "New student"
+ * A current package no payment covers yet is Unpaid too, with those notes: a new group that
+ * hasn't paid reads "Unpaid · New student".
  */
 export function balanceStatus(balance: GroupBalance, now: Instant): BalanceStatusInfo {
   const today = mytDateKey(now)
@@ -51,7 +52,7 @@ export function balanceStatus(balance: GroupBalance, now: Instant): BalanceStatu
       noteTone: 'muted',
     }
   }
-  const label = isPackagePaid(balance) ? 'Paid' : null
+  const label = owesPayment(balance) ? 'Unpaid' : 'Paid'
   if (balance.last_lesson_at !== null) {
     const day =
       mytDateKey(balance.last_lesson_at) === today

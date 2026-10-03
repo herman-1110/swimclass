@@ -5,7 +5,6 @@ import { packagePosition } from '@/entities/booking'
 import { accountLabel } from '@/entities/group'
 import type { BookedCoachLesson } from '@/entities/schedule'
 import { cn } from '@/shared/lib/cn'
-import { Pill } from '@/shared/ui/Pill'
 import { Tag } from '@/shared/ui/Tag'
 
 import { LoadError } from './LoadError'
@@ -36,7 +35,9 @@ export function LessonFacts({ lesson }: LessonFactsProps) {
     lesson.package_size,
     ' · ',
   )
-  const flagged = lesson.last_lesson || lesson.gap_override || lesson.unpaid
+  // No Unpaid pill: paying is the group's status, in its Package row below and on Students &
+  // payments, not each lesson's (Herman, 2 Oct 2026).
+  const flagged = lesson.last_lesson || lesson.gap_override
 
   return (
     <dl className="m-0 flex flex-col gap-3.5">
@@ -59,7 +60,6 @@ export function LessonFacts({ lesson }: LessonFactsProps) {
               <span className="text-label font-semibold text-warn">Last paid lesson</span>
             )}
             {lesson.gap_override && <span className="text-label text-muted">Gap override</span>}
-            {lesson.unpaid && <Pill tone="warn">Unpaid</Pill>}
           </dd>
         )}
       </div>

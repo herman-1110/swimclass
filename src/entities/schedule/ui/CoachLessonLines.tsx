@@ -49,7 +49,6 @@ export function CoachLessonLines({ lesson }: CoachLessonLinesProps) {
   const unseen = [
     overrideInstead ? place : null,
     formatDayKey(mytDateKey(lesson.starts_at)),
-    lesson.unpaid ? 'unpaid' : null,
     lesson.last_lesson ? 'last paid lesson' : null,
   ].filter((part) => part !== null)
 
