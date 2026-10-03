@@ -50,7 +50,8 @@ const moreLine = 'pt-3 text-small leading-normal text-muted'
 
 /**
  * Past lessons and receipts (my-classes §2.7, not drawn): the latest lessons that aren't
- * upcoming, laid out like the upcoming rows, then the account's payments. Mounted only while
+ * upcoming, laid out like the upcoming rows, then the account's payments. Lessons cancelled
+ * before they happened are listed too, so the heading says "Past and cancelled" (triage 12). Mounted only while
  * the panel is open, so nothing is read until it opens.
  */
 export function PastPanel({ groups, settings, me, now }: PastPanelProps) {
@@ -70,7 +71,7 @@ export function PastPanel({ groups, settings, me, now }: PastPanelProps) {
     lessons = (
       <>
         {past.data.lessons.length === 0 ? (
-          <p className={emptyLine}>No past lessons yet.</p>
+          <p className={emptyLine}>No past or cancelled lessons yet.</p>
         ) : (
           <ul role="list">
             {past.data.lessons.map((lesson) => {
@@ -136,7 +137,7 @@ export function PastPanel({ groups, settings, me, now }: PastPanelProps) {
     <>
       <section aria-labelledby={LESSONS_HEADING_ID} aria-busy={lessonsLoading || undefined}>
         <SectionLabel as="h2" id={LESSONS_HEADING_ID} tabIndex={-1} className="mb-1">
-          Past lessons
+          Past and cancelled lessons
         </SectionLabel>
         {lessons}
       </section>

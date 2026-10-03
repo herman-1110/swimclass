@@ -143,8 +143,10 @@ describe('MyClassesPage', () => {
     expect(past.getAttribute('aria-expanded')).toBe('true')
     expect(document.getElementById(past.getAttribute('aria-controls') ?? '')?.hidden).toBe(false)
     // All her used lessons are from her starting balance, not bookings.
-    expect(await rowsOf('Past lessons')).toEqual([])
-    expect(within(section('Past lessons')).getByText('No past lessons yet.')).toBeTruthy()
+    expect(await rowsOf('Past and cancelled lessons')).toEqual([])
+    expect(
+      within(section('Past and cancelled lessons')).getByText('No past or cancelled lessons yet.'),
+    ).toBeTruthy()
     expect(await rowsOf('Payments')).toEqual([
       '19 Sep 2026Aiman & Sofia · 1-to-2 · 4 lessonsFPXRM 400',
       '29 Aug 2026Sofia · 1-to-1 · 4 lessonsTransferRM 240',
@@ -180,7 +182,7 @@ describe('MyClassesPage', () => {
         'Package 2 isn’t paid yet. Pay your coach as soon as you can.',
     ])
     fireEvent.click(screen.getByRole('button', { name: 'Past lessons and receipts' }))
-    expect(await rowsOf('Past lessons')).toEqual([
+    expect(await rowsOf('Past and cancelled lessons')).toEqual([
       'Fri 25 Sep, 7:30–8:30 pmWei Jie · 1-to-1 · Package 2, lesson 2 of 4Palm CourtDone',
       'Fri 18 Sep, 7:30–8:30 pmWei Jie · 1-to-1 · Package 2, lesson 1 of 4Palm CourtDone',
     ])
@@ -289,15 +291,17 @@ describe('MyClassesPage', () => {
     const reads = await guardReads(['bookings', 'payments'])
     fireEvent.click(screen.getByRole('button', { name: 'Past lessons and receipts' }))
     await waitFor(() =>
-      expect(within(section('Past lessons')).getByRole('alert').textContent).toBe(NETWORK_MESSAGE),
+      expect(within(section('Past and cancelled lessons')).getByRole('alert').textContent).toBe(
+        NETWORK_MESSAGE,
+      ),
     )
     await waitFor(() =>
       expect(within(section('Payments')).getByRole('alert').textContent).toBe(NETWORK_MESSAGE),
     )
-    expect(section('Past lessons').getAttribute('aria-busy')).toBeNull()
+    expect(section('Past and cancelled lessons').getAttribute('aria-busy')).toBeNull()
 
     reads.hold()
-    const lessonsRetry = within(section('Past lessons')).getByRole('button', {
+    const lessonsRetry = within(section('Past and cancelled lessons')).getByRole('button', {
       name: 'Try again',
     })
     lessonsRetry.focus()
@@ -306,9 +310,11 @@ describe('MyClassesPage', () => {
     expect(document.activeElement).toBe(lessonsRetry)
     reads.release()
     await waitFor(() =>
-      expect(within(section('Past lessons')).getAllByRole('listitem')).toHaveLength(2),
+      expect(within(section('Past and cancelled lessons')).getAllByRole('listitem')).toHaveLength(
+        2,
+      ),
     )
-    expect(document.activeElement).toBe(heading('Past lessons'))
+    expect(document.activeElement).toBe(heading('Past and cancelled lessons'))
 
     const paymentsRetry = within(section('Payments')).getByRole('button', { name: 'Try again' })
     paymentsRetry.focus()
@@ -377,7 +383,7 @@ describe('MyClassesPage', () => {
     ).toBeTruthy()
 
     fireEvent.click(screen.getByRole('button', { name: 'Past lessons and receipts' }))
-    expect(await rowsOf('Past lessons')).toEqual([
+    expect(await rowsOf('Past and cancelled lessons')).toEqual([
       'Sat 3 Oct, 9:00–10:00 amAiman & Sofia · 1-to-2Palm CourtCancelled' +
         'Cancelled by you on 26 Sep.',
     ])
@@ -407,7 +413,7 @@ describe('MyClassesPage', () => {
     expect(screen.queryByRole('region', { name: 'Packages' })).toBeNull()
 
     fireEvent.click(screen.getByRole('button', { name: 'Past lessons and receipts' }))
-    expect(await rowsOf('Past lessons')).toEqual([
+    expect(await rowsOf('Past and cancelled lessons')).toEqual([
       'Fri 2 Oct, 9:00–10:00 pmKai · 1-to-1Palm CourtCancelledCancelled by you on 26 Sep.',
     ])
     expect(await rowsOf('Payments')).toEqual(['24 Sep 2026Kai · 1-to-1 · 4 lessonsFPXRM 240'])
