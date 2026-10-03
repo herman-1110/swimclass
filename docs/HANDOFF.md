@@ -3,6 +3,25 @@
 Update this file at the end of every Claude Code session. Newest entry on top.
 Keep entries short; link to files instead of pasting code.
 
+## v0.12 · 4 Oct 2026 · Merged and pushed; security audit
+**State**: `main` = `frontend-first` = `origin/main` at 6d4abdb. Herman ran the push himself
+(Claude Code's safety check blocks pushing from the session). GitHub CI passed on 6d4abdb.
+This entry is not pushed.
+**Done**
+- Herman's pasted security checklist: a read-only audit of the database and of secrets,
+  frontend, config and git history. No secret key, token or password has ever been
+  committed, and none is in the production bundle; `npm audit` is clean. The findings are
+  in `frontend-plan/review/security/audit-2026-10-04.md`, kept outside the repo because the
+  repo is public and they aren't fixed yet.
+**Next**
+1. Herman decides the audit's open questions, then fix in batches: repo-only (headers, build
+   guard, CI, maxLength, prompt and spec fixes), one migration (caps, grants, change limit),
+   and the login limiter with the wiring (prompt 05).
+2. Then v0.8 Next 2 and 3: remove the worktrees and branches (all 20 `fe/*` branches are in
+   `main` and the seven worktrees are clean), and the wiring.
+**Manual steps waiting on Herman**
+- As in v0.11.
+
 ## v0.11 · 3 Oct 2026 · Triage 7–17, the copy list and Q4, decided for Herman
 **State**: `frontend-first` (not pushed; 129 commits ahead of `origin/main`, with this
 entry). At 7402d81: typecheck, lint, format, 1,822 unit tests (243 files) and the build pass.
