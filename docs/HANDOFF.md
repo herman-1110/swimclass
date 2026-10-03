@@ -4,10 +4,11 @@ Update this file at the end of every Claude Code session. Newest entry on top.
 Keep entries short; link to files instead of pasting code.
 
 ## v0.11 · 3 Oct 2026 · Triage 7–17, the copy list and Q4, decided for Herman
-**State**: `frontend-first` (not pushed; 128 commits ahead of `origin/main`, with this
+**State**: `frontend-first` (not pushed; 129 commits ahead of `origin/main`, with this
 entry). At 7402d81: typecheck, lint, format, 1,822 unit tests (243 files) and the build pass.
-The main chunk is 112.1 kB gzipped. `test:db` wasn't run (nothing under `supabase/` changed). Herman's `npm run dev`
-runs on this checkout. Node 24.19 is now the system Node (`D:\DOWNLOAD\node.exe`).
+The main chunk is 112.1 kB gzipped. `test:db` wasn't run (nothing under `supabase/`
+changed). Herman's `npm run dev` runs on this checkout. Node 24.19 is now the system Node
+(`D:\DOWNLOAD\node.exe`).
 **Done** (Herman: "for the rest … help me think and reason it then do it". Each choice
 and its reason is below; "triage" is `frontend-plan/review/final/triage.json`
 `owner_questions`, numbered in order.)
