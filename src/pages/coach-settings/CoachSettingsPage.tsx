@@ -43,8 +43,9 @@ export function CoachSettingsPage() {
   return (
     <SettingsFormProvider settings={settings.data} weeklyHours={hours.data}>
       {/* Padded as drawn (`.set`): 24 20 0 on phones, so the Save bar meets the tab bar; 32
-          from 768 px; 32 40 24 from 1024 px. */}
-      <div className="flex flex-1 flex-col gap-6 px-5 pt-6 md:gap-7 md:p-8 lg:px-10 lg:pb-6">
+          from 768 px; 32 32 24 from 1024 px, the sides as on every coach page (the drawing's
+          40, triage 14). */}
+      <div className="flex flex-1 flex-col gap-6 px-5 pt-6 md:gap-7 md:p-8 lg:pb-6">
         <DocumentTitle page="Settings" />
         <SettingsHeader
           action={<SaveChangesButton placement="header" />}

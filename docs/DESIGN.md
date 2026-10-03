@@ -49,8 +49,10 @@ Put these in `src/app/styles/index.css` as CSS variables and expose them to Tail
   (primary under the mouse), `--shadow-press` 0 1px 3px -1px accent at 50% (primary held
   down), `--shadow-soft` a 1 px `--field` outline plus 0 4px 10px -4px ink at 25% (quiet
   and icon buttons under the mouse).
-- Spacing: 8 px grid; page side padding 20 px on phones, 32 px from 768 px, 40–48 px
-  from 1024 px.
+- Spacing: 8 px grid; page side padding 20 px on phones and 32 px from 768 px. From
+  1024 px customer pages use 48 px and coach pages keep 32 px, the same on every coach
+  page so the title doesn't move between tabs (the drawings' 40 px on Add students and
+  Settings is 32).
 
 ## 3. Components
 Where they live (ARCHITECTURE §3): generic pieces with no business words are in

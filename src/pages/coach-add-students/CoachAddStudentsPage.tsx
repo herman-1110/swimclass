@@ -21,8 +21,9 @@ export function CoachAddStudentsPage() {
 
   return (
     // The coach layout leaves the padding to each page: 12/20/32 on phones, 24/32/32 from
-    // 768 px, 24/40/32 from 1024 px, blocks 16 then 20 px apart (AdminAddStudents.dc.html:24-35).
-    <div className="flex flex-col gap-4 px-5 pt-3 pb-8 md:gap-5 md:px-8 md:pt-6 lg:px-10">
+    // 768 px, blocks 16 then 20 px apart (AdminAddStudents.dc.html:24-35). The drawing's 40 px
+    // sides from 1024 px are 32, as on every coach page (triage 14).
+    <div className="flex flex-col gap-4 px-5 pt-3 pb-8 md:gap-5 md:px-8 md:pt-6">
       <DocumentTitle page={TITLE} />
       <BackLink to={ROUTES.coachStudents} aria-label="Back to Students & payments">
         Students &amp; payments
