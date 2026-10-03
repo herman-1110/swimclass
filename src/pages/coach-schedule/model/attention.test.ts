@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import type { GroupBalance } from '@/entities/balance'
 import type { Group } from '@/entities/group'
 
-import { attentionGroups } from './attention'
+import { accountsWithoutGroups, attentionGroups } from './attention'
 
 function group(id: string, names: string): Group {
   return {
@@ -69,5 +69,23 @@ describe('attentionGroups', () => {
 
   it('skips a balance whose group isn’t loaded', () => {
     expect(attentionGroups([balance('zz', { unpaid: true })], groups).unpaid).toEqual([])
+  })
+})
+
+describe('accountsWithoutGroups', () => {
+  it('keeps the approved accounts that have no group at all, in their order', () => {
+    const accounts = [
+      { id: 'account-hana', display_name: 'Hana' },
+      { id: 'account-new', display_name: 'Mei Ling' },
+      { id: 'account-paused', display_name: 'Priya' },
+    ]
+    const groups = [
+      { account_id: 'account-hana', active: true },
+      // All of Priya's groups are paused: the coach did that, so no reminder.
+      { account_id: 'account-paused', active: false },
+    ]
+    expect(accountsWithoutGroups(accounts, groups)).toEqual([
+      { id: 'account-new', display_name: 'Mei Ling' },
+    ])
   })
 })

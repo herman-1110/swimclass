@@ -163,7 +163,9 @@ free and closed blocks in the grid's colours). Lessons carry no Unpaid flag, and
 drops the drawing's "Unpaid, collect today" and "first lesson of Package 6" (Herman,
 2 Oct 2026: paying shows on Students & payments). Side column: Today (time, group,
 location, lesson number), Needs attention (unpaid with "Record
-payment", last lesson, accounts waiting for approval), Message all customers (textarea,
+payment", last lesson, approved accounts with no group yet: "No group yet · can't book"
+with "Add students" for that account (Herman, 2 Oct 2026), accounts waiting for approval),
+Message all customers (textarea,
 "Pin as a banner until I remove it", "Send to all customers"). Clicking a lesson opens
 details: group, package position, balance, Cancel lesson (lesson goes back to the
 package, customer is emailed; an optional reason, up to 500 characters, goes into the

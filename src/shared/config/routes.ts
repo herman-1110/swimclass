@@ -63,6 +63,14 @@ export function coachStudentsHistory(groupId: string): string {
 }
 
 /**
+ * Add students with one account chosen (`?account=<account id>`): Needs attention's "Add
+ * students" for an account with no group yet.
+ */
+export function coachAddStudentsFor(accountId: string): string {
+  return `${ROUTES.coachAddStudents}?${new URLSearchParams({ account: accountId }).toString()}`
+}
+
+/**
  * Students & payments after Add students (`?added=<group id>`): the new group's row is
  * highlighted, with "3 students added" (coach-add-students §5.2.1).
  */

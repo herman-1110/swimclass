@@ -1,3 +1,4 @@
+import type { CustomerAccount } from '@/entities/account'
 import { type BalanceBucket, balanceBucket, type GroupBalance } from '@/entities/balance'
 import { byNames, type Group } from '@/entities/group'
 import { toMyt } from '@/shared/lib/time'
@@ -30,4 +31,18 @@ export function attentionGroups(
       (a, b) => when(a) - when(b) || byNames(a.group, b.group),
     ),
   }
+}
+
+/**
+ * Approved customer accounts with no group at all, by name (Herman, 2 Oct 2026; triage
+ * question 4): they can open Book but can't book until the coach adds their students, so
+ * Needs attention tells him, with "Add students". Accounts whose groups are all paused are
+ * left out: the coach paused them.
+ */
+export function accountsWithoutGroups<A extends Pick<CustomerAccount, 'id'>>(
+  accounts: readonly A[],
+  groups: readonly Pick<Group, 'account_id'>[],
+): A[] {
+  const withGroups = new Set(groups.map((group) => group.account_id))
+  return accounts.filter((account) => !withGroups.has(account.id))
 }
