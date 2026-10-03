@@ -46,8 +46,10 @@ export function SignUpPage() {
             Already have an account? <span className="font-semibold text-accent">Log in</span>
           </span>
         </ButtonLink>
+        {/* Signed-out pages can't read require_approval, so these words hold whether the coach
+            approves accounts or not (triage 7, 3 Oct 2026). */}
         <p className="text-small leading-normal text-muted">
-          Your coach approves new accounts before you can book.
+          Your coach may need to approve your account before you can book.
         </p>
       </CardFooter>
     </>

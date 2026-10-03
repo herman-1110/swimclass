@@ -31,7 +31,7 @@ type a username instead, without ever exposing emails to the browser.
      first, and say "That username is taken" only for a valid one. Check username format,
      name (1–100) and phone (≤ 30) before calling `signUp`: Auth reports a failed profile
      trigger only as "Database error saving new user". On success show "Check your email
-     to confirm, then wait for your coach to approve your account".
+     to confirm, then log in. Your coach may need to approve your account first."
    - Forgot password (email → `resetPasswordForEmail` with redirect to `/reset-password`,
      `ROUTES.resetPassword`) and
      Reset password (`updateUser`).

@@ -12,7 +12,8 @@ type SignUpSentProps = {
 const TITLE = 'Confirm your email'
 
 /**
- * Sign up's result (auth spec §2.3, §6.2): check your email, then wait for the coach. Focus
+ * Sign up's result (auth spec §2.3, §6.2): check your email, then log in; the coach may need
+ * to approve the account first (approval can be switched off, triage 7). Focus
  * moves to the heading, since it replaces the form. Demo mode sends no email and counts the
  * address as confirmed, and says so.
  */
@@ -23,7 +24,7 @@ export function SignUpSent({ email }: SignUpSentProps) {
       <PageHeader
         size="auth"
         title={TITLE}
-        description="Check your email to confirm, then wait for your coach to approve your account."
+        description="Check your email to confirm, then log in. Your coach may need to approve your account first."
         focusOnMount
       />
       <div className="flex flex-col gap-4">

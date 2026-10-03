@@ -116,7 +116,9 @@ describe('SignUpPage', () => {
     expect(
       screen.getByRole('link', { name: 'Already have an account? Log in' }).getAttribute('href'),
     ).toBe(ROUTES.login)
-    expect(screen.getByText('Your coach approves new accounts before you can book.')).toBeTruthy()
+    expect(
+      screen.getByText('Your coach may need to approve your account before you can book.'),
+    ).toBeTruthy()
     await waitFor(() => expect(document.title).toBe('Create an account · Swim Class'))
   })
 
@@ -213,7 +215,7 @@ describe('SignUpPage', () => {
     expect(document.activeElement).toBe(heading)
     expect(
       screen.getByText(
-        'Check your email to confirm, then wait for your coach to approve your account.',
+        'Check your email to confirm, then log in. Your coach may need to approve your account first.',
       ),
     ).toBeTruthy()
     expect(heading.parentElement?.nextElementSibling?.textContent).toBe(

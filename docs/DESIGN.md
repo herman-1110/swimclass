@@ -107,7 +107,8 @@ written below as phone / computer. What changes in between is in §5.
 ### Customer screens
 **Log in** (`Login.dc.html` / `LoginDesktop.dc.html`): name of the business, "Welcome
 back", username, password, Log in, "Forgot username or password?", "New here? Create an
-account", note that the coach approves new accounts.
+account", a note that the coach may need to approve the account (signed-out pages can't
+read whether approval is on, so the words hold either way).
 
 **Sign up / Forgot / Reset / Waiting for approval** (not drawn): same style as Log in.
 Sign up checks the username as they type ("That username is taken").

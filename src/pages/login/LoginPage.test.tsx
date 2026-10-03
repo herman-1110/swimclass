@@ -110,7 +110,9 @@ describe('LoginPage', () => {
     expect(signUp.getAttribute('href')).toBe(ROUTES.signup)
     // "Create an account" in 600 accent, "New here?" in ink, as drawn.
     expect(signUp.querySelector('.text-accent')?.textContent).toBe('Create an account')
-    expect(screen.getByText('Your coach approves new accounts before you can book.')).toBeTruthy()
+    expect(
+      screen.getByText('Your coach may need to approve your account before you can book.'),
+    ).toBeTruthy()
     await waitFor(() => expect(document.title).toBe('Welcome back · Swim Class'))
   })
 
