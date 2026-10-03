@@ -322,7 +322,7 @@ describe('MyClassesPage', () => {
     await renderAs('herman')
     expect(
       await screen.findByText(
-        'Your coach hasn’t set up your lessons yet. Message your coach to get started.',
+        'Customers see their lessons here. Your coach account has no lessons of its own.',
       ),
     ).toBeTruthy()
     expect(await screen.findByText('Herman’s account')).toBeTruthy()

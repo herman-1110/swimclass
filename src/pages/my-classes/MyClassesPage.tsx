@@ -6,7 +6,7 @@ import { useAccountBalances } from '@/entities/balance'
 import { useUpcomingLessons } from '@/entities/booking'
 import { useMyGroups } from '@/entities/group'
 import { DocumentTitle, usePublicSettings } from '@/entities/settings'
-import { NO_GROUPS_MESSAGE } from '@/shared/config/messages'
+import { noGroupsMessage } from '@/shared/config/messages'
 import { useNow } from '@/shared/lib/hooks/useNow'
 import { EmptyState } from '@/shared/ui/EmptyState'
 
@@ -51,7 +51,7 @@ export function MyClassesPage() {
       {groups.data?.length === 0 ? (
         // No groups (the coach's "View as customer" too): nothing to list, and no Past.
         <div className="md:col-span-2">
-          <EmptyState framed>{NO_GROUPS_MESSAGE}</EmptyState>
+          <EmptyState framed>{noGroupsMessage(profile.data?.role === 'coach')}</EmptyState>
         </div>
       ) : (
         <>

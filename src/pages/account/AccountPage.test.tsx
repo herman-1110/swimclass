@@ -305,6 +305,8 @@ describe('AccountPage', () => {
     ])
     expect(input('Name').value).toBe('Herman')
     expect(input('Phone (optional)').value).toBe('012-000 0001')
+    // No one to message about his username or email (triage 11).
+    expect(within(details).queryByText(/message your coach/)).toBeNull()
     const back = screen.getByRole('link', { name: 'Back to coach view' })
     expect(back.getAttribute('href')).toBe(ROUTES.coachSchedule)
     // Back to coach view, then Log out, after the password form (auth spec §7.1).

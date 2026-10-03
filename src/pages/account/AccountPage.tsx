@@ -38,7 +38,11 @@ export function AccountPage() {
             <SectionLabel as="h2" id="account-details-heading">
               Your details
             </SectionLabel>
-            <AccountSummary username={profile.data.username} email={email} />
+            <AccountSummary
+              username={profile.data.username}
+              email={email}
+              isCoach={profile.data.role === 'coach'}
+            />
             <ProfileForm
               key={profile.data.id}
               profile={profile.data}

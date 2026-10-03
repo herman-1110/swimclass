@@ -8,7 +8,7 @@ import { getSession, logIn, logOut } from '@/shared/api/auth'
 import { getBackend } from '@/shared/api/backend'
 import { holdDemoDatabase } from '@/shared/api/demo/testing'
 import { DEMO_PASSWORD } from '@/shared/config/demo'
-import { NO_GROUPS_MESSAGE } from '@/shared/config/messages'
+import { NO_GROUPS_COACH_MESSAGE } from '@/shared/config/messages'
 import { ROUTES } from '@/shared/config/routes'
 
 import { BookPage } from './BookPage'
@@ -437,7 +437,8 @@ describe('BookPage', () => {
 describe('BookPage for the coach', () => {
   it('shows herman the empty state and reads no start times (book §6.2)', async () => {
     const { queryClient } = await renderBook('herman')
-    const message = await screen.findByText(NO_GROUPS_MESSAGE, {}, SLOW)
+    // In his own words, not the customer's "Message your coach" (triage 11).
+    const message = await screen.findByText(NO_GROUPS_COACH_MESSAGE, {}, SLOW)
     // In a card, as My classes shows it (ui-kit §3.23: it replaces whole sections).
     expect(message.closest('.rounded-frame.border-frame')).not.toBeNull()
     expect(screen.getByRole('heading', { level: 1, name: 'Book a lesson' })).toBeTruthy()

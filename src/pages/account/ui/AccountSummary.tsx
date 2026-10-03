@@ -2,13 +2,15 @@ type AccountSummaryProps = {
   username: string
   /** From the session; Supabase always has one for these accounts. */
   email: string | null
+  /** The coach: no one to message about these, so no note (triage 11). */
+  isCoach?: boolean
 }
 
 /**
  * The details only the coach can change (auth spec §2.7, §3.3): read-only rows, a 13 px
  * label 6 px above a 15 px value, 16 px apart, then how to get them changed.
  */
-export function AccountSummary({ username, email }: AccountSummaryProps) {
+export function AccountSummary({ username, email, isCoach = false }: AccountSummaryProps) {
   return (
     <div className="flex flex-col gap-3">
       <dl className="flex flex-col gap-4">
@@ -23,9 +25,11 @@ export function AccountSummary({ username, email }: AccountSummaryProps) {
           </div>
         )}
       </dl>
-      <p className="text-small leading-[1.45] text-muted">
-        To change your username or email, message your coach.
-      </p>
+      {!isCoach && (
+        <p className="text-small leading-[1.45] text-muted">
+          To change your username or email, message your coach.
+        </p>
+      )}
     </div>
   )
 }

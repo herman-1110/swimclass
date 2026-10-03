@@ -26,6 +26,18 @@ export const NO_GROUPS_MESSAGE =
   'Your coach hasn’t set up your lessons yet. Message your coach to get started.'
 
 /**
+ * The same empty state for the coach, who looks at Book and My classes through View as
+ * customer: his account has no groups, and "Message your coach" doesn't fit him (triage 11).
+ */
+export const NO_GROUPS_COACH_MESSAGE =
+  'Customers see their lessons here. Your coach account has no lessons of its own.'
+
+/** The empty state for an account with no groups, in the reader's words. */
+export function noGroupsMessage(isCoach: boolean): string {
+  return isCoach ? NO_GROUPS_COACH_MESSAGE : NO_GROUPS_MESSAGE
+}
+
+/**
  * A malformed email: Sign up and Forgot password (Supabase's email_address_invalid) and Add
  * students (admin-accounts' invalid_email) use the same words (triage 9).
  */

@@ -13,7 +13,9 @@ import {
   messageParts,
   MIN_PASSWORD_LENGTH,
   NETWORK_MESSAGE,
+  NO_GROUPS_COACH_MESSAGE,
   NO_GROUPS_MESSAGE,
+  noGroupsMessage,
   OPEN_HOURS_SAVED_LEAD,
   reasonMessage,
 } from './messages'
@@ -618,6 +620,13 @@ describe('the fixed messages', () => {
     expect(DAY_FULLY_BOOKED_MESSAGE).toBe('This day is fully booked. Try another day.')
   })
 
+  it('give the coach his own empty state on the customer pages (triage 11)', () => {
+    expect(noGroupsMessage(false)).toBe(NO_GROUPS_MESSAGE)
+    expect(noGroupsMessage(true)).toBe(
+      'Customers see their lessons here. Your coach account has no lessons of its own.',
+    )
+  })
+
   it('say when Settings saved the open hours but not the other changes (proposed)', () => {
     expect(OPEN_HOURS_SAVED_LEAD).toBe(
       'Your open hours were saved, but your other changes weren’t.',
@@ -631,6 +640,7 @@ describe('the fixed messages', () => {
       GENERIC_MESSAGE,
       NETWORK_MESSAGE,
       NO_GROUPS_MESSAGE,
+      NO_GROUPS_COACH_MESSAGE,
       DAY_FULLY_BOOKED_MESSAGE,
       OPEN_HOURS_SAVED_LEAD,
     ]

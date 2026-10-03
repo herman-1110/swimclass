@@ -5,7 +5,7 @@ import { CoachBanner, useLatestAnnouncement } from '@/entities/announcement'
 import { useAccountBalances } from '@/entities/balance'
 import { useMyGroups } from '@/entities/group'
 import { DocumentTitle, usePublicSettings } from '@/entities/settings'
-import { NO_GROUPS_MESSAGE } from '@/shared/config/messages'
+import { noGroupsMessage } from '@/shared/config/messages'
 import { EmptyState } from '@/shared/ui/EmptyState'
 import { PageHeader } from '@/shared/ui/PageHeader'
 
@@ -39,7 +39,7 @@ export function BookPage() {
   let body: ReactNode
   if (groups.data && !groups.data.some((group) => group.active)) {
     // In a card, as it replaces whole sections (ui-kit §3.23), and as My classes shows it.
-    body = <EmptyState framed>{NO_GROUPS_MESSAGE}</EmptyState>
+    body = <EmptyState framed>{noGroupsMessage(profile.data?.role === 'coach')}</EmptyState>
   } else if (failed) {
     const retry = () => {
       // "Try again" goes while the reads run again: focus waits on the page's title.
