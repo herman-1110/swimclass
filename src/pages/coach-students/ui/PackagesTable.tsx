@@ -51,7 +51,7 @@ export function PackagesTable({
               students: <GroupName row={row} variant="table" />,
               type: <Tag>{group.type_label}</Tag>,
               package: <PackageProgress balance={balance} variant="table" />,
-              status: <BalanceStatus balance={balance} now={now} />,
+              status: <BalanceStatus balance={balance} now={now} active={group.active} />,
               paid: (
                 <LastPaid
                   paidOn={balance.last_paid_on}

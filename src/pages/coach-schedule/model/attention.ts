@@ -21,7 +21,7 @@ export function attentionGroups(
     return group ? [{ group, balance }] : []
   })
   const inBucket = (bucket: BalanceBucket) =>
-    rows.filter((row) => balanceBucket(row.balance) === bucket)
+    rows.filter((row) => balanceBucket(row.balance, row.group.active) === bucket)
   const when = (row: AttentionGroup) =>
     row.balance.last_lesson_at === null ? 0 : toMyt(row.balance.last_lesson_at).getTime()
   return {

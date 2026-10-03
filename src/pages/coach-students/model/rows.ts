@@ -48,7 +48,7 @@ export function packageRows(
       const balance = byGroup.get(group.group_id)
       if (!balance) return []
       const accountName = accountNames.get(group.account_id) ?? ''
-      return [{ group, balance, accountName, bucket: balanceBucket(balance) }]
+      return [{ group, balance, accountName, bucket: balanceBucket(balance, group.active) }]
     })
     .sort(compareRows)
 }

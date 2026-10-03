@@ -58,7 +58,12 @@ export function PackageCards({
                   the status keeps at least 8 rem beside it (WCAG 1.4.4). */}
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="min-w-0 grow basis-32">
-                  <BalanceStatus balance={balance} now={now} lastPaid={lastPaid} />
+                  <BalanceStatus
+                    balance={balance}
+                    now={now}
+                    lastPaid={lastPaid}
+                    active={group.active}
+                  />
                 </div>
                 <RowAction
                   row={row}

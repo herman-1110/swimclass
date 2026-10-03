@@ -18,8 +18,10 @@ export function balanceBucket(
     GroupBalance,
     'unpaid' | 'package_no' | 'package_size' | 'paid_lessons' | 'last_lesson_at'
   >,
+  /** The group is active: a paused one owes only for lessons past what it paid (owesPayment). */
+  active = true,
 ): BalanceBucket {
-  if (owesPayment(balance)) return 'unpaid'
+  if (owesPayment(balance, active)) return 'unpaid'
   return balance.last_lesson_at === null ? 'paid' : 'last-lesson'
 }
 
@@ -40,10 +42,14 @@ export type BalanceStatusInfo = {
  *   lesson is in the starting balance
  * - on the last paid lesson: "Last lesson 1 Oct" ("Last lesson today"), in orange
  * - no lesson used yet: "New student"
- * A current package no payment covers yet is Unpaid too, with those notes: a new group that
- * hasn't paid reads "Unpaid · New student".
+ * A current package no payment covers yet is Unpaid too while the group is active, with those
+ * notes: a new group that hasn't paid reads "Unpaid · New student".
  */
-export function balanceStatus(balance: GroupBalance, now: Instant): BalanceStatusInfo {
+export function balanceStatus(
+  balance: GroupBalance,
+  now: Instant,
+  active = true,
+): BalanceStatusInfo {
   const today = mytDateKey(now)
   if (balance.unpaid) {
     return {
@@ -52,7 +58,7 @@ export function balanceStatus(balance: GroupBalance, now: Instant): BalanceStatu
       noteTone: 'muted',
     }
   }
-  const label = owesPayment(balance) ? 'Unpaid' : 'Paid'
+  const label = owesPayment(balance, active) ? 'Unpaid' : 'Paid'
   if (balance.last_lesson_at !== null) {
     const day =
       mytDateKey(balance.last_lesson_at) === today

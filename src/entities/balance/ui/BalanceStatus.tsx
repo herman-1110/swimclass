@@ -15,6 +15,8 @@ type BalanceStatusProps = {
    * lesson shows only that note, as drawn. Leave it out in the table.
    */
   lastPaid?: string
+  /** The group is active (default): a paused one that used up what it paid is Paid. */
+  active?: boolean
 }
 
 /**
@@ -22,9 +24,10 @@ type BalanceStatusProps = {
  * §5.2.4): the Students table's Status cell and the phone cards. Unpaid (orange) until the
  * group's payment comes in, then Paid.
  */
-export function BalanceStatus({ balance, now, lastPaid }: BalanceStatusProps) {
-  const status = balanceStatus(balance, now)
-  const words = balanceBucket(balance) === 'last-lesson' ? [status.note] : [status.note, lastPaid]
+export function BalanceStatus({ balance, now, lastPaid, active = true }: BalanceStatusProps) {
+  const status = balanceStatus(balance, now, active)
+  const words =
+    balanceBucket(balance, active) === 'last-lesson' ? [status.note] : [status.note, lastPaid]
   const joined = words.filter(Boolean).join(' · ')
   const note = joined ? joined.charAt(0).toUpperCase() + joined.slice(1) : undefined
   return (

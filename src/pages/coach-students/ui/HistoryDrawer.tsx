@@ -60,7 +60,7 @@ export function HistoryDrawer({ row, onClose, onRecordPayment, now }: HistoryDra
               </span>
             </p>
             <PackageProgress balance={row.balance} variant="card" />
-            <BalanceStatus balance={row.balance} now={now} />
+            <BalanceStatus balance={row.balance} now={now} active={row.group.active} />
             <Button
               size="compact"
               className="self-start"

@@ -110,9 +110,11 @@ describe('what payments cover', () => {
     expect(owesPayment({ ...sofia, unpaid: true })).toBe(true)
     // A new group that hasn't paid, and a package used up with nothing booked.
     expect(owesPayment({ ...neverPaid, package_no: 1, unpaid: false })).toBe(true)
-    expect(owesPayment({ package_size: 4, paid_lessons: 4, package_no: 2, unpaid: false })).toBe(
-      true,
-    )
+    const usedUp = { package_size: 4, paid_lessons: 4, package_no: 2, unpaid: false }
+    expect(owesPayment(usedUp)).toBe(true)
+    // A paused group that used up what it paid owes nothing; lessons past it still count.
+    expect(owesPayment(usedUp, false)).toBe(false)
+    expect(owesPayment({ ...usedUp, unpaid: true }, false)).toBe(true)
   })
 })
 

@@ -96,6 +96,9 @@ describe('balanceStatus', () => {
     expect(balanceStatus(usedUp, NOW)).toEqual({ label: 'Unpaid', note: null, noteTone: 'muted' })
     expect(balanceBucket(neverPaid)).toBe('unpaid')
     expect(balanceBucket(usedUp)).toBe('unpaid')
+    // Paused, it owes nothing more: Paid, sorted with the rest.
+    expect(balanceStatus(usedUp, NOW, false).label).toBe('Paid')
+    expect(balanceBucket(usedUp, false)).toBe('paid')
   })
 
   it('shows the year of a date in another year', () => {
