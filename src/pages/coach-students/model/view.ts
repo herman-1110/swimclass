@@ -54,8 +54,8 @@ export function tabView({ rows, waiting, query, filter }: TabInput) {
 /**
  * What the page shows for its URL and search (coach-students §1, §2.4, §5.2): `tabView`, plus
  * - `payRow`, `historyRow`, `addedRow`: the URL's groups, null when unknown;
- * - `panelRow`: the payment panel's group: `pay`, or from 1280 px the first listed row (as
- *   drawn, where Hana is in the panel);
+ * - `panelRow`: the payment panel's group: `pay`, or from 1280 px a group just added, else the
+ *   first listed row (as drawn, where Hana is in the panel);
  * - `highlighted`: the rows on --accent-soft: the panel's group (below 1280 px only while the
  *   panel is open) and a group just added;
  * - `onScreen`: the rows a collapsed list must still show: the highlighted ones and the kept
@@ -67,7 +67,9 @@ export function studentsView(input: ViewInput) {
   const payRow = byId(rows, input.pay)
   const historyRow = byId(rows, input.history)
   const addedRow = byId(rows, input.added)
-  const panelRow = payRow ?? (wide ? (tab.listed.at(0) ?? null) : null)
+  // A group just added takes the 1280 px column, so only its row is highlighted and its first
+  // payment is one step away (Herman, 2 Oct 2026).
+  const panelRow = payRow ?? (wide ? (addedRow ?? tab.listed.at(0) ?? null) : null)
   const highlighted = new Set(
     [wide ? panelRow : payRow, addedRow].flatMap((row) => (row ? [row.group.group_id] : [])),
   )

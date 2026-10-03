@@ -73,6 +73,16 @@ describe('studentsView', () => {
     expect(ids(view.highlighted)).toEqual(['weijie'])
   })
 
+  it('from 1280 px opens the column on a group just added, so only that row is highlighted', () => {
+    const view = studentsView({ ...base, wide: true, added: 'weijie' })
+    expect(view.panelRow?.group.group_id).toBe('weijie')
+    expect(ids(view.highlighted)).toEqual(['weijie'])
+    // A row the coach then chooses takes the column.
+    const chosen = studentsView({ ...base, wide: true, added: 'weijie', pay: 'kai' })
+    expect(chosen.panelRow?.group.group_id).toBe('kai')
+    expect(ids(chosen.highlighted)).toEqual(['kai', 'weijie'])
+  })
+
   it('searches the waiting accounts by name too', () => {
     expect(studentsView({ ...base, query: 'siti' }).waitingAccounts).toEqual([siti])
     expect(studentsView({ ...base, query: 'hana' }).waitingAccounts).toEqual([])
