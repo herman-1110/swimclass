@@ -64,8 +64,8 @@ public.)
   account, phone and name format checks, removing the dev project ref from docs.
 **Manual steps waiting on Herman**
 - Push `frontend-first` to `main`.
-- Done: Node 24, Supabase minimum password length 8 (dev).
-- Still open: delete `D:d`; at go-live, a Cloudflare Turnstile widget and an `age` key
+- Done: Node 24, Supabase minimum password length 8 (dev), `D:\d` deleted.
+- Still open: at go-live, a Cloudflare Turnstile widget and an `age` key
   pair for backups (prompt 12); optional: a GitHub noreply email for future commits; v0.6's
   Supabase CLI link, Cloudflare, package prices, Google 2-Step Verification and the CA
   certificate check.
