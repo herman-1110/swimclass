@@ -24,23 +24,33 @@ dashboards: write them as a checklist for Herman and do the code parts yourself.
    - Deploy `login`, `admin-accounts`, `mail-queue`; set `MAIL_TOKEN` (new random value)
      and `SITE_URL` (the bare production origin, no trailing slash, like
      `https://swimclass.online`: `mail-queue` puts it in front of the email links' paths).
-   - Auth: confirm email on, Site URL and redirect URLs = production URL, custom SMTP
-     with Gmail (same as dev), templates.
-   - Herman signs up as `herman`; run `supabase/scripts/make-coach.sql`.
+   - Auth (TECH_SPEC §9): confirm email on, Site URL and redirect URLs = production URL,
+     custom SMTP with Gmail (same as dev), templates, minimum password length 8, a low
+     email rate limit (about 20–30 an hour), and CAPTCHA with Cloudflare Turnstile
+     (create the widget in Herman's Cloudflare account; the secret goes in Auth, the site
+     key in `.env.production.local` as `VITE_TURNSTILE_SITE_KEY`).
+   - Before the site is announced, Herman signs up as `herman` with his own email and
+     confirms it; run `supabase/scripts/make-coach.sql` with that email (it matches the
+     confirmed address, not the username).
    - Link the CLI back to `swimclass-dev` (`npx supabase link --project-ref <dev ref>`)
      so everyday `--linked` commands (`db reset --linked` wipes the database) keep
      targeting dev. `npx supabase projects list` marks the linked project.
-2. **Cloudflare**: production `.env` values (publishable key only), `npm run build`,
-   `npx wrangler deploy`. Optional custom domain on the Worker. Check deep links
+2. **Cloudflare**: production values in `.env.production.local` (URL, publishable key,
+   Turnstile site key; it wins over `.env.local`, which holds dev's), `npm run build`
+   (it refuses secret keys and writes `dist/_headers`), `npx wrangler deploy`. Check the
+   security headers with `curl -I` on a page. Optional custom domain on the Worker. Check deep links
    (`/coach/students`) load after refresh (SPA fallback).
 3. **PWA**: `manifest.webmanifest` (name "Swim Class", short name, theme `#0B5E7A`,
    white background, 192/512 px icons, `display: standalone`), iOS meta tags, and an
    "Add to Home Screen" hint on the Account page. No service-worker caching of API data.
 4. **Apps Script (prod)**: second script project or the same one pointed at prod
    (`MAIL_QUEUE_URL`, new `MAIL_TOKEN`); run `install()`.
-5. **Backups**: `.github/workflows/backup.yml` weekly (Sunday 2 am MYT) running
-   `supabase db dump` with `SUPABASE_DB_URL` from GitHub secrets, uploading the dump as
-   an artifact with 90-day retention. Add a manual "Run workflow" trigger and test it.
+5. **Backups** (TECH_SPEC §12): `.github/workflows/backup.yml` weekly (Sunday 2 am MYT)
+   dumping the schema and the data (`supabase db dump`, then `--data-only`) with
+   `SUPABASE_DB_URL` from GitHub secrets, encrypting both with `age` to Herman's public
+   key (`BACKUP_AGE_RECIPIENT`; the private key stays with him, never on GitHub), and
+   uploading only the encrypted files as an artifact with 90-day retention. The repo is
+   public, so an unencrypted dump would publish customers' contacts. Add a manual "Run workflow" trigger and test it.
    Write a restore note in HANDOFF.
 6. **Go-live data**: a short guide for Herman: add each customer account (invite),
    add their groups with starting balances, then add upcoming lessons with Add booking
@@ -58,10 +68,14 @@ dashboards: write them as a checklist for Herman and do the code parts yourself.
    of free-tier limits to watch (TECH_SPEC §14).
 
 ## VALIDATION
-- Production site loads on a phone over 4G in under 3 s; Lighthouse performance and
+- Production site loads in under 3 s on PRD §8's profile (Fast 4G, 4× CPU;
+  `frontend-plan/tools/perf.mjs`), signed-in pages too; Lighthouse performance and
   accessibility ≥ 90 on Book and Schedule.
 - `curl` to a deep link returns the app; unknown asset paths return the app, not 404.
-- No secret key in the built files (`grep -r "sb_secret" dist/` is empty).
+- No secret key in the built files: `grep -rE 'sb_secret_[A-Za-z0-9_-]{10,}' dist/` is
+  empty (a plain `sb_secret` also matches supabase-js's own code).
+- `curl -I` on the site shows the Content-Security-Policy and the other headers.
+- The backup artifact holds only `.age` files, and Herman can decrypt and read one.
 - Backup workflow run succeeded and the artifact downloads.
 - Smoke test passed; the Apps Script execution log shows runs every 5 minutes.
 - Supabase dashboard shows the project active; free-tier usage well under limits.

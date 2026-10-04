@@ -35,9 +35,11 @@ put `VITE_DEMO=false` in `.env.local` (this needs the `login` Edge Function from
    - the **Project URL** (`https://<project-ref>.supabase.co`), and
    - the **Publishable key** (starts with `sb_publishable_`).
 
-   Never copy the secret key (`sb_secret_...`) into this repo or any `VITE_` variable.
+   Never copy the secret key (`sb_secret_...`) into this repo or any `VITE_` variable;
+   `npm run build` stops if a `VITE_` value is a secret key or a database address.
 3. In the repo root, copy `.env.example` to `.env.local` and paste both values.
-   `.env.local` is ignored by Git.
+   `.env.local` is ignored by Git. A production build reads it too, so the production
+   project's values go in `.env.production.local` (also ignored), which wins over it.
 4. Link the CLI to the project (the project ref is the part before `.supabase.co`):
    ```sh
    npx supabase login

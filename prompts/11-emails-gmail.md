@@ -31,12 +31,16 @@ goes out from Herman's Gmail. Read PRD BR-32 to BR-37, TECH_SPEC §7 (`mail-queu
      (`{{site_url}}/my-classes`).
    - Coach digest: subject like "Tomorrow: 3 lessons, first at 9:00 am"; lessons in order
      with location and travel gap to the next one, unpaid groups ("collect RM [price]"),
-     last-lesson groups, accounts waiting for approval.
+     last-lesson groups, accounts waiting for approval (by username and a count, not the
+     name they typed: Gmail turns a bare URL in a stranger's name into a link).
    - Reminders are due at `reminder_time` and the digest at `digest_time` (PRD BR-32,
      BR-33): the function queues each job only once it is due, and records each on its
      own (`daily_jobs` 'reminder' and 'digest' for `p_for_date`, tomorrow's date).
      Running it again must not duplicate anything.
-2. `claim_outbox`, `ack_outbox` (retry up to 5 attempts, then leave `last_error`).
+2. `claim_outbox`, `ack_outbox` (retry up to 5 attempts, then leave `last_error`), as
+   TECH_SPEC §7 says since the 4 Oct 2026 audit: `limit` capped at 50, reminders, digests
+   and late alerts handed out first, ack only for rows still claimed, `last_error` cut to
+   500 characters, sent rows deleted after 90 days.
 3. Edge Function `mail-queue` per TECH_SPEC §7 (token check; `queue_daily_emails` with
    tomorrow's MYT date, which decides what is due; claim, ack). Return
    `{ emails: [...] }` for claim. Before returning the claimed rows, replace
@@ -56,7 +60,12 @@ goes out from Herman's Gmail. Read PRD BR-32 to BR-37, TECH_SPEC §7 (`mail-queu
    send nothing, late alerts are only for customers' changes, and broadcasts reach only
    approved customers whose address is confirmed or was entered by the coach (invited).
 6. Supabase Auth custom SMTP (dev project first): `smtp.gmail.com`, port 587, Herman's
-   Gmail and App Password, sender name; raise the Auth email rate limit; customise the
+   Gmail and App Password, sender name; keep the Auth email rate limit low (about 20–30
+   an hour; TECH_SPEC §9), so strangers can't make his Gmail send sign-up and reset
+   emails in bulk. Before connecting Gmail to dev, change the seeded accounts' passwords
+   on dev (the seed's is public in DEV_SETUP), or anyone could sign in there as `herman`
+   and send email from his Gmail; disconnect it from dev once the end-to-end test is
+   done. Customise the
    confirm, invite and reset email templates to the same plain style. Write the exact
    steps in HANDOFF for prod.
 7. Coach view: a small "Email log" in Settings (last 50 outbox rows: when, to, kind,

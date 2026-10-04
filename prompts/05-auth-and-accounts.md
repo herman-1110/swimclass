@@ -18,9 +18,12 @@ type a username instead, without ever exposing emails to the browser.
    to the dev project. Stop and report if neither works.
 
 ## TASK
-1. Edge Function `login` per TECH_SPEC §7: rate limit via `login_attempts`, identical
-   `invalid_login` for every failure, returns the session. CORS limited to `SITE_URL`
-   and localhost.
+1. Edge Function `login` per TECH_SPEC §7, with the rate limit as redesigned after the
+   4 Oct 2026 audit: normalise the username first, one service-role database function
+   that locks, counts per username+IP and per IP, never locks an account out from many
+   IPs (it asks for the CAPTCHA instead), and prunes; `login_attempts` gets `ip inet`
+   and a username length check (a new migration). Identical `invalid_login` for every
+   failure; returns the session. CORS limited to `SITE_URL` and localhost.
 2. Edge Function `admin-accounts` (coach JWT required): `create_account` (invite by
    email with metadata; `approved = true`) and `send_password_reset`.
 3. Pages (match DESIGN §4 and `design/Login.dc.html`):
@@ -36,6 +39,12 @@ type a username instead, without ever exposing emails to the browser.
      `ROUTES.resetPassword`) and
      Reset password (`updateUser`).
    - Waiting for approval (`/pending`) with a log-out button.
+   - CAPTCHA (TECH_SPEC §9): when `VITE_TURNSTILE_SITE_KEY` is set, Log in, Sign up and
+     Forgot password show Cloudflare Turnstile and send its token (`captchaToken` to
+     Auth, `captcha_token` to `login`). Without the key (demo mode, dev) there is no
+     widget. Add `https://challenges.cloudflare.com` to `script-src` and `frame-src`
+     in `vite.config.ts`'s `securityHeaders` when the key is set, and load the widget's
+     script only on those three pages.
    - Log in, Sign up, Forgot and Reset show `DEFAULT_BUSINESS_NAME` from
      `src/shared/config/business.ts` as the business name: they are signed-out pages, and
      `get_public_settings` is for signed-in accounts only (approved or not), not anon.
@@ -49,13 +58,17 @@ type a username instead, without ever exposing emails to the browser.
    profile's display name to `Sidebar` as `signedInAs` in `CustomerLayout`.
 5. Account page: display name and phone (update own profile), email shown read-only,
    change password, log out.
-6. Coach bootstrap: a SQL script in `supabase/scripts/make-coach.sql` and a line in
-   HANDOFF telling Herman to run it once.
+6. Coach bootstrap (TECH_SPEC §9): `supabase/scripts/make-coach.sql` takes the coach's
+   email, matches the confirmed address in `auth.users` (never the username: whoever
+   signs up as `herman` first would get the role), and raises an error unless exactly
+   one row changes and no other coach exists. A line in HANDOFF tells Herman to run it
+   once, before the site is announced.
 
 ## VALIDATION
 - Seeded `meiling` logs in with username and password; wrong password and unknown
   username show the same message; the 11th failed try within 15 minutes shows the
-  "too many tries" message even with the right password.
+  "too many tries" message even with the right password; tries for `meiling` from a
+  second IP still work (no lockout from many IPs), and `Meiling` counts as `meiling`.
 - A new sign-up lands on `/pending` and can't book (RPC returns `not_approved`); after
   `approve_account` (coach only: call it signed in as herman; the Approve buttons come in
   prompts 08 and 09) they reach `/book`.
