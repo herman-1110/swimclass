@@ -175,13 +175,15 @@ async function addException(
   endsAt: string,
   note: string | null = null,
 ) {
-  // The coach may write exceptions directly (TECH_SPEC §6).
-  await db.as('herman')
+  // Written as the owner: the coach goes through add_exception, which allows no direct
+  // writes (TECH_SPEC §6). The test then goes on as the coach, as before.
+  await db.asOwner()
   await db.query(
     `insert into public.availability_exceptions (kind, starts_at, ends_at, note)
      values ($1, $2, $3, $4)`,
     [kind, startsAt, endsAt, note],
   )
+  await db.as('herman')
 }
 
 async function setSetting(db: TestDb, column: string, value: unknown) {

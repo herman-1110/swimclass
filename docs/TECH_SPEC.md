@@ -169,7 +169,17 @@ daily_jobs (job text, for_date date, done_at timestamptz not null default now(),
 
 login_attempts (id bigint identity pk, username text not null,
                 attempted_at timestamptz not null default now(), ok boolean not null)
+
+booking_changes (id bigint identity pk, account_id uuid not null → profiles on delete cascade,
+                 series_id uuid, changed_at timestamptz not null default now(),
+                 unique (account_id, series_id) where series_id is not null)
 ```
+
+Caps besides the columns' own (hardening migration, 4 Oct 2026):
+`availability_exceptions.note`, `bookings.cancel_reason`, `payments.note` ≤ 500 characters;
+`settings.payment_instructions` ≤ 2000; `payments.lessons` ≤ 100 and `amount_cents` ≤
+10 000 000 (RM 100,000); starting balances ≤ 10 000; at most 50 `availability_rules`
+(`too_many_rules`).
 
 The schema migration inserts the `settings` row with the defaults (coach_email '').
 The seed sets coach_email and adds the weekly template:
@@ -178,7 +188,9 @@ Mon–Fri 17:30–22:00; Sat and Sun 07:00–12:00 and 16:00–22:00.
 Triggers: a profile is created for every new `auth.users` row; `group_members` checks
 same account (`student_other_account`) and size (`group_full`); a group always keeps a
 member (`group_empty`, checked at commit); moving a group or student to another account
-is refused; `settings.updated_at` is set on update.
+is refused; `settings.updated_at` is set on update. A customer's booking or cancellation
+is refused after 10 in 24 hours (`too_many_changes` {`limit`}; a repeat booking counts
+once, the coach's never count): see §5.2.
 
 ## 4. Derived views
 All views use `with (security_invoker = true)` so RLS applies to whoever queries them.
@@ -331,6 +343,13 @@ Built in prompt 04 (`supabase/migrations/…_coach_slot_check.sql`, `…_booking
   - then credit: lessons needed <= `can_still_book` (`credit_exceeded` {`needed`,
     `can_still_book`})
   - insert rows with a shared `series_id` and the group's location; queue emails (§8)
+  - the change limit (hardening migration): a customer may book or cancel 10 times in any
+    24 hours, so a script can't flood the outbox (Gmail sends about 100 a day). One
+    `book_lesson` call counts once, however many weeks; the 11th change raises
+    `too_many_changes` {`limit`: 10}. A trigger on `bookings` counts in `booking_changes`;
+    it acts only for a signed-in customer, so `coach_book`, the coach's cancellations and
+    excuses, the seed and migrations pass. It is an abuse limit like the login limit (§7),
+    not a business setting, so it isn't in `settings`.
 - `coach_book(p_group_id, p_starts_at, p_minutes, p_repeat_weeks int default 1, p_ignore_open_hours bool default false, p_gap_override bool default false, p_ignore_credit bool default false) returns uuid[]`:
   coach only (`not_coach`, `not_found`, then `book_lesson`'s errors from `group_inactive`
   on). The same locks and checks, with `slot_check`'s coach options: he may book in the
@@ -352,7 +371,8 @@ Built in prompt 04 (`supabase/migrations/…_coach_slot_check.sql`, `…_booking
   (`app_now()`), `cancelled_by` and the reason (trimmed, up to 500 characters:
   `invalid_reason`) are recorded; queue emails (§8). Errors also `not_approved`,
   `not_your_booking` (a customer's booking that isn't theirs, or doesn't exist),
-  `not_found` (the coach), `not_booked` {`status`}.
+  `not_found` (the coach), `not_booked` {`status`}, and for a customer `too_many_changes`
+  {`limit`} (§5.2 above).
 - `excuse_booking(p_booking_id)`: coach only; a booked lesson that has started (a future
   one is cancelled instead: `not_started`); status 'excused', so it no longer counts.
   Errors also `not_found`, `not_booked` {`status`}.
@@ -446,10 +466,15 @@ everything else goes through the functions above.
 | students, groups, group_members | select own account's | all (writes via functions) |
 | bookings | select own groups' bookings | all (writes via functions) |
 | payments | select own groups' | all (writes via functions) |
-| availability_rules, availability_exceptions | select (exceptions: not `note`, the coach's private text) | all (exception notes read through coach functions) |
-| announcements | select where removed_at is null | all |
-| settings | none (use `get_public_settings`) | select/update |
-| email_outbox, daily_jobs, login_attempts | none | none (service role only; the Email log reads the outbox through `email_log`) |
+| availability_rules, availability_exceptions | select (exceptions: not `note`, the coach's private text) | select (exception notes read through coach functions); writes via functions |
+| announcements | select where removed_at is null | select all; writes via functions |
+| settings | none (use `get_public_settings`) | select; writes via `update_settings` |
+| email_outbox, daily_jobs, login_attempts, booking_changes | none | none (service role only; the Email log reads the outbox through `email_log`) |
+
+The only direct write from the browser is a profile's `display_name` and `phone`. The coach
+had direct writes on open hours, exceptions, announcements and settings until the
+hardening migration (4 Oct 2026) revoked them: the functions check, trim and cap what is
+written, and the tables cap it too.
 
 The RLS migration removes the default privileges, so every new table, view and function
 starts with no access for `public`, `anon` and `authenticated`. Grant `execute` to

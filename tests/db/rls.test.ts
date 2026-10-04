@@ -138,10 +138,15 @@ describe.skipIf(!hasDatabase)('a customer (meiling)', () => {
       const error = await db.expectFailure(sql)
       expect(error.code, sql).toBe(PERMISSION_DENIED)
     }
-    // Updates and deletes that no policy allows simply match no rows.
-    expect((await db.query('delete from public.availability_rules')).rowCount).toBe(0)
-    expect((await db.query('update public.announcements set pinned = false')).rowCount).toBe(0)
-    expect((await db.query('update public.settings set travel_gap_minutes = 0')).rowCount).toBe(0)
+    // Signed-in users have no write grant on these tables (the coach uses functions).
+    for (const sql of [
+      'delete from public.availability_rules',
+      'update public.announcements set pinned = false',
+      'update public.settings set travel_gap_minutes = 0',
+    ]) {
+      const error = await db.expectFailure(sql)
+      expect(error.code, sql).toBe(PERMISSION_DENIED)
+    }
   })
 
   it("sees when time is blocked but not the coach's note about it", async () => {
@@ -241,15 +246,20 @@ describe.skipIf(!hasDatabase)('the coach (herman)', () => {
     expect((await db.query('select * from public.announcements')).rowCount).toBe(1)
   })
 
-  it('can change open hours, announcements and settings directly', async () => {
+  it('changes open hours, time off, announcements and settings only through functions', async () => {
+    // The functions check and trim what is written (hardening migration, 4 Oct 2026).
     await db.as('herman')
-    await db.query(
+    for (const sql of [
+      `insert into public.availability_rules (weekday, opens_at, closes_at) values (1, '06:00', '07:00')`,
       `insert into public.availability_exceptions (starts_at, ends_at, kind, note)
        values ('2026-10-07 15:00+08', '2026-10-07 17:30+08', 'open', 'Extra time')`,
-    )
-    await db.query(`insert into public.announcements (message) values ('Pool closed on Friday')`)
-    const settings = await db.query('update public.settings set travel_gap_minutes = 45')
-    expect(settings.rowCount).toBe(1)
+      `insert into public.announcements (message) values ('Pool closed on Friday')`,
+      'update public.settings set travel_gap_minutes = 45',
+      'delete from public.announcements',
+    ]) {
+      const error = await db.expectFailure(sql)
+      expect(error.code, sql).toBe(PERMISSION_DENIED)
+    }
   })
 
   it('writes bookings and payments only through functions', async () => {
@@ -327,17 +337,7 @@ describe.skipIf(!hasDatabase)('security checklist (TECH_SPEC §13)', () => {
        order by 1, 2`,
     )
     expect(rows.map((r) => `${r.name} ${r.privilege}`)).toEqual([
-      'announcements DELETE',
-      'announcements INSERT',
-      'announcements UPDATE',
-      'availability_exceptions DELETE',
-      'availability_exceptions INSERT',
-      'availability_exceptions UPDATE',
-      'availability_rules DELETE',
-      'availability_rules INSERT',
-      'availability_rules UPDATE',
       'profiles UPDATE', // display_name and phone only (checked above)
-      'settings UPDATE',
     ])
   })
 

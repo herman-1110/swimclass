@@ -28,6 +28,7 @@ Migration names below drop the `supabase/migrations/` folder.
 | `20260929110000_update_email_links` | 04 | the confirmation links to `/my-classes` |
 | `20260929110100_fix_email_link_pattern` | 04 | `email_html` links may contain `-` |
 | `20260929110200_fix_email_text` | 04 | `email_text` also breaks up `{{` inside `{{{` |
+| `20261004100000_hardening` | audit | customer change limit, coach writes only through functions, table caps, `username_available` length guard |
 
 ## Tables
 
@@ -46,6 +47,7 @@ Migration names below drop the `supabase/migrations/` folder.
 | `email_outbox` | `…100000_schema` | emails waiting for the mailer; service role only |
 | `daily_jobs` | `…100000_schema` | which daily email jobs ran for which date; service role only |
 | `login_attempts` | `…100000_schema` | the login rate limit (BR-4); service role only |
+| `booking_changes` | `…100000_hardening` | a customer's recent bookings and cancellations, for the 10-in-24-hours limit; no grants |
 
 Enums (`…100000_schema`): `app_role`, `booking_status`, `payment_method`,
 `exception_kind`.
@@ -120,6 +122,8 @@ the caller or read settings.
 | `lock_booking_dates` | `…100200_booking` | the booking-date locks that stop two bookings racing |
 | `package_price_cents` | `…100200_booking` | a group's package price, pro rata |
 | `place_bookings` | `…100200_booking` | the shared booking steps behind `book_lesson` and `coach_book` |
+| `limit_booking_changes` | `…100000_hardening` | trigger: a customer's 10 bookings or cancellations in 24 hours (`too_many_changes`) |
+| `limit_open_hours_rules` | `…100000_hardening` | trigger: at most 50 open-hours ranges (`too_many_rules`) |
 
 ## Triggers
 
@@ -130,6 +134,8 @@ the caller or read settings.
 | `groups_not_empty`, `group_members_not_empty` (checked at commit) | `groups`, `group_members` | `check_group_not_empty` |
 | `groups_account_change`, `students_account_change` | `groups`, `students` | `check_account_change` |
 | `settings_touch_updated_at` | `settings` | `touch_updated_at` |
+| `bookings_limit_changes_insert`, `bookings_limit_changes_cancel` | `bookings` | `limit_booking_changes` |
+| `availability_rules_limit` (per statement) | `availability_rules` | `limit_open_hours_rules` |
 
 ## Other files
 

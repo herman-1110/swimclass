@@ -272,6 +272,7 @@ describe.skipIf(!hasDatabase)('create_group', () => {
       ).toEqual({ message, detail })
     }
 
+    await db.asOwner()
     await db.query('update public.settings set max_students_per_lesson = 2 where id = 1')
     await db.as('herman')
     expect(
