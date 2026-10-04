@@ -36,7 +36,8 @@ type SignUpFormProps = {
  * Sign up (auth spec §2.3, §6.2): username (checked as it is typed), name, email, phone and
  * a password typed twice. Every field is checked before the call; each problem shows under
  * its field and focus goes to the first. With the CAPTCHA on (TECH_SPEC §9), its check sits
- * above the button and must pass first; every refusal asks for a fresh one. Refusals show under their field, or above the button.
+ * above the button and must pass first; every refusal asks for a fresh one. Refusals show
+ * under their field, or above the button.
  */
 export function SignUpForm({ labelledBy, onSignedUp }: SignUpFormProps) {
   const [values, setValues] = useState<SignUpValues>(EMPTY_SIGN_UP)

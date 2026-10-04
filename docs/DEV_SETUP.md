@@ -116,6 +116,38 @@ extra time or Message all customers, reload before you run the tests. Extra sign
 still fine.
 Only ever point `DATABASE_URL` at `swimclass-dev`, never at production.
 
+## 5. Edge Functions and Auth (from prompt 05)
+Without Docker the functions can't run on this PC, so they run on `swimclass-dev`.
+After the CLI is logged in and linked (§2, steps 4 and 5):
+
+1. The website's address, which the functions allow (CORS) and put in their links:
+   ```sh
+   npx supabase secrets set SITE_URL=http://localhost:5173
+   ```
+2. Deploy both functions (Supabase bundles them, so no Docker is needed; `config.toml`
+   turns the gateway's JWT check off for both, as they check the caller themselves):
+   ```sh
+   npx supabase functions deploy login --use-api
+   npx supabase functions deploy admin-accounts --use-api
+   ```
+   Deploy again after changing anything in `supabase/functions/`.
+3. In the dashboard, **Authentication**:
+   - **Sign In / Providers → Email**: on, with **Confirm email** on.
+   - **URL Configuration**: Site URL `http://localhost:5173`; Redirect URLs
+     `http://localhost:5173/**` (sign-up confirmations open `/login`, password resets and
+     invitations `/reset-password`).
+   - Until Gmail SMTP is set up (prompt 11), Auth emails only the project's team members,
+     so sign up and reset with your own address, or use the seeded accounts.
+4. To use the dev project in the browser instead of demo mode, add `VITE_DEMO=false` to
+   `.env.local` and restart `npm run dev`. Seeded accounts log in with `swim-test-2026`
+   (on dev that password is public: change it before Gmail is connected to dev, TECH_SPEC §9).
+
+To try the CAPTCHA on dev, use Cloudflare's test keys, which always pass:
+`VITE_TURNSTILE_SITE_KEY=1x00000000000000000000AA` in `.env.local`, and in the dashboard,
+**Authentication → Attack Protection → CAPTCHA**: Turnstile with the secret
+`1x0000000000000000000000000000000AA`. Turn it off again afterwards, or every sign-in on dev
+needs the widget.
+
 ## Alternative: local Supabase with Docker
 If you install Docker Desktop later, `npx supabase start` runs Supabase on your machine.
 Use the URL and publishable key it prints in `.env.local`, `npx supabase db reset` to

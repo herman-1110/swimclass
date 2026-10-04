@@ -6,7 +6,7 @@ import { Captcha, type CaptchaHandle } from '@/shared/ui/Captcha'
 export type CaptchaState = {
   /** The token to send with the form, or null (no CAPTCHA, or not passed yet). */
   token: string | null
-  /** The CAPTCHA is on and hasn't passed yet: the form says so (captcha_required) instead of sending. */
+  /** The CAPTCHA is on and hasn't passed yet: the form says so (captcha_required), not sending. */
   missing: boolean
   /** After a refused try: its token is spent, so the check runs again. */
   reset(): void

@@ -27,8 +27,8 @@ const REFUSAL_ID = 'login-error'
  * way to Forgot password. Empty fields are named before any call, and focus goes to the
  * first. With the CAPTCHA on (TECH_SPEC §9), its check sits above the button and must pass
  * first; every refusal asks for a fresh one. A refusal shows above the button; after a wrong
- * username or password the password is cleared and focused. On success the session changes and the page's guard carries the
- * person on, to where they were going or home.
+ * username or password the password is cleared and focused. On success the session changes
+ * and the page's guard carries the person on, to where they were going or home.
  */
 export function LoginForm({ labelledBy }: LoginFormProps) {
   const [values, setValues] = useState<Record<LogInField, string>>({ username: '', password: '' })

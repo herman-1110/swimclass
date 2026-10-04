@@ -167,7 +167,7 @@ email_outbox (
 daily_jobs (job text, for_date date, done_at timestamptz not null default now(),
             primary key (job, for_date))
 
-login_attempts (id bigint identity pk, username text not null,
+login_attempts (id bigint identity pk, username text not null check (≤ 64 chars), ip inet,
                 attempted_at timestamptz not null default now(), ok boolean not null)
 
 booking_changes (id bigint identity pk, account_id uuid not null → profiles on delete cascade,
@@ -490,29 +490,47 @@ signed-in accounts get too). `week_slots` and
 up, and the coach's busy times show where he is.
 
 ## 7. Edge Functions (Deno, `supabase/functions/`)
-- **`login`** (verify_jwt off). POST `{username, password, captcha_token}`. Rate limit
-  (redesigned after the 4 Oct 2026 audit; prompt 05 builds it this way):
+- **`login`** (verify_jwt off). POST `{username, password, captcha_token}` →
+  `{session: {access_token, refresh_token}}`; the browser then calls
+  `supabase.auth.setSession(...)`. Built in prompt 05 (`…120000_add_login_limiter`,
+  tested in `tests/db/login.test.ts`), as redesigned after the 4 Oct 2026 audit:
   - Normalise the username first (trim, lowercase); one that can't be a username
-    (`^[a-z0-9._]{3,30}$`) gets `invalid_login` and isn't recorded.
-  - One service-role database function decides and records, under
-    `pg_advisory_xact_lock` on the username, so parallel tries can't slip past the count.
+    (`^[a-z0-9._]{3,30}$`), or an empty password, gets `invalid_login` and isn't recorded.
+  - `check_login_attempt(p_username, p_ip)` (service role only) decides and records,
+    under advisory locks on the username, then the IP. It records the try as a failure
+    before the sign-in, so parallel tries all count, and returns `{attempt_id, email}`
+    (null email for an unknown username, still counted). It deletes rows older than a
+    day. After a successful sign-in, `record_login_success(p_attempt_id)` marks the try
+    and forgets that username's earlier failures from that IP.
   - Limits over 15 minutes: 10 failures for one username from one IP, and 30 failures
-    from one IP for any usernames → `too_many_attempts`. Failures for one username from
-    many IPs never lock the account (anyone knows `herman`); past 10 they make the
-    CAPTCHA required for that username instead.
-  - `login_attempts` gains `ip inet`, a length check on `username` (≤ 64), and the
-    function deletes rows older than a day.
-  - The client IP is the first `x-forwarded-for` entry the function receives; Auth is
-    called with that IP forwarded, so Auth's own per-IP limit isn't one bucket for all.
-  Then it looks up the user's email with the secret-key client, signs in with email +
-  password (passing the CAPTCHA token on), records the attempt, returns the session.
-  Any failure returns `invalid_login` only. Browser then calls
-  `supabase.auth.setSession(...)`. Signing in to Auth directly with an email (the
-  publishable key can) skips this function, so Auth's CAPTCHA (§9) is what guards
-  that path.
-- **`admin-accounts`** (JWT required; coach only). `create_account {username,
-  display_name, email, phone}` → `auth.admin.inviteUserByEmail` with metadata, sets
-  `approved = true`. `send_password_reset {account_id}`.
+    from one IP for any usernames → `too_many_attempts` (429). Failures for one username
+    from many IPs never lock the account (anyone knows `herman`): in production Auth asks
+    for the CAPTCHA on every sign-in (§9), which is what stops them.
+  - The client IP: `CF-Connecting-IP`, else the first `X-Forwarded-For` entry; null if
+    neither holds an IP.
+  - It signs in with the email and password through a **publishable-key** client,
+    passing the CAPTCHA token on, so Auth checks the CAPTCHA. A secret-key client would
+    skip Auth's CAPTCHA check; forwarding the client's IP to Auth (`Sb-Forwarded-For`)
+    works only with the secret key, so it isn't done. Auth's own per-IP limit on
+    password sign-ins (150 per 5 minutes, bursts of 30) is therefore shared by every
+    login through this function; the CAPTCHA and the limits above come first.
+  - Every wrong detail (unknown username, wrong password, email not confirmed) answers
+    `invalid_login` (401). Also `captcha_failed` (400) when Auth refuses the token, and
+    `too_many_attempts` when Auth's own limit answers 429.
+  Signing in to Auth directly with an email (the publishable key can) skips this
+  function, so Auth's CAPTCHA (§9) is what guards that path.
+- **`admin-accounts`** (verify_jwt off: it checks the caller itself). The caller's
+  `Authorization` JWT must be the coach's: `is_coach()`, called as the caller, says
+  so (no JWT or an expired one → 401 `not_signed_in`; anyone else → 403 `not_coach`).
+  - `create_account {username, display_name, email, phone}` → `{account_id}`. Checks
+    the fields (`invalid_username`, `invalid_display_name` 1–100, `invalid_phone` ≤ 30,
+    `invalid_email`) and `username_available` (`username_taken`), then
+    `auth.admin.inviteUserByEmail` with the profile's details as metadata and a link to
+    `/reset-password` (where the person sets a password), then `approve_account` as the
+    coach. An address already registered → `email_taken` (also for an address that
+    signed up with another username and never confirmed: Auth invites it again).
+  - `send_password_reset {account_id}` → `{ok: true}`: emails that account a link to
+    `/reset-password` (`not_found`).
 - **`mail-queue`** (verify_jwt off; requires header `x-mail-token` equal to `MAIL_TOKEN`,
   compared in constant time). POST `{action: "claim", limit}` (`claim_outbox` caps
   `limit` at 50 and hands out reminders, digests and late alerts before other kinds): call `queue_daily_emails`
@@ -523,7 +541,13 @@ up, and the coach's busy times show where he is.
   `{action: "ack", results: [{id, ok, error}]}` (at most 50) → `ack_outbox` for each;
   it acts only on rows still claimed and keeps the first 500 characters of `error`.
   Sent rows older than 90 days are deleted (they hold names and addresses).
-- CORS on `login` and `admin-accounts`: allow only `SITE_URL` (and localhost in dev).
+- CORS on `login` and `admin-accounts`: allow only `SITE_URL`'s origin, which is
+  `http://localhost:5173` on the dev project; a request from another page's origin gets
+  403 `forbidden_origin`. Refusals are `{error: "<code>"}` with a 4xx status;
+  anything unexpected is 500 `unknown` (`supabase/functions/_shared/http.ts`).
+- Secrets: hosted functions get `SUPABASE_URL` and the new API keys
+  (`SUPABASE_SECRET_KEYS`, `SUPABASE_PUBLISHABLE_KEYS`) by themselves; set `SITE_URL`
+  (and `MAIL_TOKEN` in prompt 11) with `npx supabase secrets set`.
 
 ## 8. Email pipeline
 Rows are added to `email_outbox` by the functions (not by the browser):
@@ -591,7 +615,10 @@ after `digest_time`.
   Log in, Sign up and Forgot password show the widget (site key in
   `VITE_TURNSTILE_SITE_KEY`) and send its token (`captchaToken`; `login` passes it
   on). The site's Content-Security-Policy then also allows
-  `https://challenges.cloudflare.com` in `script-src` and `frame-src`.
+  `https://challenges.cloudflare.com` in `script-src` and `frame-src`. A token works
+  once, so the forms ask for a fresh check after every refusal. Without the key (demo
+  mode, dev) there is no widget. Cloudflare's test keys (site `1x00000000000000000000AA`,
+  secret `1x0000000000000000000000000000000AA`) always pass, for trying it on dev.
 - Minimum password length 8 (the app checks the same, `MIN_PASSWORD_LENGTH`).
 - The dev project's seeded password is public (DEV_SETUP). Before Gmail SMTP or the Apps
   Script is connected to dev (prompt 11's end-to-end test), change the seeded accounts'

@@ -3,6 +3,86 @@
 Update this file at the end of every Claude Code session. Newest entry on top.
 Keep entries short; link to files instead of pasting code.
 
+## v0.13 · 4 Oct 2026 · Prompt 05 built; not deployed yet
+**State**: `origin/main` = `origin/frontend-first` = 5d97c94 (v0.12, CI green). Local
+`frontend-first` has prompt 05's commits on top, not pushed. Typecheck, lint, format and the
+full unit suite (1,840 tests) pass locally. A demo build with Turnstile's always-pass test key,
+served by `wrangler dev` with the real headers, shows the widget on Log in, Sign up and Forgot
+password at 390 and 1280 px with nothing blocked, and meiling logs in through it
+(`frontend-plan/review/security/captcha-check.mjs`). Built and tested locally only:
+- **Not yet on `swimclass-dev`**: the migration `20261004120000_add_login_limiter` (applying it
+  from the session was blocked by Claude Code's permission check) and both Edge Functions
+  (the CLI isn't logged in, and Docker isn't installed, so prompt 05's DIAGNOSE 4 failed:
+  neither `functions serve` nor deploying works yet). `tests/db/login.test.ts` was written
+  but not run against dev; the migration was run in PGlite (demo mode and `pgq.mjs`).
+- So VALIDATION's live checks (meiling through `login`, the 11th failure, a second IP,
+  a customer calling `admin-accounts`, the network tab) are still to do (Next 1–3).
+**Done**
+- 2a8a00d, migration `…120000_add_login_limiter`: `login_attempts` gets `ip inet` and a
+  64-character username cap; `check_login_attempt` (service role only) locks per username
+  then IP, prunes rows older than a day, refuses after 10 failures per username+IP or 30 per
+  IP in 15 minutes, otherwise records the try as a failure *before* the sign-in (so parallel
+  tries all count) and returns the account's email; `record_login_success` marks it and
+  forgets that username's earlier failures from that IP. Demo mode's login uses the same
+  functions now. `supabase/README.md`, ARCHITECTURE §4.2/§4.3 updated.
+- f7f3d07, `supabase/functions/`: `login` and `admin-accounts` (TECH_SPEC §7 rewritten to
+  match), `_shared/http.ts` (CORS for `SITE_URL` only, JSON refusals) and `_shared/clients.ts`
+  (reads `SUPABASE_SECRET_KEYS`/`SUPABASE_PUBLISHABLE_KEYS`). `config.toml`: `verify_jwt =
+  false` for both; local Auth site URL `http://localhost:5173` and Confirm email on. Both type-check with
+  `deno check` (Deno 2.9 through `npx deno@2`).
+- 9847449: Cloudflare Turnstile on Log in, Sign up and Forgot password when
+  `VITE_TURNSTILE_SITE_KEY` is set (`shared/ui/Captcha.tsx`, `shared/lib/hooks/useCaptcha.tsx`,
+  `shared/lib/turnstile.ts`); the CSP allows `https://challenges.cloudflare.com` only then.
+  Words for `captcha_required`, `captcha_failed`, `captcha_unavailable`,
+  `over_request_rate_limit` (DESIGN §6).
+- 6a10ee5: `supabase/scripts/make-coach.sql` (by confirmed email; exactly one row; no other
+  coach). Tried in PGlite: placeholder left, a coach already there, no such email, success.
+- Already built in the frontend waves and unchanged: the pages, guards (signed out →
+  `/login`, unapproved → `/pending`, customers kept out of `/coach/*`), `SessionProvider`,
+  the sidebar's "Signed in as", the Account page, `DEFAULT_BUSINESS_NAME` on signed-out pages.
+- DEV_SETUP §5: deploying the functions, the `SITE_URL` secret, the dashboard's Auth
+  settings, `VITE_DEMO=false`, and Turnstile's test keys.
+**Next**
+1. Herman: `! npx supabase login` (opens the browser once). Then the session links the CLI
+   (`npx supabase link --project-ref uhrgtttvzqjrdtdzyzkr`, with the database password).
+2. Apply the migration to dev: `npx supabase db push` (linked) or with `--db-url`, then
+   `npm run test:db` (should add `login.test.ts`'s tests to the 243).
+3. DEV_SETUP §5: set `SITE_URL`, deploy both functions, check the dashboard's Auth settings,
+   then prompt 05's VALIDATION with `VITE_DEMO=false`. Also send a login with a made-up
+   `X-Forwarded-For` and `CF-Connecting-IP` and read `login_attempts.ip`: if a client can
+   choose the IP the function sees, change `clientIp` in `login/index.ts` to the header
+   Supabase sets. `frontend-plan/review/prompt05/validate.mjs` does all of this from the
+   command line (no accounts created, no email sent).
+4. `npm run db:types` once linked (still owed from v0.12).
+5. Prompt 06.
+**Decisions** (Herman left them to Claude)
+- The "CAPTCHA instead of a lockout" for many-IP failures is the CAPTCHA Auth asks on
+  every sign-in in production; `check_login_attempt` doesn't flag usernames, as a flag could
+  only be checked by a token Auth checks anyway.
+- `login` signs in with the publishable key so Auth checks the CAPTCHA (a secret-key client
+  skips it). Forwarding the client IP to Auth (`Sb-Forwarded-For`) needs the secret key, so
+  it isn't done: Auth's own per-IP allowance for password sign-ins (150 per 5 minutes,
+  bursts of 30) is shared by every login through the function. Plenty for one coach's
+  customers; the CAPTCHA and the limiter come first.
+- Two functions, not one: `check_login_attempt` records the try as a failure before the
+  sign-in, and `record_login_success` marks it after, so parallel tries can't slip past.
+- `admin-accounts` checks the coach by calling `is_coach()` and `approve_account` as the
+  caller (with their JWT), not with the service role. An address that signed up with
+  another username and never confirmed is refused as `email_taken`.
+- CORS allows exactly `SITE_URL`'s origin (dev's is `http://localhost:5173`).
+**Manual steps waiting on Herman**
+- Now: Next 1 (`supabase login`), and in the dev dashboard (DEV_SETUP §5): Email provider
+  and Confirm email on; Site URL `http://localhost:5173`; Redirect URLs
+  `http://localhost:5173/**`.
+- Before the site is announced (prompt 12), on production: sign up as `herman` with your own
+  email, confirm it, put that email in `supabase/scripts/make-coach.sql` and run it once in
+  the SQL editor.
+- At go-live (prompt 12): a Turnstile widget for the site's domain: its site key in
+  `.env.production.local`, its secret in Auth → Attack Protection → CAPTCHA.
+- Still open from v0.12: an `age` key pair for backups (prompt 12); optional: a GitHub
+  noreply email; Cloudflare, package prices, Google 2-Step Verification and the CA
+  certificate check.
+
 ## v0.12 · 4 Oct 2026 · Pushed; security audit and fixes
 **State**: `origin/main` is 6d4abdb (v0.11): Herman pushed it himself, since Claude Code's
 safety check blocks pushing from the session, and GitHub CI passed. `frontend-first` (=
