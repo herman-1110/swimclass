@@ -8,13 +8,22 @@ on:
   push:
   workflow_dispatch:
 
+# The job only reads the code; its token can't write to the repo.
+permissions:
+  contents: read
+
 jobs:
   check:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
+      # Actions pinned to a commit (the v5 tags on 4 Oct 2026), so a moved tag can't change
+      # what runs. The checkout keeps no token for the steps after it (npm ci runs
+      # packages' install scripts).
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
         with:
           node-version-file: .nvmrc
           cache: npm
