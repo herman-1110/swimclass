@@ -1,4 +1,4 @@
-import type { PGlite } from '@electric-sql/pglite'
+import type { PGlite, Transaction } from '@electric-sql/pglite'
 
 import type { AuthSession, SignUpInput } from '../auth'
 import { AppError, toAppError } from '../rpc'
@@ -6,28 +6,44 @@ import { demoSession, setDemoSession } from './session'
 
 // Demo stand-ins for the `login` and `admin-accounts` Edge Functions (TECH_SPEC §7) and
 // for Supabase Auth (§9), working on the demo database's auth.users. They answer with
-// the same codes the real ones will, so the screens can show every message.
+// the same codes the real ones do, so the screens can show every message.
 
-const FAILURE_WINDOW_MS = 15 * 60_000
-const MAX_FAILURES = 10
+/** The profile trigger's username rule; the login function refuses anything else unrecorded. */
+const USERNAME = /^[a-z0-9._]{3,30}$/
 /**
  * The shortest password, as the forms check it (MIN_PASSWORD_LENGTH in shared/config/messages,
  * the auth spec's Q2). Supabase Auth's "Minimum password length" must say the same.
  */
 const MIN_PASSWORD_LENGTH = 8
 
-const failures = new Map<string, number[]>()
+/** Runs work as the service role, the way the Edge Functions reach the database. */
+function asServiceRole<T>(db: PGlite, work: (tx: Transaction) => Promise<T>): Promise<T> {
+  return db.transaction(async (tx) => {
+    await tx.exec('set local role service_role')
+    return work(tx)
+  })
+}
 
-/** TECH_SPEC §7: 10 failures in 15 minutes for a username → too_many_attempts; any other failure → invalid_login. */
+/**
+ * The `login` Edge Function (TECH_SPEC §7) with the database's own limit
+ * (check_login_attempt, record_login_success): 10 failures in 15 minutes for a username,
+ * or 30 for any usernames, from one browser (demo mode has no IP: all its tries share
+ * one) → too_many_attempts; any other failure → invalid_login. No CAPTCHA in demo mode.
+ */
 export async function demoLogIn(
   db: PGlite,
   username: string,
   password: string,
 ): Promise<AuthSession> {
   const name = username.trim().toLowerCase()
-  const now = Date.now()
-  const recent = (failures.get(name) ?? []).filter((at) => now - at < FAILURE_WINDOW_MS)
-  if (recent.length >= MAX_FAILURES) throw new AppError('too_many_attempts')
+  if (!USERNAME.test(name)) throw new AppError('invalid_login')
+  const attemptId = await asServiceRole(db, async (tx) => {
+    const { rows } = await tx.query<{ id: string }>(
+      `select public.check_login_attempt($1, null) ->> 'attempt_id' as id`,
+      [name],
+    )
+    return rows[0]?.id
+  })
   const { rows } = await db.query<{ id: string; email: string | null }>(
     `select u.id, u.email
      from public.profiles p
@@ -38,11 +54,8 @@ export async function demoLogIn(
     [name, password],
   )
   const row = rows[0]
-  if (!row) {
-    failures.set(name, [...recent, now])
-    throw new AppError('invalid_login')
-  }
-  failures.delete(name)
+  if (!row || !attemptId) throw new AppError('invalid_login')
+  await asServiceRole(db, (tx) => tx.query('select public.record_login_success($1)', [attemptId]))
   const session = { userId: row.id, email: row.email }
   setDemoSession(session)
   return session

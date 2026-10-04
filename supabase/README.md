@@ -29,6 +29,7 @@ Migration names below drop the `supabase/migrations/` folder.
 | `20260929110100_fix_email_link_pattern` | 04 | `email_html` links may contain `-` |
 | `20260929110200_fix_email_text` | 04 | `email_text` also breaks up `{{` inside `{{{` |
 | `20261004100000_hardening` | audit | customer change limit, coach writes only through functions, table caps, `username_available` length guard |
+| `20261004120000_add_login_limiter` | 05 | `login_attempts` gets `ip` and a username cap; `check_login_attempt`, `record_login_success` |
 
 ## Tables
 
@@ -46,7 +47,7 @@ Migration names below drop the `supabase/migrations/` folder.
 | `settings` | `…100000_schema` | the one settings row (id 1) |
 | `email_outbox` | `…100000_schema` | emails waiting for the mailer; service role only |
 | `daily_jobs` | `…100000_schema` | which daily email jobs ran for which date; service role only |
-| `login_attempts` | `…100000_schema` | the login rate limit (BR-4); service role only |
+| `login_attempts` | `…100000_schema` (`ip`, username cap: `…120000_add_login_limiter`) | the login rate limit (BR-4): username, IP, time, ok; kept a day; service role only |
 | `booking_changes` | `…100000_hardening` | a customer's recent bookings and cancellations, for the 10-in-24-hours limit; no grants |
 
 Enums (`…100000_schema`): `app_role`, `booking_status`, `payment_method`,
@@ -91,6 +92,15 @@ listed in each function's header comment in its migration.
 | `update_settings` | `…100400_settings` | coach | change settings |
 | `post_announcement` | `…100400_settings` | coach | message all customers (banner and email) |
 | `remove_announcement` | `…100400_settings` | coach | take a message down |
+
+## Service-role functions
+
+Granted only to `service_role`, which the Edge Functions use (TECH_SPEC §7).
+
+| Function | Defined in | Who | What it does |
+|---|---|---|---|
+| `check_login_attempt` | `…120000_add_login_limiter` | `login` | the login limit: refuses after 10 failures per username and IP or 30 per IP in 15 minutes (`too_many_attempts`), else records the try as a failure and returns the account's email |
+| `record_login_success` | `…120000_add_login_limiter` | `login` | marks a try a success; forgets that username's earlier failures from that IP |
 
 Also granted to `authenticated`, because RLS policies and the views run them with the
 caller's rights: `is_coach`, `is_approved`, `my_account_id` (`…100300_rls`) and
@@ -141,6 +151,8 @@ the caller or read settings.
 
 - `seed.sql`: the sample data (week of Mon 28 Sep 2026). Dev project only, never prod.
 - `scripts/`: SQL run by hand. `shift-seed.sql` moves the sample week forward
-  (TECH_SPEC §10).
-- `functions/`: the Edge Functions (`login`, `admin-accounts`, `mail-queue`), from
-  prompt 05 on.
+  (TECH_SPEC §10); `make-coach.sql` makes the coach's confirmed email the coach, once
+  per project (TECH_SPEC §9).
+- `functions/`: the Edge Functions (TECH_SPEC §7): `login` and `admin-accounts`
+  (prompt 05), `mail-queue` (prompt 11). `_shared/` holds their door (`http.ts`: CORS,
+  JSON, refusals) and Supabase clients (`clients.ts`).
