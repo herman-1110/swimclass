@@ -17,7 +17,8 @@ declare
   v_coach text;
   v_changed int;
 begin
-  if v_email = 'coach-email@example.com' then
+  -- The example address (or none) means the line above wasn't filled in.
+  if v_email = '' or v_email like '%@example.com' then
     raise exception 'Put the coach''s email in this script first (the line marked ▼).';
   end if;
 
