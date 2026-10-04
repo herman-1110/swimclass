@@ -68,6 +68,7 @@ export function FreeLessonForm({ id, groupId, names, onAdded, onCancel }: FreeLe
       </p>
       <Textarea
         ref={noteRef}
+        maxLength={500}
         label="Note (optional)"
         value={note}
         readOnly={add.isPending}

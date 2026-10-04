@@ -93,8 +93,8 @@ describe('SignUpPage', () => {
       ['signup-name', 'text', 'name', '100'],
       ['signup-email', 'email', 'email', '254'],
       ['signup-phone', 'tel', 'tel', '30'],
-      ['signup-password', 'password', 'new-password', null],
-      ['signup-password-confirm', 'password', 'new-password', null],
+      ['signup-password', 'password', 'new-password', '72'],
+      ['signup-password-confirm', 'password', 'new-password', '72'],
     ])
     // The username's keyboard is set up as the log-in username's (auth spec §7.3).
     expect(

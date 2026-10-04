@@ -113,6 +113,7 @@ export function EditGroupDialog({ group, accountName, onClose, onSaved }: EditGr
       <form id={formId} noValidate onSubmit={submit} className="flex flex-col gap-4.5">
         <Field
           id={ids.location}
+          maxLength={100}
           label="Pool location"
           autoCapitalize="words"
           autoComplete="off"

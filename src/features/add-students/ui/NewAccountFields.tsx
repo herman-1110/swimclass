@@ -33,6 +33,7 @@ export function NewAccountFields({
       <div className="flex flex-col gap-3">
         <Field
           id={FIELD_IDS.newName}
+          maxLength={100}
           layout="inline"
           label="Name"
           value={value.name}
@@ -43,6 +44,7 @@ export function NewAccountFields({
         />
         <Field
           id={FIELD_IDS.newUsername}
+          maxLength={30}
           layout="inline"
           label="Username"
           value={value.username}
@@ -63,6 +65,7 @@ export function NewAccountFields({
         />
         <Field
           id={FIELD_IDS.newEmail}
+          maxLength={254}
           layout="inline"
           type="email"
           label="Email"
@@ -73,6 +76,7 @@ export function NewAccountFields({
         />
         <Field
           id={FIELD_IDS.newPhone}
+          maxLength={30}
           layout="inline"
           type="tel"
           label="Phone (optional)"

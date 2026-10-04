@@ -37,6 +37,7 @@ export function EmailRow({ form }: EmailRowProps) {
             type="email"
             size="row"
             autoComplete="email"
+            maxLength={254}
             placeholder="you@example.com"
             value={form.draft.coach_email}
             onChange={(event) => form.setField('coach_email', event.target.value)}

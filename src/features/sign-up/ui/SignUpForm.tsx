@@ -168,6 +168,7 @@ export function SignUpForm({ labelledBy, onSignedUp }: SignUpFormProps) {
       <Field
         ref={passwordInput}
         id="signup-password"
+        maxLength={72}
         label="Password"
         type="password"
         size="lg"
@@ -181,6 +182,7 @@ export function SignUpForm({ labelledBy, onSignedUp }: SignUpFormProps) {
       <Field
         ref={confirmInput}
         id="signup-password-confirm"
+        maxLength={72}
         label="Confirm password"
         type="password"
         size="lg"

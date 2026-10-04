@@ -83,6 +83,7 @@ export function LoginForm({ labelledBy }: LoginFormProps) {
       <Field
         ref={usernameInput}
         id="login-username"
+        maxLength={64}
         label="Username"
         size="lg"
         placeholder="e.g. meiling"
@@ -99,6 +100,7 @@ export function LoginForm({ labelledBy }: LoginFormProps) {
       <Field
         ref={passwordInput}
         id="login-password"
+        maxLength={72}
         label="Password"
         type="password"
         size="lg"

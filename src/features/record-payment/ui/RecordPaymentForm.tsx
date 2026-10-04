@@ -102,6 +102,7 @@ export function RecordPaymentForm({ accountName, ...input }: RecordPaymentFormPr
       />
       <Textarea
         id="pay-note"
+        maxLength={500}
         label="Note (optional)"
         placeholder={notePlaceholder(accountName)}
         value={draft.note}

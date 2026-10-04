@@ -92,6 +92,7 @@ export function ChangePasswordForm({ labelledBy }: ChangePasswordFormProps) {
       <Field
         ref={passwordInput}
         id="account-password"
+        maxLength={72}
         label="New password"
         type="password"
         size="lg"
@@ -105,6 +106,7 @@ export function ChangePasswordForm({ labelledBy }: ChangePasswordFormProps) {
       <Field
         ref={confirmInput}
         id="account-password-confirm"
+        maxLength={72}
         label="Confirm new password"
         type="password"
         size="lg"

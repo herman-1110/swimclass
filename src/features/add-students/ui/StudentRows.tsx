@@ -53,6 +53,7 @@ export function StudentRows({
           <Field
             key={row.index}
             id={studentId(row.index)}
+            maxLength={100}
             layout="inline"
             label={`Student ${row.index}`}
             placeholder={studentPlaceholder(row.index)}

@@ -18,6 +18,7 @@ export function LocationField({ value, onChange, suggestions, error }: LocationF
     <>
       <Field
         id={FIELD_IDS.location}
+        maxLength={100}
         label="Pool location"
         placeholder="e.g. Maple Condo pool"
         value={value}

@@ -91,6 +91,7 @@ export function NewPasswordForm({ labelledBy, onSaved, onExpired }: NewPasswordF
       <Field
         ref={passwordInput}
         id="reset-password"
+        maxLength={72}
         label="New password"
         type="password"
         size="lg"
@@ -104,6 +105,7 @@ export function NewPasswordForm({ labelledBy, onSaved, onExpired }: NewPasswordF
       <Field
         ref={confirmInput}
         id="reset-password-confirm"
+        maxLength={72}
         label="Confirm new password"
         type="password"
         size="lg"

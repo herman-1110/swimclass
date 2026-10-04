@@ -33,6 +33,7 @@ export function InstructionsRow({ form }: InstructionsRowProps) {
           <Textarea
             id={id}
             look="row"
+            maxLength={2000}
             placeholder="e.g. Bank transfer or DuitNow to your account, or cash to your coach."
             value={form.draft.payment_instructions}
             onChange={(event) => form.setField('payment_instructions', event.target.value)}
