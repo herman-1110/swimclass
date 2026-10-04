@@ -45,17 +45,85 @@ function preloadSupabaseBackend(): Plugin {
   }
 }
 
+/**
+ * dist/_headers for Cloudflare's static assets: the security headers of every page. The
+ * policy allows only this site's own files, plus the Supabase project in connect-src.
+ * Demo builds also allow WebAssembly (PGlite). Nothing inline: no inline script or <style>
+ * element anywhere (React's style props are allowed, they don't go through the parser).
+ */
+function securityHeaders(supabaseUrl: string | undefined, demo: boolean): Plugin {
+  const connect = ["'self'", supabaseUrl ? new URL(supabaseUrl).origin : null].filter(Boolean)
+  const policy = [
+    "default-src 'self'",
+    `script-src 'self'${demo ? " 'wasm-unsafe-eval'" : ''}`,
+    "style-src 'self'",
+    "img-src 'self' data:",
+    "font-src 'self'",
+    `connect-src ${connect.join(' ')}`,
+    "object-src 'none'",
+    "base-uri 'none'",
+    "form-action 'self'",
+    "frame-ancestors 'none'",
+  ].join('; ')
+  const headers = [
+    '/*',
+    `  Content-Security-Policy: ${policy}`,
+    '  Strict-Transport-Security: max-age=31536000',
+    '  X-Content-Type-Options: nosniff',
+    '  X-Frame-Options: DENY',
+    '  Referrer-Policy: strict-origin-when-cross-origin',
+    '  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()',
+    '  Cross-Origin-Opener-Policy: same-origin',
+    '',
+  ].join('\n')
+  return {
+    name: 'security-headers',
+    apply: 'build',
+    generateBundle() {
+      this.emitFile({ type: 'asset', fileName: '_headers', source: headers })
+    },
+  }
+}
+
+/**
+ * Only the publishable key may reach the browser (CLAUDE.md rule 7): a build stops if a
+ * VITE_ value is a secret key, a service-role JWT or a database address.
+ */
+function refuseSecrets(env: Record<string, string>) {
+  for (const [name, value] of Object.entries(env)) {
+    const jwtRole = /^eyJ[\w-]*\.([\w-]+)\./.exec(value)?.[1]
+    const role = jwtRole
+      ? (JSON.parse(Buffer.from(jwtRole, 'base64url').toString()) as { role?: string }).role
+      : undefined
+    if (
+      value.startsWith('sb_secret_') ||
+      role === 'service_role' ||
+      /postgres(ql)?:\/\//.test(value)
+    ) {
+      throw new Error(`${name} holds a secret; only the publishable key may go in VITE_ values.`)
+    }
+  }
+}
+
 // https://vite.dev/config/
-export default defineConfig(({ mode }) => {
+export default defineConfig(({ command, mode }) => {
   // Demo mode (src/shared/api/demo): the site runs the repo's migrations and seed in the
   // browser instead of talking to Supabase. On for `npm run dev` and the tests, off for
   // production builds, unless VITE_DEMO=true or false in .env.local says otherwise.
   // Written into the code as a constant, so a production build leaves the demo out.
-  const { VITE_DEMO } = loadEnv(mode, process.cwd(), 'VITE_')
+  // Production values go in .env.production.local, which wins over .env.local's dev ones.
+  const browserEnv = loadEnv(mode, process.cwd(), 'VITE_')
+  const { VITE_DEMO, VITE_SUPABASE_URL } = browserEnv
   const demo = VITE_DEMO ? VITE_DEMO === 'true' : mode !== 'production'
+  if (command === 'build') refuseSecrets(browserEnv)
 
   return {
-    plugins: [react(), tailwindcss(), preloadSupabaseBackend()],
+    plugins: [
+      react(),
+      tailwindcss(),
+      preloadSupabaseBackend(),
+      securityHeaders(VITE_SUPABASE_URL, demo),
+    ],
     define: { 'import.meta.env.VITE_DEMO': JSON.stringify(String(demo)) },
     build: {
       rolldownOptions: {

@@ -1,40 +1,19 @@
+import './SaveBar.css'
+
 import { StickyBar } from '@/shared/ui/StickyBar'
 
 import { SaveChangesButton } from './SaveChangesButton'
 import { SaveStatus } from './SaveStatus'
 
-// While the Save bar shows, a box reached with Tab scrolls clear of it and the tab bar
-// (coach-settings §2.5, proposed): 73 + 73 px under 768 px, plus room for up to three lines
-// of a save error in the bar, and 73 px for the tab bar alone from 768 px until the sidebar
-// takes over at 1024 px; each with 8 px more, so the focus ring (2 px, 2 px outside the
-// box) clears the bars too.
-const SCROLL_PADDING = `
-@media (width < 48rem) {
-  html:has([data-save-bar]) {
-    scroll-padding-bottom: calc(154px + max(0px, env(safe-area-inset-bottom) - 16px));
-  }
-  html:has([data-save-bar] [role="alert"]) {
-    scroll-padding-bottom: calc(218px + max(0px, env(safe-area-inset-bottom) - 16px));
-  }
-}
-@media (48rem <= width < 64rem) {
-  html:has([data-save-bar]) {
-    scroll-padding-bottom: calc(81px + max(0px, env(safe-area-inset-bottom) - 16px));
-  }
-}
-`
-
 /**
  * The phones' Save bar (design/AdminSettings.dc.html:230-232): sticky just above the tab bar,
  * edge to edge, with any save error above the 48 px "Save changes". Hidden from 768 px, where
- * Save sits in the header. Render it last in the page's column.
+ * Save sits in the header. Render it last in the page's column. SaveBar.css keeps a box
+ * reached with Tab clear of it.
  */
 export function SaveBar() {
   return (
     <StickyBar hideFrom="md" data-save-bar="">
-      <style href="settings-save-bar" precedence="default">
-        {SCROLL_PADDING}
-      </style>
       <SaveStatus placement="bar" />
       <SaveChangesButton placement="bar" />
     </StickyBar>
