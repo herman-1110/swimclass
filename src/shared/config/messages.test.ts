@@ -96,6 +96,18 @@ const CUSTOMER_CASES: Case[] = [
   ['not_approved', {}, 'Your coach hasn’t approved your account yet.'],
   ['invalid_login', {}, 'Wrong username or password.'],
   ['too_many_attempts', {}, 'Too many tries. Wait 15 minutes and try again.'],
+  [
+    'over_request_rate_limit',
+    {},
+    'Too many tries from this network. Wait a few minutes and try again.',
+  ],
+  ['captcha_required', {}, 'Finish the security check above, then try again.'],
+  ['captcha_failed', {}, 'The security check didn’t work. Do it again, then try again.'],
+  [
+    'captcha_unavailable',
+    {},
+    'Couldn’t load the security check. Check your connection and refresh the page.',
+  ],
   ['network', {}, 'Couldn’t reach the server. Check your connection and try again.'],
   // The auth spec's proposed wording (§5.4).
   ['weak_password', {}, 'Use at least 8 characters.'],
@@ -246,7 +258,6 @@ const CUSTOMER_GENERIC = [
   'off_step',
   'signup_failed',
   'not_signed_in',
-  'over_request_rate_limit',
   'email_address_not_authorized',
   'a_code_nobody_wrote',
 ]

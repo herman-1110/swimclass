@@ -6,8 +6,8 @@ import type { Backend, Filter } from './backend'
 import { AppError } from './rpc'
 import { supabase } from './supabase'
 
-// Supabase behind rpc.ts and auth.ts. Used when demo mode is off; the `login` and
-// `admin-accounts` Edge Functions it calls are built in prompt 05.
+// Supabase behind rpc.ts and auth.ts. Used when demo mode is off; it calls the `login` and
+// `admin-accounts` Edge Functions (supabase/functions).
 
 /** supabase-js's PostgrestError is an Error with `code`, `details` and `hint`. */
 type Result = { data: unknown; error: Error | null }
@@ -138,8 +138,10 @@ export function createSupabaseBackend(): Backend {
         )
         return () => data.subscription.unsubscribe()
       },
-      async logIn(username, password) {
-        const tokens = tokensFrom(await edge('login', { username, password }))
+      async logIn(username, password, captchaToken) {
+        const tokens = tokensFrom(
+          await edge('login', { username, password, captcha_token: captchaToken }),
+        )
         if (!tokens) throw new AppError('invalid_login')
         const { data, error } = await supabase.auth.setSession(tokens)
         if (error) throw authError(error)
@@ -154,6 +156,7 @@ export function createSupabaseBackend(): Backend {
           options: {
             data: { username: input.username, display_name: input.displayName, phone: input.phone },
             emailRedirectTo: redirectTo,
+            captchaToken: input.captchaToken ?? undefined,
           },
         })
         if (error) throw authError(error)
@@ -164,8 +167,11 @@ export function createSupabaseBackend(): Backend {
         const { error } = await supabase.auth.signOut({ scope: 'local' })
         if (error) throw authError(error)
       },
-      async sendPasswordReset(email, redirectTo) {
-        const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo })
+      async sendPasswordReset(email, redirectTo, captchaToken) {
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo,
+          captchaToken: captchaToken ?? undefined,
+        })
         if (error) throw authError(error)
       },
       async updatePassword(password) {

@@ -48,14 +48,21 @@ function preloadSupabaseBackend(): Plugin {
 /**
  * dist/_headers for Cloudflare's static assets: the security headers of every page. The
  * policy allows only this site's own files, plus the Supabase project in connect-src.
- * Demo builds also allow WebAssembly (PGlite). Nothing inline: no inline script or <style>
- * element anywhere (React's style props are allowed, they don't go through the parser).
+ * Demo builds also allow WebAssembly (PGlite). With a Turnstile site key, Cloudflare's
+ * CAPTCHA may load its script and frame (TECH_SPEC §9). Nothing inline: no inline script or
+ * <style> element anywhere (React's style props are allowed, they don't go through the parser).
  */
-function securityHeaders(supabaseUrl: string | undefined, demo: boolean): Plugin {
+function securityHeaders(
+  supabaseUrl: string | undefined,
+  demo: boolean,
+  turnstile: boolean,
+): Plugin {
   const connect = ["'self'", supabaseUrl ? new URL(supabaseUrl).origin : null].filter(Boolean)
+  const challenges = turnstile ? ' https://challenges.cloudflare.com' : ''
   const policy = [
     "default-src 'self'",
-    `script-src 'self'${demo ? " 'wasm-unsafe-eval'" : ''}`,
+    `script-src 'self'${demo ? " 'wasm-unsafe-eval'" : ''}${challenges}`,
+    `frame-src ${turnstile ? challenges.trim() : "'none'"}`,
     "style-src 'self'",
     "img-src 'self' data:",
     "font-src 'self'",
@@ -120,7 +127,7 @@ export default defineConfig(({ command, mode }) => {
   // Written into the code as a constant, so a production build leaves the demo out.
   // Production values go in .env.production.local, which wins over .env.local's dev ones.
   const browserEnv = loadEnv(mode, process.cwd(), 'VITE_')
-  const { VITE_DEMO, VITE_SUPABASE_URL } = browserEnv
+  const { VITE_DEMO, VITE_SUPABASE_URL, VITE_TURNSTILE_SITE_KEY } = browserEnv
   const demo = VITE_DEMO ? VITE_DEMO === 'true' : mode !== 'production'
   if (command === 'build') refuseSecrets(browserEnv)
 
@@ -129,7 +136,7 @@ export default defineConfig(({ command, mode }) => {
       react(),
       tailwindcss(),
       preloadSupabaseBackend(),
-      securityHeaders(VITE_SUPABASE_URL, demo),
+      securityHeaders(VITE_SUPABASE_URL, demo, Boolean(VITE_TURNSTILE_SITE_KEY)),
     ],
     define: { 'import.meta.env.VITE_DEMO': JSON.stringify(String(demo)) },
     build: {

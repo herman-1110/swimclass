@@ -5,6 +5,7 @@ import { useUsernameAvailable } from '@/entities/account'
 import { toAppError } from '@/shared/api/rpc'
 import { messageFor, MIN_PASSWORD_LENGTH } from '@/shared/config/messages'
 import { focusProblem } from '@/shared/lib/focusProblem'
+import { useCaptcha } from '@/shared/lib/hooks/useCaptcha'
 import { Button } from '@/shared/ui/Button'
 import { Field } from '@/shared/ui/Field'
 
@@ -34,7 +35,8 @@ type SignUpFormProps = {
 /**
  * Sign up (auth spec §2.3, §6.2): username (checked as it is typed), name, email, phone and
  * a password typed twice. Every field is checked before the call; each problem shows under
- * its field and focus goes to the first. Refusals show under their field, or above the button.
+ * its field and focus goes to the first. With the CAPTCHA on (TECH_SPEC §9), its check sits
+ * above the button and must pass first; every refusal asks for a fresh one. Refusals show under their field, or above the button.
  */
 export function SignUpForm({ labelledBy, onSignedUp }: SignUpFormProps) {
   const [values, setValues] = useState<SignUpValues>(EMPTY_SIGN_UP)
@@ -50,6 +52,7 @@ export function SignUpForm({ labelledBy, onSignedUp }: SignUpFormProps) {
   const confirmInput = useRef<HTMLInputElement>(null)
   const check = useUsernameAvailable(values.username)
   const signUp = useSignUp()
+  const captcha = useCaptcha()
 
   // Event handlers only: refs are never read while rendering.
   function inputOf(field: SignUpField) {
@@ -70,6 +73,7 @@ export function SignUpForm({ labelledBy, onSignedUp }: SignUpFormProps) {
   }
 
   function refused(error: Error) {
+    captcha.reset()
     const code = toAppError(error).code
     const field = signUpFieldFor(code)
     // Committed before the focus moves, so the field is read with its message.
@@ -98,7 +102,11 @@ export function SignUpForm({ labelledBy, onSignedUp }: SignUpFormProps) {
       focusProblem(inputOf(first), messageFor({ code: found[first] }))
       return
     }
-    const input = signUpInput(values)
+    if (captcha.missing) {
+      setRefusal(messageFor({ code: 'captcha_required' }))
+      return
+    }
+    const input = { ...signUpInput(values), captchaToken: captcha.token }
     signUp.mutate(input, {
       onSuccess: ({ confirmEmail }) => onSignedUp({ email: input.email, confirmEmail }),
       onError: refused,
@@ -192,6 +200,7 @@ export function SignUpForm({ labelledBy, onSignedUp }: SignUpFormProps) {
         onChange={(event) => change('confirm', event.target.value)}
         error={errorOf('confirm')}
       />
+      {captcha.widget}
       {refusal && (
         <p role="alert" className="text-label leading-normal text-warn">
           {refusal}

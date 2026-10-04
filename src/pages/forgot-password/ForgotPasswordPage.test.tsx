@@ -117,7 +117,7 @@ describe('ForgotPasswordPage', () => {
     send()
     const heading = await screen.findByRole('heading', { level: 1, name: 'Check your email' })
     expect(document.activeElement).toBe(heading)
-    expect(sendPasswordReset).toHaveBeenCalledWith('nobody@example.com')
+    expect(sendPasswordReset).toHaveBeenCalledWith('nobody@example.com', null)
     expect(heading.nextElementSibling?.textContent).toBe(
       'If an account uses nobody@example.com, we’ve sent it a link to set a new password.',
     )

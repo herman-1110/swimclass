@@ -16,6 +16,8 @@ export type SignUpInput = {
   email: string
   phone: string | null
   password: string
+  /** The CAPTCHA's token when it is on (TECH_SPEC §9); Auth checks it. */
+  captchaToken?: string | null
 }
 
 async function run<T>(call: () => Promise<T>): Promise<T> {
@@ -48,9 +50,16 @@ export function onSessionChange(listener: (session: AuthSession | null) => void)
   }
 }
 
-/** Username and password, through the `login` Edge Function (`invalid_login`, `too_many_attempts`). */
-export function logIn(username: string, password: string): Promise<AuthSession> {
-  return run(async () => (await getBackend()).auth.logIn(username, password))
+/**
+ * Username and password, through the `login` Edge Function (`invalid_login`,
+ * `too_many_attempts`, `captcha_failed`), with the CAPTCHA's token when it is on.
+ */
+export function logIn(
+  username: string,
+  password: string,
+  captchaToken: string | null = null,
+): Promise<AuthSession> {
+  return run(async () => (await getBackend()).auth.logIn(username, password, captchaToken))
 }
 
 /**
@@ -66,10 +75,13 @@ export function logOut(): Promise<void> {
   return run(async () => (await getBackend()).auth.logOut())
 }
 
-/** Emails a link to /reset-password. */
-export function sendPasswordReset(email: string): Promise<void> {
+/** Emails a link to /reset-password; with the CAPTCHA's token when it is on. */
+export function sendPasswordReset(
+  email: string,
+  captchaToken: string | null = null,
+): Promise<void> {
   return run(async () =>
-    (await getBackend()).auth.sendPasswordReset(email, linkTo(ROUTES.resetPassword)),
+    (await getBackend()).auth.sendPasswordReset(email, linkTo(ROUTES.resetPassword), captchaToken),
   )
 }
 

@@ -5,6 +5,7 @@ import { toAppError } from '@/shared/api/rpc'
 import { messageFor } from '@/shared/config/messages'
 import { ROUTES } from '@/shared/config/routes'
 import { focusProblem } from '@/shared/lib/focusProblem'
+import { useCaptcha } from '@/shared/lib/hooks/useCaptcha'
 import { Button } from '@/shared/ui/Button'
 import { ButtonLink } from '@/shared/ui/ButtonLink'
 import { Field } from '@/shared/ui/Field'
@@ -24,8 +25,9 @@ const REFUSAL_ID = 'login-error'
 /**
  * Log in (design/Login.dc.html; auth spec §2.2, §6.1): username, password, "Log in" and the
  * way to Forgot password. Empty fields are named before any call, and focus goes to the
- * first. A refusal shows above the button; after a wrong username or password the password
- * is cleared and focused. On success the session changes and the page's guard carries the
+ * first. With the CAPTCHA on (TECH_SPEC §9), its check sits above the button and must pass
+ * first; every refusal asks for a fresh one. A refusal shows above the button; after a wrong
+ * username or password the password is cleared and focused. On success the session changes and the page's guard carries the
  * person on, to where they were going or home.
  */
 export function LoginForm({ labelledBy }: LoginFormProps) {
@@ -35,6 +37,7 @@ export function LoginForm({ labelledBy }: LoginFormProps) {
   const usernameInput = useRef<HTMLInputElement>(null)
   const passwordInput = useRef<HTMLInputElement>(null)
   const logIn = useLogIn()
+  const captcha = useCaptcha()
 
   // Event handlers only: refs are never read while rendering.
   const inputOf = (field: LogInField) =>
@@ -46,6 +49,7 @@ export function LoginForm({ labelledBy }: LoginFormProps) {
   }
 
   function refused(error: Error) {
+    captcha.reset()
     const wrongDetails = toAppError(error).code === 'invalid_login'
     // Committed before the focus moves, so the field is read with its new description.
     flushSync(() => {
@@ -70,7 +74,11 @@ export function LoginForm({ labelledBy }: LoginFormProps) {
       focusProblem(inputOf(first), messageFor({ code: found[first] }))
       return
     }
-    logIn.mutate(values, { onError: refused })
+    if (captcha.missing) {
+      setRefusal({ message: messageFor({ code: 'captcha_required' }), wrongDetails: false })
+      return
+    }
+    logIn.mutate({ ...values, captchaToken: captcha.token }, { onError: refused })
   }
 
   const errorOf = (field: LogInField) => {
@@ -113,6 +121,7 @@ export function LoginForm({ labelledBy }: LoginFormProps) {
         error={errorOf('password')}
         aria-describedby={refusal?.wrongDetails ? REFUSAL_ID : undefined}
       />
+      {captcha.widget}
       {refusal && (
         <p id={REFUSAL_ID} role="alert" className="text-label leading-normal text-warn">
           {refusal.message}

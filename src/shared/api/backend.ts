@@ -27,10 +27,11 @@ export type AuthBackend = {
   getSession(): Promise<AuthSession | null>
   /** Calls the listener after every sign-in and sign-out; returns a function that stops it. */
   onChange(listener: (session: AuthSession | null) => void): () => void
-  logIn(username: string, password: string): Promise<AuthSession>
+  /** `captchaToken`: the CAPTCHA's token, or null when it is off (TECH_SPEC §9). */
+  logIn(username: string, password: string, captchaToken: string | null): Promise<AuthSession>
   signUp(input: SignUpInput, redirectTo: string): Promise<{ confirmEmail: boolean }>
   logOut(): Promise<void>
-  sendPasswordReset(email: string, redirectTo: string): Promise<void>
+  sendPasswordReset(email: string, redirectTo: string, captchaToken: string | null): Promise<void>
   updatePassword(password: string): Promise<void>
 }
 

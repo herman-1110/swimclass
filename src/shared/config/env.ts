@@ -9,6 +9,11 @@ declare global {
     /** Supabase publishable key (sb_publishable_...). Never the secret key. */
     readonly VITE_SUPABASE_PUBLISHABLE_KEY?: string
     /**
+     * Cloudflare Turnstile's site key (TECH_SPEC §9). When set, Log in, Sign up and Forgot
+     * password show the CAPTCHA and send its token. Public by design, like the publishable key.
+     */
+    readonly VITE_TURNSTILE_SITE_KEY?: string
+    /**
      * 'true' in demo mode. vite.config.ts always sets it: from VITE_DEMO in .env.local
      * when that is set, otherwise on for `npm run dev` and tests, off for production builds.
      */
@@ -19,6 +24,10 @@ declare global {
 export const env = {
   supabaseUrl: import.meta.env.VITE_SUPABASE_URL,
   supabasePublishableKey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+  /** Turnstile's site key, or undefined: no CAPTCHA (demo mode, dev). Read when asked, so tests can set it. */
+  get turnstileSiteKey(): string | undefined {
+    return import.meta.env.VITE_TURNSTILE_SITE_KEY || undefined
+  },
   /**
    * Demo mode: the site runs the repo's own migrations and seed in the browser
    * (`shared/api/demo`) instead of talking to Supabase, with the clock stopped at

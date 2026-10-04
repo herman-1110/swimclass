@@ -43,7 +43,7 @@ describe('useSendPasswordReset', () => {
   it('answers the same for any address (demo mode sends nothing)', async () => {
     const { result } = renderHook(() => useSendPasswordReset(), { wrapper: newWrapper() })
     for (const email of ['meiling@example.com', 'nobody@example.com']) {
-      await expect(act(() => result.current.mutateAsync(email))).resolves.toBeUndefined()
+      await expect(act(() => result.current.mutateAsync({ email }))).resolves.toBeUndefined()
     }
   })
 })

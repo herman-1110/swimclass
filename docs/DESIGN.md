@@ -284,6 +284,10 @@ Reason codes (from the database) → messages. `{gap}` is formatted from setting
 | not_approved | Your coach hasn't approved your account yet. |
 | invalid_login | Wrong username or password. |
 | too_many_attempts | Too many tries. Wait 15 minutes and try again. |
+| over_request_rate_limit | Too many tries from this network. Wait a few minutes and try again. |
+| captcha_required | Finish the security check above, then try again. |
+| captcha_failed | The security check didn't work. Do it again, then try again. |
+| captcha_unavailable | Couldn't load the security check. Check your connection and refresh the page. |
 | weak_password | Use at least 8 characters. |
 | same_password | That's your current password. Choose a different one. |
 | user_already_exists | An account already uses that email. Log in, or use Forgot username or password. |

@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -222,5 +222,70 @@ describe('LoginPage', () => {
     fireEvent.click(screen.getByRole('link', { name: 'Forgot username or password?' }))
     await screen.findByRole('heading', { name: 'Forgot your password?' })
     expect(router.state.location.pathname).toBe(ROUTES.forgotPassword)
+  })
+})
+
+describe('LoginPage with the CAPTCHA on (TECH_SPEC §9)', () => {
+  // Cloudflare's script, played by a stand-in that remembers the widget's callbacks.
+  let pass: ((token: string) => void) | undefined
+  const turnstile = {
+    render: vi.fn((_container: HTMLElement, options: { callback: (token: string) => void }) => {
+      pass = options.callback
+      return 'widget-1'
+    }),
+    reset: vi.fn(),
+    remove: vi.fn(),
+  }
+
+  beforeEach(() => {
+    vi.stubEnv('VITE_TURNSTILE_SITE_KEY', 'test-key')
+    window.turnstile = turnstile
+    turnstile.reset.mockClear()
+    pass = undefined
+  })
+
+  afterEach(() => {
+    vi.unstubAllEnvs()
+    delete window.turnstile
+  })
+
+  async function renderWithCheck() {
+    renderLogin()
+    await waitFor(() => expect(pass).toBeDefined())
+  }
+
+  it('asks for the check first, without calling login', async () => {
+    await renderWithCheck()
+    fill('meiling', DEMO_PASSWORD)
+    fireEvent.click(logInButton())
+    expect((await screen.findByRole('alert')).textContent).toBe(
+      'Finish the security check above, then try again.',
+    )
+    expect(logIn).not.toHaveBeenCalled()
+  })
+
+  it('sends the token, and asks for a fresh check after a refusal', async () => {
+    await renderWithCheck()
+    act(() => pass?.('token-1'))
+    fill('meiling', 'wrong-password')
+    fireEvent.click(logInButton())
+    expect((await screen.findByRole('alert')).textContent).toBe('Wrong username or password.')
+    expect(logIn).toHaveBeenCalledWith('meiling', 'wrong-password', 'token-1')
+    expect(turnstile.reset).toHaveBeenCalledWith('widget-1')
+
+    // The spent token isn't sent again.
+    fill('meiling', DEMO_PASSWORD)
+    fireEvent.click(logInButton())
+    await waitFor(() =>
+      expect(screen.getByRole('alert').textContent).toBe(
+        'Finish the security check above, then try again.',
+      ),
+    )
+    expect(logIn).toHaveBeenCalledTimes(1)
+
+    act(() => pass?.('token-2'))
+    fireEvent.click(logInButton())
+    await waitFor(async () => expect((await getSession())?.userId).toBe(MEILING))
+    expect(logIn).toHaveBeenLastCalledWith('meiling', DEMO_PASSWORD, 'token-2')
   })
 })

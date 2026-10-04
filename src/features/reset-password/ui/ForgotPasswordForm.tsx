@@ -4,6 +4,7 @@ import { flushSync } from 'react-dom'
 import { toAppError } from '@/shared/api/rpc'
 import { messageFor } from '@/shared/config/messages'
 import { focusProblem } from '@/shared/lib/focusProblem'
+import { useCaptcha } from '@/shared/lib/hooks/useCaptcha'
 import { Button } from '@/shared/ui/Button'
 import { Field } from '@/shared/ui/Field'
 
@@ -19,7 +20,9 @@ type ForgotPasswordFormProps = {
 
 /**
  * Forgot password (auth spec §2.4, §6.3): the email address, then "Send reset link". A
- * malformed address is named before any call; refusals show above the button.
+ * malformed address is named before any call; refusals show above the button. With the
+ * CAPTCHA on (TECH_SPEC §9), its check sits above the button and must pass first; every
+ * refusal asks for a fresh one.
  */
 export function ForgotPasswordForm({ labelledBy, onSent }: ForgotPasswordFormProps) {
   const [email, setEmail] = useState('')
@@ -27,8 +30,10 @@ export function ForgotPasswordForm({ labelledBy, onSent }: ForgotPasswordFormPro
   const [refusal, setRefusal] = useState<string | null>(null)
   const input = useRef<HTMLInputElement>(null)
   const send = useSendPasswordReset()
+  const captcha = useCaptcha()
 
   function refused(error: Error) {
+    captcha.reset()
     const onField = toAppError(error).code === 'email_address_invalid'
     // Committed before the focus moves, so the field is read with its message.
     flushSync(() => {
@@ -51,8 +56,15 @@ export function ForgotPasswordForm({ labelledBy, onSent }: ForgotPasswordFormPro
       focusProblem(input.current, messageFor({ code: found }))
       return
     }
+    if (captcha.missing) {
+      setRefusal(messageFor({ code: 'captcha_required' }))
+      return
+    }
     const address = email.trim()
-    send.mutate(address, { onSuccess: () => onSent(address), onError: refused })
+    send.mutate(
+      { email: address, captchaToken: captcha.token },
+      { onSuccess: () => onSent(address), onError: refused },
+    )
   }
 
   return (
@@ -75,6 +87,7 @@ export function ForgotPasswordForm({ labelledBy, onSent }: ForgotPasswordFormPro
         }}
         error={problem ? messageFor({ code: problem }) : undefined}
       />
+      {captcha.widget}
       {refusal && (
         <p role="alert" className="text-label leading-normal text-warn">
           {refusal}

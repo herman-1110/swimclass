@@ -249,6 +249,14 @@ const CUSTOMER: Readonly<Record<string, Words>> = {
   not_approved: 'Your coach hasn’t approved your account yet.',
   invalid_login: 'Wrong username or password.',
   too_many_attempts: 'Too many tries. Wait 15 minutes and try again.',
+  // Supabase Auth's own limit per IP (sign-up, reset; the login function passes it on).
+  over_request_rate_limit: 'Too many tries from this network. Wait a few minutes and try again.',
+  // The CAPTCHA on Log in, Sign up and Forgot password (TECH_SPEC §9): not passed yet, refused
+  // by Auth (a token works once, or it expired), or its script didn't load.
+  captcha_required: 'Finish the security check above, then try again.',
+  captcha_failed: 'The security check didn’t work. Do it again, then try again.',
+  captcha_unavailable:
+    'Couldn’t load the security check. Check your connection and refresh the page.',
   network: NETWORK_MESSAGE,
   // DESIGN §6's generic row, spelled out (any code in neither table gets it too, such as
   // invalid_week, off_step, unknown, and signup_failed and not_signed_in, which the sign-up
