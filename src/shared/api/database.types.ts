@@ -100,6 +100,35 @@ export type Database = {
         }
         Relationships: []
       }
+      booking_changes: {
+        Row: {
+          account_id: string
+          changed_at: string
+          id: number
+          series_id: string | null
+        }
+        Insert: {
+          account_id: string
+          changed_at?: string
+          id?: never
+          series_id?: string | null
+        }
+        Update: {
+          account_id?: string
+          changed_at?: string
+          id?: never
+          series_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_changes_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bookings: {
         Row: {
           cancel_reason: string | null
@@ -333,18 +362,21 @@ export type Database = {
         Row: {
           attempted_at: string
           id: number
+          ip: unknown
           ok: boolean
           username: string
         }
         Insert: {
           attempted_at?: string
           id?: never
+          ip?: unknown
           ok: boolean
           username: string
         }
         Update: {
           attempted_at?: string
           id?: never
+          ip?: unknown
           ok?: boolean
           username?: string
         }
@@ -680,6 +712,10 @@ export type Database = {
         Args: { p_booking_id: string; p_reason?: string }
         Returns: undefined
       }
+      check_login_attempt: {
+        Args: { p_ip: unknown; p_username: string }
+        Returns: Json
+      }
       coach_book: {
         Args: {
           p_gap_override?: boolean
@@ -856,6 +892,10 @@ export type Database = {
           p_to: string
         }
         Returns: boolean
+      }
+      record_login_success: {
+        Args: { p_attempt_id: number }
+        Returns: undefined
       }
       record_payment: {
         Args: {

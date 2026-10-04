@@ -506,8 +506,9 @@ up, and the coach's busy times show where he is.
     from one IP for any usernames → `too_many_attempts` (429). Failures for one username
     from many IPs never lock the account (anyone knows `herman`): in production Auth asks
     for the CAPTCHA on every sign-in (§9), which is what stops them.
-  - The client IP: `CF-Connecting-IP`, else the first `X-Forwarded-For` entry; null if
-    neither holds an IP. Still to check on dev: that a client can't set these itself.
+  - The client IP: `CF-Connecting-IP`, which Cloudflare in front of Supabase sets (it refuses
+    a request that sends one itself), else the first `X-Forwarded-For` entry; null if
+    neither holds an IP. A made-up `X-Forwarded-For` doesn't change it (checked on dev).
   - It signs in with the email and password through a **publishable-key** client,
     passing the CAPTCHA token on, so Auth checks the CAPTCHA. A secret-key client would
     skip Auth's CAPTCHA check; forwarding the client's IP to Auth (`Sb-Forwarded-For`)

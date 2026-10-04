@@ -3,20 +3,36 @@
 Update this file at the end of every Claude Code session. Newest entry on top.
 Keep entries short; link to files instead of pasting code.
 
-## v0.13 · 4 Oct 2026 · Prompt 05 built; not deployed yet
+## v0.13 · 5 Oct 2026 · Prompt 05: built, deployed to dev, validated
 **State**: `origin/main` = `origin/frontend-first` = 5d97c94 (v0.12, CI green). Local
-`frontend-first` has prompt 05's commits on top, not pushed. Typecheck, lint, format and the
-full unit suite (1,840 tests) pass locally. A demo build with Turnstile's always-pass test key,
-served by `wrangler dev` with the real headers, shows the widget on Log in, Sign up and Forgot
-password at 390 and 1280 px with nothing blocked, and meiling logs in through it
-(`frontend-plan/review/security/captcha-check.mjs`). Built and tested locally only:
-- **Not yet on `swimclass-dev`**: the migration `20261004120000_add_login_limiter` (applying it
-  from the session was blocked by Claude Code's permission check) and both Edge Functions
-  (the CLI isn't logged in, and Docker isn't installed, so prompt 05's DIAGNOSE 4 failed:
-  neither `functions serve` nor deploying works yet). `tests/db/login.test.ts` was written
-  but not run against dev; the migration was run in PGlite (demo mode and `pgq.mjs`).
-- So VALIDATION's live checks (meiling through `login`, the 11th failure, a second IP,
-  a customer calling `admin-accounts`, the network tab) are still to do (Next 1–3).
+`frontend-first` has prompt 05's commits on top, not pushed. On `swimclass-dev` (Herman ran
+`supabase login`; the session linked the CLI): the migration `…120000_add_login_limiter` is
+applied, `SITE_URL=http://localhost:5173` is set, and `login` and `admin-accounts` are
+deployed (`verify_jwt` false for both). Checks:
+- Typecheck, lint, format; the full unit suite (1,840 tests); `npm run test:db` on dev (262,
+  with the 19 new login-limit tests). Both functions pass `deno check`.
+- Prompt 05's VALIDATION, live on dev (`frontend-plan/review/prompt05/validate.mjs`, ALL OK):
+  meiling logs in through `login`, and the reply holds only the two tokens (no email); a wrong
+  password and an unknown username get the same 401 `invalid_login`; `Meiling` counts as
+  `meiling`; the 11th try after 10 failures is 429 `too_many_attempts` even with the right
+  password; another page's origin gets 403; `admin-accounts` answers 401 signed out, 403
+  `not_coach` to meiling, and reaches its checks for herman (`invalid_username`,
+  `username_taken`; nothing created, no email).
+- The client IP can't be faked: Cloudflare, in front of Supabase, refuses a request that sets
+  `CF-Connecting-IP` itself (its own 403 page), and a made-up `X-Forwarded-For` didn't
+  change the IP recorded (`login_attempts.ip` was the real one).
+- "Tries from a second IP still work" can't be sent from one PC; `tests/db/login.test.ts`
+  checks it in the database (10 failures from one IP leave another IP free).
+- Dev's Auth (its public settings): email sign-in on, sign-ups on, Confirm email on. The Site
+  URL and redirect URLs aren't public: Herman checks them (Manual steps).
+- A production build has no secret key and no demo code; the only addresses in it are the
+  forms' examples (`name@example.com`, `you@example.com`).
+- A demo build with Turnstile's always-pass test key, served by `wrangler dev` with the real
+  headers, shows the widget on Log in, Sign up and Forgot password at 390 and 1280 px with
+  nothing blocked, and meiling logs in through it
+  (`frontend-plan/review/security/captcha-check.mjs`).
+- `npm run db:types` regenerated `database.types.ts` (only additions: `booking_changes`,
+  `login_attempts.ip`, the two login functions).
 **Done**
 - 2a8a00d, migration `…120000_add_login_limiter`: `login_attempts` gets `ip inet` and a
   64-character username cap; `check_login_attempt` (service role only) locks per username
@@ -28,8 +44,8 @@ password at 390 and 1280 px with nothing blocked, and meiling logs in through it
 - f7f3d07, `supabase/functions/`: `login` and `admin-accounts` (TECH_SPEC §7 rewritten to
   match), `_shared/http.ts` (CORS for `SITE_URL` only, JSON refusals) and `_shared/clients.ts`
   (reads `SUPABASE_SECRET_KEYS`/`SUPABASE_PUBLISHABLE_KEYS`). `config.toml`: `verify_jwt =
-  false` for both; local Auth site URL `http://localhost:5173` and Confirm email on. Both type-check with
-  `deno check` (Deno 2.9 through `npx deno@2`).
+  false` for both; local Auth site URL `http://localhost:5173` and Confirm email on. Both
+  type-check with `deno check` (Deno 2.9 through `npx deno@2`).
 - 9847449: Cloudflare Turnstile on Log in, Sign up and Forgot password when
   `VITE_TURNSTILE_SITE_KEY` is set (`shared/ui/Captcha.tsx`, `shared/lib/hooks/useCaptcha.tsx`,
   `shared/lib/turnstile.ts`); the CSP allows `https://challenges.cloudflare.com` only then.
@@ -43,18 +59,14 @@ password at 390 and 1280 px with nothing blocked, and meiling logs in through it
 - DEV_SETUP §5: deploying the functions, the `SITE_URL` secret, the dashboard's Auth
   settings, `VITE_DEMO=false`, and Turnstile's test keys.
 **Next**
-1. Herman: `! npx supabase login` (opens the browser once). Then the session links the CLI
-   (`npx supabase link --project-ref uhrgtttvzqjrdtdzyzkr`, with the database password).
-2. Apply the migration to dev: `npx supabase db push` (linked) or with `--db-url`, then
-   `npm run test:db` (should add `login.test.ts`'s tests to the 243).
-3. DEV_SETUP §5: set `SITE_URL`, deploy both functions, check the dashboard's Auth settings,
-   then prompt 05's VALIDATION with `VITE_DEMO=false`. Also send a login with a made-up
-   `X-Forwarded-For` and `CF-Connecting-IP` and read `login_attempts.ip`: if a client can
-   choose the IP the function sees, change `clientIp` in `login/index.ts` to the header
-   Supabase sets. `frontend-plan/review/prompt05/validate.mjs` does all of this from the
-   command line (no accounts created, no email sent).
-4. `npm run db:types` once linked (still owed from v0.12).
-5. Prompt 06.
+1. Herman pushes `frontend-first` (`git push origin frontend-first`); once CI is green,
+   `git fetch . frontend-first:main` and `git push origin main`.
+2. Optional, Herman: the sign-up path on dev with `VITE_DEMO=false` in `.env.local` (Auth
+   emails only team members until prompt 11, so use your own Gmail): sign up → confirm →
+   `/pending`; then approve it signed in as herman (the Approve buttons come in prompts
+   08 and 09) → `/book`. Demo mode already shows the same flow, and the unit tests cover it.
+   Watch the browser's Network tab while logging in: no one else's email, no secret key.
+3. Prompt 06.
 **Decisions** (Herman left them to Claude)
 - The "CAPTCHA instead of a lockout" for many-IP failures is the CAPTCHA Auth asks on
   every sign-in in production; `check_login_attempt` doesn't flag usernames, as a flag could
@@ -71,20 +83,16 @@ password at 390 and 1280 px with nothing blocked, and meiling logs in through it
   another username and never confirmed is refused as `email_taken`.
 - CORS allows exactly `SITE_URL`'s origin (dev's is `http://localhost:5173`).
 **Open issues**
-- `tests/db/login.test.ts` has never run: if `set local role service_role` is refused on dev,
-  run those calls as the owner and keep the anon and signed-in refusal tests.
 - `send_password_reset` (unused until prompt 09) assumes Auth skips its CAPTCHA for the
   secret key; Auth's source says so for `service_role`, untried with an `sb_secret_` key.
-- VALIDATION's sign-up → `/pending` → `approve_account` → `/book` and the network-tab check
-  need a real sign-up on dev, and Auth emails only team members until prompt 11: Herman signs
-  up with his own Gmail, the session approves it as herman (or demo mode shows the same flow).
 - An invite to a non-team address on dev fails as 500 `unknown` (`email_address_not_authorized`);
   map it in prompt 09 if needed.
 - `dist/` holds a demo build with Turnstile's test key: never deploy it.
+- The validation leaves rows in dev's `login_attempts` (deleted after a day); it doesn't
+  touch anything the database tests fingerprint.
 **Manual steps waiting on Herman**
-- Now: Next 1 (`supabase login`), and in the dev dashboard (DEV_SETUP §5): Email provider
-  and Confirm email on; Site URL `http://localhost:5173`; Redirect URLs
-  `http://localhost:5173/**`.
+- Now, in the dev dashboard → Authentication → URL Configuration (DEV_SETUP §5): Site URL
+  `http://localhost:5173`; Redirect URLs `http://localhost:5173/**`. Then Next 1.
 - Before the site is announced (prompt 12), on production: sign up as `herman` with your own
   email, confirm it, put that email in `supabase/scripts/make-coach.sql` and run it once in
   the SQL editor.

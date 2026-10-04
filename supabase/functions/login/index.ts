@@ -26,9 +26,10 @@ function validIp(value: string | undefined): string | null {
 }
 
 /**
- * The client's IP: CF-Connecting-IP, or else the first X-Forwarded-For entry; null when
- * neither holds an IP. Whether a client can set either header itself is still to be checked
- * on dev (HANDOFF v0.13, Next 3); if one can, read the header Supabase's edge sets instead.
+ * The client's IP: CF-Connecting-IP, which Cloudflare (in front of Supabase) sets, or else the
+ * first X-Forwarded-For entry; null when neither holds an IP. Checked on dev (4 Oct 2026):
+ * Cloudflare refuses a request that sends CF-Connecting-IP itself (403), and a made-up
+ * X-Forwarded-For doesn't change the IP recorded.
  */
 function clientIp(request: Request): string | null {
   return (
