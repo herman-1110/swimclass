@@ -89,12 +89,19 @@ function securityHeaders(supabaseUrl: string | undefined, demo: boolean): Plugin
  * Only the publishable key may reach the browser (CLAUDE.md rule 7): a build stops if a
  * VITE_ value is a secret key, a service-role JWT or a database address.
  */
+function jwtRole(value: string): string | undefined {
+  const payload = /^eyJ[\w-]*\.([\w-]+)\./.exec(value)?.[1]
+  if (!payload) return undefined
+  try {
+    return (JSON.parse(Buffer.from(payload, 'base64url').toString()) as { role?: string }).role
+  } catch {
+    return undefined // not a JWT after all
+  }
+}
+
 function refuseSecrets(env: Record<string, string>) {
   for (const [name, value] of Object.entries(env)) {
-    const jwtRole = /^eyJ[\w-]*\.([\w-]+)\./.exec(value)?.[1]
-    const role = jwtRole
-      ? (JSON.parse(Buffer.from(jwtRole, 'base64url').toString()) as { role?: string }).role
-      : undefined
+    const role = jwtRole(value)
     if (
       value.startsWith('sb_secret_') ||
       role === 'service_role' ||

@@ -9,8 +9,8 @@ safety check blocks pushing from the session, and GitHub CI passed. `frontend-fi
 local `main` plus this work) is not pushed. At 15ae3bd typecheck, lint and format pass, and the build passed at
 37bb6ab. The full unit run was stopped by Claude Code for low memory before it finished;
 the files these changes touch passed in partial runs (booking, cancelling and Settings in
-demo mode with the migration, 371 tests; every form with new limits, 409). Run `npm run
-test` before pushing. The hardening migration is applied
+demo mode with the migration, 371 tests; every form with new limits, 409). GitHub CI
+runs the whole suite once `frontend-first` is pushed (Next 1). The hardening migration is applied
 to `swimclass-dev` and `npm run test:db` passes there (243 tests). The old worktrees and
 all 20 `fe/*` branches are removed (all were merged and clean).
 **Done** (Herman pasted a security checklist, then: "The decisions you reason it and made
@@ -47,7 +47,9 @@ public.)
   minimum is 8. (15ae3bd repairs 02f75ce, whose `String.replace` pasted a copy of the
   spec's first half into §7.)
 **Next**
-1. Herman pushes `frontend-first` to `main` (the commands are in the session report).
+1. Herman pushes `frontend-first` first (`git push origin frontend-first`), so CI runs the
+   full unit suite off this PC; once it is green, `git fetch . frontend-first:main` and
+   `git push origin main`.
 2. The wiring (prompts 05–11), building the login limiter and CAPTCHA as prompt 05 now
    says. Run `npm run db:types` once the CLI is linked.
 **Decisions** (Herman left them to Claude)
