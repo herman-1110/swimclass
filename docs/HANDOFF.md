@@ -3,24 +3,70 @@
 Update this file at the end of every Claude Code session. Newest entry on top.
 Keep entries short; link to files instead of pasting code.
 
-## v0.12 · 4 Oct 2026 · Merged and pushed; security audit
-**State**: `main` = `frontend-first` = `origin/main` at 6d4abdb. Herman ran the push himself
-(Claude Code's safety check blocks pushing from the session). GitHub CI passed on 6d4abdb.
-This entry is not pushed.
-**Done**
-- Herman's pasted security checklist: a read-only audit of the database and of secrets,
-  frontend, config and git history. No secret key, token or password has ever been
-  committed, and none is in the production bundle; `npm audit` is clean. The findings are
-  in `frontend-plan/review/security/audit-2026-10-04.md`, kept outside the repo because the
-  repo is public and they aren't fixed yet.
+## v0.12 · 4 Oct 2026 · Pushed; security audit and fixes
+**State**: `origin/main` is 6d4abdb (v0.11): Herman pushed it himself, since Claude Code's
+safety check blocks pushing from the session, and GitHub CI passed. `frontend-first` (=
+local `main` plus this work) is not pushed. At 15ae3bd typecheck, lint and format pass, and the build passed at
+37bb6ab. The full unit run was stopped by Claude Code for low memory before it finished;
+the files these changes touch passed in partial runs (booking, cancelling and Settings in
+demo mode with the migration, 371 tests; every form with new limits, 409). Run `npm run
+test` before pushing. The hardening migration is applied
+to `swimclass-dev` and `npm run test:db` passes there (243 tests). The old worktrees and
+all 20 `fe/*` branches are removed (all were merged and clean).
+**Done** (Herman pasted a security checklist, then: "The decisions you reason it and made
+it yourself". The findings and their outcomes are in
+`frontend-plan/review/security/audit-2026-10-04.md`, outside the repo because the repo is
+public.)
+- Secrets: none was ever committed (173 commits, every branch), none is in the production
+  bundle, and `npm audit` is clean. Only the URL and publishable key reach the browser.
+- 0fe7260, migration `20261004100000_hardening`, applied with `supabase db push --db-url`:
+  - A customer may book or cancel 10 times in 24 hours (`too_many_changes` {limit}; PRD
+    BR-16). A repeat booking counts once; the coach never counts. A trigger counts in the
+    new `booking_changes` table.
+  - The coach's direct writes on open hours, exceptions, announcements and settings are
+    revoked; the functions check, trim and cap what is written.
+  - Table caps match the functions' (notes and reasons 500, payment instructions 2000),
+    plus payments ≤ 100 lessons and RM 100,000, starting balances ≤ 10,000, and at most 50
+    open-hours ranges (`too_many_rules`). `username_available` refuses input over 64.
+  - `database.types.ts` wasn't regenerated (`db:types` needs the CLI link; only the new
+    table is missing, and the browser never reads it).
+- 7e79ac0: the customer message for the limit (DESIGN §6).
+- 37bb6ab: the build writes `dist/_headers` (Content-Security-Policy with only the site's
+  files and the Supabase project, frame-ancestors 'none', HSTS, nosniff, X-Frame-Options,
+  Referrer-Policy, Permissions-Policy, COOP), and refuses secret keys in `VITE_` values.
+  Settings' Save bar CSS moved from a `<style>` element to `SaveBar.css`. Checked with
+  `wrangler dev` on a demo build (`frontend-plan/review/security/csp-check.mjs`): every
+  page at 390 and 1280 px, nothing blocked; an injected inline script is refused.
+- 4a4ceb6: CI has a read-only token, actions pinned to commits, no stored credentials.
+- ee0f492: `maxLength` on every text box (passwords 72, Auth's bcrypt limit).
+- 02f75ce, 15ae3bd: TECH_SPEC §7, §9, §12, §13 and prompts 05, 11, 12 now describe the safer
+  designs to build: the login limit per username+IP and per IP with no lockout from many
+  IPs, Cloudflare Turnstile CAPTCHA, a low Auth email limit, the coach made by confirmed
+  email, encrypted backups (the repo is public), `.env.production.local`, and changing
+  dev's public seed passwords before Gmail is connected to dev. `config.toml`'s password
+  minimum is 8. (15ae3bd repairs 02f75ce, whose `String.replace` pasted a copy of the
+  spec's first half into §7.)
 **Next**
-1. Herman decides the audit's open questions, then fix in batches: repo-only (headers, build
-   guard, CI, maxLength, prompt and spec fixes), one migration (caps, grants, change limit),
-   and the login limiter with the wiring (prompt 05).
-2. Then v0.8 Next 2 and 3: remove the worktrees and branches (all 20 `fe/*` branches are in
-   `main` and the seven worktrees are clean), and the wiring.
+1. Herman pushes `frontend-first` to `main` (the commands are in the session report).
+2. The wiring (prompts 05–11), building the login limiter and CAPTCHA as prompt 05 now
+   says. Run `npm run db:types` once the CLI is linked.
+**Decisions** (Herman left them to Claude)
+- CAPTCHA: yes, Cloudflare Turnstile (free), built with prompt 05 and switched on in
+  prompt 12.
+- Sign-up stays open, with CAPTCHA and the coach's approval.
+- The change limit is 10 in a rolling 24 hours, hard-coded: it is an abuse limit like the
+  login limit (TECH_SPEC §7), not a business setting, so it isn't in `settings`.
+- Migrations go to `swimclass-dev` with `npx supabase db push --db-url "$DATABASE_URL"`
+  (the session pooler, port 5432), which keeps the migration history in step.
+- Not done, with reasons in the audit file: a per-recipient email cap, un-approving an
+  account, phone and name format checks, removing the dev project ref from docs.
 **Manual steps waiting on Herman**
-- As in v0.11.
+- Push `frontend-first` to `main`.
+- Done: Node 24, Supabase minimum password length 8 (dev).
+- Still open: delete `D:d`; at go-live, a Cloudflare Turnstile widget and an `age` key
+  pair for backups (prompt 12); optional: a GitHub noreply email for future commits; v0.6's
+  Supabase CLI link, Cloudflare, package prices, Google 2-Step Verification and the CA
+  certificate check.
 
 ## v0.11 · 3 Oct 2026 · Triage 7–17, the copy list and Q4, decided for Herman
 **State**: `frontend-first` (not pushed; 129 commits ahead of `origin/main`, with this
