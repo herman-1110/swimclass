@@ -230,6 +230,13 @@ const CUSTOMER: Readonly<Record<string, Words>> = {
         `These weeks clash: ${dates}. Nothing was booked. Try another time or turn off repeat.`,
     ),
   group_inactive: 'Your coach has paused bookings for this group. Message your coach.',
+  // BR-16's limit on bookings and cancellations (hardening migration, 4 Oct 2026).
+  too_many_changes: (d) =>
+    given(
+      countOf(d.limit),
+      (limit) =>
+        `You’ve booked or cancelled ${limit} times in the last 24 hours. Try again later, or message your coach.`,
+    ),
   // "{cutoff} hours" reads "1 hours" for a 1-hour cutoff, so the unit comes with the number
   // (the My classes spec, C8). A cutoff of 0 has no sensible words: generic.
   locked: (_, o) =>

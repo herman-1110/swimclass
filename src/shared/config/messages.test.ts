@@ -79,6 +79,11 @@ const CUSTOMER_CASES: Case[] = [
   ],
   ['group_inactive', {}, 'Your coach has paused bookings for this group. Message your coach.'],
   [
+    'too_many_changes',
+    { limit: 10 },
+    'You’ve booked or cancelled 10 times in the last 24 hours. Try again later, or message your coach.',
+  ],
+  [
     'locked',
     { cutoff_at: '2026-09-26T11:00:00+08:00' },
     'It’s less than 6 hours before the lesson, so it can’t be cancelled.',

@@ -103,7 +103,9 @@ Every rule has an ID so code, tests and prompts can refer to it.
 - **BR-15** Customers can cancel up to `cancel_cutoff_hours` (default 6) before the
   start. After that the lesson is locked: it can't be cancelled and counts even if
   missed. The cancel button shows the deadline ("Free to cancel until 3:00 am, Sat 3 Oct").
-- **BR-16** Rescheduling = cancel + book, following the same rules.
+- **BR-16** Rescheduling = cancel + book, following the same rules. A customer can book
+  or cancel at most 10 times in any 24 hours (a repeat booking counts once; the coach's
+  changes don't count), so no one can flood the emails (BR-37). Added 4 Oct 2026.
 - **BR-17** The coach can cancel any lesson at any time (for example weather or
   emergency). The lesson goes back to the package and the customer is emailed.
 - **BR-18** The coach can mark a lesson "excused" (for example the student was sick and

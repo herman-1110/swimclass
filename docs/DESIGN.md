@@ -278,6 +278,7 @@ Reason codes (from the database) → messages. `{gap}` is formatted from setting
 | credit_exceeded | Pay for the current package before booking more lessons. |
 | repeat_conflict | These weeks clash: {dates}. Nothing was booked. Try another time or turn off repeat. |
 | group_inactive | Your coach has paused bookings for this group. Message your coach. |
+| too_many_changes | You've booked or cancelled {limit} times in the last 24 hours. Try again later, or message your coach. |
 | locked | It's less than {cutoff} hours before the lesson, so it can't be cancelled. |
 | not_booked | This lesson is no longer booked. Refresh to see the latest. |
 | not_approved | Your coach hasn't approved your account yet. |
