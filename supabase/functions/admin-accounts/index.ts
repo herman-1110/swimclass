@@ -72,7 +72,8 @@ async function sendPasswordReset(body: Body): Promise<Response> {
   const found = await admin.auth.admin.getUserById(accountId)
   const email = found.data.user?.email
   if (found.error || !email) return refuse('not_found', 404)
-  // The secret-key client: Auth asks no CAPTCHA of it.
+  // The secret-key client: Auth skips its CAPTCHA for admin credentials (its source says so for
+  // service_role; not yet tried with an sb_secret_ key, HANDOFF v0.13).
   const sent = await admin.auth.resetPasswordForEmail(email, { redirectTo: resetPasswordUrl() })
   if (sent.error) {
     if (sent.error.status === 429) return refuse('over_email_send_rate_limit', 429)

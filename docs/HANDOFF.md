@@ -70,6 +70,17 @@ password at 390 and 1280 px with nothing blocked, and meiling logs in through it
   caller (with their JWT), not with the service role. An address that signed up with
   another username and never confirmed is refused as `email_taken`.
 - CORS allows exactly `SITE_URL`'s origin (dev's is `http://localhost:5173`).
+**Open issues**
+- `tests/db/login.test.ts` has never run: if `set local role service_role` is refused on dev,
+  run those calls as the owner and keep the anon and signed-in refusal tests.
+- `send_password_reset` (unused until prompt 09) assumes Auth skips its CAPTCHA for the
+  secret key; Auth's source says so for `service_role`, untried with an `sb_secret_` key.
+- VALIDATION's sign-up → `/pending` → `approve_account` → `/book` and the network-tab check
+  need a real sign-up on dev, and Auth emails only team members until prompt 11: Herman signs
+  up with his own Gmail, the session approves it as herman (or demo mode shows the same flow).
+- An invite to a non-team address on dev fails as 500 `unknown` (`email_address_not_authorized`);
+  map it in prompt 09 if needed.
+- `dist/` holds a demo build with Turnstile's test key: never deploy it.
 **Manual steps waiting on Herman**
 - Now: Next 1 (`supabase login`), and in the dev dashboard (DEV_SETUP §5): Email provider
   and Confirm email on; Site URL `http://localhost:5173`; Redirect URLs

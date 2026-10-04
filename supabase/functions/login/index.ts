@@ -26,8 +26,9 @@ function validIp(value: string | undefined): string | null {
 }
 
 /**
- * The client's IP: Cloudflare's CF-Connecting-IP, which Supabase's edge sets and a client
- * can't, or else the first X-Forwarded-For entry. Null when neither holds an IP.
+ * The client's IP: CF-Connecting-IP, or else the first X-Forwarded-For entry; null when
+ * neither holds an IP. Whether a client can set either header itself is still to be checked
+ * on dev (HANDOFF v0.13, Next 3); if one can, read the header Supabase's edge sets instead.
  */
 function clientIp(request: Request): string | null {
   return (

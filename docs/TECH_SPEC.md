@@ -507,7 +507,7 @@ up, and the coach's busy times show where he is.
     from many IPs never lock the account (anyone knows `herman`): in production Auth asks
     for the CAPTCHA on every sign-in (§9), which is what stops them.
   - The client IP: `CF-Connecting-IP`, else the first `X-Forwarded-For` entry; null if
-    neither holds an IP.
+    neither holds an IP. Still to check on dev: that a client can't set these itself.
   - It signs in with the email and password through a **publishable-key** client,
     passing the CAPTCHA token on, so Auth checks the CAPTCHA. A secret-key client would
     skip Auth's CAPTCHA check; forwarding the client's IP to Auth (`Sb-Forwarded-For`)
