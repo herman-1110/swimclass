@@ -45,16 +45,16 @@ describe('CoachDayView', () => {
     const strip = screen.getByRole('group', { name: 'Days' })
     const days = within(strip).getAllByRole('button')
     expect(days.map((day) => day.getAttribute('aria-label'))).toEqual([
-      'Monday 28 Sep, 1 lesson',
-      'Tuesday 29 Sep, 1 lesson',
-      'Wednesday 30 Sep, 1 lesson',
-      'Thursday 1 Oct, 2 lessons',
-      'Friday 2 Oct, 2 lessons',
-      'Saturday 3 Oct, 3 lessons',
-      'Sunday 4 Oct, 4 lessons',
+      'Mon 28, 1 lesson',
+      'Tue 29, 1 lesson',
+      'Wed 30, 1 lesson',
+      'Thu 1, 2 lessons',
+      'Fri 2, 2 lessons',
+      'Sat 3, 3 lessons',
+      'Sun 4, 4 lessons',
     ])
     expect(days[5].getAttribute('aria-pressed')).toBe('true')
-    expect(days[5].textContent).toBe('Sat 33 lessons')
+    expect(days[5].textContent).toBe('Sat 3 3 lessons')
     expect(screen.getByRole('heading', { level: 2, name: 'Saturday 3 Oct' })).toBeTruthy()
   })
 
@@ -138,7 +138,7 @@ describe('CoachDayView', () => {
         onSelectLesson={() => {}}
       />,
     )
-    fireEvent.click(screen.getByRole('button', { name: 'Thursday 1 Oct, 2 lessons' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Thu 1, 2 lessons' }))
     expect(onSelectDay).toHaveBeenCalledWith('2026-10-01')
   })
 
@@ -157,7 +157,7 @@ describe('CoachDayView', () => {
     expect(screen.queryByRole('list', { name: 'Saturday 10 Oct' })).toBeNull()
     expect(screen.getByRole('status').textContent).toBe('Loading the week')
     expect(screen.queryByText(/Kiara Park|Palm Court|Vista Heights/)).toBeNull()
-    expect(screen.getByRole('button', { name: 'Saturday 10 Oct' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Sat 10' })).toBeTruthy()
   })
 
   it('shows a loading list until the week arrives, then the page’s error if it fails', () => {
@@ -174,7 +174,7 @@ describe('CoachDayView', () => {
     expect(status.textContent).toBe('Loading the week')
     // About a typical day's height (seven 44 px rows), so the page below moves little.
     expect(status.parentElement?.querySelectorAll('.h-11')).toHaveLength(7)
-    expect(screen.getByRole('button', { name: 'Saturday 3 Oct' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Sat 3' })).toBeTruthy()
     rerender(
       <CoachDayView
         weekStart="2026-09-28"

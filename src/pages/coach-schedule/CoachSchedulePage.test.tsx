@@ -98,18 +98,16 @@ describe('CoachSchedulePage, opening on today’s week (§8.1)', () => {
         .getAllByRole('button')
         .map((day) => day.getAttribute('aria-label')),
     ).toEqual([
-      'Monday 21 Sep, 0 lessons',
-      'Tuesday 22 Sep, 0 lessons',
-      'Wednesday 23 Sep, 0 lessons',
-      'Thursday 24 Sep, 0 lessons',
-      'Friday 25 Sep, 1 lesson',
-      'Saturday 26 Sep, 3 lessons',
-      'Sunday 27 Sep, 0 lessons',
+      'Mon 21, 0 lessons',
+      'Tue 22, 0 lessons',
+      'Wed 23, 0 lessons',
+      'Thu 24, 0 lessons',
+      'Fri 25, 1 lesson',
+      'Sat 26, 3 lessons',
+      'Sun 27, 0 lessons',
     ])
     expect(
-      within(days)
-        .getByRole('button', { name: 'Saturday 26 Sep, 3 lessons' })
-        .getAttribute('aria-pressed'),
+      within(days).getByRole('button', { name: 'Sat 26, 3 lessons' }).getAttribute('aria-pressed'),
     ).toBe('true')
     const list = screen.getByRole('list', { name: 'Saturday 26 Sep' })
     expect(texts(within(list).getAllByRole('listitem'))).toEqual([
@@ -194,13 +192,13 @@ describe('CoachSchedulePage, moving through the weeks (§8.2)', () => {
         .getAllByRole('button')
         .map((day) => day.textContent),
     ).toEqual([
-      'Mon 281 lesson',
-      'Tue 291 lesson',
-      'Wed 301 lesson',
-      'Thu 12 lessons',
-      'Fri 22 lessons',
-      'Sat 33 lessons',
-      'Sun 44 lessons',
+      'Mon 28 1 lesson',
+      'Tue 29 1 lesson',
+      'Wed 30 1 lesson',
+      'Thu 1 2 lessons',
+      'Fri 2 2 lessons',
+      'Sat 3 3 lessons',
+      'Sun 4 4 lessons',
     ])
     expect(screen.getByRole('heading', { level: 2, name: 'Saturday 3 Oct' })).toBeTruthy()
     // Today stays today.
@@ -237,7 +235,7 @@ describe('CoachSchedulePage, moving through the weeks (§8.2)', () => {
   it('picks a day on the phone’s strip', async () => {
     const router = await renderPage(ROUTES.coachSchedule)
     await grid('21–27 Sep 2026')
-    fireEvent.click(screen.getByRole('button', { name: 'Friday 25 Sep, 1 lesson' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Fri 25, 1 lesson' }))
     expect(router.state.location.search).toBe('?day=2026-09-25')
     expect(router.state.historyAction).toBe('REPLACE')
     const list = screen.getByRole('list', { name: 'Friday 25 Sep' })

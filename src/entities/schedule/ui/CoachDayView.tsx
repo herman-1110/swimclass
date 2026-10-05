@@ -4,8 +4,8 @@ import { plural } from '@/shared/lib/format'
 import { type DateKey, weekDays } from '@/shared/lib/time'
 import { DayStrip } from '@/shared/ui/DayStrip'
 
-import { dayLessonsLabel } from '../model/describe'
-import { dayHeading, formatDayLong } from '../model/labels'
+import { dayButtonLabel } from '../model/describe'
+import { dayButtonDate, dayHeading, formatDayLong } from '../model/labels'
 import { bookedLessons, isWeekOf } from '../model/select'
 import { coachDayTimeline, coachWeekHours } from '../model/timeline'
 import type { BookedCoachLesson, CoachWeek } from '../model/types'
@@ -62,7 +62,8 @@ export function CoachDayView({
         days={dates.map((date, i) => ({
           key: date,
           ...dayHeading(date),
-          label: current ? dayLessonsLabel(current[i]) : formatDayLong(date),
+          // While the week loads, the date alone ("Sat 3"), still the button's own words.
+          label: current ? dayButtonLabel(current[i]) : dayButtonDate(date),
           // Until the week is in, a blank line keeps the dates where they will stay.
           caption: current ? plural(bookedLessons(current[i]).length, 'lesson') : ' ',
         }))}

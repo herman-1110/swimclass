@@ -2,7 +2,7 @@ import { joinWithAnd, plural } from '@/shared/lib/format'
 import { formatRange, formatTime } from '@/shared/lib/time'
 
 import { atMinute } from './days'
-import { formatDayKey, formatDayLong } from './labels'
+import { dayButtonDate, formatDayKey, formatDayLong } from './labels'
 import { bookedLessons } from './select'
 import { customerDayTimeline, type GridHours } from './timeline'
 import type { CoachDay, CoachLesson, CustomerDay } from './types'
@@ -49,10 +49,19 @@ export function describeCoachDay(day: CoachDay): string {
 
 /**
  * A coach day with its number of booked lessons (a 2-hour lesson counts once): "Saturday
- * 3 Oct, 3 lessons" (coach-schedule §7.2: the grid's day lists and the day strip).
+ * 3 Oct, 3 lessons" (coach-schedule §7.2: the grid's day lists).
  */
 export function dayLessonsLabel(day: CoachDay): string {
   return `${formatDayLong(day.day)}, ${plural(bookedLessons(day).length, 'lesson')}`
+}
+
+/**
+ * A day button in the phone's day strip: "Sat 3, 3 lessons". It is the button's own words
+ * ("Sat", "3", "3 lessons"), so someone using speech can say what they see (WCAG 2.5.3,
+ * label in name); the week above the strip names the month.
+ */
+export function dayButtonLabel(day: CoachDay): string {
+  return `${dayButtonDate(day.day)}, ${plural(bookedLessons(day).length, 'lesson')}`
 }
 
 /** Where a lesson is: "Vista Heights" for 1-to-1, "1-to-2 · Palm Court" for a group. */

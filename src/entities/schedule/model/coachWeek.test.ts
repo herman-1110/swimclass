@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest'
 
-import { dayLessonsLabel, describeCoachDay, lessonLine, lessonNotes, lessonPlace } from './describe'
+import {
+  dayButtonLabel,
+  dayLessonsLabel,
+  describeCoachDay,
+  lessonLine,
+  lessonNotes,
+  lessonPlace,
+} from './describe'
 import { bookedLessons, isWeekOf, weekExceptions } from './select'
 import { coachDayTimeline, coachWeekHours } from './timeline'
 import type { BookedCoachLesson, CoachDay, CoachLesson } from './types'
@@ -122,6 +129,9 @@ describe('the coach’s day as blocks (coach-schedule §3.3, §3.4)', () => {
     expect(bookedLessons(day).map((l) => l.starts_at)).toEqual(['2026-10-03T17:00:00+08:00'])
     expect(dayLessonsLabel(day)).toBe('Saturday 3 Oct, 1 lesson')
     expect(dayLessonsLabel(saturday)).toBe('Saturday 3 Oct, 3 lessons')
+    // The day strip's buttons: their own words, so the name contains what they show.
+    expect(dayButtonLabel(day)).toBe('Sat 3, 1 lesson')
+    expect(dayButtonLabel(saturday)).toBe('Sat 3, 3 lessons')
     expect(kinds(day)[0]).toBe('free 420–720')
   })
 

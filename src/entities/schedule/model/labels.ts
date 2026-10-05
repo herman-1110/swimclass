@@ -57,6 +57,12 @@ export function dayHeading(day: DateKey): { weekday: string; date: string } {
   return { weekday, date }
 }
 
+/** A day button's date as the coach's day strip shows it: "Sat 3". */
+export function dayButtonDate(day: DateKey): string {
+  const { weekday, date } = parts(day)
+  return `${weekday} ${date}`
+}
+
 /** A date with its whole weekday: "Saturday 3 Oct" (the coach's day view title). */
 export function formatDayLong(day: DateKey): string {
   const { weekday, date, month } = parts(day)

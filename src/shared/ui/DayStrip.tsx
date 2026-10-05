@@ -9,7 +9,8 @@ export type DayStripDay = {
   weekday: string
   /** "29" */
   date: string
-  /** The button's name: "Tue 29 Sep, 4 free start times", "Saturday 3 Oct, 3 lessons". */
+  /** The button's name, which contains its text: "Tue 29 Sep, 4 free start times",
+   *  "Sat 3, 3 lessons" (WCAG 2.5.3, label in name). */
   label: string
   /** Book: a 4 px accent dot under the date (free start times exist). */
   dot?: boolean
@@ -94,8 +95,14 @@ export function DayStrip({ days, selected, onSelect, heading, label = 'Days' }: 
               >
                 {day.date}
               </span>
+              {/* Likewise a space before the caption: "Sat 3 3 lessons" for "Sat 3, 3 lessons". */}
               {day.caption !== undefined ? (
-                <span className="text-[0.625rem] whitespace-nowrap text-muted">{day.caption}</span>
+                <>
+                  {' '}
+                  <span className="text-[0.625rem] whitespace-nowrap text-muted">
+                    {day.caption}
+                  </span>
+                </>
               ) : (
                 <span
                   className={cn(
