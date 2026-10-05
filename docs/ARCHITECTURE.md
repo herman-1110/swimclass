@@ -322,7 +322,7 @@ possible later step; for now the missing grants do that job.
 | every signed-in account | `get_public_settings` |
 | approved customers (their own groups) and the coach | `week_slots`, `week_busy`, `cancel_booking` |
 | approved customers | `book_lesson` |
-| the coach only (checked inside) | `coach_week`, `coach_slot_check`, `coach_book`, `excuse_booking`, `record_payment`, `add_free_lesson`, `create_group`, `update_group`, `set_group_active`, `approve_account`, `set_open_hours`, `add_exception`, `remove_exception`, `update_settings`, `post_announcement`, `remove_announcement`; later `pending_accounts` (prompt 09) and `email_log` (prompt 11) |
+| the coach only (checked inside) | `coach_week`, `coach_slot_check`, `coach_book`, `excuse_booking`, `record_payment`, `add_free_lesson`, `create_group`, `update_group`, `set_group_active`, `approve_account`, `set_open_hours`, `add_exception`, `remove_exception`, `update_settings`, `post_announcement`, `remove_announcement`, `pending_accounts`; later `email_log` (prompt 11) |
 | the service role (Edge Functions) | `check_login_attempt`, `record_login_success` (login); `claim_outbox`, `ack_outbox` (mail-queue, prompt 11) |
 
 ### 4.3 Migrations
@@ -356,9 +356,10 @@ The files so far:
 | `20260929110200_fix_email_text` | 04 | `email_text` also breaks up `{{` inside `{{{` |
 | `20261004100000_hardening` | audit | customer change limit, coach writes only through functions, table caps |
 | `20261004120000_add_login_limiter` | 05 | `login_attempts.ip`, `check_login_attempt`, `record_login_success` |
+| `20261005100000_pending_accounts` | 09 | `pending_accounts` |
 
-Still to come: `pending_accounts` (prompt 09) and the mail queue: reminders, digest,
-`claim_outbox`, `ack_outbox`, `email_log` (prompt 11).
+Still to come: the mail queue: reminders, digest, `claim_outbox`, `ack_outbox`,
+`email_log` (prompt 11).
 
 ### 4.4 SQL style
 - snake_case everywhere; tables plural (`bookings`); functions start with a verb

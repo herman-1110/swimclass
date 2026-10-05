@@ -457,6 +457,76 @@ describe.skipIf(!hasDatabase)('approve_account (BR-2)', () => {
   })
 })
 
+describe.skipIf(!hasDatabase)('pending_accounts (BR-2, prompt 09)', () => {
+  const db = useTestDb()
+
+  /** A sign-up as Auth makes it (the profile trigger runs), signed up at `at`. */
+  async function signUp(username: string, email: string, confirmed: boolean, at: string) {
+    const { rows } = await db.query<{ id: string }>(
+      `insert into auth.users (instance_id, id, aud, role, email, email_confirmed_at,
+                               raw_user_meta_data)
+       values ('00000000-0000-0000-0000-000000000000', gen_random_uuid(), 'authenticated',
+               'authenticated', $1, case when $2::boolean then now() end, $3)
+       returning id`,
+      [email, confirmed, JSON.stringify({ username, display_name: `${username} X`, phone: '012' })],
+    )
+    const id = rows[0]?.id ?? ''
+    await db.query('update public.profiles set created_at = $2 where id = $1', [id, at])
+    return id
+  }
+
+  it('gives the coach every account waiting for approval, oldest first, with its email', async () => {
+    const later = await signUp('later', 'later@example.com', false, '2026-09-26 10:00+08')
+    const sooner = await signUp('sooner', 'sooner@example.com', true, '2026-09-25 09:00+08')
+    await db.as('herman')
+    const { rows } = await db.query('select * from public.pending_accounts()')
+    expect(rows).toEqual([
+      {
+        id: sooner,
+        username: 'sooner',
+        display_name: 'sooner X',
+        phone: '012',
+        email: 'sooner@example.com',
+        email_confirmed: true,
+        created_at: new Date('2026-09-25T01:00:00Z'),
+      },
+      {
+        id: later,
+        username: 'later',
+        display_name: 'later X',
+        phone: '012',
+        email: 'later@example.com',
+        email_confirmed: false,
+        created_at: new Date('2026-09-26T02:00:00Z'),
+      },
+    ])
+
+    await db.query('select public.approve_account($1)', [sooner])
+    const { rows: left } = await db.query<{ id: string }>(
+      'select id from public.pending_accounts()',
+    )
+    expect(left.map((r) => r.id)).toEqual([later])
+  })
+
+  it('lists no approved accounts: the seed has none waiting', async () => {
+    await db.as('herman')
+    const { rows } = await db.query('select * from public.pending_accounts()')
+    expect(rows).toEqual([])
+  })
+
+  it('refuses customers, and the waiting accounts themselves', async () => {
+    const waiting = await signUp('waiting', 'waiting@example.com', true, '2026-09-26 10:00+08')
+    await db.as('meiling')
+    expect(await failure(db, 'select * from public.pending_accounts()')).toMatchObject({
+      message: 'not_coach',
+    })
+    await actAs(db, waiting)
+    expect(await failure(db, 'select * from public.pending_accounts()')).toMatchObject({
+      message: 'not_coach',
+    })
+  })
+})
+
 describe.skipIf(!hasDatabase)('username_available (BR-1)', () => {
   const db = useTestDb()
 

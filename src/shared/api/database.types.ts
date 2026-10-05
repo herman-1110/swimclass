@@ -856,6 +856,18 @@ export type Database = {
           unpaid_packages_allowed: number
         }[]
       }
+      pending_accounts: {
+        Args: never
+        Returns: {
+          created_at: string
+          display_name: string
+          email: string
+          email_confirmed: boolean
+          id: string
+          phone: string
+          username: string
+        }[]
+      }
       place_bookings: {
         Args: {
           p_by_coach: boolean

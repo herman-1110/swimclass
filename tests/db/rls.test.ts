@@ -378,6 +378,7 @@ describe.skipIf(!hasDatabase)('security checklist (TECH_SPEC §13)', () => {
       'lessons_for(timestamp with time zone,timestamp with time zone)',
       'my_account_id()',
       'package_settings()',
+      'pending_accounts()', // prompt 09
       'post_announcement(text,boolean,boolean)',
       'record_payment(uuid,integer,integer,payment_method,date,text)',
       'remove_announcement(uuid)',
@@ -404,6 +405,7 @@ describe.skipIf(!hasDatabase)('security checklist (TECH_SPEC §13)', () => {
       `select public.update_group('${SEED.groups.hana}', 'Pool')`,
       `select public.set_group_active('${SEED.groups.hana}', false)`,
       `select public.approve_account('${SEED.groups.hana}')`,
+      `select * from public.pending_accounts()`,
       `select public.set_open_hours('[]')`,
       `select public.add_exception('closed', '2026-10-06 17:30+08', '2026-10-06 19:00+08')`,
       `select public.remove_exception('${SEED.groups.hana}')`,

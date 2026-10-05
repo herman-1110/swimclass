@@ -30,6 +30,7 @@ Migration names below drop the `supabase/migrations/` folder.
 | `20260929110200_fix_email_text` | 04 | `email_text` also breaks up `{{` inside `{{{` |
 | `20261004100000_hardening` | audit | customer change limit, coach writes only through functions, table caps, `username_available` length guard |
 | `20261004120000_add_login_limiter` | 05 | `login_attempts` gets `ip` and a username cap; `check_login_attempt`, `record_login_success` |
+| `20261005100000_pending_accounts` | 09 | `pending_accounts`: the accounts waiting for approval, with their email |
 
 ## Tables
 
@@ -86,6 +87,7 @@ listed in each function's header comment in its migration.
 | `update_group` | `…100300_groups_accounts` | coach | change a group's location and starting balances |
 | `set_group_active` | `…100300_groups_accounts` | coach | deactivate or reactivate a group |
 | `approve_account` | `…100300_groups_accounts` | coach | approve a sign-up |
+| `pending_accounts` | `…100000_pending_accounts` | coach | the accounts waiting for approval, with their email from `auth.users` |
 | `set_open_hours` | `…100400_settings` | coach | replace the weekly open hours |
 | `add_exception` | `…100400_settings` | coach | Block time or Open extra time |
 | `remove_exception` | `…100400_settings` | coach | remove one of those |
@@ -124,7 +126,7 @@ the caller or read settings.
 | `html_escape` | `…100100_emails` | escape text for HTML emails |
 | `email_text` | `…110200_fix_email_text` | neutralise `{{` in free text put into emails |
 | `email_html` | `…110100_fix_email_link_pattern` | an email's HTML from its text, with the templates' links |
-| `account_email` | `…100100_emails` | an account's address from `auth.users` |
+| `account_email` | `…100100_emails` | an account's address from `auth.users` (also read by `pending_accounts`) |
 | `queue_email` | `…100100_emails` | add one email to the outbox, once per dedupe key |
 | `email_booked` | `…110000_update_email_links` | the booking confirmation |
 | `email_cancelled`, `email_late_alert`, `email_broadcast` | `…100100_emails` | the other three templates |
