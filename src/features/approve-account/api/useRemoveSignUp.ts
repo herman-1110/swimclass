@@ -3,14 +3,6 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { accountKeys } from '@/entities/account'
 import { callEdge, toAppError } from '@/shared/api/rpc'
 
-/**
- * Whether the `admin-accounts` Edge Function can delete a sign-up yet. Its `delete_account`
- * action comes with prompt 09 (data-contracts §5.2: only unapproved accounts with no groups)
- * and doesn't exist today (demo mode answers `unknown`), so RemoveSignUpButton renders
- * nothing until this is turned on (the Students spec §6: "Remove" is hidden until then).
- */
-export const REMOVE_SIGN_UP_AVAILABLE: boolean = false
-
 export type RemoveSignUpInput = { accountId: string }
 
 type UseRemoveSignUpOptions = {
@@ -19,9 +11,9 @@ type UseRemoveSignUpOptions = {
 }
 
 /**
- * `admin-accounts` `delete_account` (prompt 09, planned): deletes a sign-up the coach doesn't
- * want. Its refusal codes aren't defined yet, so every failure reads as the generic message.
- * Then it refreshes the accounts.
+ * `admin-accounts` `delete_account` (TECH_SPEC §7): deletes a sign-up the coach doesn't want,
+ * only a customer still waiting for approval with no groups (`account_approved`,
+ * `has_groups`, `not_found`: DESIGN §6's coach words). Then it refreshes the accounts.
  */
 export function useRemoveSignUp({ onRemoved }: UseRemoveSignUpOptions = {}) {
   const queryClient = useQueryClient()

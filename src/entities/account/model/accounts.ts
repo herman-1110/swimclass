@@ -1,4 +1,4 @@
-import type { PendingAccount, Profile } from './types'
+import type { Profile } from './types'
 
 // Names sort as people read them, ignoring case and accents. The demo database sorts in
 // byte order (collation C), where "Zulaikha" comes before "aina" (the Add students spec §5.1).
@@ -20,12 +20,6 @@ export function bySignUp(
   b: Pick<Profile, 'created_at' | 'id'>,
 ): number {
   return Date.parse(a.created_at) - Date.parse(b.created_at) || a.id.localeCompare(b.id)
-}
-
-/** A waiting profile as a PendingAccount: no email until `pending_accounts()` exists. */
-export function toPendingAccount(profile: Profile): PendingAccount {
-  const { id, username, display_name, phone, created_at } = profile
-  return { id, username, display_name, phone, created_at, email: null, email_confirmed: null }
 }
 
 /** Add students' account option: "Mei Ling · meiling" (AdminAddStudents.dc.html). */

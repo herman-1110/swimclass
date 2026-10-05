@@ -140,7 +140,10 @@ async function requireCoach(db: PGlite): Promise<void> {
 
 const text = (value: unknown) => (typeof value === 'string' ? value.trim() : '')
 
-/** TECH_SPEC §7 `admin-accounts` (coach only): create_account, send_password_reset. */
+/**
+ * TECH_SPEC §7 `admin-accounts` (coach only): create_account, send_password_reset,
+ * delete_account.
+ */
 export async function demoAdminAccounts(
   db: PGlite,
   body: Record<string, unknown>,
@@ -190,6 +193,24 @@ export async function demoAdminAccounts(
     }
     case 'send_password_reset':
       return { ok: true }
+    case 'delete_account': {
+      // Like the real one: a customer still waiting for approval, with no groups.
+      const id = text(body.account_id)
+      const { rows } = await db.query<{ approved: boolean; groups: number }>(
+        `select p.approved,
+                (select count(*)::int from public.groups g where g.account_id = p.id) as groups
+         from public.profiles p
+         where p.id::text = $1 and p.role = 'customer'`,
+        [id],
+      )
+      const account = rows[0]
+      if (!account) throw new AppError('not_found')
+      if (account.approved) throw new AppError('account_approved')
+      if (account.groups > 0) throw new AppError('has_groups')
+      // Like auth.admin.deleteUser: the profile goes with it (on delete cascade).
+      await db.query(`delete from auth.users where id::text = $1`, [id])
+      return { ok: true }
+    }
     default:
       throw new AppError('unknown')
   }

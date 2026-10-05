@@ -9,6 +9,10 @@
 //   invalid_display_name, invalid_phone, invalid_email, email_taken.
 // POST { action: "send_password_reset", account_id } → { ok: true }: emails that account a
 //   link to /reset-password. Refusal: not_found.
+// POST { action: "delete_account", account_id } → { ok: true }: deletes a sign-up the coach
+//   doesn't want (auth.admin.deleteUser; its profile goes with it). Only a customer account
+//   still waiting for approval with no groups: refusals not_found (no such customer),
+//   account_approved, has_groups.
 import { adminClient, callerClient } from '../_shared/clients.ts'
 import { type Body, json, refuse, serveFromSite, siteOrigin, text } from '../_shared/http.ts'
 
@@ -82,6 +86,35 @@ async function sendPasswordReset(body: Body): Promise<Response> {
   return json({ ok: true })
 }
 
+async function deleteAccount(caller: Caller, body: Body): Promise<Response> {
+  const accountId = text(body, 'account_id')
+  if (!UUID.test(accountId)) return refuse('not_found', 404)
+  // Read as the coach: RLS lets the coach read every profile and group.
+  const profile = await caller
+    .from('profiles')
+    .select('role, approved')
+    .eq('id', accountId)
+    .maybeSingle()
+  if (profile.error) throw new Error(`profiles: ${profile.error.message}`)
+  if (!profile.data || profile.data.role !== 'customer') return refuse('not_found', 404)
+  if (profile.data.approved) return refuse('account_approved', 409)
+  // Load-bearing: groups go with the profile (on delete cascade) but their bookings and
+  // payments don't, so an account with a group must never be deleted.
+  const groups = await caller
+    .from('groups')
+    .select('id', { count: 'exact', head: true })
+    .eq('account_id', accountId)
+  if (groups.error) throw new Error(`groups: ${groups.error.message}`)
+  if ((groups.count ?? 0) > 0) return refuse('has_groups', 409)
+
+  const deleted = await adminClient().auth.admin.deleteUser(accountId)
+  if (deleted.error) {
+    if (deleted.error.status === 404) return refuse('not_found', 404)
+    throw new Error(`deleteUser: ${deleted.error.code ?? deleted.error.message}`)
+  }
+  return json({ ok: true })
+}
+
 serveFromSite(async (body, request) => {
   const authorization = request.headers.get('authorization') ?? ''
   // A signed-in caller's token is a JWT; a bare publishable key is not.
@@ -96,6 +129,8 @@ serveFromSite(async (body, request) => {
       return createAccount(caller, body)
     case 'send_password_reset':
       return sendPasswordReset(body)
+    case 'delete_account':
+      return deleteAccount(caller, body)
     default:
       return refuse('unknown_action', 400)
   }

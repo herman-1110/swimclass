@@ -80,7 +80,7 @@ describe('the coach’s customer accounts', () => {
     expect(result.current.pending.data).toEqual([])
   })
 
-  it('lists a new sign-up as waiting, oldest first, with no email until pending_accounts() exists', async () => {
+  it('lists a new sign-up as waiting, oldest first, with its email (pending_accounts)', async () => {
     for (const [username, displayName] of [
       ['siti', 'Siti Rahman'],
       ['adam.w', 'Adam Wong'],
@@ -101,8 +101,9 @@ describe('the coach’s customer accounts', () => {
     expect(pending[0]).toMatchObject({
       display_name: 'Siti Rahman',
       phone: '012-345 6789',
-      email: null,
-      email_confirmed: null,
+      email: 'siti@example.com',
+      // Demo mode's sign-up confirms the address at once (no email to click).
+      email_confirmed: true,
     })
     expect(Object.keys(pending[0]).toSorted()).toEqual([
       'created_at',
@@ -121,18 +122,26 @@ describe('the coach’s customer accounts', () => {
     expect([...(result.current.names.data?.values() ?? [])]).toContain('Siti Rahman')
   })
 
-  it('reads the profiles once for every view', async () => {
+  it('reads the profiles once for the accounts and names, and the waiting list once', async () => {
     await logIn('herman', DEMO_PASSWORD)
     const { result, queryClient } = renderAccountHooks()
     await waitFor(() => expect(result.current.pendingByName.isSuccess).toBe(true))
-    expect(queryClient.getQueryCache().findAll({ queryKey: accountKeys.all })).toHaveLength(1)
+    await waitFor(() => expect(result.current.names.isSuccess).toBe(true))
+    const keys = queryClient
+      .getQueryCache()
+      .findAll({ queryKey: accountKeys.all })
+      .map((q) => q.queryKey)
+    expect(keys.toSorted()).toEqual([accountKeys.customers(), accountKeys.waiting()])
     expect(accountKeys.customers()).toEqual(['account', 'customers'])
+    expect(accountKeys.waiting()).toEqual(['account', 'waiting'])
   })
 
-  it('shows a customer only their own account (RLS)', async () => {
+  it('shows a customer only their own account (RLS), and no waiting list (not_coach)', async () => {
     await logIn('meiling', DEMO_PASSWORD)
     const { result } = renderAccountHooks()
     await waitFor(() => expect(result.current.accounts.isSuccess).toBe(true))
     expect(result.current.accounts.data?.map((a) => a.username)).toEqual(['meiling'])
+    await waitFor(() => expect(result.current.pending.isError).toBe(true))
+    expect(result.current.pending.error).toMatchObject({ code: 'not_coach' })
   })
 })

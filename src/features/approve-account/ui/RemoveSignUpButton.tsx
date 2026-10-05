@@ -4,7 +4,6 @@ import type { PendingAccount } from '@/entities/account'
 import { possessive } from '@/shared/lib/format'
 import { Button } from '@/shared/ui/Button'
 
-import { REMOVE_SIGN_UP_AVAILABLE } from '../api/useRemoveSignUp'
 import { RemoveSignUpConfirm } from './RemoveSignUpConfirm'
 
 type RemoveSignUpButtonProps = {
@@ -16,13 +15,10 @@ type RemoveSignUpButtonProps = {
 
 /**
  * "Remove" beside Approve in Waiting for approval (the Students spec §3.9: styled like a
- * row's "History"), with its confirmation. It needs `admin-accounts`' `delete_account`
- * (prompt 09), which doesn't exist yet: until REMOVE_SIGN_UP_AVAILABLE it renders nothing,
- * as the spec recommends, so the page can place it today.
+ * row's "History"), with its confirmation (`admin-accounts` `delete_account`).
  */
 export function RemoveSignUpButton({ account, onRemoved }: RemoveSignUpButtonProps) {
   const [open, setOpen] = useState(false)
-  if (!REMOVE_SIGN_UP_AVAILABLE) return null
 
   return (
     <>

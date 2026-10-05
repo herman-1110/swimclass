@@ -349,6 +349,8 @@ message needs gets the generic message.
 | invalid_display_name | Type their name (up to 100 characters). |
 | invalid_phone | Shorten the phone number to 30 characters or fewer. |
 | email_taken | Another account already uses this email. Choose that account under Account, or type a different email. |
+| account_approved | This account is already approved, so it can't be removed. Refresh to see the latest. |
+| has_groups | This account has a group of students, so it can't be removed. Approve it instead. |
 | invalid_username, invalid_email | The customer table's words (invalid_email reads as email_address_invalid). |
 | account_required | Choose an account, or create a new one. |
 | amount_format | Enter the amount in RM, like 240 or 240.50. |

@@ -407,6 +407,11 @@ Built in prompt 04 (`…_groups_accounts.sql`, tested in `tests/db/groups.test.t
   reactivating is refused while an active group has the same students
   (`duplicate_group` {`group_id`}). Errors also `invalid_active`, `not_found`.
 - `approve_account(p_account_id)`: coach only (`not_found`).
+- `pending_accounts() returns table (id, username, display_name, phone, email, email_confirmed, created_at)`:
+  coach only (`not_coach`; prompt 09, `…20261005100000_pending_accounts`, tested in
+  `tests/db/groups.test.ts`). The customer accounts with `approved = false`, oldest sign-up
+  first, each with its address through `account_email` and whether Auth has confirmed it.
+  The coach's only way to read other accounts' emails: never a view over `auth.users`.
 - `username_available(p_username) returns boolean`: for anon (sign-up) and signed-in
   accounts (the coach's new-account form). Lowercased and trimmed like the profile
   trigger; returns only true/false (false for an invalid username).
@@ -532,6 +537,12 @@ up, and the coach's busy times show where he is.
     signed up with another username and never confirmed: Auth invites it again).
   - `send_password_reset {account_id}` → `{ok: true}`: emails that account a link to
     `/reset-password` (`not_found`).
+  - `delete_account {account_id}` → `{ok: true}` (prompt 09): removes a sign-up the coach
+    doesn't want with `auth.admin.deleteUser` (the profile goes with it). Only a customer
+    account still waiting for approval with no groups: `not_found` (404; no such customer
+    account), `account_approved` (409), `has_groups` (409). The checks read as the coach;
+    the groups check matters because groups go with the profile but their bookings and
+    payments don't.
 - **`mail-queue`** (verify_jwt off; requires header `x-mail-token` equal to `MAIL_TOKEN`,
   compared in constant time). POST `{action: "claim", limit}` (`claim_outbox` caps
   `limit` at 50 and hands out reminders, digests and late alerts before other kinds): call `queue_daily_emails`

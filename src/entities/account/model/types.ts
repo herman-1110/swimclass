@@ -9,17 +9,17 @@ export type CustomerAccount = Profile
 
 /**
  * An account waiting for approval (Needs attention on the schedule, Waiting for approval on
- * Students & payments). The planned `pending_accounts()` (prompt 09; data-contracts §3.1)
- * will add the email; until it exists the rows come from `profiles`, which has none, so
- * `email` and `email_confirmed` are null.
+ * Students & payments): a row of `pending_accounts()` (TECH_SPEC §5.3), the profile with
+ * the account's email from Auth.
  */
 export type PendingAccount = Pick<
   Profile,
   'id' | 'username' | 'display_name' | 'phone' | 'created_at'
 > & {
+  /** The address in Auth; null only if it is empty. */
   email: string | null
-  /** Whether the address is confirmed; null while unknown. */
-  email_confirmed: boolean | null
+  /** Whether Auth has confirmed the address (a sign-up confirms it from their email). */
+  email_confirmed: boolean
 }
 
 /**

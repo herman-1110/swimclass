@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { accountOptionLabel, byDisplayName, bySignUp, toPendingAccount } from './accounts'
+import { accountOptionLabel, byDisplayName, bySignUp } from './accounts'
 import type { Profile } from './types'
 
 function profile(overrides: Partial<Profile>): Profile {
@@ -51,23 +51,5 @@ describe('bySignUp', () => {
     const early = profile({ id: 'c', created_at: '2026-09-30T07:59:59.5+00:00' })
     const sameAsLate = profile({ id: 'a', created_at: '2026-09-30T16:00:00+08:00' })
     expect([late, early, sameAsLate].toSorted(bySignUp).map((p) => p.id)).toEqual(['c', 'a', 'b'])
-  })
-})
-
-describe('toPendingAccount', () => {
-  it('keeps what the waiting list shows and has no email yet', () => {
-    expect(
-      toPendingAccount(
-        profile({ username: 'siti', display_name: 'Siti Rahman', phone: '012-345 6789' }),
-      ),
-    ).toEqual({
-      id: 'a0000000-0000-4000-8000-000000000099',
-      username: 'siti',
-      display_name: 'Siti Rahman',
-      phone: '012-345 6789',
-      created_at: '2026-09-29T16:05:07.107+00:00',
-      email: null,
-      email_confirmed: null,
-    })
   })
 })

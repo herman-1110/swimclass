@@ -233,6 +233,17 @@ const COACH_CASES: Case[] = [
     {},
     'Another account already uses this email. Choose that account under Account, or type a different email.',
   ],
+  // admin-accounts delete_account, from Waiting for approval's Remove (prompt 09).
+  [
+    'account_approved',
+    {},
+    'This account is already approved, so it can’t be removed. Refresh to see the latest.',
+  ],
+  [
+    'has_groups',
+    {},
+    'This account has a group of students, so it can’t be removed. Approve it instead.',
+  ],
   // The coach's forms' checks before any call (proposed in the Add students, Students,
   // Settings and Schedule specs).
   ['account_required', {}, 'Choose an account, or create a new one.'],

@@ -403,6 +403,10 @@ const COACH: Readonly<Record<string, Words>> = {
   invalid_email: EMAIL_FORMAT_MESSAGE,
   email_taken:
     'Another account already uses this email. Choose that account under Account, or type a different email.',
+  // Removing a sign-up in Waiting for approval (admin-accounts delete_account, prompt 09).
+  account_approved:
+    'This account is already approved, so it can’t be removed. Refresh to see the latest.',
+  has_groups: 'This account has a group of students, so it can’t be removed. Approve it instead.',
   // The coach's forms' checks before any call. Add students: no account chosen (its spec
   // §5.3). Record payment, Add students and Settings' prices: an amount parseRinggit can't
   // read. Settings: a count that isn't a whole number, or a time it can't read (triage 9;
