@@ -141,6 +141,8 @@ After the CLI is logged in and linked (§2, steps 4 and 5):
 4. To use the dev project in the browser instead of demo mode, add `VITE_DEMO=false` to
    `.env.local` and restart `npm run dev`. Seeded accounts log in with `swim-test-2026`
    (on dev that password is public: change it before Gmail is connected to dev, TECH_SPEC §9).
+   The unit tests (`npm run test`) stay in demo mode either way; only the site uses the
+   setting. Remove the line again when you are done, so `npm run dev` is back in demo mode.
 
 To try the CAPTCHA on dev, use Cloudflare's test keys, which always pass:
 `VITE_TURNSTILE_SITE_KEY=1x00000000000000000000AA` in `.env.local`, and in the dashboard,

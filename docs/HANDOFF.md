@@ -12,7 +12,7 @@ admin-accounts --use-api`: Claude Code's safety check refused both to the sessio
 added the two missing backend pieces and checked everything on the real backend. Dev holds the
 seed as loaded: after the live checks the unit suite ran against dev by mistake (Done, f1039da)
 and Herman reloaded it (`npx supabase db reset --linked`); the fingerprint matches. Typecheck,
-lint, format and the full unit suite (1,846, demo mode) pass; `npm run test:db` 265 pass on dev
+lint, format, the build and the full unit suite (1,846, demo mode) pass; `npm run test:db` 265 pass on dev
 (262 + 3 new).
 The scripts and results are in `frontend-plan/review/prompt09/` (outside the repo; its
 `NOTES.md` lists them).
@@ -82,7 +82,7 @@ The scripts and results are in `frontend-plan/review/prompt09/` (outside the rep
   on swimclass-dev (`frontend-plan/review/prompt09/damage.log`). No real person was emailed:
   the outbox rows were to @example.com and unsent, and the sign-ups hit Auth's 429. Herman
   reloaded dev; mode `test` now means demo mode whatever `.env.local` says (checked with
-  `VITE_DEMO=false` still set).
+  `VITE_DEMO=false` still set). DEV_SETUP §5 says so next to the `VITE_DEMO=false` step.
 **Next**
 1. Herman pushes `frontend-first` (`git push origin frontend-first`); once CI is green,
    `git fetch . frontend-first:main` and `git push origin main`.
@@ -107,7 +107,8 @@ The scripts and results are in `frontend-plan/review/prompt09/` (outside the rep
 - From v0.13: `send_password_reset` with an `sb_secret_` key; an invite to a non-team address
   (500 `unknown`). (The reload emptied dev's `email_outbox`: v0.15's 10 unsent rows are gone.)
 - In demo mode a sign-up's date and a payment's `created_at` are the real date, not `DEMO_NOW`.
-- `dist/` is v0.16's build: wired to `swimclass-dev`, never deploy it; prompt 12 builds the real one.
+- `dist/` is this session's `npm run build`: no demo code, wired to `swimclass-dev`; never deploy
+  it, prompt 12 builds the real one.
 **Manual steps waiting on Herman**
 - Next 1.
 - As in v0.13: dev's Auth URL settings (DEV_SETUP §5); before prompt 12, the coach on
