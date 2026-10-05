@@ -126,9 +126,12 @@ export default defineConfig(({ command, mode }) => {
   // production builds, unless VITE_DEMO=true or false in .env.local says otherwise.
   // Written into the code as a constant, so a production build leaves the demo out.
   // Production values go in .env.production.local, which wins over .env.local's dev ones.
+  // The tests (mode 'test') always run in demo mode, whatever .env.local says: with
+  // VITE_DEMO=false they would book, cancel and change settings on swimclass-dev (they did
+  // on 5 Oct 2026).
   const browserEnv = loadEnv(mode, process.cwd(), 'VITE_')
   const { VITE_DEMO, VITE_SUPABASE_URL, VITE_TURNSTILE_SITE_KEY } = browserEnv
-  const demo = VITE_DEMO ? VITE_DEMO === 'true' : mode !== 'production'
+  const demo = mode === 'test' || (VITE_DEMO ? VITE_DEMO === 'true' : mode !== 'production')
   if (command === 'build') refuseSecrets(browserEnv)
 
   return {
