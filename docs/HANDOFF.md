@@ -45,7 +45,10 @@ the repo).
 **Done**
 - DayStrip: a space between the weekday and the date, so a day's text reads "Mon 5" and its
   label "Mon 5 Oct, …" contains it (WCAG 2.5.3; Lighthouse's label-in-name check). Nothing
-  moves on screen. Three tests read the day buttons' text and now expect the space.
+  moves on screen: Book's screenshots before and after are byte-identical at 390 and 1280
+  px. Three tests read the day buttons' text and now expect the space. The coach's day
+  buttons still run the date and caption together ("Mon 28" then "1 lesson"); look at that
+  with prompt 08.
 - `tests/db/login.test.ts`: each test starts with no login tries (deleted inside its own
   transaction, so rolled back). The tests count every row for a username, and real logins
   on dev leave rows for a day: prompt 05's validation and this session's DIAGNOSE left 6
@@ -58,12 +61,21 @@ back, gives the database tests' seed fingerprint again. To run it (Next 2).
 **Next**
 1. Herman pushes `frontend-first` (`git push origin frontend-first`); once CI is green,
    `git fetch . frontend-first:main` and `git push origin main`.
-2. Optional, the live booking checks, about 5 minutes. Herman runs, with `!` in Claude Code:
-   `D:/DOWNLOAD/node.exe D:/DOWNLOAD/Swimming/frontend-plan/review/prompt06/seedshift.mjs forward`
-   (the sample week moves to next week). Claude runs `MODE=live node validate.mjs` (dates 14
-   days later). Then Herman runs the same command with `restore`: it deletes only the
-   bookings made since `forward`, moves the week back, and commits only if the fingerprint
-   matches. Then `npm run test:db`.
+2. Optional, the live booking checks, about 10 minutes, Monday to Friday (shifted lessons
+   from the sample Saturday must still be ahead), `forward` and `restore` in one sitting
+   (`npm run test:db` fails while the week is shifted):
+   - Claude starts the live server from the swimclass folder:
+     `VITE_DEMO=false node ../frontend-plan/review/prompt06/serve-live.mjs` (port 5290).
+   - Herman runs, with `!` in Claude Code:
+     `D:/DOWNLOAD/node.exe D:/DOWNLOAD/Swimming/frontend-plan/review/prompt06/seedshift.mjs forward`
+     (the sample week moves to next week).
+   - Claude runs `MODE=live node validate.mjs` in that folder (it reads how far the week
+     moved).
+   - Herman runs the same command with `restore`: it deletes only the bookings made since
+     `forward`, moves the week back, and commits only if the seed fingerprint then matches.
+     If it prints "rolled back", the week stays shifted: tell Claude, who looks at what else
+     changed on dev before anything is reset.
+   - Claude runs `npm run test:db`.
 3. Prompt 07.
 **Decisions**
 - Sofia's Tue 29 Sep lesson: the prompt said the summary would read "uses Package 3, not
