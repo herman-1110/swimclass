@@ -66,7 +66,8 @@ Typecheck, lint, format, the build and 1,840 unit tests pass. The scripts and re
   Block time / Open extra time ranges and unsent emails made since `forward` (the coach's
   Remove only hides a message, and the fingerprint counts them), and `restore-dry` runs the
   same steps rolled back. Herman ran `forward` and `restore`: 5 test bookings, 2 messages and 14
-  unsent emails went, and the fingerprint matches.
+  unsent emails went, and the fingerprint matches. Its first rename ran too
+  (`shift-started-at.2026-10-05T01-53-18-617Z.txt`), so the next `forward` notes a fresh time.
 **Next**
 1. Herman pushes `frontend-first` (`git push origin frontend-first`); once CI is green,
    `git fetch . frontend-first:main` and `git push origin main`.
@@ -92,7 +93,9 @@ Typecheck, lint, format, the build and 1,840 unit tests pass. The scripts and re
 - From v0.15: dev's `email_outbox` holds 10 unsent rows from prompts 06 and 07 (this session's
   went with `restore`); delete them before `mail-queue` runs on dev (prompt 11). From v0.13:
   `send_password_reset` with an `sb_secret_` key, the invite to a non-team address (500
-  `unknown`), `dist/` holding a demo build (never deploy it).
+  `unknown`).
+- `dist/` is now this session's `npm run build`: no demo code, but wired to `swimclass-dev`
+  from `.env.local`, with no Turnstile key. Still never deploy it; prompt 12 builds the real one.
 **Manual steps waiting on Herman**
 - Next 1.
 - As in v0.13: dev's Auth URL settings (DEV_SETUP §5); before prompt 12, the coach on
