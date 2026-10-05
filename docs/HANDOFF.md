@@ -3,6 +3,116 @@
 Update this file at the end of every Claude Code session. Newest entry on top.
 Keep entries short; link to files instead of pasting code.
 
+## v0.17 · 5 Oct 2026 · Prompt 09: Students & payments, Add students, approvals
+**State**: `origin/main` = `origin/frontend-first` = cb9f0d4 (v0.16; Herman pushed it). Local
+`frontend-first` has prompt 09's commits and this entry on top, not pushed. On `swimclass-dev`
+Herman ran `npx supabase db push` (the new migration) and `npx supabase functions deploy
+admin-accounts --use-api`: Claude Code's safety check refused both to the session this time
+("Modify Shared Resources"). The frontend waves had built both screens (v0.6–v0.11); prompt 09
+added the two missing backend pieces and checked everything on the real backend. Dev holds the
+seed as loaded: after the live checks the unit suite ran against dev by mistake (Done, f1039da)
+and Herman reloaded it (`npx supabase db reset --linked`); the fingerprint matches. Typecheck,
+lint, format and the full unit suite (1,846, demo mode) pass; `npm run test:db` 265 pass on dev
+(262 + 3 new).
+The scripts and results are in `frontend-plan/review/prompt09/` (outside the repo; its
+`NOTES.md` lists them).
+- DIAGNOSE 1 (`diagnose.mjs`, read-only): herman's `group_balance` through the API and the
+  same view over SQL at the same moment are identical for all 13 groups.
+- DIAGNOSE 2: meiling gets `not_coach` from `create_group`, `record_payment`,
+  `add_free_lesson`, `excuse_booking`, `update_group`, `set_group_active`, `approve_account`
+  and `pending_accounts`, and 403 `not_coach` from `admin-accounts` (`create_account`,
+  `delete_account`). herman's `delete_account` answers 404 `not_found` for a made-up id and
+  409 `account_approved` for meiling.
+- DIAGNOSE 3: as built. `shared/ui` Table, Tabs (the filter strip, `?filter=`), SidePanel
+  (Record payment beside the table from 1280 px, a drawer below), Figure, SegmentBar, Pill and
+  Tag; `pages/coach-students/ui` PackagesTable, PackageCards, StudentsFigures, PaymentPanel,
+  HistoryDrawer, WaitingAccounts. Other screens open the panel by address:
+  `coachStudentsPay(groupId)` → `?pay=<group>` (the Schedule's Needs attention),
+  `coachStudentsHistory` → `?history=<group>` (the "that group" links), and Add students
+  returns with `?added=<group>` and router state (no email in the address).
+- VALIDATION in demo mode (`validate.mjs`, 81 checks, ALL OK) and live on dev with the sample
+  week moved 14 days (the same script on Herman's 5173 with `VITE_DEMO=false`, 70 checks, ALL
+  OK; the PC had too little memory for a second server):
+  - The table matches `group_balance` for all 13 groups (TECH_SPEC §10 on the shifted
+    Saturday): figures "2 Unpaid · Hana, Wei Jie", "2 On last lesson · Priya, Sofia",
+    "15 Students · 13 packages"; tabs All 13, Unpaid 2, Last lesson 2, Paid 11; needs-action
+    first; search by student and by account.
+  - Record payment for Hana: "1-to-1 · Package 6 · 4 lessons", no price set so the
+    `price_not_set` words and the coach types the amount, a future date refused
+    (`invalid_date`); Save payment → "Payment saved", her row turns Paid with History, and she
+    leaves Unpaid and the Schedule's Needs attention.
+  - The panel beside the table at 1280 and 1440 px, a drawer at 768 and 1024, full screen at
+    390; History has Payments, Lessons and Group.
+  - Add students for zulaikha: 1-to-3 with Hakim, Iman and Zara → `?added=`, "3 students
+    added.", the row highlighted; on her Book, "Who’s this lesson for?" lists them with the
+    1-to-3 tag. The same students again → `duplicate_group` with "that group" → its History.
+    A typed name equal to one of the account's students reads "Existing student".
+  - The new group's location and starting balance edited, deactivated and reactivated;
+    deactivating Hana is refused ("This group has 2 upcoming lessons…").
+  - Waiting for approval, live on 5173 (`accounts-live.mjs`, with Herman's address): the Sign
+    up page as a visitor → "Confirm your email"; herman sees Test Signup p09.signup with the
+    email and "Not confirmed" (table and phone card) and on Needs attention; Remove →
+    "Sign-up removed." and the Auth user is gone. Then Add students → Create a new account…
+    with the same address: "Student added · Invite sent to …", the account approved and not
+    waiting; Herman clicked the invite, chose a password on /reset-password and saw "New
+    password saved. You’re signed in as p09.invite." (the address confirmed, signed in).
+    Supabase's own mailer refused the invite three times first (429, DESIGN §6's words,
+    nothing created): it allows a couple of emails an hour until prompt 11.
+  - No sideways scrolling on either page at 360–1920 px. Lighthouse accessibility 100 on both
+    at 390 and 1280 px, live.
+**Done**
+- 97175ff, migration `…20261005100000_pending_accounts`: `pending_accounts()`, coach only,
+  security definer, granted to `authenticated`: the customers with `approved = false`, oldest
+  first, with `account_email` and `email_confirmed`. Never a view over `auth.users`. Database
+  tests in `groups.test.ts`, the grant list in `rls.test.ts`, the database map.
+  `database.types.ts` regenerated from dev afterwards: identical to the hand edit.
+- f613513, `admin-accounts` `delete_account {account_id}` → `{ok: true}`: `auth.admin.deleteUser`
+  for a customer still waiting for approval with no groups (`not_found` 404,
+  `account_approved` 409, `has_groups` 409; the checks read as the coach). Demo mode's
+  stand-in refuses the same way. `usePendingAccounts` reads `pending_accounts()` (its own
+  query, `accountKeys.waiting()`); the Waiting list always has the Email column and phone cards
+  say "Not confirmed" too; Remove is on (`REMOVE_SIGN_UP_AVAILABLE` is gone). TECH_SPEC §5.3,
+  §7, ARCHITECTURE §4.2, §4.3.
+- a964fea: TECH_SPEC §10's expected balances list all 13 groups (Daniel, Aina, Nurul were only
+  in the seed and the tests).
+- f1039da: the unit tests always run in demo mode. After `restore`, while `.env.local` still
+  had `VITE_DEMO=false` for the live checks, the session ran the full unit suite, and Vitest
+  read that too: for six minutes the tests booked, cancelled and excused seed lessons, recorded
+  payments, made groups, posted announcements, added Block time and changed settings and names
+  on swimclass-dev (`frontend-plan/review/prompt09/damage.log`). No real person was emailed:
+  the outbox rows were to @example.com and unsent, and the sign-ups hit Auth's 429. Herman
+  reloaded dev; mode `test` now means demo mode whatever `.env.local` says (checked with
+  `VITE_DEMO=false` still set).
+**Next**
+1. Herman pushes `frontend-first` (`git push origin frontend-first`); once CI is green,
+   `git fetch . frontend-first:main` and `git push origin main`.
+2. Prompt 10 (coach Settings). Live checks: the same forward, check, restore loop. Settings
+   edits change seed rows (`settings`, open hours) that `restore` can't undo: put each value
+   back, or have Herman reload dev (`npx supabase db reset --linked`) afterwards.
+**Decisions**
+- The two new refusals' words (DESIGN §6, proposed for Herman's OK): `account_approved` "This
+  account is already approved, so it can't be removed. Refresh to see the latest.";
+  `has_groups` "This account has a group of students, so it can't be removed. Approve it
+  instead."
+- `delete_account`'s groups check is load-bearing: groups go with the profile (on delete
+  cascade) but their bookings and payments don't, so an account with a group is never deleted.
+- `has_groups` was checked in the database-backed demo mode and the unit tests, not live: it
+  needs a waiting account with a group, and a second sign-up needs a second team address.
+- With too little memory for a second Vite server, live checks ran on Herman's 5173 with
+  `VITE_DEMO=false` (`admin-accounts` and the invite links need that origin anyway). Put
+  `.env.local` back before running anything else.
+**Open issues**
+- Supabase's own mailer allows only a couple of emails an hour (429
+  `over_email_send_rate_limit`) until prompt 11's Gmail SMTP: the live invite waited for it.
+- From v0.13: `send_password_reset` with an `sb_secret_` key; an invite to a non-team address
+  (500 `unknown`). (The reload emptied dev's `email_outbox`: v0.15's 10 unsent rows are gone.)
+- In demo mode a sign-up's date and a payment's `created_at` are the real date, not `DEMO_NOW`.
+- `dist/` is v0.16's build: wired to `swimclass-dev`, never deploy it; prompt 12 builds the real one.
+**Manual steps waiting on Herman**
+- Next 1.
+- As in v0.13: dev's Auth URL settings (DEV_SETUP §5); before prompt 12, the coach on
+  production with `make-coach.sql`, Turnstile and the `age` key pair.
+
 ## v0.16 · 5 Oct 2026 · Prompt 08: coach Schedule validated on dev and in demo mode
 **State**: `origin/main` = `origin/frontend-first` = 174aafc (v0.15; Herman pushed it). Local
 `frontend-first` has one fix and this entry on top, not pushed. Prompt 08 found every TASK item
