@@ -3,6 +3,101 @@
 Update this file at the end of every Claude Code session. Newest entry on top.
 Keep entries short; link to files instead of pasting code.
 
+## v0.16 · 5 Oct 2026 · Prompt 08: coach Schedule validated on dev and in demo mode
+**State**: `origin/main` = `origin/frontend-first` = 174aafc (v0.15; Herman pushed it). Local
+`frontend-first` has one fix and this entry on top, not pushed. Prompt 08 found every TASK item
+already built by the frontend waves (v0.6–v0.11) and checked it on the real backend. Dev holds
+the seed as loaded (fingerprint matches; `npm run test:db` 262 pass before and after).
+Typecheck, lint, format, the build and 1,840 unit tests pass. The scripts and results are in
+`frontend-plan/review/prompt08/` (outside the repo; its `NOTES.md` lists them).
+- DIAGNOSE 1 on `swimclass-dev`: herman logs in through `login`; `coach_week` gives the
+  documented days (open, closed, exceptions, lessons with travel minutes, package position,
+  `unpaid`, `last_lesson`, `gap_override`); Kai's Fri 2 Oct lesson has travel 0/60 and Wei
+  Jie's 60/0. With the week shifted, through the API: `coach_book` (no email queued),
+  `add_exception` (shows in `coach_week` as extra open time), `post_announcement` with
+  `p_send_email` false (no email), then `remove_exception`, `remove_announcement` and the
+  coach's `cancel_booking` (one "cancelled" email to the customer, no late alert).
+- DIAGNOSE 2: meiling gets `not_coach` from `coach_week`, `coach_slot_check`, `coach_book`,
+  `add_exception`, `remove_exception`, `post_announcement`, `remove_announcement`,
+  `approve_account` and `excuse_booking`; `slot_check` has no grant (404).
+- DIAGNOSE 3: as built (DESIGN §4, `shared/ui/WeekGrid`): 56 px an hour (28 px rows of 30
+  minutes) from 7 am to 10 pm, longer when the week's open hours or lessons fall outside it.
+- VALIDATION in demo mode (`validate.mjs`, 79 checks, ALL OK) and live on dev with the
+  sample week moved 14 days (the same script, 82 checks, ALL OK):
+  - The drawn week at 1440 px matches `design/AdminSchedule.dc.html` (`compare-demo-1440.png`):
+    header actions, week navigation with Today, legend, lesson blocks ("1-to-2 · Palm Court",
+    "Vista Heights" for 1-to-1, Chloe's "2 lessons", Kai's "Gap override"), travel before Wei
+    Jie and none between Wei Jie and Kai, closed blocks, the 320 px side column to the edge.
+    At 390 px the day view matches `AdminSchedulePhone.dc.html` block by block for Sat 26 Sep
+    and Sat 3 Oct, with Today, Needs attention and Message below. No sideways scrolling at
+    360–1920 px; the day view under 768, the grid from 768, the side column from 1280.
+  - Today for Sat 26 Sep (demo clock): Ethan 9:00 am "done", Aiman & Sofia 5:00 pm, Hana
+    7:30 pm (also `CoachSchedulePage.test.tsx`). Live, Today matched `coach_week` for Mon 5 Oct
+    ("No lessons today."). Needs attention: Hana and Wei Jie unpaid with Record payment
+    (`/coach/students?pay=<group>`), Priya and Sofia on their last paid lesson.
+  - Open extra time Wed 3:00–5:30 pm: meiling's Book offers 3:00 and 4:00 pm that day, and a
+    week later starts at 5:30 pm. Block time Mon 7:00–9:00 pm: nothing from 7:00 to 8:30 pm
+    ("Your coach isn’t available 7:00–9:00 pm."), the next Monday still has 7:00 pm. Both
+    removed from the week's list; the weekly hours unchanged. Blocking over lessons warns
+    "These lessons stay booked".
+  - Add booking at 3:00 pm on a weekday: "It’s outside your open hours…" with Book off; with
+    "Outside open hours" on it books, and no email is queued. Another group at 3:30 pm with
+    both toggles on: "It overlaps another lesson at 3:00–4:00 pm." and Book stays off. Wei Jie
+    (can still book 1), 2 weeks: "This group can book 1 more lesson before paying…", then
+    "Book anyway" books both (can still book −1).
+  - Lesson details (group, account, location, package position, balance); Cancel lesson with a
+    reason (500 characters): the booking is cancelled, the balance restored, one "cancelled"
+    email to the customer with the reason, no late alert. A test lesson booked yesterday offers
+    Mark as excused and then uses nothing; a future one doesn't offer it.
+  - Message all customers (1000 characters, pinned): the pinned list shows it, meiling sees the
+    banner on Schedule and My classes, and live queued 12 "broadcast" emails, one per approved
+    customer with a confirmed or invited address; Remove takes the banner down. Approve
+    (demo only): "Siti Aminah approved."
+- Lighthouse accessibility on `/coach/schedule`: 100 at 390 and 1280 in demo mode; live 100
+  at 1280 and 96 at 390 (Decisions).
+**Done**
+- The coach's day buttons are named by their own words: "Sat 3, 3 lessons" for the text
+  "Sat 3 3 lessons" (DayStrip puts a space before the caption), "Sat 3" while the week loads
+  (v0.14's open issue; Lighthouse's `label-content-name-mismatch`). The grid's day lists keep
+  "Saturday 3 Oct, 3 lessons". Nothing moves on screen: the phone strip's screenshots before
+  and after are byte-identical at 390 and 360 px.
+- Prompt 08 now says Today has no Unpaid flag (Decisions).
+- `frontend-plan/review/prompt06/seedshift.mjs restore` also deletes the announcements,
+  Block time / Open extra time ranges and unsent emails made since `forward` (the coach's
+  Remove only hides a message, and the fingerprint counts them), and `restore-dry` runs the
+  same steps rolled back. Herman ran `forward` and `restore`: 5 test bookings, 2 messages and 14
+  unsent emails went, and the fingerprint matches.
+**Next**
+1. Herman pushes `frontend-first` (`git push origin frontend-first`); once CI is green,
+   `git fetch . frontend-first:main` and `git push origin main`.
+2. Prompt 09 (students and payments). Live checks can use the same loop: Herman runs
+   `seedshift.mjs forward`, Claude runs its checks and `seedshift.mjs restore-dry`, Herman runs
+   `restore`, Claude runs `npm run test:db`. Payments, groups, students and accounts are in the
+   fingerprint but `restore` doesn't delete them: prompt 09's live checks need `restore` to
+   learn about payments (and anything else they add) first, or must stay in demo mode.
+**Decisions**
+- Today has no "Unpaid, collect today" and no "first lesson of Package 6": Herman dropped them
+  on 2 Oct 2026 (DESIGN §4, v0.10); the prompt's VALIDATION predates that.
+- Lighthouse's `target-size` at 390 px live: on the unshifted week, Wei Jie's Record payment
+  link starts 3 px under the sticky tab bar at the first scroll position and scrolls clear, as
+  Book's chips under its sticky summary (v0.14).
+- The coach's day-button names drop the month ("Sat 3, 3 lessons"): a name must contain what the
+  button shows for someone using speech, and the week above the strip names the month.
+- Live checks change only what `restore` deletes: the coach books test lessons and cancels or
+  excuses those, and removes what it adds. Approving an account stays in demo mode (dev has no
+  account waiting, and a sign-up can't be undone).
+**Open issues**
+- In demo mode a message's "Posted" date and a sign-up's date are the real date, not
+  `DEMO_NOW` (`now()` defaults in PGlite). Live they are right.
+- From v0.15: dev's `email_outbox` holds 10 unsent rows from prompts 06 and 07 (this session's
+  went with `restore`); delete them before `mail-queue` runs on dev (prompt 11). From v0.13:
+  `send_password_reset` with an `sb_secret_` key, the invite to a non-team address (500
+  `unknown`), `dist/` holding a demo build (never deploy it).
+**Manual steps waiting on Herman**
+- Next 1.
+- As in v0.13: dev's Auth URL settings (DEV_SETUP §5); before prompt 12, the coach on
+  production with `make-coach.sql`, Turnstile and the `age` key pair.
+
 ## v0.15 · 5 Oct 2026 · Prompt 07: Schedule, My classes and Account validated on dev and in demo mode
 **State**: `origin/main` = `origin/frontend-first` = cf60234 (v0.14; Herman pushed it). Local
 `frontend-first` has only this entry on top, not pushed. Prompt 07 needed no code changes:

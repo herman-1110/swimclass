@@ -31,8 +31,9 @@ and the dialogs "not drawn"), PRD BR-17, BR-18, BR-28 to BR-31, BR-36, TECH_SPEC
    "Show cancelled" optional). Data: `coach_week` (TECH_SPEC §5.1: open, closed,
    exceptions with notes, and lessons with travel minutes, package position and flags).
 3. Right panel:
-   - Today: each lesson with time, group, location, "lesson N of 4", and the orange
-     "Unpaid, collect today" when the group is unpaid.
+   - Today: each lesson with time, group, location and "lesson N of 4". No Unpaid flag:
+     the drawing's orange "Unpaid, collect today" was dropped (Herman, 2 Oct 2026; paying
+     shows on Students & payments, DESIGN §4).
    - Needs attention: unpaid groups (Record payment → Students page with the panel
      open for that group), groups whose next lesson is their last paid one, accounts
      waiting for approval (Approve button → `approve_account`).
@@ -82,7 +83,7 @@ and the dialogs "not drawn"), PRD BR-17, BR-18, BR-28 to BR-31, BR-36, TECH_SPEC
   "Gap override", no travel block between Wei Jie and Kai), with no sideways scrolling
   at DESIGN §5's widths.
 - Today panel for Sat 26 Sep lists Ethan 9:00 am (done), Aiman & Sofia 5:00 pm, Hana
-  7:30 pm with "Unpaid, collect today": a component test fed `coach_week` output taken at
+  7:30 pm (no Unpaid flag, see TASK 3): a component test fed `coach_week` output taken at
   the pinned clock (the API always runs at the real time), or by hand on the shifted
   Saturday.
 - Opening extra time on a date makes those starts appear for customers on that date only;
