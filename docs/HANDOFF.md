@@ -85,7 +85,10 @@ the repo; its `NOTES.md` lists them).
 1. Herman pushes `frontend-first` (`git push origin frontend-first`); once CI is green,
    `git fetch . frontend-first:main` and `git push origin main`.
 2. Prompt 08 (coach schedule). Its live checks can use the same forward, validate, restore
-   loop (v0.14 Next 3).
+   loop (v0.14 Next 3). `forward` keeps an existing `shift-started-at.txt` and `restore`
+   uses its time, so `seedshift.mjs restore` now renames that file on success (adding the
+   time) and the next `forward` notes a fresh one. That rename hasn't run yet: prompt 08's
+   `restore` is its first use (this session moved the file by hand).
 **Decisions**
 - The Locked row was checked in demo mode only. Live, a lesson inside the 6-hour cutoff would
   have to start today, and booking a lesson in the next 24 hours queues the coach's
