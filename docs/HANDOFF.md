@@ -3,6 +3,87 @@
 Update this file at the end of every Claude Code session. Newest entry on top.
 Keep entries short; link to files instead of pasting code.
 
+## v0.14 · 5 Oct 2026 · Prompt 06: Book checked on dev and in demo mode
+**State**: `origin/main` = `origin/frontend-first` = 892ade5 (v0.13; Herman pushed it). Local
+`frontend-first` has this entry and two small fixes on top, not pushed. Typecheck, lint and
+format pass. The full run of both Vitest projects (2,102 tests, the database ones on dev) had
+5 failures, all fixed below: one test expecting the old DayStrip text, and 4 login-limit
+database tests; those files now pass (142 unit tests, 19 database tests). Book was built in the
+frontend waves (v0.6–v0.11); prompt 06 found every TASK item already there and checked it on
+the real backend. The scripts and results are in `frontend-plan/review/prompt06/` (outside
+the repo).
+- DIAGNOSE on `swimclass-dev` (`diagnose.mjs`, read-only): meiling logs in through `login`;
+  `get_public_settings` gives one row, `group_details` her two active groups,
+  `group_balance` both balances, `week_slots` this week's and next week's starts.
+- Components and hooks: Segmented, OptionRow, DayStrip, Chip, SegmentBar and Tag in
+  `shared/ui`; GroupPicker, PackageSummary, TimeChipGrid in their entities; BookingSummary in
+  `features/book-lesson`. TASK 1's hooks: `usePublicSettings`, `useMyGroups`,
+  `useAccountBalances` (the prompt's `useGroupBalance`), `useWeekSlots`,
+  `useLatestAnnouncement`.
+- Today's MYT date is `mytDateKey(useNow())` (the real clock; `DEMO_NOW` in demo mode), the
+  week starts on its Monday (`mytWeekStart`), and `bookableWindow` gives this week plus
+  `booking_window_weeks` more, ending on a Sunday.
+- On dev with demo mode off (Vite on 5290, signed in with Auth directly because `login`'s
+  CORS allows only 5173): Book loads for meiling with every call going to Supabase and no
+  errors; the day strip and chips are identical with the browser in Malaysia, Los Angeles and
+  Auckland time (`live-tz.mjs`); Lighthouse accessibility is 100 at 390 and 1280 px.
+- VALIDATION in demo mode (`validate.mjs`, the same migrations and seed in PGlite; 30 checks,
+  ALL OK, and again with the browser in Los Angeles time): Tue 29 Sep 1 hour frees 7:30–9:00
+  pm and crosses out 5:30–7:00 pm; 7:00 pm shows "7:00 pm isn’t available" and the gap_after
+  words, and Book is disabled; 2 hours frees 7:30 and 8:00 pm, and Thursday is fully booked;
+  Sofia shows "New bookings start Package 3."; booking 7:30 pm for Aiman & Sofia by keyboard
+  only (Tab to the chip, Space, Tab to Book, Enter) shows the confirmation, and 7:30 pm then
+  reads "It overlaps Aiman & Sofia’s lesson at 7:30–8:30 pm."; a start taken between picking
+  it and pressing Book comes back from `book_lesson` as `overlap_mine` in words; "Repeat
+  weekly for 5 weeks" from Sun 27 Sep refuses with `repeat_conflict` naming Sun 4 Oct; no
+  sideways scrolling at 360, 390, 768, 1024, 1280, 1440 and 1920 px.
+- Lighthouse in demo mode: 96 at 390 px, 100 at 1280. The 4 points are `target-size`: at
+  390 × 844 the chips start under the sticky booking summary, as drawn; scrolling brings every
+  chip and the help line clear of it (`footer-overlap.mjs`).
+- Unit tests for the reason messages, the repeat label and the week start were already there
+  (`messages.test.ts`, `repeatWeeks.test.ts`, `time.test.ts`, `bookableWindow.test.ts`).
+**Done**
+- DayStrip: a space between the weekday and the date, so a day's text reads "Mon 5" and its
+  label "Mon 5 Oct, …" contains it (WCAG 2.5.3; Lighthouse's label-in-name check). Nothing
+  moves on screen. Three tests read the day buttons' text and now expect the space.
+- `tests/db/login.test.ts`: each test starts with no login tries (deleted inside its own
+  transaction, so rolled back). The tests count every row for a username, and real logins
+  on dev leave rows for a day: prompt 05's validation and this session's DIAGNOSE left 6
+  for meiling, so 4 tests failed until the rows aged out.
+- Prompt 06's Sofia bullet now says what the database does (Decisions).
+**Not done: the booking checks live on dev.** Claude Code's safety check refused to let the
+session move dev's sample week (`shift-seed.sql`), so the VALIDATION bookings ran in demo
+mode only. `seedshift.mjs` is ready and was tried in a rolled-back transaction: forward, then
+back, gives the database tests' seed fingerprint again. To run it (Next 2).
+**Next**
+1. Herman pushes `frontend-first` (`git push origin frontend-first`); once CI is green,
+   `git fetch . frontend-first:main` and `git push origin main`.
+2. Optional, the live booking checks, about 5 minutes. Herman runs, with `!` in Claude Code:
+   `D:/DOWNLOAD/node.exe D:/DOWNLOAD/Swimming/frontend-plan/review/prompt06/seedshift.mjs forward`
+   (the sample week moves to next week). Claude runs `MODE=live node validate.mjs` (dates 14
+   days later). Then Herman runs the same command with `restore`: it deletes only the
+   bookings made since `forward`, moves the week back, and commits only if the fingerprint
+   matches. Then `npm run test:db`.
+3. Prompt 07.
+**Decisions**
+- Sofia's Tue 29 Sep lesson: the prompt said the summary would read "uses Package 3, not
+  paid yet". The ledger numbers lessons by start time, so Tuesday takes Package 2's last
+  lesson and her Sunday lesson moves into Package 3, and Book says "uses 1 lesson from
+  Package 2 · Package 3 isn’t paid yet" (TECH_SPEC §10; Herman's answer to triage 1–2 in
+  v0.10). The prompt now says so.
+- Lighthouse's `target-size` at 390 px stays: the summary is sticky by design (DESIGN §4,
+  `design/Main.dc.html`) and every chip can be scrolled clear of it.
+**Open issues**
+- The first live Vite run in this session re-optimised the shared `node_modules/.vite`
+  before it moved to its own cache. If Herman's `npm run dev` on 5173 acts oddly, stop it
+  and start it again.
+- From v0.13: `send_password_reset` with an `sb_secret_` key, the invite to a non-team
+  address (500 `unknown`), `dist/` holding a demo build (never deploy it).
+**Manual steps waiting on Herman**
+- Next 1 and, if wanted, Next 2.
+- As in v0.13: dev's Auth URL settings (DEV_SETUP §5); before prompt 12, the coach on
+  production with `make-coach.sql`, Turnstile and the `age` key pair.
+
 ## v0.13 · 5 Oct 2026 · Prompt 05: built, deployed to dev, validated
 **State**: `origin/main` = `origin/frontend-first` = 5d97c94 (v0.12, CI green). Local
 `frontend-first` has prompt 05's commits on top, not pushed. On `swimclass-dev` (Herman ran

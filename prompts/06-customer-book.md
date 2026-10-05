@@ -66,8 +66,10 @@ the dates below shift by the same number of weeks; the times and messages stay t
   tapping 7:00 pm shows "It starts too soon after the lesson that ends at 6:30 pm. Your
   coach needs 1 hour to travel between lessons."
 - 2 hours: Tuesday 7:30 and 8:00 pm; Thursday shows "This day is fully booked…".
-- Selecting "Sofia" shows "New bookings start Package 3…" and the summary says the
-  lesson uses Package 3, not paid yet.
+- Selecting "Sofia" shows "New bookings start Package 3…". For Tue 7:30 pm the summary
+  says "uses 1 lesson from Package 2 · Package 3 isn’t paid yet": the ledger numbers
+  lessons by start time, so Tuesday takes Package 2's last lesson and her Sunday lesson
+  moves into Package 3 (TECH_SPEC §10; Herman's answer to triage 1–2, HANDOFF v0.10).
 - Booking 7:30 pm for Aiman & Sofia succeeds; the chip becomes crossed out with
   "overlaps Aiman & Sofia's lesson".
 - Screen matches `design/Main.dc.html` at 390 px and `design/MainDesktop.dc.html` at
