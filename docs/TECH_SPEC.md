@@ -688,6 +688,9 @@ Expected `group_balance` at that clock:
 | Chloe | 3 | 0 | 2 | 2 | Paid | |
 | Ethan | 7 | 1 | 1 | 2 | Paid | |
 | Kai | 1 | 0 | 1 | 3 | Paid | |
+| Daniel | 1 | 0 | 1 | 3 | Paid | |
+| Aina | 1 | 0 | 1 | 3 | Paid | |
+| Nurul | 1 | 2 | 1 | 1 | Paid | |
 
 Expected free start times, week of Mon 28 Sep (any customer group; 1 h / 2 h):
 | Day | 1 hour | 2 hours |

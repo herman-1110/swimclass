@@ -176,7 +176,8 @@ const TECH_SPEC_TABLE: Expected[] = [
   },
 ]
 
-// Not in the TECH_SPEC table: worked out from the seed with the §4 formulas.
+// Worked out from the seed with the §4 formulas; TECH_SPEC §10's table has them too since
+// prompt 09.
 const OTHER_GROUPS: Expected[] = [
   {
     group: 'Daniel',
