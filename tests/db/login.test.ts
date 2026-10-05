@@ -1,7 +1,7 @@
 // The login rate limit (supabase/migrations/…_add_login_limiter.sql; TECH_SPEC §7):
 // check_login_attempt and record_login_success, which only the service role (the `login`
 // Edge Function) may run. The limit counts real time (now()), not the pinned clock.
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 
 import { hasDatabase, type TestDb, useTestDb } from './helpers'
 
@@ -11,6 +11,20 @@ const IP = '203.0.113.7'
 const OTHER_IP = '198.51.100.20'
 
 type Answer = { attempt_id: number; email: string | null }
+
+/**
+ * useTestDb, with no login tries at the start of each test. Real logins on swimclass-dev (a
+ * check signing in as meiling) leave rows for a day, and these tests count every row for a
+ * username. The delete runs inside the test's transaction, so it is rolled back too.
+ */
+function useLoginTestDb(): TestDb {
+  const db = useTestDb()
+  beforeEach(async () => {
+    await db.asOwner()
+    await db.query('delete from public.login_attempts')
+  })
+  return db
+}
 
 /** Acts as the service role, as the Edge Function does. */
 async function asServiceRole(db: TestDb) {
@@ -69,7 +83,7 @@ async function attempts(db: TestDb, username: string) {
 }
 
 describe.skipIf(!hasDatabase)('check_login_attempt', () => {
-  const db = useTestDb()
+  const db = useLoginTestDb()
 
   it('records a try as a failure and returns the account’s email', async () => {
     const answer = await check(db, 'meiling')
@@ -153,7 +167,7 @@ describe.skipIf(!hasDatabase)('check_login_attempt', () => {
 })
 
 describe.skipIf(!hasDatabase)('record_login_success', () => {
-  const db = useTestDb()
+  const db = useLoginTestDb()
 
   it('marks the try a success and forgets that username’s failures from that IP', async () => {
     await failures(db, 'meiling', 9)
@@ -188,7 +202,7 @@ describe.skipIf(!hasDatabase)('record_login_success', () => {
 })
 
 describe.skipIf(!hasDatabase)('who may run the login limit', () => {
-  const db = useTestDb()
+  const db = useLoginTestDb()
 
   it.each([
     ['visitors (anon)', (d: TestDb) => d.asAnon()],
