@@ -3,6 +3,114 @@
 Update this file at the end of every Claude Code session. Newest entry on top.
 Keep entries short; link to files instead of pasting code.
 
+## v0.15 · 5 Oct 2026 · Prompt 07: Schedule, My classes and Account validated on dev and in demo mode
+**State**: `origin/main` = `origin/frontend-first` = cf60234 (v0.14; Herman pushed it). Local
+`frontend-first` has only this entry on top, not pushed. Prompt 07 needed no code changes:
+the frontend waves built every TASK item (v0.6–v0.11), and this session checked them on the
+real backend. Dev holds the seed as loaded (fingerprint matches; `npm run test:db` 262 pass
+before and after). The scripts and results are in `frontend-plan/review/prompt07/` (outside
+the repo; its `NOTES.md` lists them).
+- DIAGNOSE 1 on `swimclass-dev` (`diagnose.mjs`, read-only, after `test:db`): meiling logs in
+  through `login`; `get_public_settings` (cutoff 6 hours, window 4 weeks, no payment
+  instructions yet), `group_details`, `group_balance`, `booking_ledger` (her 3 lessons),
+  `bookings` (RLS: hers only) and `week_busy` for the sample week and this week (only the
+  documented keys; no names, locations or other ids; `booking_id` and `group_id` only on
+  hers; a null week gives `invalid_week`). `cancel_booking` was called only where it refuses,
+  so nothing changed: a made-up id and weijie's lesson give `not_your_booking`; her own Sat
+  3 Oct lesson, past its cutoff, gives `locked` {`cutoff_at`: "2026-10-03T03:00:00+08:00"}
+  and is still booked afterwards.
+- DIAGNOSE 2: reused from prompt 06: SegmentBar (the package bar), PackageSummary
+  (`variant="account"`), Tag, Dialog, WeekNav, CoachBanner. Already built for prompt 07:
+  WeekGrid in `shared/ui`; CustomerWeekGrid, CustomerWeekText, CustomerScheduleLegend and
+  `useCustomerWeek` in entity `schedule`; LessonRowLayout, PastLessonRow, HistoryLessonRow,
+  `useUpcomingLessons` and `usePastLessons` in entity `booking` (the prompt's LessonRow is
+  LessonRowLayout plus `pages/my-classes/ui/UpcomingLessonRow`); `features/cancel-lesson`,
+  `update-profile`, `change-password` and `log-out`.
+- VALIDATION in demo mode (`validate.mjs`, 99 checks, ALL OK):
+  - Schedule opens on this week with Previous disabled; Next stops after 4 weeks
+    (`booking_window_weeks`); a `?week=` before or past the window snaps to it. The sample
+    week as meiling matches `design/Schedule.dc.html` block by block, per day and kind:
+    closed, other people's lessons as Booked with no text, travel, hers as "You" (Sat
+    9:00 am, Sun 5:00 pm). Travel shows only inside open time: none before Priya's Tue
+    5:30 pm lesson, none between Wei Jie and Kai on Fri 2 Oct. The hidden list reads each
+    day ("Tue 29 Sep: free 7:30 pm to 10:00 pm", "Thu 1 Oct: no free time"); the legend and
+    the note are there; days from today link to `/book?day=…` (past days are plain); Tab
+    reaches the week buttons and the day links with a focus ring, and Enter on Tue opens
+    Book on Tue.
+  - My classes lists one row per lesson in `booking_ledger` that hasn't ended, in order,
+    each with "lesson N of 4" from the ledger ("Package 3, lesson 1 of 4" for a later
+    package), the location and the deadline: "Today, 5:00–6:00 pm … Locked" with "Under 6
+    hours to go…", and "Free to cancel until 3:00 am, Sat 3 Oct." `cancel_booking` called
+    directly on the Locked lesson gives `locked`, and it stays booked. Packages match
+    `group_balance` for both groups ("Package 2 · 3 used · 1 booked · fully booked"), with
+    the paid date and method. With prices and payment instructions set as the coach (the
+    seed has none), Sofia's note reads "… Pay RM 240 before or at its first lesson." in
+    #9A3412, and How to pay shows the instructions.
+  - Cancel by keyboard: Tab to "Cancel Sat 3 Oct, 9:00–10:00 am for Aiman & Sofia", Enter,
+    and the confirmation has the prompt's words with focus inside; Escape returns focus to
+    the button; "Cancel lesson" shows the notice, the row goes, the booking is cancelled,
+    the package counts drop, and Book shows 9:00 am free. A lesson cancelled behind the
+    open confirmation answers `not_booked` in DESIGN §6's words ("This lesson is no longer
+    booked. Refresh to see the latest.") with Close, and the list refreshes. "Past lessons
+    and receipts" starts collapsed (`aria-expanded`) and lists the cancelled lessons and
+    the payments.
+  - Account: Name and Phone are editable, the username and email are text; a new phone
+    survives a reload; "Save new password" works and meiling signs in with it; Log out
+    ends on Log in. The coach's pinned announcement shows at the top of Schedule and My
+    classes.
+  - No sideways scrolling on the three pages at 360–1920 px, and at 390 × 844 the tab bar
+    leaves the last item clear. The screens match the drawings at 390 and 1280 px
+    (`demo-*.png`); the differences are the seed's "Palm Court" (drawn "Palm Court pool")
+    and the business name.
+- Lighthouse accessibility is 100 on `/schedule`, `/my-classes` and `/account` at 390 and
+  1280 px, in demo mode and live.
+- Live on dev before the shift (`live-readonly.mjs`, read-only): no console errors, the
+  `week_busy` bodies hold no names, Packages match `group_balance`, and Past shows her three
+  seed lessons as Done.
+- VALIDATION live on dev, the sample week moved 14 days (Herman ran `seedshift.mjs forward`
+  and `restore`): the same `validate.mjs`, 94 checks, ALL OK. The 9 `week_busy` responses in
+  the browser hold no names, usernames or locations. meiling booked Tue 13 Oct 7:30 pm (Aiman
+  & Sofia) and Wed 14 Oct 5:30 pm (Sofia) and cancelled both: one by keyboard on the screen
+  (7:30 pm was then free on Book), one behind the open confirmation (`not_booked`). The only
+  failed request was that `not_booked` (HTTP 400, which Chrome logs as an error). The first
+  of two runs flagged two things in the script, not the app (Decisions). `restore` deleted
+  the 4 test bookings and their 8 `booking_changes` rows; the fingerprint matches and
+  `npm run test:db` passes (262).
+- The test on the JSON that the prompt asks for was already there:
+  `tests/db/availability.test.ts`, "contains no names, locations or other accounts’ ids"
+  (prompt 03).
+**Done**
+- This entry. No code changes.
+**Next**
+1. Herman pushes `frontend-first` (`git push origin frontend-first`); once CI is green,
+   `git fetch . frontend-first:main` and `git push origin main`.
+2. Prompt 08 (coach schedule). Its live checks can use the same forward, validate, restore
+   loop (v0.14 Next 3).
+**Decisions**
+- The Locked row was checked in demo mode only. Live, a lesson inside the 6-hour cutoff would
+  have to start today, and booking a lesson in the next 24 hours queues the coach's
+  late-change alert (BR-35) to Herman's real address. The live `locked` refusal is
+  DIAGNOSE's.
+- A group shows Unpaid on My classes when no payment covers its current package, even with
+  `group_balance.unpaid` false (live before the shift: Sofia has used 8 of 8 paid, and
+  Package 3 isn't paid). That is BR-22 (`owesPayment`), as built. While a group owes, the
+  Unpaid pill takes the place of the paid date; the first live run's check expected the
+  date, and its other flag was the provoked `not_booked` 400.
+- Live checks never cancel a seed booking: `restore` deletes only bookings made since
+  `forward`, so a cancelled seed booking would keep the fingerprint from matching. Later
+  prompts' live checks should book their own lessons and cancel those.
+**Open issues**
+- Dev's `email_outbox` holds 10 unsent rows from the live checks (prompt 06: 2 "booked";
+  prompt 07: 4 "booked", 4 "cancelled"), all to meiling@example.com; `restore` doesn't touch
+  the outbox. Delete the unsent rows before `mail-queue` runs on dev (prompt 11).
+- From v0.14: the coach's day buttons run the date and caption together (prompt 08). From
+  v0.13: `send_password_reset` with an `sb_secret_` key, the invite to a non-team address
+  (500 `unknown`), `dist/` holding a demo build (never deploy it).
+**Manual steps waiting on Herman**
+- Next 1.
+- As in v0.13: dev's Auth URL settings (DEV_SETUP §5); before prompt 12, the coach on
+  production with `make-coach.sql`, Turnstile and the `age` key pair.
+
 ## v0.14 · 5 Oct 2026 · Prompt 06: Book validated on dev and in demo mode
 **State**: `origin/main` = `origin/frontend-first` = 892ade5 (v0.13; Herman pushed it). Local
 `frontend-first` has this entry and two small fixes on top, not pushed. Dev holds the seed
