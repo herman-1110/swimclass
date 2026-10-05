@@ -73,9 +73,12 @@ Typecheck, lint, format, the build and 1,840 unit tests pass. The scripts and re
    `git fetch . frontend-first:main` and `git push origin main`.
 2. Prompt 09 (students and payments). Live checks can use the same loop: Herman runs
    `seedshift.mjs forward`, Claude runs its checks and `seedshift.mjs restore-dry`, Herman runs
-   `restore`, Claude runs `npm run test:db`. Payments, groups, students and accounts are in the
-   fingerprint but `restore` doesn't delete them: prompt 09's live checks need `restore` to
-   learn about payments (and anything else they add) first, or must stay in demo mode.
+   `restore`, Claude runs `npm run test:db`. `restore` now also deletes the payments, groups,
+   students and accounts made since `forward` (deleting an account's login removes its
+   profile); `seedshift.mjs selftest` makes one of each in a rolled-back transaction and
+   checks that the fingerprint matches after the deletes. It can't undo an edit to a seed
+   row, so live checks edit only what they made (the new group's location, a lesson the
+   check booked yesterday), and record payments as new rows.
 **Decisions**
 - Today has no "Unpaid, collect today" and no "first lesson of Package 6": Herman dropped them
   on 2 Oct 2026 (DESIGN §4, v0.10); the prompt's VALIDATION predates that.
