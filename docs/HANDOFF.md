@@ -3,9 +3,10 @@
 Update this file at the end of every Claude Code session. Newest entry on top.
 Keep entries short; link to files instead of pasting code.
 
-## v0.14 · 5 Oct 2026 · Prompt 06: Book checked on dev and in demo mode
+## v0.14 · 5 Oct 2026 · Prompt 06: Book validated on dev and in demo mode
 **State**: `origin/main` = `origin/frontend-first` = 892ade5 (v0.13; Herman pushed it). Local
-`frontend-first` has this entry and two small fixes on top, not pushed. Typecheck, lint and
+`frontend-first` has this entry and two small fixes on top, not pushed. Dev holds the seed
+as loaded again (fingerprint matches; `npm run test:db` 262 pass). Typecheck, lint and
 format pass. The full run of both Vitest projects (2,102 tests, the database ones on dev) had
 5 failures, all fixed below: one test expecting the old DayStrip text, and 4 login-limit
 database tests; those files now pass (142 unit tests, 19 database tests). Book was built in the
@@ -54,16 +55,22 @@ the repo).
   on dev leave rows for a day: prompt 05's validation and this session's DIAGNOSE left 6
   for meiling, so 4 tests failed until the rows aged out.
 - Prompt 06's Sofia bullet now says what the database does (Decisions).
-**Not done: the booking checks live on dev.** Claude Code's safety check refused to let the
-session move dev's sample week (`shift-seed.sql`), so the VALIDATION bookings ran in demo
-mode only. `seedshift.mjs` is ready and was tried in a rolled-back transaction: forward, then
-back, gives the database tests' seed fingerprint again. To run it (Next 2).
+- VALIDATION live on dev, the same `validate.mjs` with the sample week moved 14 days (to Mon
+  12 Oct): all 30 checks pass, with real bookings (Aiman & Sofia Tue 13 Oct 7:30 pm by
+  keyboard only; Sofia Wed 14 Oct 5:30 pm behind the screen) and both refusals in words
+  (`overlap_mine`; `repeat_conflict` naming Sun 18 Oct). Chrome logs each refusal as "Failed
+  to load resource: 400": PostgREST answers a refusal with HTTP 400 and
+  `{code: "P0001", message: "overlap_mine", details: "<json>"}` (`check-400.mjs`), which is
+  what `toAppError` reads. Claude Code's safety check refused to let the session move dev's
+  data, so Herman ran `seedshift.mjs forward` and `restore` with `!`. After `restore`, the seed
+  fingerprint matches again and `npm run test:db` passes (262).
 **Next**
 1. Herman pushes `frontend-first` (`git push origin frontend-first`); once CI is green,
    `git fetch . frontend-first:main` and `git push origin main`.
-2. Optional, the live booking checks, about 10 minutes, Monday to Friday (shifted lessons
-   from the sample Saturday must still be ahead), `forward` and `restore` in one sitting
-   (`npm run test:db` fails while the week is shifted):
+2. Prompt 07.
+3. To run live booking checks again later (prompt 07's, say), about 10 minutes, Monday to
+   Friday (shifted lessons from the sample Saturday must still be ahead), `forward` and
+   `restore` in one sitting (`npm run test:db` fails while the week is shifted):
    - Claude starts the live server from the swimclass folder:
      `VITE_DEMO=false node ../frontend-plan/review/prompt06/serve-live.mjs` (port 5290).
    - Herman runs, with `!` in Claude Code:
@@ -76,7 +83,6 @@ back, gives the database tests' seed fingerprint again. To run it (Next 2).
      If it prints "rolled back", the week stays shifted: tell Claude, who looks at what else
      changed on dev before anything is reset.
    - Claude runs `npm run test:db`.
-3. Prompt 07.
 **Decisions**
 - Sofia's Tue 29 Sep lesson: the prompt said the summary would read "uses Package 3, not
   paid yet". The ledger numbers lessons by start time, so Tuesday takes Package 2's last
@@ -92,7 +98,7 @@ back, gives the database tests' seed fingerprint again. To run it (Next 2).
 - From v0.13: `send_password_reset` with an `sb_secret_` key, the invite to a non-team
   address (500 `unknown`), `dist/` holding a demo build (never deploy it).
 **Manual steps waiting on Herman**
-- Next 1 and, if wanted, Next 2.
+- Next 1.
 - As in v0.13: dev's Auth URL settings (DEV_SETUP §5); before prompt 12, the coach on
   production with `make-coach.sql`, Turnstile and the `age` key pair.
 
