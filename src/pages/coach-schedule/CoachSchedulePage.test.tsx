@@ -194,13 +194,13 @@ describe('CoachSchedulePage, moving through the weeks (§8.2)', () => {
         .getAllByRole('button')
         .map((day) => day.textContent),
     ).toEqual([
-      'Mon281 lesson',
-      'Tue291 lesson',
-      'Wed301 lesson',
-      'Thu12 lessons',
-      'Fri22 lessons',
-      'Sat33 lessons',
-      'Sun44 lessons',
+      'Mon 281 lesson',
+      'Tue 291 lesson',
+      'Wed 301 lesson',
+      'Thu 12 lessons',
+      'Fri 22 lessons',
+      'Sat 33 lessons',
+      'Sun 44 lessons',
     ])
     expect(screen.getByRole('heading', { level: 2, name: 'Saturday 3 Oct' })).toBeTruthy()
     // Today stays today.

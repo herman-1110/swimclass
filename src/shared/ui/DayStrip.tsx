@@ -79,7 +79,9 @@ export function DayStrip({ days, selected, onSelect, heading, label = 'Days' }: 
               onClick={() => onSelect(day.key)}
               className="flex h-19 min-w-0 cursor-pointer flex-col items-center justify-center gap-1 bg-transparent disabled:cursor-default"
             >
-              <span className="text-small text-muted">{day.weekday}</span>
+              <span className="text-small text-muted">{day.weekday}</span>{' '}
+              {/* The space shows nowhere (a flex column drops it) but makes the text "Mon 5",
+                  which the label "Mon 5 Oct, …" contains (WCAG 2.5.3, label in name). */}
               <span
                 className={cn(
                   'flex size-9 items-center justify-center rounded-full text-base',

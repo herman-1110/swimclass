@@ -44,7 +44,7 @@ describe('DayStrip', () => {
     render(<DayStrip days={book} selected="2026-09-29" onSelect={() => {}} />)
     const tuesday = screen.getByRole('button', { name: 'Tue 29 Sep, 4 free start times' })
     expect(tuesday.getAttribute('aria-pressed')).toBe('true')
-    expect(tuesday.textContent).toBe('Tue29')
+    expect(tuesday.textContent).toBe('Tue 29')
     const thursday = screen.getByRole('button', { name: 'Thu 1 Oct, fully booked' })
     expect(thursday.getAttribute('aria-pressed')).toBe('false')
     expect(screen.getByRole('button', { name: 'Mon 28 Sep, 1 free start time' })).toBeTruthy()

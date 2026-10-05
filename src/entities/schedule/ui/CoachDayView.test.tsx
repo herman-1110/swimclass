@@ -54,7 +54,7 @@ describe('CoachDayView', () => {
       'Sunday 4 Oct, 4 lessons',
     ])
     expect(days[5].getAttribute('aria-pressed')).toBe('true')
-    expect(days[5].textContent).toBe('Sat33 lessons')
+    expect(days[5].textContent).toBe('Sat 33 lessons')
     expect(screen.getByRole('heading', { level: 2, name: 'Saturday 3 Oct' })).toBeTruthy()
   })
 
