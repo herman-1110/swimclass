@@ -30,6 +30,12 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
+      # The repo, for supabase/config.toml: the CLI reads the Postgres version there and runs
+      # the matching pg_dump. Nothing from it is installed or run. Same pin as ci.yml.
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+
       # The CLI version in package.json, checked against the checksum GitHub lists for it.
       # `supabase db dump` runs pg_dump in Docker, which GitHub's runners have.
       - name: Install the Supabase CLI and age
