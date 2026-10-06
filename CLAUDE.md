@@ -10,6 +10,7 @@ the schedule, packages and payments. Everything must run on free tiers.
 - `docs/DESIGN.md`: screens, design tokens, copy rules. Approved screens are in `design/`
 - `docs/HANDOFF.md`: where the last session stopped. Read it at the start of every
   session and update it at the end.
+- `docs/PRODUCTION.md`: the live site: setting it up, deploying, backups, keys, limits
 
 Work through `prompts/` in order, one prompt per session unless told otherwise.
 Each prompt has four parts: CONTEXT, DIAGNOSE, TASK, VALIDATION. Do DIAGNOSE before
@@ -89,7 +90,8 @@ Unit tests sit next to the code they test (`time.ts` and `time.test.ts`).
   (`npm run db:types:local` when Supabase runs locally in Docker)
 - `npx supabase db reset` (local) or `npx supabase db push` (linked project)
 - `npx supabase functions deploy <name>`
-- `npx wrangler deploy`: publish `dist/` to Cloudflare (`--dry-run` checks without publishing)
+- `npx wrangler deploy`: publish `dist/` to Cloudflare at swimclass.online (`--dry-run` checks
+  without publishing). Build first: `.env.production.local` holds production's values
 
 The Supabase CLI and Wrangler are pinned dev dependencies, so `npx` runs those versions.
 Dev environment setup (no Docker: the `swimclass-dev` project): `docs/DEV_SETUP.md`.

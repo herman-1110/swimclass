@@ -32,7 +32,7 @@ swimclass/
 ├── .github/workflows/   ci.yml (checks on every push) · backup.yml (weekly database backup)
 ├── apps-script/         Gmail mailer: Code.gs, README.md
 ├── design/              approved screens (reference only, never imported) · screens/ (PNGs)
-├── docs/                PRD, TECH_SPEC, DESIGN, ARCHITECTURE, HANDOFF
+├── docs/                PRD, TECH_SPEC, DESIGN, ARCHITECTURE, DEV_SETUP, PRODUCTION, HANDOFF
 ├── prompts/             build steps 01–12
 ├── public/              served as-is: favicon, icons/, manifest.webmanifest, robots.txt
 ├── src/                 the website (§3)

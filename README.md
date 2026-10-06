@@ -11,6 +11,7 @@ Everything Claude Code needs to build the booking site, in build order.
 | `docs/DESIGN.md` | Design tokens, components, every screen at every width, wording |
 | `docs/ARCHITECTURE.md` | Where every file goes and which part may use which (ESLint checks it) |
 | `docs/DEV_SETUP.md` | Setting up the dev environment (the `swimclass-dev` project, no Docker) |
+| `docs/PRODUCTION.md` | The live site: setting it up, moving students in, deploying, backups, keys, limits |
 | `docs/HANDOFF.md` | Session-to-session notes (Claude Code updates it) |
 | `prompts/01…12` | One build phase each, in CONTEXT → DIAGNOSE → TASK → VALIDATION |
 | `design/` | The approved screens as reference HTML, phone and computer (+ `screens/` for your screenshots) |
@@ -32,7 +33,7 @@ Everything Claude Code needs to build the booking site, in build order.
 | Before prompt 01 | Node 24.15+ (24 LTS recommended; 22.22.2+ or 26+ also work, 25 doesn't), Git, and ideally Docker Desktop (for local Supabase) |
 | Before prompt 02 | Supabase account; if no Docker, a project `swimclass-dev` in Singapore |
 | Before prompt 11 | Google 2-Step Verification on, then an App Password for Gmail |
-| Prompt 12 | Supabase project `swimclass` (prod), Cloudflare account, Apps Script project, GitHub secret for backups |
+| Prompt 12 | Supabase project `swimclass` (prod), Cloudflare Turnstile, an `age` key pair and GitHub secrets for backups: `docs/PRODUCTION.md` §1 |
 | Any time | Your package prices and payment instructions (bank / DuitNow) for Settings |
 | Optional | A domain such as swimclass.online (the site works without one) |
 

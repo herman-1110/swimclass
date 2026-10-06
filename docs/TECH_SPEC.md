@@ -755,12 +755,19 @@ names; `queue_daily_emails` twice for the same date creates one reminder per acc
 - Reason codes → messages in one module (`src/shared/config/messages.ts`), unit tested.
 - Types: `npm run db:types` (`supabase gen types typescript`) into
   `src/shared/api/database.types.ts`.
-- PWA: a web manifest and icons so "Add to Home Screen" works; no offline caching of API data.
+- PWA: `public/manifest.webmanifest` (Swim Class, standalone, theme `#0B5E7A`, white), the
+  icons in `public/icons/` (192, 512, a maskable 512 and the 180 px `apple-touch-icon`) and
+  the iOS meta tags in `index.html`, so "Add to Home Screen" works; Account says how. No
+  service worker, so nothing caches API data.
 
 ## 12. Deployment and operations
+- How to do each step, in order: `docs/PRODUCTION.md`.
 - **Cloudflare**: `wrangler.jsonc`
   ```jsonc
   { "name": "swimclass", "compatibility_date": "2026-09-27",
+    "routes": [{ "pattern": "swimclass.online", "custom_domain": true }],
+    "workers_dev": false,
+    "preview_urls": false,
     "assets": { "directory": "./dist", "not_found_handling": "single-page-application" } }
   ```
   Build with production env vars in `.env.production.local` (it wins over `.env.local`,
@@ -768,8 +775,9 @@ names; `queue_daily_emails` twice for the same date creates one reminder per acc
   keys in `VITE_` values and writes `dist/_headers`: the Content-Security-Policy (only the
   site's own files and the Supabase project), frame-ancestors 'none', HSTS, nosniff,
   Referrer-Policy, Permissions-Policy (`vite.config.ts`). After deploying, check them with
-  `curl -I`. Optional custom domain
-  (for example `swimclass.online`) is added to the Worker in the Cloudflare dashboard.
+  `curl -I`. The site has one address, `https://swimclass.online` (`SITE_URL`, the only origin
+  Auth's links and the functions' CORS allow): `wrangler deploy` attaches the domain to the
+  Worker and leaves the `workers.dev` address off.
 - **Supabase prod**: create in Singapore; mark it as production before anything else
   (`create role swimclass_production nologin;` in its SQL editor: `seed.sql` refuses to run
   where this role exists); `supabase link`; `supabase db push` (never the seed); deploy the
@@ -787,7 +795,11 @@ names; `queue_daily_emails` twice for the same date creates one reminder per acc
   only the encrypted files as an artifact kept 90 days. The repo is public, so anyone
   signed in to GitHub can download artifacts: an unencrypted dump would publish every
   customer's name, email and phone. The private key stays off GitHub, with Herman.
-  `SUPABASE_DB_URL` is a GitHub secret.
+  `SUPABASE_DB_URL` is a GitHub secret: the Session pooler address (GitHub's runners have no
+  IPv6). The job downloads the Supabase CLI version in `package.json` and checks it against
+  the release's checksum. The data dump includes Auth's accounts. A restore rebuilds the
+  schema with the migrations (`schema.sql` leaves out the trigger on `auth.users`), then
+  loads the data (`docs/PRODUCTION.md` §5).
 - **Go-live data**: add each current customer's groups with starting balances (BR-25),
   then enter upcoming lessons with Add booking (`coach_book`): in the past or beyond the
   booking window if needed, Skip travel gap for tight pairs, Outside open hours for times
@@ -811,7 +823,10 @@ names; `queue_daily_emails` twice for the same date creates one reminder per acc
 - Supabase free: 500 MB database, 50,000 monthly active users, 500,000 Edge Function
   calls a month, 2 projects, pauses after a week with no requests (the poller prevents
   this), no automatic backups (hence §12).
+- Auth emails: the rate limit set to 25 an hour (§9), sent through Gmail SMTP.
 - Gmail through Apps Script: 100 recipients a day on a normal Gmail account.
 - Cloudflare: static asset requests are free and unlimited.
-- Apps Script: time-trigger runtime is limited per day; each poll must stay short
-  (claim at most 20 emails per run).
+- Apps Script: time-trigger runtime is limited (90 minutes a day in total); each poll must
+  stay short (claim at most 20 emails per run). URL fetches: 20,000 a day.
+- GitHub Actions: free for a public repo. Scheduled workflows stop after 60 days without a
+  commit (GitHub emails first; Actions → Backup → Enable workflow).
