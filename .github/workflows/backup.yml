@@ -1,0 +1,88 @@
+# Weekly backup of the production database (TECH_SPEC §12; restore: docs/PRODUCTION.md §6).
+# The repo is public, so anyone signed in to GitHub can download its artifacts: the dumps are
+# encrypted with age before they are uploaded, and only the encrypted files leave the job.
+#
+# Two repository secrets (Settings → Secrets and variables → Actions):
+#   SUPABASE_DB_URL       the production project's Session pooler connection string (port
+#                         5432). GitHub's runners have no IPv6, so not the direct
+#                         db.<ref>.supabase.co address.
+#   BACKUP_AGE_RECIPIENT  Herman's age public key (age1…). The private key stays with him.
+name: Backup
+
+on:
+  schedule:
+    # Saturday 18:00 UTC is Sunday 2:00 am in Malaysia. GitHub may start it a little late.
+    # It runs from the default branch (main). GitHub turns schedules off in a public repo
+    # after 60 days with no commits; Actions → Backup → Enable workflow turns it back on.
+    - cron: '0 18 * * 6'
+  # The "Run workflow" button (Actions → Backup), for a backup now or a test.
+  workflow_dispatch:
+
+# The job only reads; its token can't write to the repo.
+permissions:
+  contents: read
+
+concurrency:
+  group: backup
+
+jobs:
+  backup:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      # The CLI version in package.json, checked against the checksum GitHub lists for it.
+      # `supabase db dump` runs pg_dump in Docker, which GitHub's runners have.
+      - name: Install the Supabase CLI and age
+        env:
+          CLI_VERSION: 2.118.0
+          CLI_SHA256: f6089a86fb9d9221c958193a277338daddd6822f706929943812fa32e106c86d
+        run: |
+          set -euo pipefail
+          curl -fsSL -o "$RUNNER_TEMP/supabase.tar.gz" \
+            "https://github.com/supabase/cli/releases/download/v$CLI_VERSION/supabase_linux_amd64.tar.gz"
+          echo "$CLI_SHA256  $RUNNER_TEMP/supabase.tar.gz" | sha256sum --check --strict
+          mkdir -p "$RUNNER_TEMP/bin"
+          tar -xzf "$RUNNER_TEMP/supabase.tar.gz" -C "$RUNNER_TEMP/bin"
+          echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq age
+
+      # The schema, then the data (auth's accounts too: their emails and password hashes).
+      # The plain dumps stay in plain/, which is never uploaded; encrypted/ holds only .age
+      # files. A dump missing the bookings table or the settings row stops the job.
+      - name: Dump and encrypt
+        id: dump
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          BACKUP_AGE_RECIPIENT: ${{ secrets.BACKUP_AGE_RECIPIENT }}
+        run: |
+          set -euo pipefail
+          if [ -z "$SUPABASE_DB_URL" ] || [ -z "$BACKUP_AGE_RECIPIENT" ]; then
+            echo "::error::Set the SUPABASE_DB_URL and BACKUP_AGE_RECIPIENT secrets first."
+            exit 1
+          fi
+          umask 077
+          plain="$RUNNER_TEMP/plain"
+          encrypted="$RUNNER_TEMP/encrypted"
+          mkdir -p "$plain" "$encrypted"
+          supabase db dump --db-url "$SUPABASE_DB_URL" --file "$plain/schema.sql"
+          supabase db dump --db-url "$SUPABASE_DB_URL" --data-only --file "$plain/data.sql"
+          grep -q '"public"."bookings"' "$plain/schema.sql"
+          grep -q 'INSERT INTO "public"."settings"' "$plain/data.sql"
+          stamp=$(TZ=Asia/Kuala_Lumpur date +%Y-%m-%d)
+          for part in schema data; do
+            age --encrypt --recipient "$BACKUP_AGE_RECIPIENT" \
+              --output "$encrypted/swimclass-$stamp-$part.sql.age" "$plain/$part.sql"
+          done
+          rm -rf "$plain"
+          ls -l "$encrypted"
+          echo "stamp=$stamp" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: swimclass-backup-${{ steps.dump.outputs.stamp }}-${{ github.run_number }}
+          path: ${{ runner.temp }}/encrypted/*.age
+          if-no-files-found: error
+          retention-days: 90
+          # Encrypted files don't compress.
+          compression-level: 0
