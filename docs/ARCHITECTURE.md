@@ -285,7 +285,8 @@ supabase/
 │   │                          clients.ts (secret-key, publishable-key and caller clients)
 │   ├── admin-accounts/index.ts
 │   ├── login/index.ts
-│   └── mail-queue/index.ts
+│   └── mail-queue/            index.ts · mail.ts (plain helpers, Vitest-tested)
+├── templates/                 the Auth emails (confirm, invite, reset), pasted into the dashboard
 ├── scripts/                   SQL run by hand: shift-seed.sql · make-coach.sql (prompt 05)
 ├── seed.sql                   sample data, dev project only
 └── README.md                  database map (below)
@@ -322,8 +323,8 @@ possible later step; for now the missing grants do that job.
 | every signed-in account | `get_public_settings` |
 | approved customers (their own groups) and the coach | `week_slots`, `week_busy`, `cancel_booking` |
 | approved customers | `book_lesson` |
-| the coach only (checked inside) | `coach_week`, `coach_slot_check`, `coach_book`, `excuse_booking`, `record_payment`, `add_free_lesson`, `create_group`, `update_group`, `set_group_active`, `approve_account`, `set_open_hours`, `add_exception`, `remove_exception`, `update_settings`, `post_announcement`, `remove_announcement`, `pending_accounts`; later `email_log` (prompt 11) |
-| the service role (Edge Functions) | `check_login_attempt`, `record_login_success` (login); `claim_outbox`, `ack_outbox` (mail-queue, prompt 11) |
+| the coach only (checked inside) | `coach_week`, `coach_slot_check`, `coach_book`, `excuse_booking`, `record_payment`, `add_free_lesson`, `create_group`, `update_group`, `set_group_active`, `approve_account`, `set_open_hours`, `add_exception`, `remove_exception`, `update_settings`, `post_announcement`, `remove_announcement`, `pending_accounts`, `email_log` |
+| the service role (Edge Functions) | `check_login_attempt`, `record_login_success` (login); `queue_daily_emails`, `claim_outbox`, `ack_outbox` (mail-queue) |
 
 ### 4.3 Migrations
 - Every change is a new file in `supabase/migrations/`. Never edit a migration that has
@@ -357,9 +358,7 @@ The files so far:
 | `20261004100000_hardening` | audit | customer change limit, coach writes only through functions, table caps |
 | `20261004120000_add_login_limiter` | 05 | `login_attempts.ip`, `check_login_attempt`, `record_login_success` |
 | `20261005100000_pending_accounts` | 09 | `pending_accounts` |
-
-Still to come: the mail queue: reminders, digest, `claim_outbox`, `ack_outbox`,
-`email_log` (prompt 11).
+| `20261006100000_mail_queue` | 11 | reminders, digest, `queue_daily_emails`, `claim_outbox`, `ack_outbox`, `email_log` |
 
 ### 4.4 SQL style
 - snake_case everywhere; tables plural (`bookings`); functions start with a verb
@@ -401,7 +400,7 @@ the CLI to it.
 - `apps-script/`: `Code.gs` (pasted into Google Apps Script by hand) and `README.md` with
   the setup steps. Same rule as Edge Functions: it only fetches, sends and acknowledges.
 - `tests/db/`: one file per area (`admin`, `availability`, `balance`, `booking`,
-  `changes`, `constraints`, `groups`, `rls`, `shift-seed`; `emails` comes in prompt 11),
+  `changes`, `constraints`, `emails`, `groups`, `login`, `rls`, `shift-seed`),
   plus `helpers.ts` (connect, act as a user, pin the clock, roll back), `fixture.ts`
   (the clock and the fixed ids `seed.sql` uses, so tests don't repeat magic values) and
   `supabase-root-2021-ca.crt` (checks the database's TLS certificate).
@@ -414,7 +413,8 @@ the CLI to it.
   same folder; component tests likewise (`TimeChipGrid.test.tsx`).
 - **Database tests** live in `tests/db/` and run against the dev project inside a
   transaction that is rolled back, so they leave nothing behind.
-- Two Vitest projects: `unit` (`src/**`, jsdom), run by `npm run test`; and `db`
+- Two Vitest projects: `unit` (`src/**`, jsdom, plus the Edge Functions' plain helpers in
+  `supabase/functions/**/*.test.ts`), run by `npm run test`; and `db`
   (`tests/db/**`, Node), run by `npm run test:db`, which needs `DATABASE_URL`. The `db`
   files run one at a time, since they share the dev database, with 30 s per test.
 - Unit tests run in demo mode, so page and component tests call the real database

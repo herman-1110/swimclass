@@ -124,20 +124,27 @@ After the CLI is logged in and linked (§2, steps 4 and 5):
    ```sh
    npx supabase secrets set SITE_URL=http://localhost:5173
    ```
-2. Deploy both functions (Supabase bundles them, so no Docker is needed; `config.toml`
-   turns the gateway's JWT check off for both, as they check the caller themselves):
+2. Deploy the functions (Supabase bundles them, so no Docker is needed; `config.toml`
+   turns the gateway's JWT check off for all three, as they check the caller themselves):
    ```sh
    npx supabase functions deploy login --use-api
    npx supabase functions deploy admin-accounts --use-api
+   npx supabase functions deploy mail-queue --use-api
    ```
+   `mail-queue` (prompt 11) also needs the token the Apps Script sends: put
+   `MAIL_TOKEN=<64 random hex characters>` in a file outside the repo and run
+   `npx supabase secrets set --env-file <that file>`, so the token never appears in a
+   command line. Without it every call answers 500.
    Deploy again after changing anything in `supabase/functions/`.
 3. In the dashboard, **Authentication**:
    - **Sign In / Providers → Email**: on, with **Confirm email** on.
    - **URL Configuration**: Site URL `http://localhost:5173`; Redirect URLs
      `http://localhost:5173/**` (sign-up confirmations open `/login`, password resets and
      invitations `/reset-password`).
-   - Until Gmail SMTP is set up (prompt 11), Auth emails only the project's team members,
-     so sign up and reset with your own address, or use the seeded accounts.
+   - Without custom SMTP, Auth emails only the project's team members, a couple an hour,
+     so sign up and reset with your own address, or use the seeded accounts. Gmail SMTP
+     is connected to dev only for prompt 11's end-to-end test (HANDOFF v0.19), after the
+     seeded accounts' password is changed, and disconnected afterwards.
 4. To use the dev project in the browser instead of demo mode, add `VITE_DEMO=false` to
    `.env.local` and restart `npm run dev`. Seeded accounts log in with `swim-test-2026`
    (on dev that password is public: change it before Gmail is connected to dev, TECH_SPEC §9).

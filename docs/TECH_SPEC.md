@@ -450,11 +450,24 @@ Built in prompt 04 (`…_settings.sql`, tested in `tests/db/admin.test.ts`); pro
   daily job that is due and hasn't run for that date: the reminders once the MYT time is
   past `reminder_time` (BR-32: one per account, dedupe `reminder:<account>:<date>`;
   records `daily_jobs('reminder', date)`), and the coach digest once it is past
-  `digest_time` (BR-33: `digest:<date>`; records `daily_jobs('digest', date)`). The
-  function decides what is due, so running it again changes nothing.
-- `claim_outbox(p_limit int) returns setof email_outbox`: marks unsent rows whose
-  claim is empty or older than 15 minutes, oldest first.
-- `ack_outbox(p_id, p_ok, p_error)`.
+  `digest_time` (BR-33: `digest:<date>`; records `daily_jobs('digest', date)`, also while
+  `coach_email` is '' and nothing is sent). Nothing once `p_for_date` has begun. The
+  function decides what is due, so running it again changes nothing. Built in prompt 11
+  (`…_mail_queue.sql`) with the templates `email_reminder` and `email_digest`. The digest
+  (Herman, 6 Oct 2026) lists tomorrow's lessons with the travel gap to the next one, then
+  among those groups the unpaid ones ("Hana: collect RM 240", whole packages at the group's
+  price, or "collect payment" without a price) and those on their last paid lesson, then
+  the sign-ups waiting (count and first ten usernames); on a day with no lessons it still
+  comes: "Tomorrow: no lessons".
+- `claim_outbox(p_limit int) returns setof email_outbox`: up to `p_limit` (at most 50)
+  unsent rows with no claim and fewer than 5 failed tries, reminders, digests and late
+  alerts first, then oldest first; marks them claimed. A claim older than 15 minutes with
+  no ack is released first and counts as a failed try (`last_error` says the mailer
+  didn't answer). Deletes rows sent, or given up on, more than 90 days ago.
+- `ack_outbox(p_id, p_ok, p_error)`: only for a row still claimed and unsent. Sent sets
+  `sent_at`; a failure adds a try, keeps the first 500 characters of the error and
+  releases the claim, so the next poll tries again. `attempts` counts failed tries, so the
+  Email log shows "Waiting" until one fails.
 - `email_log(p_limit int default 50)`: coach only (granted to `authenticated`, checks
   `is_coach()`), for the Email log in Settings (prompt 11): the latest outbox rows'
   `created_at`, `to_email`, `kind`, `sent_at`, `attempts` and `last_error`, newest
@@ -612,6 +625,8 @@ function install() {           // run once by hand
   ScriptApp.newTrigger('poll').timeBased().everyMinutes(5).create();
 }
 ```
+(The repo's `Code.gs` is this, formatted by Prettier, plus `uninstall()` to stop it and
+errors cut to 500 characters.)
 Reminders therefore go out within about 5 minutes after `reminder_time`, and the digest
 after `digest_time`.
 
@@ -762,7 +777,9 @@ names; `queue_daily_emails` twice for the same date creates one reminder per acc
   migration creates it) with the coach's email; add the open hours; bootstrap the coach;
   link the CLI back to the dev project.
 - **Apps Script**: new project in the coach's Google account, paste `apps-script/Code.gs`,
-  set script properties, run `install()` once and approve the permissions.
+  set script properties, run `install()` once and approve the permissions
+  (`apps-script/README.md`). Then Auth's Gmail SMTP, rate limit and templates
+  (`supabase/templates/`): HANDOFF v0.19 has the steps.
 - **Backups**: `.github/workflows/backup.yml` weekly (`cron: '0 18 * * 6'`, Sunday
   2 am MYT) dumps the schema and, separately, the data (`supabase db dump --db-url
   "$SUPABASE_DB_URL"`, then again with `--data-only`; the default is the schema only),
