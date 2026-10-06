@@ -8,8 +8,8 @@ Keep entries short; link to files instead of pasting code.
 `frontend-first` has this entry on top, not pushed. Prompt 10 found every TASK item already
 built: the page by the frontend waves (v0.6–v0.11), `update_settings` and `set_open_hours` by
 prompt 04. No code changed. Dev holds the seed as loaded (Herman ran `seedshift.mjs forward`,
-then `restore`; the fingerprint matches; `npm run test:db` 265 pass). Typecheck, lint and
-format pass. The scripts and results are in `frontend-plan/review/prompt10/` (outside the
+then `restore`; the fingerprint matches; `npm run test:db` 265 pass). Typecheck, lint, format
+and the full unit suite (1,846, demo mode) pass. The scripts and results are in `frontend-plan/review/prompt10/` (outside the
 repo; its `NOTES.md` lists them).
 - DIAGNOSE 1 (`diagnose.mjs`, on dev, refusals only): every PRD §7 setting is a `settings`
   column (the weekly hours are `availability_rules`; `business_name`, `coach_email` and
@@ -61,8 +61,8 @@ repo; its `NOTES.md` lists them).
 1. Herman pushes `frontend-first` (`git push origin frontend-first`); once CI is green,
    `git fetch . frontend-first:main` and `git push origin main`.
 2. Prompt 11 (emails through Gmail). Nothing reads `reminder_time` or `digest_time` yet: the
-   prompt builds the reminders and digest that use them (BR-32, BR-33). Before `mail-queue`
-   runs on dev, check `email_outbox` for unsent test rows.
+   prompt builds the reminders and digest that use them (BR-32, BR-33). Dev's `email_outbox` has no
+   unsent rows (6 Oct: `restore-dry` found none to delete).
 **Decisions**
 - No `db reset --linked` after the live run: it changed only the travel gap and Saturday's
   hours, each put back through the page, and checked the `settings` row and
