@@ -3,6 +3,76 @@
 Update this file at the end of every Claude Code session. Newest entry on top.
 Keep entries short; link to files instead of pasting code.
 
+## v0.20 · 6 Oct 2026 · Prompt 12, part 1: the code for going live
+**State**: `origin/main` = `origin/frontend-first` = 80c18ee (v0.19; Herman pushed it). Local
+`frontend-first` has the five commits below and this entry, not pushed. There is no production
+project yet: everything left in prompt 12 starts with Herman's steps in `docs/PRODUCTION.md`
+§1.1. Scripts and results are in `frontend-plan/review/prompt12/` (outside the repo; its
+`NOTES.md` lists them, with the §13 security checklist item by item).
+- DIAGNOSE 1: unit 1,852 passed (demo mode; then the Account tests again, 18); `npm run
+  test:db` 286 on dev; typecheck, lint, format and the production build pass; no secret key in
+  `dist/` or in any of the 222 commits.
+- DIAGNOSE 2 (TECH_SPEC §13): all ten items pass or are built, except what production itself
+  switches on: CAPTCHA (PRODUCTION.md 1.5), the Auth email limit (1.3), the live headers
+  (1.4) and the first backup run (1.7). `npm audit` had one build-tool advisory, fixed.
+- DIAGNOSE 3: the domain is `swimclass.online` (bought, v0.2); its nameservers are
+  Cloudflare's.
+- PWA, in a browser: the Account page's Home screen section at 390 and 1280 px, also for the
+  coach (`account-hint.mjs`, 10 checks); the production build under `wrangler dev` with its
+  real headers: Chrome reads the manifest with no errors and finds nothing stopping installation,
+  the icons are PNGs, nothing logged on /login, a deep link and an unknown asset path return
+  the app (`pwa-check.mjs`, 15 checks). `wrangler deploy --dry-run` accepts the config.
+**Done**
+- e6a46db: `npm audit fix` (source-map-js 1.2.2).
+- b61e7dd: `public/manifest.webmanifest`, `public/icons/` (192, 512, maskable 512,
+  apple-touch-icon 180, drawn by `frontend-plan/tools/icons.mjs`), the iOS tags in
+  `index.html`, `robots.txt`, and Account's "Home screen" section
+  (`pages/account/ui/HomeScreenHint.tsx` + test).
+- b589c22: `.github/workflows/backup.yml`.
+- bacfe20: `wrangler.jsonc` attaches `swimclass.online` and turns `workers.dev` off.
+- 31211da: `docs/PRODUCTION.md` (setup checklist, moving students in, smoke test, deploying,
+  watching, backups and restore, rotating keys, limits); TECH_SPEC §11, §12, §14; ARCHITECTURE,
+  CLAUDE.md, README.
+- `frontend-plan/review/prompt12/prod-functions.env`: production's `MAIL_TOKEN` and
+  `SITE_URL`, for PRODUCTION.md 1.2 and 1.6.
+**Next**
+1. Herman pushes: `git push origin frontend-first`; once CI is green,
+   `git fetch . frontend-first:main` and `git push origin main` (one command per line). The
+   backup workflow is then on `main`; until its secrets are set (1.7), its Sunday run fails
+   with "Set the SUPABASE_DB_URL and BACKUP_AGE_RECIPIENT secrets first."
+2. Herman: PRODUCTION.md §1.1, then give Claude `<prod-ref>`, the publishable key and the
+   Turnstile site key (all three are public).
+3. PRODUCTION.md 1.2 to 1.8 in order, Claude doing the Claude steps; then §2 (moving the
+   students in); then prompt 12's VALIDATION (first load and Lighthouse on the live site, the
+   backup run, the smoke test, Supabase usage) and HANDOFF v1.0.
+**Decisions**
+- One address, `https://swimclass.online`: it is `SITE_URL`, the only origin Auth's links and
+  the functions' CORS allow. `wrangler deploy` attaches it (`routes` in `wrangler.jsonc`)
+  instead of a dashboard step; `workers.dev` and preview URLs are off. `www` isn't attached
+  (optional later: a redirect rule to the bare domain).
+- Backups: the job downloads the Supabase CLI release that matches `package.json` and checks
+  its checksum, instead of `npm ci`, so no package install script runs in the job that holds
+  the database address. `age` comes from Ubuntu's packages. The dumps are plain only in the
+  runner's temp folder; only `.age` files are uploaded.
+- Restore note: download the artifact, `age --decrypt` with the private key, then into a new
+  project: migrations (`db push`), `delete from public.settings`, and `psql ... --file
+  data.sql` (PRODUCTION.md §5). Not with `schema.sql`: Supabase's schema dump leaves out the
+  `auth` schema, and with it the sign-up trigger on `auth.users`. The data dump includes
+  Auth's accounts, so customers keep their passwords.
+- PWA: no service worker (nothing to cache, and no stale API data); `theme-color` is the
+  accent, as in the manifest; the hint hides when the site is open from the home screen.
+- The production `MAIL_TOKEN` was made by Claude into a file outside the repo and never
+  printed.
+**Open issues**
+- The restore hasn't been rehearsed: the free plan has two projects (PRODUCTION.md §5.3).
+- First load and Lighthouse on signed-in production pages need a signed-in browser, and with
+  CAPTCHA on a script can't log in. Plan: Chrome started by hand with its own profile and a
+  debugging port, Herman logs in once as the smoke-test customer, and the scripts attach.
+- From v0.19, still open: an ack after its claim was released can send an email twice; the
+  coach has no "send reset" button.
+**Manual steps waiting on Herman**
+- Next 1 and 2. Then PRODUCTION.md §1 in order.
+
 ## v0.19 · 6 Oct 2026 · Prompt 11: emails through Gmail
 **State**: `origin/main` = `origin/frontend-first` = dfb35c5 (prompt 11's code and docs; Herman
 pushed it, CI green on both). Local `frontend-first` has this entry on top, not pushed. Dev is
