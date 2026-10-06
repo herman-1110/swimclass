@@ -4,8 +4,9 @@ Update this file at the end of every Claude Code session. Newest entry on top.
 Keep entries short; link to files instead of pasting code.
 
 ## v0.21 · 6 Oct 2026 · Design changes before go-live: wide laptops and dropdowns
-**State**: as v0.20 (nothing pushed since 80c18ee; Herman's push now carries v0.20 and this),
-plus Herman's three design requests, built and checked in his 5173 (demo mode). Scripts,
+**State**: `origin/main` = `origin/frontend-first` = bd33e60 (v0.20; Herman pushed it, so the
+backup workflow is on `main`). Local `frontend-first` adds this entry's six commits, not
+pushed: Herman's three design requests, built and checked in his 5173 (demo mode). Scripts,
 screenshots and notes: `frontend-plan/review/design-1/` (outside the repo; `NOTES.md`).
 Typecheck, lint, format, the production build and the full unit suite (1,857, demo mode) pass.
 **Done**
@@ -38,7 +39,8 @@ Typecheck, lint, format, the production build and the full unit suite (1,857, de
   not asked for.
 - With the styled list, an arrow key on a closed select opens the list instead of changing
   the value straight away (Chrome's behaviour for it).
-**Next**: as v0.20 Next 1–3 (push both; PRODUCTION.md §1.1; send Claude the three values).
+**Next**: Herman pushes these six commits (as in v0.20 Next 1); then v0.20 Next 2–3
+(PRODUCTION.md §1.1; send Claude the three values).
 
 ## v0.20 · 6 Oct 2026 · Prompt 12, part 1: the code for going live
 **State**: `origin/main` = `origin/frontend-first` = 80c18ee (v0.19; Herman pushed it). Local
