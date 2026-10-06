@@ -3,6 +3,86 @@
 Update this file at the end of every Claude Code session. Newest entry on top.
 Keep entries short; link to files instead of pasting code.
 
+## v0.18 · 6 Oct 2026 · Prompt 10: coach Settings validated on dev and in demo mode
+**State**: `origin/main` = `origin/frontend-first` = 58211a4 (v0.17; Herman pushed it). Local
+`frontend-first` has this entry on top, not pushed. Prompt 10 found every TASK item already
+built: the page by the frontend waves (v0.6–v0.11), `update_settings` and `set_open_hours` by
+prompt 04. No code changed. Dev holds the seed as loaded (Herman ran `seedshift.mjs forward`,
+then `restore`; the fingerprint matches; `npm run test:db` 265 pass). Typecheck, lint and
+format pass. The scripts and results are in `frontend-plan/review/prompt10/` (outside the
+repo; its `NOTES.md` lists them).
+- DIAGNOSE 1 (`diagnose.mjs`, on dev, refusals only): every PRD §7 setting is a `settings`
+  column (the weekly hours are `availability_rules`; `business_name`, `coach_email` and
+  `payment_instructions` are extra). meiling's `update_settings` and `set_open_hours` →
+  `not_coach`; herman's 27 bad inputs are refused by the database with the documented codes
+  (gap 500, −1, "60" and 1.5; step 45; lengths [90] and []; 4 students; cutoff 73; window 0;
+  21 lessons; 3 unpaid; a negative price; "24:00" and "25:00"; 2001 characters; a bad email;
+  a null switch; `id`, `updated_at` and unknown keys → `unknown_setting {keys}`; end before or
+  at the start → `invalid_range {index}`; overlapping Saturday ranges → `overlapping_rules
+  {weekday: 6}`; weekday 8 → `invalid_rules {index}`). The row and the hours were identical
+  afterwards, `updated_at` too.
+- DIAGNOSE 2 (`diagnose2.md`): no hard-coded business numbers in `src/` or the SQL. Every
+  setting is read from `usePublicSettings` / `useCoachSettings`, the database rows or, in SQL,
+  the `settings` row; no fallback is a number. What looks like one isn't a setting: the week
+  grid's 7 am–10 pm frame, the dialog's 5:00 am–11:00 pm and 15-minute grid, option lists
+  that repeat the schema's checks, `interval '2 hours'` (the longest lesson), BR-35's 24 hours,
+  BR-16's and the login limiter's abuse limits.
+- VALIDATION in demo mode (`validate.mjs`, 68 checks, ALL OK; Lighthouse accessibility 100 at
+  390 and 1280) and live on dev with the sample week moved 14 days (18 read-only checks, then
+  39, ALL OK):
+  - Travel gap 30 → "Settings saved"; meiling's Book on the shifted Tuesday, 1 hour: 7:00 pm
+    becomes free (7:00–9:00 pm instead of 7:30–9:00 pm); back to 60, as before.
+  - Saturday from 8:00 am (the Edit dialog, then Save) → Save sends the whole week (all nine
+    ranges stored); Book's shifted Saturday loses the 7:00 am start and starts at 8:00 am;
+    back to 7:00 am, as before.
+  - A gap of 500 passes the form (it only checks digits) and the database refuses it: "Travel
+    gap has a value that isn’t allowed. Check it and save again." under the field and near
+    Save, focus on the field, nothing saved. `set_open_hours` with the end before the start →
+    `invalid_range`. meiling: `/coach/settings` sends her to Book, both functions →
+    `not_coach`.
+  - The dialog refuses an end before the start, overlapping ranges and a range left on
+    "Choose", and offers 5:00 am–11:00 pm only; a range stored outside those hours from
+    elsewhere shows as stored and "Set Monday hours" says "Open hours must be between 5:00 am
+    and 11:00 pm.". Save is off until a value differs ("60 " is 60); the change notes show
+    while a value differs; leaving with changes asks "Leave without saving?".
+  - Demo only: prices ("260.5" → 26050, shown "260.50", cleared → null), payment instructions
+    (trimmed; meiling sees them on My classes), switches, times ("7:30 PM" → 19:30), lengths;
+    the form's own words for "1.5" and "24:00"; the database's for a bad email; and the open
+    hours plus gap 500 in one Save: "Your open hours were saved, but your other changes
+    weren’t. Travel gap has a value…", the hours stored, the gap still to save.
+  - The page matches `design/AdminSettings.dc.html` at 1440 px and `AdminSettingsPhone.dc.html`
+    at 390 px (known differences in NOTES: Save off until a change, the chip format, "Not set"
+    for [PRICE], expiry off, the booking-confirmations words). Two columns from 1280 px, one
+    up to 760 px below, the Save bar above the tab bar under 768 px; no sideways scrolling at
+    360–1920 px.
+**Done**
+- Nothing in the repo but this entry: prompt 10's TASK was already built and passes.
+**Next**
+1. Herman pushes `frontend-first` (`git push origin frontend-first`); once CI is green,
+   `git fetch . frontend-first:main` and `git push origin main`.
+2. Prompt 11 (emails through Gmail). Nothing reads `reminder_time` or `digest_time` yet: the
+   prompt builds the reminders and digest that use them (BR-32, BR-33). Before `mail-queue`
+   runs on dev, check `email_outbox` for unsent test rows.
+**Decisions**
+- No `db reset --linked` after the live run: it changed only the travel gap and Saturday's
+  hours, each put back through the page, and checked the `settings` row and
+  `availability_rules` before and after over a read-only connection. The fingerprint leaves
+  out `updated_at` and the rules' ids, so `restore` alone brought the seed back. Later live
+  checks of settings can do the same.
+- Live checks never click a time on Book (BR-35 would alert Herman for a lesson within 24
+  hours); reading the free times is enough.
+**Open issues**
+- "Lesson reminder to customers · Sent the evening before" (the drawing's words) reads oddly
+  if Herman picks a morning `reminder_time`; the reminder is still sent the day before (BR-32).
+- From v0.17: Supabase's own mailer allows a couple of emails an hour until prompt 11's Gmail
+  SMTP; `send_password_reset` with an `sb_secret_` key and an invite to a non-team address (500
+  `unknown`, v0.13); demo-mode dates use the real date, not `DEMO_NOW`; `dist/` is wired to
+  `swimclass-dev`: never deploy it.
+**Manual steps waiting on Herman**
+- Next 1.
+- As in v0.13: dev's Auth URL settings (DEV_SETUP §5); before prompt 12, the coach on
+  production with `make-coach.sql`, Turnstile and the `age` key pair.
+
 ## v0.17 · 5 Oct 2026 · Prompt 09: Students & payments, Add students, approvals
 **State**: `origin/main` = `origin/frontend-first` = cb9f0d4 (v0.16; Herman pushed it). Local
 `frontend-first` has prompt 09's commits and this entry on top, not pushed. On `swimclass-dev`
