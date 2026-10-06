@@ -3,6 +3,140 @@
 Update this file at the end of every Claude Code session. Newest entry on top.
 Keep entries short; link to files instead of pasting code.
 
+## v0.19 · 6 Oct 2026 · Prompt 11: emails through Gmail
+**State**: `origin/main` = `origin/frontend-first` = dfb35c5 (prompt 11's code and docs; Herman
+pushed it, CI green on both). Local `frontend-first` has this entry on top, not pushed. Dev is
+back to the seed: after the end-to-end test Herman uninstalled the Apps Script trigger, turned
+dev's custom SMTP off, ran `db reset --linked` (the fingerprint matches, the outbox and
+`daily_jobs` are empty, the seeded password is swim-test-2026 again), removed
+`VITE_DEMO=false` and deleted the dev App Password. On `swimclass-dev`
+Herman ran `npx supabase db push` (the new migration), `secrets set --env-file` (`MAIL_TOKEN`)
+and `functions deploy mail-queue --use-api`: Claude Code's safety check refused the push
+("Modify Shared Resources"). Typecheck, lint, format, the full unit suite (1,852, demo mode)
+and `npm run test:db` (286 on dev: 265 + 21 in `emails.test.ts`) pass. The scripts and
+results are in `frontend-plan/review/prompt11/` (outside the repo; its `NOTES.md` lists them).
+- DIAGNOSE 1: the seed queues no email; the tests' rows (all rolled back) have the keys
+  `booked:<series>`, `late:<booking>:booked|cancelled`, `cancelled:<booking>` and
+  `broadcast:<announcement>:<account>`. Dev's outbox and `daily_jobs` were empty.
+- DIAGNOSE 2: functions deploy and secrets work on dev (login, admin-accounts, `SITE_URL`);
+  Herman runs them.
+- DIAGNOSE 3: Herman has 2-Step Verification on; the site sends from `hlyy1011@gmail.com`.
+- VALIDATION:
+  - `tests/db/emails.test.ts`: at Fri 2 Oct 20:05 MYT, Sat 3 Oct's reminders for meiling
+    (Aiman & Sofia 9:00 am, "Free to cancel or reschedule until 3:00 am, Sat 3 Oct."),
+    farah and zulaikha and one digest "Tomorrow: 3 lessons, first at 9:00 am" with the
+    travel gaps and Hana unpaid; again → nothing; not before 20:00 or once the day began;
+    `digest_time` 21:00 → the digest only then; `coach_email` '' → no digest, job recorded;
+    Hana paid → not unpaid; Wei Jie "collect RM 240" with a price set and Kai's 30-minute gap
+    "(less than your usual 1 hour)"; Sofia's last paid lesson on Sun 4 Oct; a sign-up waiting
+    by username, not the name typed; "Tomorrow: no lessons"; a customer's two lessons in one
+    email, and "It starts in less than 24 hours, so it can't be cancelled.". claim/ack:
+    priority order, cap 50, fresh claims not handed out, re-claim after 15 minutes as a failed
+    try, 5 tries, 500 characters, 90-day deletion, service role only; `email_log` for herman,
+    `not_coach` for meiling, no grant for anon. The tests clear Sat 3 Oct's real jobs and
+    emails inside their own transaction.
+  - `supabase/functions/mail-queue/mail.test.ts` (unit): both placeholders in an HTML link are
+    replaced, the subject too, `{ {` left alone; tomorrow in Malaysia; the token check.
+  - Live on dev (`live-mailqueue.mjs`, 23 checks, ALL OK): no token or a wrong one → 401
+    `unauthorized`; GET → 405; bad bodies → 400; meiling's booking → claim returns the
+    confirmation with `http://localhost:5173/my-classes` twice in the link and no
+    `{{site_url}}`, marked claimed; claim again → nothing; ack → sent; ack again → 0; her
+    cancellation claimed and not acked → after 15.4 minutes handed out again with attempts 1
+    and "The mailer took it but didn't say whether it was sent."; ack → sent.
+  - End to end on dev, after `db reset --linked` and `devpasswords.mjs` (the seeded accounts'
+    password changed: none left on swim-test-2026), Gmail SMTP, the three templates and the
+    Apps Script set up by Herman: Coach email → `hlyy1011@gmail.com`; Add students' invite for
+    `p11.test` (`hlyy1011+p11@gmail.com`) arrived through Gmail SMTP and was used at 3:10 pm;
+    a second click said expired, so the coach's `send_password_reset` sent "Reset your
+    password" through Gmail, and Herman set the password with it. As p11.test he booked Tue
+    6 Oct 7:30 pm (inside 24 hours) and Wed 7 Oct 6:00 pm: the late-change alert and both
+    confirmations came from his Gmail (claimed and sent at 3:29 pm by a hand-run `poll`; the
+    late alert first; the timer hadn't fired yet when Herman uninstalled it to look). Settings
+    → Email log as herman, live: the three rows "Sent 3:29 pm" at 1440 and 390 px
+    (`live-emaillog-*.png`), no sideways scrolling, no errors. With the trigger installed
+    again, the coach cancelled the 7:30 pm lesson at 3:44 pm ("Testing the mailer"): the
+    timer sent the cancellation at 3:48 pm on its own. At 8:03 pm the timer's poll queued
+    Wed 7 Oct's jobs once each (`daily_jobs` reminder and digest at 20:03:16) and sent the
+    reminder "Swim lesson tomorrow, Wed 7 Oct" (6:00–7:00 pm for Test Swimmer at Palm Court,
+    "Free to cancel or reschedule until 12:00 pm, Wed 7 Oct.") to `+p11` and the digest
+    "Tomorrow: 1 lesson at 6:00 pm" (with "Test Swimmer: collect payment (no 1-to-1 price in
+    Settings)") to Herman; the polls in the next 40 minutes added nothing. Herman received
+    every email.
+  - Not exercised: `MailApp.getRemainingDailyQuota()` at 0. `poll` returns before claiming
+    anything when it is 0 or less (read in `Code.gs`), so the rows stay queued.
+**Done**
+- 73567dd, migration `…20261006100000_mail_queue` (TECH_SPEC §5.5): `email_reminder`,
+  `email_digest`, `queue_daily_emails`, `claim_outbox`, `ack_outbox`, `email_log`,
+  `ringgit_text`, `duration_text`, an index on unsent emails; `tests/db/emails.test.ts`, the
+  grant list in `rls.test.ts`, the database map.
+- f390df3: Edge Function `mail-queue` (`index.ts`, `mail.ts` + test; the unit project now also
+  runs `supabase/functions/**/*.test.ts`); `config.toml` `[functions.mail-queue]` verify_jwt
+  off and the local Auth templates; `supabase/templates/` (confirm, invite, reset).
+- 97e0551: `apps-script/Code.gs` (TECH_SPEC §8 plus `uninstall()`), `apps-script/README.md`.
+- 0b08841: Settings shows the Email log (`EMAIL_LOG_AVAILABLE` gone, `database.types.ts`
+  regenerated from dev).
+- dfb35c5: TECH_SPEC §5.5 and §12, ARCHITECTURE, DEV_SETUP §5.
+**Next**
+1. Herman pushes this entry: `git push origin frontend-first`; once CI is green,
+   `git fetch . frontend-first:main` and `git push origin main` (in PowerShell 5.1 one
+   command per line: it has no `&&`).
+2. Prompt 12 (deploy and go live), with the production email steps below.
+**Decisions**
+- The digest (Herman, 6 Oct 2026): unpaid and last-lesson lists cover only tomorrow's groups
+  (the full list stays on Needs attention); it comes on days with no lessons too ("Tomorrow:
+  no lessons"). What to collect is whole packages at the group's price ("collect payment"
+  while the price isn't set). Waiting sign-ups: the count and the first ten usernames.
+- `attempts` counts failed tries (a failed ack, or a claim with no answer for 15 minutes), so
+  the Email log's "Waiting" / "Not sent: …" stay right as built. A job runs only from its time
+  on the evening before until the day begins; the digest job is recorded even while
+  `coach_email` is ''.
+- `mail-queue` has no CORS and its own replies; the token is compared through SHA-256 digests.
+  A failure of `queue_daily_emails` is logged and the claim still goes ahead.
+- `MAIL_TOKEN` is set from a file (`secrets set --env-file`), so it never appears in a command.
+- The Auth templates live in `supabase/templates/` (the local stack reads them through
+  `config.toml`); the hosted projects get them pasted, with "Swim Class" replaced.
+**Open issues**
+- A username may contain dots (`bit.ly` is valid), and Gmail turns that into a link in the
+  digest's waiting list. Low risk (the coach's own email); not changed.
+- If an ack arrives after its claim was released (15 minutes), that email can go out twice.
+- An invitation link works once; a customer whose link was used or expired can use Forgot
+  password with their address (works for invited accounts; checked on dev). The coach has
+  no "send reset" button in the app (`send_password_reset` is API only).
+- `coach_email` must be set in production Settings, or there is no digest and no late alert.
+- A new Apps Script timer first fires at a random moment within its interval: after `install`,
+  allow up to 5 minutes (more the first time) before deciding it doesn't run; Executions
+  shows the Time-Driven runs.
+- Dev has no Gmail any more: Auth's built-in mailer again (team members only, a couple an
+  hour). Connecting Gmail to dev again needs the seeded password changed first
+  (`frontend-plan/review/prompt11/devpasswords.mjs`) and the disconnect afterwards.
+**Manual steps waiting on Herman**
+- Next 1.
+- Production email (prompt 12), in this order:
+  1. Google, signed in as `hlyy1011@gmail.com`: https://myaccount.google.com/apppasswords →
+     App name `Supabase swimclass prod` → Create; copy the 16 letters (no spaces), once.
+  2. Supabase prod → Authentication → Emails → SMTP Settings → Enable custom SMTP: sender
+     email `hlyy1011@gmail.com`, sender name = the business name, host `smtp.gmail.com`, port
+     `587`, minimum interval unchanged, username `hlyy1011@gmail.com`, password = the App
+     Password → Save.
+  3. Authentication → Rate Limits → Rate limit for sending emails: 25 an hour (check it after
+     step 2, which may change it).
+  4. Authentication → Emails → Templates: Confirm signup "Confirm your email"
+     (`confirmation.html`), Invite user "Your swim lesson account" (`invite.html`), Reset
+     Password "Reset your password" (`recovery.html`), each with "Swim Class" replaced by the
+     business name; keep `{{ .ConfirmationURL }}` and `{{ .Data.username }}`.
+  5. Authentication → URL Configuration: Site URL = the production site; Redirect URLs
+     `https://<site>/**`.
+  6. A new `MAIL_TOKEN` for prod (64 hex characters) in a file outside the repo; with the CLI
+     linked to prod: `npx supabase secrets set --env-file <file>`, `SITE_URL` = the production
+     origin, `npx supabase functions deploy mail-queue --use-api` (with `login` and
+     `admin-accounts`); link back to dev afterwards.
+  7. Production Settings: Coach email `hlyy1011@gmail.com`, Business name.
+  8. Apps Script: Script Properties `MAIL_QUEUE_URL` = `https://<prod-ref>.supabase.co/
+     functions/v1/mail-queue`, `MAIL_TOKEN` = the prod token, `SENDER_NAME` = the business
+     name; run `poll` once, then `install`; Executions shows Time-Driven runs every 5 minutes.
+- As in v0.13: before prompt 12, the coach on production with `make-coach.sql`, Turnstile and
+  the `age` key pair.
+
 ## v0.18 · 6 Oct 2026 · Prompt 10: coach Settings validated on dev and in demo mode
 **State**: `origin/main` = `origin/frontend-first` = 58211a4 (v0.17; Herman pushed it). Local
 `frontend-first` has this entry on top, not pushed. Prompt 10 found every TASK item already
