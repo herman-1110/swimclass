@@ -5,7 +5,7 @@ Keep entries short; link to files instead of pasting code.
 
 ## v0.20 · 6 Oct 2026 · Prompt 12, part 1: the code for going live
 **State**: `origin/main` = `origin/frontend-first` = 80c18ee (v0.19; Herman pushed it). Local
-`frontend-first` has the five commits below and this entry, not pushed. There is no production
+`frontend-first` has the six commits below and this entry, not pushed. There is no production
 project yet: everything left in prompt 12 starts with Herman's steps in `docs/PRODUCTION.md`
 §1.1. Scripts and results are in `frontend-plan/review/prompt12/` (outside the repo; its
 `NOTES.md` lists them, with the §13 security checklist item by item).
@@ -28,7 +28,9 @@ project yet: everything left in prompt 12 starts with Herman's steps in `docs/PR
   apple-touch-icon 180, drawn by `frontend-plan/tools/icons.mjs`), the iOS tags in
   `index.html`, `robots.txt`, and Account's "Home screen" section
   (`pages/account/ui/HomeScreenHint.tsx` + test).
-- b589c22: `.github/workflows/backup.yml`.
+- b589c22, f737bcc (the checkout, so the CLI reads `supabase/config.toml` for the Postgres
+  version): `.github/workflows/backup.yml`. It can't run on this PC (no Docker): Herman's
+  first "Run workflow" is its test (PRODUCTION.md 1.7).
 - bacfe20: `wrangler.jsonc` attaches `swimclass.online` and turns `workers.dev` off.
 - 31211da: `docs/PRODUCTION.md` (setup checklist, moving students in, smoke test, deploying,
   watching, backups and restore, rotating keys, limits); TECH_SPEC §11, §12, §14; ARCHITECTURE,
