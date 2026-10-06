@@ -1,5 +1,5 @@
 export { emailLogKeys } from './api/keys'
-export { EMAIL_LOG_AVAILABLE, useEmailLog } from './api/useEmailLog'
+export { useEmailLog } from './api/useEmailLog'
 export type { EmailKind, EmailLogRow } from './model/types'
 export { EmailLogList } from './ui/EmailLogList'
 export { EmailLogSection } from './ui/EmailLogSection'

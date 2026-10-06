@@ -684,6 +684,10 @@ export type Database = {
     }
     Functions: {
       account_email: { Args: { p_account_id: string }; Returns: string }
+      ack_outbox: {
+        Args: { p_error?: string; p_id: number; p_ok: boolean }
+        Returns: boolean
+      }
       add_exception: {
         Args: {
           p_ends_at: string
@@ -715,6 +719,29 @@ export type Database = {
       check_login_attempt: {
         Args: { p_ip: unknown; p_username: string }
         Returns: Json
+      }
+      claim_outbox: {
+        Args: { p_limit: number }
+        Returns: {
+          attempts: number
+          body_html: string | null
+          body_text: string
+          claimed_at: string | null
+          created_at: string
+          dedupe_key: string | null
+          id: number
+          kind: string
+          last_error: string | null
+          sent_at: string | null
+          subject: string
+          to_email: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "email_outbox"
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
       coach_book: {
         Args: {
@@ -756,6 +783,7 @@ export type Database = {
         }
         Returns: string
       }
+      duration_text: { Args: { p_minutes: number }; Returns: string }
       email_booked: {
         Args: { p_series_id: string }
         Returns: {
@@ -780,9 +808,36 @@ export type Database = {
           subject: string
         }[]
       }
+      email_digest: {
+        Args: { p_for_date: string }
+        Returns: {
+          body_html: string
+          body_text: string
+          subject: string
+        }[]
+      }
       email_html: { Args: { p_text: string }; Returns: string }
       email_late_alert: {
         Args: { p_booking_id: string; p_event: string }
+        Returns: {
+          body_html: string
+          body_text: string
+          subject: string
+        }[]
+      }
+      email_log: {
+        Args: { p_limit?: number }
+        Returns: {
+          attempts: number
+          created_at: string
+          kind: string
+          last_error: string
+          sent_at: string
+          to_email: string
+        }[]
+      }
+      email_reminder: {
+        Args: { p_account_id: string; p_for_date: string }
         Returns: {
           body_html: string
           body_text: string
@@ -894,6 +949,7 @@ export type Database = {
         Args: { p_booking_id: string; p_by_customer: boolean }
         Returns: undefined
       }
+      queue_daily_emails: { Args: { p_for_date: string }; Returns: number }
       queue_email: {
         Args: {
           p_body_html: string
@@ -922,6 +978,7 @@ export type Database = {
       }
       remove_announcement: { Args: { p_id: string }; Returns: undefined }
       remove_exception: { Args: { p_id: string }; Returns: undefined }
+      ringgit_text: { Args: { p_cents: number }; Returns: string }
       set_group_active: {
         Args: { p_active: boolean; p_group_id: string }
         Returns: undefined

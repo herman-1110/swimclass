@@ -56,8 +56,7 @@ export function CoachSettingsPage() {
         />
         {ready ? (
           <SettingsSections>
-            {/* After the sections, across both columns (coach-settings §2.6); nothing until
-                the database has email_log(). */}
+            {/* After the sections, across both columns (coach-settings §2.6). */}
             <EmailLogSection className="xl:col-span-2" />
           </SettingsSections>
         ) : loadError !== null ? (
