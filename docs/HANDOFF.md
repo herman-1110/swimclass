@@ -23,9 +23,12 @@ between 12:30 and 12:55 am, with Claude checking; details in `frontend-plan/note
 - Herman made a new age key during 1.7: the public key `age134mny…` matches
   `C:\Users\User\swimclass-backup-key.txt`. The earlier `age1jj483…` has no private key any
   more; nothing was encrypted with it.
+- 5.2 at about 1:15 am: Herman decrypted the artifact's data file with his key file and found
+  production's `INSERT INTO "public"."settings"` row (Swim Class, 20:00 reminder and digest).
+  The key opens the backups.
 **Open**
-- 5.2: Herman decrypts one file of that artifact (asked at 00:53), and copies the new key
-  file to his spare place (a copy made before 00:37 is the dead key).
+- Herman copies the new key file to his spare place (a copy made before 00:37 is the dead
+  key), and deletes the decrypted `data.sql` and the download.
 - 1.3 (Auth SMTP, rate limit, templates, URL settings) is still unconfirmed. Until custom
   SMTP is on, sign-up and reset emails come from Supabase's own sender, which allows only a
   few emails an hour: §2's invites need it.
@@ -41,7 +44,7 @@ between 12:30 and 12:55 am, with Claude checking; details in `frontend-plan/note
 1. Herman pushes v0.22 and v0.23:
    `git push origin frontend-first`, then once CI is green
    `git fetch . frontend-first:main` and `git push origin main`.
-2. Herman: 5.2 (above); 1.3; then 1.8 with `smoketest`; `remove-uromom.sql` if `uromom` was
+2. Herman: 1.3; then 1.8 with `smoketest`; `remove-uromom.sql` if `uromom` was
    his test.
 3. Claude: check 1.8's results and the 8 pm jobs on production (needs the production reads
    allowed, or Herman pasting the query output), the signed-in first-load and Lighthouse
