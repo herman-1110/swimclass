@@ -371,6 +371,7 @@ describe.skipIf(!hasDatabase)('security checklist (TECH_SPEC §13)', () => {
       'coach_slot_check(uuid,timestamp with time zone,integer,boolean,boolean)',
       'coach_week(date)', // prompt 03; checks is_coach() first
       'create_group(uuid,jsonb,text,boolean,integer,payment_method,integer,integer)',
+      'email_log(integer)', // prompt 11
       'excuse_booking(uuid)',
       'get_public_settings()',
       'is_approved()',
@@ -406,6 +407,7 @@ describe.skipIf(!hasDatabase)('security checklist (TECH_SPEC §13)', () => {
       `select public.set_group_active('${SEED.groups.hana}', false)`,
       `select public.approve_account('${SEED.groups.hana}')`,
       `select * from public.pending_accounts()`,
+      `select * from public.email_log()`,
       `select public.set_open_hours('[]')`,
       `select public.add_exception('closed', '2026-10-06 17:30+08', '2026-10-06 19:00+08')`,
       `select public.remove_exception('${SEED.groups.hana}')`,

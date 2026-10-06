@@ -31,6 +31,7 @@ Migration names below drop the `supabase/migrations/` folder.
 | `20261004100000_hardening` | audit | customer change limit, coach writes only through functions, table caps, `username_available` length guard |
 | `20261004120000_add_login_limiter` | 05 | `login_attempts` gets `ip` and a username cap; `check_login_attempt`, `record_login_success` |
 | `20261005100000_pending_accounts` | 09 | `pending_accounts`: the accounts waiting for approval, with their email |
+| `20261006100000_mail_queue` | 11 | the reminder and digest templates, `queue_daily_emails`, `claim_outbox`, `ack_outbox`, `email_log`; an index on unsent emails |
 
 ## Tables
 
@@ -46,8 +47,8 @@ Migration names below drop the `supabase/migrations/` folder.
 | `availability_exceptions` | `…100000_schema` | Block time (`closed`) and Open extra time (`open`) |
 | `announcements` | `…100000_schema` | the coach's messages to customers; pinned, removed |
 | `settings` | `…100000_schema` | the one settings row (id 1) |
-| `email_outbox` | `…100000_schema` | emails waiting for the mailer; service role only |
-| `daily_jobs` | `…100000_schema` | which daily email jobs ran for which date; service role only |
+| `email_outbox` | `…100000_schema` (index on unsent rows: `…100000_mail_queue`) | emails waiting for the mailer, and those sent in the last 90 days; service role only (the coach reads it through `email_log`) |
+| `daily_jobs` | `…100000_schema` | which daily email jobs ran for which date ('reminder', 'digest'); service role only |
 | `login_attempts` | `…100000_schema` (`ip`, username cap: `…120000_add_login_limiter`) | the login rate limit (BR-4): username, IP, time, ok; kept a day; service role only |
 | `booking_changes` | `…100000_hardening` | a customer's recent bookings and cancellations, for the 10-in-24-hours limit; no grants |
 
@@ -88,6 +89,7 @@ listed in each function's header comment in its migration.
 | `set_group_active` | `…100300_groups_accounts` | coach | deactivate or reactivate a group |
 | `approve_account` | `…100300_groups_accounts` | coach | approve a sign-up |
 | `pending_accounts` | `…100000_pending_accounts` | coach | the accounts waiting for approval, with their email from `auth.users` |
+| `email_log` | `…100000_mail_queue` | coach | the latest emails (50 by default, at most 200), newest first: when, to whom, kind, sent, tries, last error |
 | `set_open_hours` | `…100400_settings` | coach | replace the weekly open hours |
 | `add_exception` | `…100400_settings` | coach | Block time or Open extra time |
 | `remove_exception` | `…100400_settings` | coach | remove one of those |
@@ -103,6 +105,9 @@ Granted only to `service_role`, which the Edge Functions use (TECH_SPEC §7).
 |---|---|---|---|
 | `check_login_attempt` | `…120000_add_login_limiter` | `login` | the login limit: refuses after 10 failures per username and IP or 30 per IP in 15 minutes (`too_many_attempts`), else records the try as a failure and returns the account's email |
 | `record_login_success` | `…120000_add_login_limiter` | `login` | marks a try a success; forgets that username's earlier failures from that IP |
+| `queue_daily_emails` | `…100000_mail_queue` | `mail-queue` | queues tomorrow's reminders (from `reminder_time`) and the coach digest (from `digest_time`), once each per date (`daily_jobs`) |
+| `claim_outbox` | `…100000_mail_queue` | `mail-queue` | hands out up to 50 unsent emails (reminders, digests and late alerts first, then the oldest); releases claims older than 15 minutes as a failed try; deletes rows sent or given up on more than 90 days ago |
+| `ack_outbox` | `…100000_mail_queue` | `mail-queue` | records a claimed email as sent, or as a failed try (up to 5; the error's first 500 characters) |
 
 Also granted to `authenticated`, because RLS policies and the views run them with the
 caller's rights: `is_coach`, `is_approved`, `my_account_id` (`…100300_rls`) and
@@ -131,6 +136,9 @@ the caller or read settings.
 | `email_booked` | `…110000_update_email_links` | the booking confirmation |
 | `email_cancelled`, `email_late_alert`, `email_broadcast` | `…100100_emails` | the other three templates |
 | `queue_booked_emails`, `queue_cancelled_emails`, `queue_broadcast_emails` | `…100100_emails` | who gets which email after a change |
+| `email_reminder` | `…100000_mail_queue` | the evening reminder to one account: its lessons on a date, each with its cancel deadline |
+| `email_digest` | `…100000_mail_queue` | the coach's "Tomorrow's schedule": lessons with travel gaps, unpaid and last-lesson groups among them, sign-ups waiting |
+| `ringgit_text`, `duration_text` | `…100000_mail_queue` | "RM 260", "1 hour 30 min" for emails |
 | `lock_booking_dates` | `…100200_booking` | the booking-date locks that stop two bookings racing |
 | `package_price_cents` | `…100200_booking` | a group's package price, pro rata |
 | `place_bookings` | `…100200_booking` | the shared booking steps behind `book_lesson` and `coach_book` |
@@ -156,5 +164,9 @@ the caller or read settings.
   (TECH_SPEC §10); `make-coach.sql` makes the coach's confirmed email the coach, once
   per project (TECH_SPEC §9).
 - `functions/`: the Edge Functions (TECH_SPEC §7): `login` and `admin-accounts`
-  (prompt 05), `mail-queue` (prompt 11). `_shared/` holds their door (`http.ts`: CORS,
-  JSON, refusals) and Supabase clients (`clients.ts`).
+  (prompt 05), `mail-queue` (prompt 11; `mail.ts` holds its plain helpers, unit-tested by
+  Vitest). `_shared/` holds the website's door (`http.ts`: CORS, JSON, refusals) and the
+  Supabase clients (`clients.ts`).
+- `templates/`: the Auth emails (confirm sign-up, invite, reset password) in the site's plain
+  style, pasted into the dashboard by hand (HANDOFF v0.19); `config.toml` points the local
+  stack at them.
