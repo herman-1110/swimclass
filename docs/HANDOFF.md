@@ -3,6 +3,39 @@
 Update this file at the end of every Claude Code session. Newest entry on top.
 Keep entries short; link to files instead of pasting code.
 
+## v0.21 · 6 Oct 2026 · Design changes before go-live: wide laptops and dropdowns
+**State**: as v0.20 (nothing pushed since 80c18ee; Herman's push now carries v0.20 and this),
+plus Herman's three design requests, built and checked in his 5173 (demo mode). Scripts,
+screenshots and notes: `frontend-plan/review/design-1/` (outside the repo; `NOTES.md`).
+Typecheck, lint, format, the production build and the full unit suite (1,857, demo mode) pass.
+**Done**
+- d495991: every dropdown (`shared/ui/Select`, used by Settings, Edit hours, Block and
+  Open extra time, Record payment, Add students) loses the browser's arrow for an 18 px
+  chevron in the text boxes' border, radius and height. With a mouse in Chrome or Edge 135+
+  the open list is styled too (`Select.css`, `appearance: base-select`): white, radius 12,
+  40 px options, the chosen one on `--accent-soft` with a tick, no "Choose…" placeholder in
+  the list. Phones keep their own picker; other browsers their plain list. Checked: click,
+  Escape, keyboard (Space, arrows, Enter) and Settings' Save noticing the change
+  (`select-check.mjs`, 13 checks).
+- ab08b39: Book, Schedule and My classes stop at 1100 px in the middle of the space beside
+  the sidebar instead of on its left; Account takes the same 1100 px from 1280 px, in two
+  columns (your details | password and home screen). Settings' two columns grow with the
+  window up to 760 px each (1568 px), Save changes above their right edge. Phones and the
+  1024–1279 px layouts are unchanged (screenshots at 390, 1024, 1280, 1440, 1920). DESIGN §3
+  (Select) and §5.
+**Decisions** (Herman chose "the page stops early" for both, over "the right column is short")
+- Centre the customer pages rather than stretch them: the drawings' proportions stay, and every
+  customer page's title sits at the same place. Settings grows instead, like the other coach
+  pages, so its title doesn't move between coach tabs.
+- The styled open list only with a mouse: a phone's own picker suits a finger, and iPhones
+  can't style it anyway.
+**Open issues**
+- Add students at 1920 px still leaves a blank strip on the right (form 600 px + preview);
+  not asked for.
+- With the styled list, an arrow key on a closed select opens the list instead of changing
+  the value straight away (Chrome's behaviour for it).
+**Next**: as v0.20 Next 1–3 (push both; PRODUCTION.md §1.1; send Claude the three values).
+
 ## v0.20 · 6 Oct 2026 · Prompt 12, part 1: the code for going live
 **State**: `origin/main` = `origin/frontend-first` = 80c18ee (v0.19; Herman pushed it). Local
 `frontend-first` has the six commits below and this entry, not pushed. There is no production
