@@ -29,6 +29,21 @@ export type ModalDialogHandlers = {
 // focus and answers Esc.
 const stack: HTMLDialogElement[] = []
 
+/**
+ * Whether a key comes from a select's open list. Chrome's styled selects (shared/ui/Select.css)
+ * draw the list inside the page, so its Esc and Tab reach the dialog too; they belong to the
+ * list, which closes on its own. `:open` is unknown to older browsers and jsdom: not open.
+ */
+function fromOpenSelect(target: EventTarget): boolean {
+  const select = target instanceof Element ? target.closest('select') : null
+  if (!select) return false
+  try {
+    return select.matches(':open')
+  } catch {
+    return false
+  }
+}
+
 let locks = 0
 let savedScroll: { overflow: string; gutter: string } | null = null
 
@@ -166,6 +181,7 @@ export function useModalDialog(
     onKeyDown: (event) => {
       const dialog = event.currentTarget
       if (stack.at(-1) !== dialog) return
+      if (fromOpenSelect(event.target)) return
       if (event.key === 'Escape') {
         // Handled here, so the browser doesn't close the dialog behind React's back.
         event.preventDefault()

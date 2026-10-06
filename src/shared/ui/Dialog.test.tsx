@@ -85,6 +85,33 @@ describe('Dialog', () => {
     expect(document.activeElement).toBe(opener)
   })
 
+  it('leaves Esc to a select whose list is open inside it (Chrome’s styled select)', () => {
+    function WithSelect() {
+      const [open, setOpen] = useState(true)
+      return (
+        <Dialog open={open} onClose={() => setOpen(false)} title="Block time">
+          <label>
+            From
+            <select defaultValue="7">
+              <option value="7">7:00 am</option>
+              <option value="8">8:00 am</option>
+            </select>
+          </label>
+        </Dialog>
+      )
+    }
+    render(<WithSelect />)
+    const select = screen.getByRole('combobox', { name: 'From' })
+    const listOpen = vi.spyOn(select, 'matches').mockImplementation((query) => query === ':open')
+    // The list has focus on an option; Esc closes the list, not the dialog.
+    fireEvent.keyDown(screen.getAllByRole('option')[0], { key: 'Escape' })
+    expect(screen.queryByRole('dialog')).not.toBeNull()
+    // Once the list is shut, Esc on the select closes the dialog as before.
+    listOpen.mockReturnValue(false)
+    fireEvent.keyDown(select, { key: 'Escape' })
+    expect(screen.queryByRole('dialog')).toBeNull()
+  })
+
   it('closes with Close, and with its own buttons', () => {
     render(<Page />)
     const opener = openFrom('Cancel')
