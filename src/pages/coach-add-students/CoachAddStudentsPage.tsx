@@ -23,23 +23,28 @@ export function CoachAddStudentsPage() {
     // The coach layout leaves the padding to each page: 12/20/32 on phones, 24/32/32 from
     // 768 px, blocks 16 then 20 px apart (AdminAddStudents.dc.html:24-35). The drawing's 40 px
     // sides from 1024 px are 32, as on every coach page (triage 14).
-    <div className="flex flex-col gap-4 px-5 pt-3 pb-8 md:gap-5 md:px-8 md:pt-6">
-      <DocumentTitle page={TITLE} />
-      <BackLink to={ROUTES.coachStudents} aria-label="Back to Students & payments">
-        Students &amp; payments
-      </BackLink>
-      <PageHeader
-        size="coach"
-        title={TITLE}
-        description="Set up who books together. Students in one group share their lessons and one package."
-      />
-      <AddStudentsForm
-        initialAccountId={params.get('account') ?? undefined}
-        onAdded={(added) => {
-          const state: AddedState = { added }
-          void navigate(coachStudentsAdded(added.groupId), { state })
-        }}
-      />
+    // From 1024 px the page is as wide as the form and the preview (600 + 48 + 320 px) and sits
+    // in the middle of the space beside the sidebar (Herman, 6 Oct 2026: left-aligned, a wide
+    // laptop showed a blank strip on the right).
+    <div className="flex flex-col px-5 pt-3 pb-8 md:px-8 md:pt-6">
+      <div className="flex w-full flex-col gap-4 md:gap-5 lg:mx-auto lg:max-w-[968px]">
+        <DocumentTitle page={TITLE} />
+        <BackLink to={ROUTES.coachStudents} aria-label="Back to Students & payments">
+          Students &amp; payments
+        </BackLink>
+        <PageHeader
+          size="coach"
+          title={TITLE}
+          description="Set up who books together. Students in one group share their lessons and one package."
+        />
+        <AddStudentsForm
+          initialAccountId={params.get('account') ?? undefined}
+          onAdded={(added) => {
+            const state: AddedState = { added }
+            void navigate(coachStudentsAdded(added.groupId), { state })
+          }}
+        />
+      </div>
     </div>
   )
 }

@@ -103,7 +103,8 @@ uses Chip, `GroupPicker` (entity `group`) uses OptionRow. The tab bar and sideba
   accent, plus the phone's safe-area inset). From 1024 px a 220 px sidebar instead:
   business name at the top ("Swim Class", from settings; the drawings' "Swim Class
   Booking" is the old name), text links (current one on `--subtle` with a 3 px `--accent`
-  bar at its left edge, so it reads at a glance), "Signed in as …" at the bottom.
+  bar at its left edge, so it reads at a glance), "Signed in as …" at the bottom. It stays in
+  place while the page scrolls, as tall as the window (Herman, 6 Oct 2026).
   - Customer: Book, Schedule, My classes, Account.
   - Coach: Schedule, Students & payments ("Students" in the tab bar), Settings, and
     View as customer ("Customer view" in the tab bar; at the bottom of the sidebar).
@@ -237,7 +238,8 @@ layout, and Tailwind's `md:`, `lg:` and `xl:` prefixes add the wider layouts.
 Wide screens don't stretch the content: Book, Schedule, My classes and Account stop at
 1100 px, in the middle of the space beside the sidebar (Herman, 6 Oct 2026: left-aligned,
 a wide laptop showed a blank strip on the right); Settings' columns stop at 760 px each
-(1568 px for two); Add students' form stops at 600 px.
+(1568 px for two); Add students' form stops at 600 px, and from 1024 px the form and its
+preview sit together in the middle of the space (968 px).
 
 | Screen | Phone (under 768 px) | Tablet (768–1279 px) | Computer (1280 px and up) |
 |---|---|---|---|

@@ -25,6 +25,8 @@ const linkBase = 'flex min-h-11 items-center rounded-small px-3 text-sm no-under
 // top, text links (the current one on --subtle, with a 3 px --accent bar at its left edge)
 // and "Signed in as …" at the bottom (DESIGN §3; the drawings' .side). The drawn --subtle
 // alone was about 1.1:1 on white; the bar gives the state 3:1 (WCAG 1.4.11; triage 15).
+// It stays in place while the page scrolls, as tall as the window, so the bottom links stay
+// at the bottom of the screen (Herman, 6 Oct 2026); a very short window scrolls it inside.
 export function Sidebar({
   label,
   businessName,
@@ -39,7 +41,7 @@ export function Sidebar({
   return (
     <aside
       aria-label={`${label} navigation`}
-      className="hidden w-[220px] shrink-0 flex-col gap-8 border-r border-line px-3.5 pt-7 pb-6 lg:flex"
+      className="hidden w-[220px] shrink-0 flex-col gap-8 border-r border-line px-3.5 pt-7 pb-6 lg:sticky lg:top-0 lg:flex lg:h-dvh lg:self-start lg:overflow-y-auto"
     >
       {/* min-h keeps the line's height while the settings load, so nothing below moves. */}
       <div className="min-h-[1lh] px-3 text-body font-semibold text-accent">{businessName}</div>
