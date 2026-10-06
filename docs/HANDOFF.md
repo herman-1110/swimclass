@@ -3,6 +3,61 @@
 Update this file at the end of every Claude Code session. Newest entry on top.
 Keep entries short; link to files instead of pasting code.
 
+## v0.22 · 7 Oct 2026 · Production is live; the repo's edges and frontend-plan tidied
+**State**: `origin/main` = `origin/frontend-first` = d2b046a (Herman pushed). Local
+`frontend-first` adds this entry's commit. https://swimclass.online serves the production
+build (Herman ran `wrangler login` and `deploy` on 6 Oct; the GoDaddy "Launching Soon" page is
+gone). The production Supabase project is `swimclass`, ref `lzpvvgbnyyqzzohwncxc`
+(Singapore); the CLI stays linked to dev. The checks and their results are in
+`frontend-plan/notes/prompt12.md`.
+- PRODUCTION.md §1 done: 1.1, 1.2 (17 migrations; the three functions; `MAIL_TOKEN` and
+  `SITE_URL` match `frontend-plan/secrets/prod-functions.env`), 1.4 (headers, deep links,
+  manifest, Turnstile on /login: `tools/pwa-check.mjs` ALL OK (15) on the live site; Log in
+  first load 1.08 s on Fast 4G + 4× CPU; Web Analytics off; Always Use HTTPS on: `http://`
+  → 301 `https://`), 1.5 (herman is the coach: his profile row had been deleted by hand and
+  was put back with `frontend-plan/sql/restore-herman-profile.sql`, then make-coach.sql).
+- Not done or not confirmed: 1.3 (Auth SMTP, rate limit, templates, URL settings: ask
+  Herman), `www.swimclass.online` (still 522: the redirect rule isn't matching), 1.6 mailer,
+  1.7 backup secrets and first run, 1.8 smoke test, §2 students, the signed-in first-load and
+  Lighthouse checks, HANDOFF v1.0.
+- A test customer `uromom` (approved, 1 group, lessons Wed 7, 21, 28 Oct 7:30 pm, 2 unsent
+  emails) was on production; `frontend-plan/sql/remove-uromom.sql` (rehearsed, rolled back)
+  deletes it if Herman runs it.
+**Done** (Herman: "rearrange the files and folders into a cleaner architecture and remove the
+files that are not needed"; he chose: trim frontend-plan, keep its name, light tidy in the repo)
+- `src/` unchanged: it already follows ARCHITECTURE.md, and ESLint enforces it.
+- Repo: README.md rewritten for the live site (it was the planning pack's); the 16 drawing
+  PNGs moved into `design/screens/` (1.5 MB; `design/README.md` asked for them); the two
+  `.gitkeep` files removed; PRODUCTION.md 1.2 points at the new secrets path and deploys the
+  functions with `--project-ref`.
+- `frontend-plan` 707 MB → 197 MB (almost all of it `tools/node_modules`). Deleted: the
+  build's review screenshots, logs and scripts (399 MB), the portable Node (107 MB, the
+  system Node 24 replaces it), design-png, the wave and final-review scripts, BUILDER_BRIEF,
+  `tools/get-node24.ps1`, `tools/wt-setup.sh`, and the empty `worktrees/`. Kept, in new places
+  (`frontend-plan/README.md` lists them):
+  - `secrets/prod-functions.env` (was `review/prompt12/`), `secrets/dev-mail-queue.env`,
+    `secrets/dev-mail-token.txt` (were `review/prompt11/`).
+  - `tools/`: `seedshift.mjs`, `serve-live.mjs`, `live.mjs`, `lighthouse.mjs` (were
+    `review/prompt06/`), `lib.mjs` (`review/prompt08/`), `devpasswords.mjs`
+    (`review/prompt11/`, writes to `secrets/`), `pwa-check.mjs` (`review/prompt12/`; now
+    ignores Turnstile's own console lines). Each ran from there: seedshift `check` (fingerprint
+    matches), devpasswords `check` (13 accounts on the seed password), the libraries import,
+    pwa-check on the live site.
+  - `sql/` (tonight's production SQL), `notes/` (each prompt's NOTES.md, the 4 Oct security
+    audit, the final review's triage and copy list), `specs/` (cited by code comments),
+    `out/` (new screenshots).
+- Older HANDOFF entries name `frontend-plan/review/...` paths that no longer exist; their
+  notes are in `frontend-plan/notes/`.
+**Next**
+1. Herman pushes this commit (as in v0.20 Next 1).
+2. Herman: the `www` redirect rule (Rules → Overview: on; Request URL
+   `https://www.swimclass.online/*`; the `www` DNS record proxied), then PRODUCTION.md 1.3 if
+   not done, 1.6 (the mailer, with `frontend-plan/secrets/prod-functions.env`'s token), 1.7,
+   1.8; and `remove-uromom.sql` if `uromom` is his test.
+3. Claude: once herman can sign in on a phone, the signed-in first-load and Lighthouse checks
+   (Turnstile blocks a scripted login: a Chrome started by hand with a debugging port), then
+   HANDOFF v1.0.
+
 ## v0.21 · 6 Oct 2026 · Design changes before go-live: wide laptops and dropdowns
 **State**: `origin/main` = `origin/frontend-first` = bd33e60 (v0.20; Herman pushed it, so the
 backup workflow is on `main`). Local `frontend-first` adds this entry's nine commits, not

@@ -27,7 +27,7 @@ Each screen has two drawings of the same markup, a phone one and a computer one;
 | AdminSettings.dc.html | Coach · Settings · computer | 1440 × 1120 |
 | AdminSettingsPhone.dc.html | Coach · Settings · phone | 390 × 2520 |
 
-`screens/`: put a PNG screenshot of each drawing here with the same base name
-(for example `Main.png`) so Claude Code can look at them.
+`screens/`: a PNG of each drawing at its own size, with the same base name (for example
+`Main.png`), rendered on 30 Sep 2026 so Claude Code can look at them.
 
 Sample names, condos and dates in these files are made up. Prices show as [PRICE].

@@ -47,24 +47,24 @@ ref is `uhrgtttvzqjrdtdzyzkr`.
    npx supabase link --project-ref <prod-ref>
    npx supabase db push --dry-run
    npx supabase db push
-   ```
-   The dry run lists the migrations; the push applies them. No seed: `db push` never runs it.
-2. **Claude** writes `D:\DOWNLOAD\Swimming\frontend-plan\review\prompt12\prod-functions.env`
-   (outside the repo): a new random `MAIL_TOKEN` and `SITE_URL=https://swimclass.online` (no
-   trailing slash: `mail-queue` puts it in front of the email links' paths, and it is the only
-   origin `login` and `admin-accounts` accept).
-3. **Herman**:
-   ```powershell
-   npx supabase secrets set --env-file ..\frontend-plan\review\prompt12\prod-functions.env
-   npx supabase functions deploy login --use-api
-   npx supabase functions deploy admin-accounts --use-api
-   npx supabase functions deploy mail-queue --use-api
    npx supabase link --project-ref uhrgtttvzqjrdtdzyzkr
    npx supabase projects list
    ```
-   The last two point the CLI back at `swimclass-dev` (if the link asks for a password, it is
-   dev's, from `DATABASE_URL` in `.env.local`; the list marks the linked project), so an
-   everyday `db reset --linked` can never wipe production.
+   The dry run lists the migrations; the push applies them. No seed: `db push` never runs it.
+   The last two point the CLI straight back at `swimclass-dev` (if the link asks for a
+   password, it is dev's, from `DATABASE_URL` in `.env.local`; the list marks the linked
+   project), so an everyday `db reset --linked` can never wipe production.
+2. **Claude** writes `D:\DOWNLOAD\Swimming\frontend-plan\secrets\prod-functions.env`
+   (outside the repo): a new random `MAIL_TOKEN` and `SITE_URL=https://swimclass.online` (no
+   trailing slash: `mail-queue` puts it in front of the email links' paths, and it is the only
+   origin `login` and `admin-accounts` accept).
+3. **Herman** (these name the project, so the CLI's link doesn't matter):
+   ```powershell
+   npx supabase secrets set --project-ref <prod-ref> --env-file ..\frontend-plan\secrets\prod-functions.env
+   npx supabase functions deploy login --project-ref <prod-ref> --use-api
+   npx supabase functions deploy admin-accounts --project-ref <prod-ref> --use-api
+   npx supabase functions deploy mail-queue --project-ref <prod-ref> --use-api
+   ```
 
 ### 1.3 Auth (Herman, production dashboard → Authentication)
 1. **Sign In / Providers → Email**: on, **Confirm email** on, new sign-ups allowed; minimum
