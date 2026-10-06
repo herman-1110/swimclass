@@ -3,6 +3,50 @@
 Update this file at the end of every Claude Code session. Newest entry on top.
 Keep entries short; link to files instead of pasting code.
 
+## v0.23 · 7 Oct 2026 · Mailer, www and backups on production
+**State**: `origin/main` = `origin/frontend-first` = d2b046a. Local `frontend-first` adds
+v0.22 (62552ec) and this entry. No code changed since v0.22. Herman did the steps below
+between 12:30 and 12:55 am, with Claude checking; details in `frontend-plan/notes/prompt12.md`.
+**Done**
+- PRODUCTION.md 1.6, the mailer: the Apps Script points at production (poll, then install).
+  The 5 waiting emails to `uromom`'s address (1 booking, 4 cancellations: Herman had cancelled
+  its lessons in the app) went out at 00:30, no errors, no retries. Settings: business name
+  Swim Class, coach email set, reminder and digest at 8 pm.
+- 1.4 step 4 finished: Always Use HTTPS (`http://` → 301 `https://`, path and query kept) and
+  the www Redirect Rule ("Redirect from WWW to root"): `https://www.swimclass.online/book?x=1`
+  → 301 `https://swimclass.online/book?x=1`. DNS: `www` is a proxied CNAME to the apex.
+- 1.7, backups: both secrets set; run 37498005725 attempt 2 passed in about 2 minutes
+  (artifact `swimclass-backup-2026-10-07-1`, 178 kB, kept until 4 Jan 2027); it now runs every
+  Sunday at 2 am. Attempt 1 failed in "Dump and encrypt": `SUPABASE_DB_URL` held Claude's
+  shortened example host `aws-…pooler.supabase.com`. Lesson: never put "…" or another
+  shortened part in a value Herman will paste; give the whole value or where to copy it.
+- Herman made a new age key during 1.7: the public key `age134mny…` matches
+  `C:\Users\User\swimclass-backup-key.txt`. The earlier `age1jj483…` has no private key any
+  more; nothing was encrypted with it.
+**Open**
+- 5.2: Herman decrypts one file of that artifact (asked at 00:53), and copies the new key
+  file to his spare place (a copy made before 00:37 is the dead key).
+- 1.3 (Auth SMTP, rate limit, templates, URL settings) is still unconfirmed. Until custom
+  SMTP is on, sign-up and reset emails come from Supabase's own sender, which allows only a
+  few emails an hour: §2's invites need it.
+- 1.8: `uromom` has already been through sign-up, approval, booking, cancelling and the
+  emails. Still unseen: a confirmation email through Gmail SMTP, the late-change alert, and
+  the 8 pm jobs (reminder and digest) on production.
+- `frontend-plan/sql/remove-uromom.sql` still works, but its header's counts are from 6 Oct:
+  the 2 waiting emails have since been sent, so it deletes no emails now (sent ones stay in
+  the log); it still removes the 4 lessons and the account.
+- This session's read-only production queries (`db query --project-ref lzpv…`) were refused
+  by Claude Code's auto-mode check ("Production Reads"); earlier sessions ran them.
+**Next**
+1. Herman pushes v0.22 and v0.23:
+   `git push origin frontend-first`, then once CI is green
+   `git fetch . frontend-first:main` and `git push origin main`.
+2. Herman: 5.2 (above); 1.3; then 1.8 with `smoketest`; `remove-uromom.sql` if `uromom` was
+   his test.
+3. Claude: check 1.8's results and the 8 pm jobs on production (needs the production reads
+   allowed, or Herman pasting the query output), the signed-in first-load and Lighthouse
+   checks, then §2 with Herman and HANDOFF v1.0.
+
 ## v0.22 · 7 Oct 2026 · Production is live; the repo's edges and frontend-plan tidied
 **State**: `origin/main` = `origin/frontend-first` = d2b046a (Herman pushed). Local
 `frontend-first` adds this entry's commit. https://swimclass.online serves the production
