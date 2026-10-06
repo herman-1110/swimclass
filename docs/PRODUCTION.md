@@ -96,9 +96,17 @@ CAPTCHA comes in 1.5, once the site that shows the widget is live.
 3. **Herman**: `npx wrangler deploy`. It uploads `dist/` and attaches `swimclass.online`
    (`wrangler.jsonc`; the `workers.dev` address stays off). The certificate can take a few
    minutes the first time.
-4. **Claude** checks the live site: the headers (`curl -I`), a deep link such as
-   `/coach/students` and an unknown asset path both return the app, the manifest and icons, and
-   the first-load time (PRD §8).
+4. **Herman**, in the Cloudflare dashboard → `swimclass.online`:
+   - **SSL/TLS → Edge Certificates → Always Use HTTPS**: on. Without it `http://swimclass.online`
+     shows the site, but logging in fails: the functions accept only the `https://` origin.
+   - **Rules → Redirect Rules → Create rule**: Request URL `https://www.swimclass.online/*`,
+     Target URL `https://swimclass.online/${1}`, 301, preserve query string. Keep the `www` DNS
+     record proxied (orange cloud).
+   - **Web Analytics** → swimclass.online → **Manage site** → **Disable**: otherwise Cloudflare
+     adds its tracking script to every page, which the site's CSP blocks.
+5. **Claude** checks the live site: the headers (`curl -I`), a deep link such as
+   `/coach/students` and an unknown asset path both return the app, `http://` and `www` end up
+   on `https://swimclass.online`, the manifest and icons, and the first-load time (PRD §8).
 
 ### 1.5 The coach account (Herman)
 1. Production dashboard → **Authentication → Attack Protection → CAPTCHA**: on, provider
