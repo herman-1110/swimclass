@@ -5,10 +5,10 @@ Keep entries short; link to files instead of pasting code.
 
 ## v0.21 · 6 Oct 2026 · Design changes before go-live: wide laptops and dropdowns
 **State**: `origin/main` = `origin/frontend-first` = bd33e60 (v0.20; Herman pushed it, so the
-backup workflow is on `main`). Local `frontend-first` adds this entry's six commits, not
-pushed: Herman's three design requests, built and checked in his 5173 (demo mode). Scripts,
+backup workflow is on `main`). Local `frontend-first` adds this entry's eight commits, not
+pushed: Herman's design requests, built and checked in his 5173 (demo mode). Scripts,
 screenshots and notes: `frontend-plan/review/design-1/` (outside the repo; `NOTES.md`).
-Typecheck, lint, format, the production build and the full unit suite (1,857, demo mode) pass.
+Typecheck, lint, format, the production build and the full unit suite (1,858, demo mode) pass.
 **Done**
 - d495991: every dropdown (`shared/ui/Select`, used by Settings, Edit hours, Block and
   Open extra time, Record payment, Add students) loses the browser's arrow for an 18 px
@@ -22,6 +22,12 @@ Typecheck, lint, format, the production build and the full unit suite (1,857, de
   the page): `useModalDialog` now leaves an open select's keys alone, so Esc closes the list
   and a second Esc the dialog (Block time, Open extra time, Edit hours: `dialog-escape.mjs`,
   14 checks with the focus ring; a Dialog unit test).
+- 98d7e3a (Herman's follow-up): the sidebar stays put while the page scrolls, as tall as the
+  window, its bottom links at the bottom of the screen (a very short window scrolls it
+  inside); Add students' form and preview (968 px) sit in the middle of the space from
+  1024 px. `sidebar-check.mjs`: every page's sidebar in place after scrolling, Record
+  payment's column too, Log out reachable in a 420 px tall window, Add students at 390–1920
+  px with no sideways scrolling.
 - ab08b39: Book, Schedule and My classes stop at 1100 px in the middle of the space beside
   the sidebar instead of on its left; Account takes the same 1100 px from 1280 px, in two
   columns (your details | password and home screen). Settings' two columns grow with the
@@ -35,11 +41,9 @@ Typecheck, lint, format, the production build and the full unit suite (1,857, de
 - The styled open list only with a mouse: a phone's own picker suits a finger, and iPhones
   can't style it anyway.
 **Open issues**
-- Add students at 1920 px still leaves a blank strip on the right (form 600 px + preview);
-  not asked for.
 - With the styled list, an arrow key on a closed select opens the list instead of changing
   the value straight away (Chrome's behaviour for it).
-**Next**: Herman pushes these six commits (as in v0.20 Next 1); then v0.20 Next 2–3
+**Next**: Herman pushes these eight commits (as in v0.20 Next 1); then v0.20 Next 2–3
 (PRODUCTION.md §1.1; send Claude the three values).
 
 ## v0.20 · 6 Oct 2026 · Prompt 12, part 1: the code for going live
