@@ -191,6 +191,9 @@ hear about the site from the message at the end.
 - **GitHub → Actions → Backup**: a green run every Sunday. GitHub turns schedules off in a
   public repo after 60 days without a commit (it emails first): **Enable workflow** there.
 - **Supabase → Reports / Usage** once a month against the limits in §7.
+- **The domain**: `swimclass.online` is registered at GoDaddy until 28 Sep 2027, with its DNS at
+  Cloudflare. Keep auto-renew on with a card that works: if it lapses, the site's address and
+  every link in the emails stop working.
 
 ## 5. Backups
 ### 5.1 What is in them
