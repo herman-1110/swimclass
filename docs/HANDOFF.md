@@ -5,7 +5,7 @@ Keep entries short; link to files instead of pasting code.
 
 ## v0.21 · 6 Oct 2026 · Design changes before go-live: wide laptops and dropdowns
 **State**: `origin/main` = `origin/frontend-first` = bd33e60 (v0.20; Herman pushed it, so the
-backup workflow is on `main`). Local `frontend-first` adds this entry's eight commits, not
+backup workflow is on `main`). Local `frontend-first` adds this entry's nine commits, not
 pushed: Herman's design requests, built and checked in his 5173 (demo mode). Scripts,
 screenshots and notes: `frontend-plan/review/design-1/` (outside the repo; `NOTES.md`).
 Typecheck, lint, format, the production build and the full unit suite (1,858, demo mode) pass.
@@ -28,6 +28,8 @@ Typecheck, lint, format, the production build and the full unit suite (1,858, de
   1024 px. `sidebar-check.mjs`: every page's sidebar in place after scrolling, Record
   payment's column too, Log out reachable in a 420 px tall window, Add students at 390–1920
   px with no sideways scrolling.
+- The last commit: Add students' back link stays at the top left; only the title, form and preview
+  move to the middle (Herman, from a screenshot; `backlink.mjs` at 390–1920 px).
 - ab08b39: Book, Schedule and My classes stop at 1100 px in the middle of the space beside
   the sidebar instead of on its left; Account takes the same 1100 px from 1280 px, in two
   columns (your details | password and home screen). Settings' two columns grow with the
@@ -43,7 +45,7 @@ Typecheck, lint, format, the production build and the full unit suite (1,858, de
 **Open issues**
 - With the styled list, an arrow key on a closed select opens the list instead of changing
   the value straight away (Chrome's behaviour for it).
-**Next**: Herman pushes these eight commits (as in v0.20 Next 1); then v0.20 Next 2–3
+**Next**: Herman pushes these nine commits (as in v0.20 Next 1); then v0.20 Next 2–3
 (PRODUCTION.md §1.1; send Claude the three values).
 
 ## v0.20 · 6 Oct 2026 · Prompt 12, part 1: the code for going live

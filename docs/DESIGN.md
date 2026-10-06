@@ -239,7 +239,8 @@ Wide screens don't stretch the content: Book, Schedule, My classes and Account s
 1100 px, in the middle of the space beside the sidebar (Herman, 6 Oct 2026: left-aligned,
 a wide laptop showed a blank strip on the right); Settings' columns stop at 760 px each
 (1568 px for two); Add students' form stops at 600 px, and from 1024 px the form and its
-preview sit together in the middle of the space (968 px).
+preview sit together in the middle of the space (968 px), under a back link that stays at the
+top left.
 
 | Screen | Phone (under 768 px) | Tablet (768–1279 px) | Computer (1280 px and up) |
 |---|---|---|---|
