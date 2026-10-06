@@ -17,6 +17,10 @@ Typecheck, lint, format, the production build and the full unit suite (1,857, de
   the list. Phones keep their own picker; other browsers their plain list. Checked: click,
   Escape, keyboard (Space, arrows, Enter) and Settings' Save noticing the change
   (`select-check.mjs`, 13 checks).
+- e10ea0a: Esc on an open list inside a dialog closed the dialog too (the styled list is part of
+  the page): `useModalDialog` now leaves an open select's keys alone, so Esc closes the list
+  and a second Esc the dialog (Block time, Open extra time, Edit hours: `dialog-escape.mjs`,
+  14 checks with the focus ring; a Dialog unit test).
 - ab08b39: Book, Schedule and My classes stop at 1100 px in the middle of the space beside
   the sidebar instead of on its left; Account takes the same 1100 px from 1280 px, in two
   columns (your details | password and home screen). Settings' two columns grow with the
