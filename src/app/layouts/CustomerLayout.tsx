@@ -15,7 +15,8 @@ import { useBusinessName } from './useBusinessName'
 
 // Phone first (design/Main.dc.html, MainDesktop.dc.html): a bottom tab bar below 1024 px,
 // a 220 px sidebar from 1024 px (DESIGN §3, §5). Each page sets its own maximum width
-// (Book, Schedule and My classes stop at 1100 px).
+// (Book, Schedule, My classes and, from 1280 px, Account stop at 1100 px, in the middle of
+// the space beside the sidebar).
 
 const items: NavItem[] = [
   { to: ROUTES.book, label: 'Book', icon: <CalendarPlusIcon /> },

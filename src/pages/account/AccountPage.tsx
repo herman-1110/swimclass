@@ -30,12 +30,15 @@ export function AccountPage() {
   const email = session.status === 'signed-in' ? session.session.email : null
 
   return (
-    // A 420 px column, like the sign-in card (auth spec §2.7, Q15).
-    <div className="flex w-full max-w-[420px] flex-col gap-8">
+    // A 420 px column, like the sign-in card (auth spec §2.7, Q15). From 1280 px the page
+    // takes the other customer pages' 1100 px, in the middle beside the sidebar, with two
+    // columns: your details on the left, the password and home screen on the right (Herman,
+    // 6 Oct 2026: the lone column left the rest of a laptop screen blank).
+    <div className="flex w-full max-w-[420px] flex-col gap-8 xl:mx-auto xl:max-w-[1100px]">
       <DocumentTitle page={TITLE} />
       <PageHeader size="customer" title={TITLE} />
       {profile.data ? (
-        <>
+        <div className="flex flex-col gap-8 xl:grid xl:grid-cols-2 xl:items-start xl:gap-x-16">
           <section aria-labelledby="account-details-heading" className="flex flex-col gap-4">
             <SectionLabel as="h2" id="account-details-heading">
               Your details
@@ -51,17 +54,19 @@ export function AccountPage() {
               labelledBy="account-details-heading"
             />
           </section>
-          <section
-            aria-labelledby="account-password-heading"
-            className="flex flex-col gap-4 border-t border-line pt-6"
-          >
-            <SectionLabel as="h2" id="account-password-heading">
-              Password
-            </SectionLabel>
-            <ChangePasswordForm labelledBy="account-password-heading" />
-          </section>
-          <HomeScreenHint />
-          <div className="flex flex-col items-start border-t border-line pt-6">
+          <div className="flex flex-col gap-8">
+            <section
+              aria-labelledby="account-password-heading"
+              className="flex flex-col gap-4 border-t border-line pt-6 xl:border-t-0 xl:pt-0"
+            >
+              <SectionLabel as="h2" id="account-password-heading">
+                Password
+              </SectionLabel>
+              <ChangePasswordForm labelledBy="account-password-heading" />
+            </section>
+            <HomeScreenHint />
+          </div>
+          <div className="flex flex-col items-start border-t border-line pt-6 xl:col-span-2">
             {profile.data.role === 'coach' && (
               <ButtonLink to={ROUTES.coachSchedule} variant="link" flush>
                 Back to coach view
@@ -69,7 +74,7 @@ export function AccountPage() {
             )}
             <LogOutButton className={buttonClasses({ variant: 'link', flush: true })} />
           </div>
-        </>
+        </div>
       ) : profile.isError ? (
         <Banner
           role="alert"
@@ -83,7 +88,10 @@ export function AccountPage() {
           {messageFor(profile.error)}
         </Banner>
       ) : (
-        <AccountSkeleton />
+        // As wide as the details column it stands in for.
+        <div className="xl:grid xl:grid-cols-2 xl:gap-x-16">
+          <AccountSkeleton />
+        </div>
       )}
     </div>
   )

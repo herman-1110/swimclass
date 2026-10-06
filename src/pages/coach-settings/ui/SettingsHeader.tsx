@@ -18,7 +18,7 @@ type SettingsHeaderProps = {
  */
 export function SettingsHeader({ action, status, focusTitle = false }: SettingsHeaderProps) {
   return (
-    <div className="flex flex-col gap-2 md:max-w-[760px] xl:max-w-[1140px]">
+    <div className="flex flex-col gap-2 md:max-w-[760px] xl:max-w-[1568px]">
       <PageHeader
         size="coach"
         align="start"

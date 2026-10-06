@@ -15,8 +15,9 @@ type SettingsSectionsProps = {
 /**
  * The Settings form (design/AdminSettings.dc.html `.sections`): the four sections in one
  * column up to 760 px, two columns from 1280 px filled row by row, each section as tall as
- * its own content. Wide screens stop at 1140 px, the 1440 px drawing's width
- * (coach-settings C15, proposed). The Save buttons sit outside it and submit it by its id;
+ * its own content. The columns grow with the window up to 760 px each, the one-column
+ * width, so 1568 px in all (Herman, 6 Oct 2026: at 1140 px a wide laptop showed a blank
+ * strip on the right; the drawing's 1140 px was coach-settings C15). The Save buttons sit outside it and submit it by its id;
  * Enter in a box does the same. Renders nothing until the settings and hours are in.
  */
 export function SettingsSections({ children }: SettingsSectionsProps) {
@@ -32,7 +33,7 @@ export function SettingsSections({ children }: SettingsSectionsProps) {
         event.preventDefault()
         form.save()
       }}
-      className="grid grid-cols-1 items-start gap-y-8 md:max-w-[760px] xl:max-w-[1140px] xl:grid-cols-2 xl:gap-x-12 xl:gap-y-7"
+      className="grid grid-cols-1 items-start gap-y-8 md:max-w-[760px] xl:max-w-[1568px] xl:grid-cols-2 xl:gap-x-12 xl:gap-y-7"
     >
       <OpenHoursSection form={form} />
       <BookingRulesSection form={form} />

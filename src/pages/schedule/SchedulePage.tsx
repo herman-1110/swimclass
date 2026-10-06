@@ -89,7 +89,8 @@ export function SchedulePage() {
   }, [param, week, setParams])
 
   return (
-    <div className="flex max-w-[1100px] flex-col gap-3.5 md:gap-4.5">
+    // Stops at 1100 px, in the middle of the space beside the sidebar (DESIGN §5).
+    <div className="mx-auto flex w-full max-w-[1100px] flex-col gap-3.5 md:gap-4.5">
       <DocumentTitle page="Schedule" />
       <PageHeader
         size="customer"

@@ -70,6 +70,12 @@ uses Chip, `GroupPicker` (entity `group`) uses OptionRow. The tab bar and sideba
 - **Segmented control** (`Segmented`): track `--subtle`, selected segment white with an
   `--accent` border (the drawings' light grey border was too faint to show which is chosen).
   Used for 1 hour / 2 hours and lesson type.
+- **Select** (`Select`): the text boxes' border, radius and height, the browser's arrow
+  replaced by an 18 px chevron (stroke 1.6, muted) at the right edge (Herman, 6 Oct 2026). With
+  a mouse, in browsers that allow it (Chrome and Edge 135+), the open list matches too: white,
+  `--frame` border, radius 12, a soft shadow, 40 px options, the hovered one on `--subtle`, the
+  chosen one on `--accent-soft` in accent with a tick; a "Choose…" placeholder isn't listed.
+  Phones keep their own picker, and other browsers their plain list.
 - **Option row** (`OptionRow`, a radio): 48 px, border `--field`; selected border accent and
   `--accent-soft` background; name left, type tag right.
 - **Day strip** (`DayStrip`): 7 buttons; weekday small, date in a 36 px circle (accent when selected);
@@ -228,8 +234,10 @@ layout, and Tailwind's `md:`, `lg:` and `xl:` prefixes add the wider layouts.
 | 1024–1279 px | `lg:` | Small computer: the sidebar replaces the bottom tab bar |
 | 1280 px and up | `xl:` | Computer: coach side panels sit beside the content |
 
-Wide screens don't stretch the content: Book, Schedule and My classes stop at 1100 px;
-Settings in one column stops at 760 px; Add students' form stops at 600 px.
+Wide screens don't stretch the content: Book, Schedule, My classes and Account stop at
+1100 px, in the middle of the space beside the sidebar (Herman, 6 Oct 2026: left-aligned,
+a wide laptop showed a blank strip on the right); Settings' columns stop at 760 px each
+(1568 px for two); Add students' form stops at 600 px.
 
 | Screen | Phone (under 768 px) | Tablet (768–1279 px) | Computer (1280 px and up) |
 |---|---|---|---|
@@ -237,10 +245,11 @@ Settings in one column stops at 760 px; Add students' form stops at 600 px.
 | Book | One column in the order of §4; booking summary is a sticky footer above the tab bar | Two columns: choices on the left; package card and booking summary stacked on the right (280–340 px), the summary sticky | Same; package card beside the group picker |
 | Schedule (customer) | 7-day grid with narrow columns, 16 px per half hour; weekday over date | 22 px per half hour; weekday and date on one line | Same as tablet |
 | My classes | Upcoming, Packages, Past in one column | Upcoming on the left; Packages in a card on the right (280–380 px) | Same as tablet |
+| Account | One 420 px column: your details, password, home screen, log out | Same as phone | Two columns: your details on the left; password and home screen on the right; log out below both |
 | Coach schedule | Day view (§4); Today, Needs attention and Message below it | Week grid; Today and Needs attention side by side below it; Message full width | Week grid with a 320 px side column: Today, Needs attention, Message |
 | Students & payments | Cards, action-needed first, "Show all"; filter tabs scroll sideways; Record payment opens full screen | Table; Record payment opens as a 380 px drawer | Table with Record payment always beside it (340 px) |
 | Add students | Form, then the customer preview, then the buttons (Add fills the width) | Same order, form up to 600 px; from 1024 px as on a computer | Form and preview side by side |
-| Settings | One column; setting rows wrap their control under the label when narrow; prices in a row of three; Save bar pinned above the tab bar | One column (up to 760 px); Save changes in the header | Two columns of sections |
+| Settings | One column; setting rows wrap their control under the label when narrow; prices in a row of three; Save bar pinned above the tab bar | One column (up to 760 px); Save changes in the header | Two columns of sections, growing with the window up to 760 px each; the email log under both |
 
 Test every screen at 360, 390, 768, 1024, 1280 and 1440 px (browser dev tools, device
 toolbar), and on a real phone before going live.

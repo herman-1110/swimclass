@@ -38,7 +38,8 @@ export function MyClassesPage() {
   const anyActive = groups.data?.some((group) => group.active) ?? true
 
   return (
-    <div className="grid max-w-[1100px] grid-cols-1 gap-y-8 md:grid-cols-[minmax(0,1fr)_minmax(280px,380px)] md:grid-rows-[auto_auto_1fr] md:items-start md:gap-x-12">
+    // Stops at 1100 px, in the middle of the space beside the sidebar (DESIGN §5).
+    <div className="mx-auto grid w-full max-w-[1100px] grid-cols-1 gap-y-8 md:grid-cols-[minmax(0,1fr)_minmax(280px,380px)] md:grid-rows-[auto_auto_1fr] md:items-start md:gap-x-12">
       <DocumentTitle page="My classes" />
       <MyClassesHeader
         className="md:col-span-2"

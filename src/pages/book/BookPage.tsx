@@ -56,8 +56,9 @@ export function BookPage() {
   return (
     // CustomerLayout pads <main> 20 px at the bottom on phones and 32 px from 768 px; the
     // drawing has 0 (the summary sits on the tab bar) and 40 px (book spec §2.6 item 4, C14).
-    // From 1024 px the screen stops at 1100 px, left-aligned (Main@1440).
-    <div className="-mb-5 flex flex-1 flex-col gap-6 md:mb-0 md:gap-7 md:pb-2 lg:max-w-[1100px] lg:pb-0">
+    // From 1024 px the screen stops at 1100 px, in the middle of the space beside the
+    // sidebar (Herman, 6 Oct 2026: on a wide laptop it left a blank strip on the right).
+    <div className="-mb-5 flex w-full flex-1 flex-col gap-6 md:mb-0 md:gap-7 md:pb-2 lg:mx-auto lg:max-w-[1100px] lg:pb-0">
       <DocumentTitle page={TITLE} />
       <PageHeader
         size="customer"

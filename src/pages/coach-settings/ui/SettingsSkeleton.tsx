@@ -29,7 +29,7 @@ export function SettingsSkeleton() {
   return (
     <div
       aria-busy="true"
-      className="grid grid-cols-1 items-start gap-y-8 md:max-w-[760px] xl:max-w-[1140px] xl:grid-cols-2 xl:gap-x-12 xl:gap-y-7"
+      className="grid grid-cols-1 items-start gap-y-8 md:max-w-[760px] xl:max-w-[1568px] xl:grid-cols-2 xl:gap-x-12 xl:gap-y-7"
     >
       <p role="status" className="sr-only">
         Loading settings…
