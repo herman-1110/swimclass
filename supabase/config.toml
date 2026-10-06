@@ -243,10 +243,20 @@ otp_expiry = 3600
 # admin_email = "admin@email.com"
 # sender_name = "Admin"
 
-# Uncomment to customize email template
-# [auth.email.template.invite]
-# subject = "You have been invited"
-# content_path = "./supabase/templates/invite.html"
+# The Auth emails in the site's plain style (prompt 11). The hosted projects get the same
+# subjects and files pasted into the dashboard by hand (Authentication → Emails), with the
+# business name in place of "Swim Class".
+[auth.email.template.confirmation]
+subject = "Confirm your email"
+content_path = "./supabase/templates/confirmation.html"
+
+[auth.email.template.invite]
+subject = "Your swim lesson account"
+content_path = "./supabase/templates/invite.html"
+
+[auth.email.template.recovery]
+subject = "Reset your password"
+content_path = "./supabase/templates/recovery.html"
 
 # Uncomment to customize notification email template
 # [auth.email.notification.password_changed]
@@ -385,13 +395,17 @@ deno_version = 2
 # [edge_runtime.secrets]
 # secret_key = "env(SECRET_VALUE)"
 
-# The website's Edge Functions (TECH_SPEC §7). The gateway's JWT check is off: it only
-# understands the legacy JWT keys, and a publishable key alone would pass it anyway.
-# `login` has no user yet; `admin-accounts` checks the caller's JWT itself (is_coach()).
+# The Edge Functions (TECH_SPEC §7). The gateway's JWT check is off: it only understands the
+# legacy JWT keys, and a publishable key alone would pass it anyway. `login` has no user yet;
+# `admin-accounts` checks the caller's JWT itself (is_coach()); `mail-queue` is called by the
+# Apps Script poller and checks its x-mail-token header against the MAIL_TOKEN secret.
 [functions.login]
 verify_jwt = false
 
 [functions.admin-accounts]
+verify_jwt = false
+
+[functions.mail-queue]
 verify_jwt = false
 
 [analytics]

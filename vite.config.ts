@@ -174,8 +174,9 @@ export default defineConfig(({ command, mode }) => {
           extends: true,
           test: {
             name: 'unit',
-            // Unit tests sit next to their code.
-            include: ['src/**/*.test.{ts,tsx}'],
+            // Unit tests sit next to their code. The Edge Functions' plain helpers too
+            // (supabase/functions/*/mail.ts): Deno code, which tsc and ESLint leave out.
+            include: ['src/**/*.test.{ts,tsx}', 'supabase/functions/**/*.test.ts'],
             environment: 'jsdom',
           },
         },
