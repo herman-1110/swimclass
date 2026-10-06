@@ -181,15 +181,34 @@ hear about the site from the message at the end.
    day; more wait for the next day.
 
 ## 3. Deploy a change
-- **The website**: `npm run build` (it reads `.env.production.local`), then
-  `npx wrangler deploy` (Herman). Check `curl -I https://swimclass.online/login` afterwards.
-  `dist/` then holds a production build: never deploy one made with dev's values or in demo
-  mode.
-- **A migration**: `npm run test:db` on dev first. Then link to production, `db push --dry-run`,
-  `db push`, and link back to dev (as in 1.2).
-- **An Edge Function**: link to production, `npx supabase functions deploy <name> --use-api`,
-  link back to dev.
-- **The mailer**: paste the new `Code.gs` over the old one and save; the timer keeps running.
+Changes in **Settings** (prices, open hours, times, payment instructions) and everything in
+the coach pages take effect at once: no deploy. Only changes to the code need one.
+
+The usual way: ask Claude Code for the change. It changes the code, checks it in
+`npm run dev` (http://localhost:5173, demo mode) and runs the tests. Look at it there, then:
+1. **Save it on GitHub** (Herman): `git push origin frontend-first`; once CI is green,
+   `git fetch . frontend-first:main` and `git push origin main`. Pushing doesn't change the
+   live site.
+2. **Deploy** only what changed, in this order (the database first, the website last, so the
+   site never calls something that isn't there yet):
+   - **The database** (a new file in `supabase/migrations/`): `npm run test:db` on dev first,
+     then `npx supabase link --project-ref lzpvvgbnyyqzzohwncxc`, `npx supabase db push
+     --dry-run`, `npx supabase db push`, and straight away
+     `npx supabase link --project-ref uhrgtttvzqjrdtdzyzkr` (back to dev).
+   - **An Edge Function** (`supabase/functions/`):
+     `npx supabase functions deploy <name> --project-ref lzpvvgbnyyqzzohwncxc --use-api`.
+   - **The website** (`src/`, `public/`, `index.html`): `npm run build`, then
+     `npx wrangler deploy`. The build reads `.env.production.local`, so it is always a
+     production build; build right before deploying, so `dist/` is never a test build.
+   - **The mailer** (`apps-script/Code.gs`): paste it over the old one in Apps Script and
+     save; the timer keeps running.
+3. **Check** https://swimclass.online (reload it; on a phone, close and reopen the tab).
+   Claude can check the headers and pages as in 1.4.
+
+If a website deploy breaks something: `npx wrangler deployments list` shows the last ten,
+and `npx wrangler rollback` puts the previous one back in seconds (give a version id to pick
+an older one). Then fix it and deploy again. A database change can't be rolled back like
+that: test it on dev first.
 
 ## 4. Watch
 - **Apps Script → Executions**: a run every 5 minutes, few failures. If it stops, emails wait
