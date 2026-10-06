@@ -14,13 +14,15 @@ import { SectionLabel } from '@/shared/ui/SectionLabel'
 
 import { AccountSkeleton } from './ui/AccountSkeleton'
 import { AccountSummary } from './ui/AccountSummary'
+import { HomeScreenHint } from './ui/HomeScreenHint'
 
 const TITLE = 'Account'
 
 /**
  * Account (auth spec §2.7; not drawn, so in the customer pages' style): the details only the
- * coach can change, name and phone, a new password, and Log out. The coach reaches it
- * through View as customer and also gets "Back to coach view" here.
+ * coach can change, name and phone, a new password, how to add the site to the home screen,
+ * and Log out. The coach reaches it through View as customer and also gets "Back to coach
+ * view" here.
  */
 export function AccountPage() {
   const session = useSession()
@@ -58,6 +60,7 @@ export function AccountPage() {
             </SectionLabel>
             <ChangePasswordForm labelledBy="account-password-heading" />
           </section>
+          <HomeScreenHint />
           <div className="flex flex-col items-start border-t border-line pt-6">
             {profile.data.role === 'coach' && (
               <ButtonLink to={ROUTES.coachSchedule} variant="link" flush>
