@@ -49,6 +49,17 @@ describe('Select', () => {
     expect(select.getAttribute('aria-invalid')).toBe('true')
   })
 
+  it('draws its own arrow instead of the browser’s, hidden from screen readers', () => {
+    render(<Select label="Account" options={accounts} defaultValue="" />)
+    const select = screen.getByRole('combobox', { name: 'Account' })
+    expect(select.className).toContain('appearance-none')
+    expect(select.className).toContain('select-control')
+    const arrow = select.nextElementSibling
+    expect(arrow?.tagName.toLowerCase()).toBe('svg')
+    expect(arrow?.getAttribute('aria-hidden')).toBe('true')
+    expect(arrow?.getAttribute('class')).toContain('pointer-events-none')
+  })
+
   it('can be labelled by a settings row and disabled', () => {
     render(
       <>

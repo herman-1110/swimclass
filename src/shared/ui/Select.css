@@ -1,0 +1,85 @@
+/* The open list of a Select (Herman, 6 Oct 2026: dropdowns in the site's own style). Browsers
+   that can style it (Chrome and Edge 135+, `appearance: base-select`) show a white list with
+   the frames' border and radius, 40 px options, the hovered one on --subtle and the chosen one
+   on --accent-soft with a tick. Only with a mouse: phones keep their own pickers (the iPhone's
+   wheel, Android's sheet), which suit a finger better, and other browsers keep their plain
+   list. The closed select looks the same everywhere (Select.tsx). A file, not a <style>
+   element, so the site's Content-Security-Policy allows it. */
+@supports (appearance: base-select) {
+  @media (hover: hover) and (pointer: fine) {
+    .select-control,
+    .select-control::picker(select) {
+      appearance: base-select;
+    }
+
+    /* In this mode the select is a flex box: keep the chosen option's words in the middle of
+       its height, as the native select does. */
+    .select-control {
+      align-items: center;
+    }
+
+    /* Select.tsx draws its own chevron beside the select. */
+    .select-control::picker-icon {
+      display: none;
+    }
+
+    .select-control::picker(select) {
+      margin-block: 4px;
+      padding: 4px;
+      max-block-size: min(320px, 50vh);
+      overflow-y: auto;
+      border: 1px solid var(--frame);
+      border-radius: 12px;
+      background: #fff;
+      box-shadow:
+        0 12px 28px -12px rgb(20 33 43 / 0.3),
+        0 2px 6px -2px rgb(20 33 43 / 0.1);
+      font-size: 0.875rem;
+    }
+
+    .select-control option {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-block-size: 40px;
+      padding-inline: 12px;
+      border-radius: 8px;
+      color: var(--ink);
+      cursor: pointer;
+    }
+
+    .select-control option:hover,
+    .select-control option:focus-visible {
+      background: var(--subtle);
+      outline: none;
+    }
+
+    .select-control option:checked {
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-weight: 500;
+    }
+
+    /* The tick goes after the words, at the right edge. */
+    .select-control option::checkmark {
+      order: 1;
+      margin-inline-start: auto;
+      color: var(--accent);
+    }
+
+    .select-control option:disabled {
+      color: var(--muted);
+      cursor: default;
+    }
+
+    .select-control option:disabled:hover {
+      background: transparent;
+    }
+
+    /* A "Choose…" placeholder (disabled, value "") names the empty select; it isn't a choice,
+       so the open list leaves it out. */
+    .select-control option[value='']:disabled {
+      display: none;
+    }
+  }
+}
