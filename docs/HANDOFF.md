@@ -5,10 +5,9 @@ Keep entries short; link to files instead of pasting code.
 
 ## v0.25 · 7 Oct 2026 · Later packages show; payments at most one package ahead
 **State**: local `frontend-first` adds this work on top of v0.24 (949b71f); nothing pushed.
-The new migration `20261007100000_payment_limit.sql` is on neither dev nor production: the
+The new migration `20261007100000_payment_limit.sql` is on dev, not production: the
 auto-mode check refused Claude's `npx supabase db push` to dev ("Production Deploy"), so
-`npm run test:db` hasn't run with it. Demo mode (PGlite) runs it: the form's
-`too_many_lessons` test passed there.
+Herman pushed it. Then `npm run test:db` passed on dev (12 files, 290 tests).
 **Done** (Herman chose 1A, 2A and "remove payments")
 - 1A: lessons booked past the current package get a bar per later package under it:
   "Package 3 · 1 booked · 3 left to book" on Book and My classes, "Package 3" / "1 booked ·
@@ -24,11 +23,9 @@ auto-mode check refused Claude's `npx supabase db push` to dev ("Production Depl
   6 Oct on production (given in chat) and say which to delete; then a `DELETE` by id with the
   group's balance before and after, as `frontend-plan/sql/remove-tester-payments.sql`.
 **Next**
-1. Herman: `npx supabase db push` on dev (the CLI is linked to dev); Claude then runs
-   `npm run test:db`.
-2. Herman: push; production `db push` (PRODUCTION.md §3: link prod, `--dry-run`, push, link
+1. Herman: push; production `db push` (PRODUCTION.md §3: link prod, `--dry-run`, push, link
    dev straight back); `npm run build`; `npx wrangler deploy`.
-3. The tester's payments; "Unpaid packages allowed" (v0.24 Next 2); then v0.23's Next 2, 3.
+2. The tester's payments; "Unpaid packages allowed" (v0.24 Next 2); then v0.23's Next 2, 3.
 
 ## v0.24 · 7 Oct 2026 · The Unpaid pill names its package
 **State**: local `frontend-first` adds v0.22, v0.23, 50b069a and this entry on top of
