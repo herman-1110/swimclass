@@ -79,7 +79,8 @@ and CoachLayout keeps the coach's screens English.
 - Schedule's hour lines are 24-hour in Chinese ("7:00" … "21:00"): "上午10" and "下午12" took
   two lines in the phone's 34 px column.
 - Tests: `shared/i18n/registerAllChinese.ts` (tests only) registers every `*.zh.ts`; Chinese
-  cases in labels, days and summary tests. The full unit run passed (see the commit).
+  cases in labels, days and summary tests. Full unit run: 250 files, 1884 tests passed; the build
+  keeps every Chinese word in the `zh` chunk (4.8 kB gzipped). Commit 9e6f354.
 **Don't deploy mid-way**: My classes and Account are still English (stage 3). The work stays on
 the `chinese` branch until stage 5.
 **For the reviewer** (`frontend-plan/out/zh/`, 390 and 1280 px each unless named): stage 1:
