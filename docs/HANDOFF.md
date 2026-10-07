@@ -3,6 +3,35 @@
 Update this file at the end of every Claude Code session. Newest entry on top.
 Keep entries short; link to files instead of pasting code.
 
+## v0.24 · 7 Oct 2026 · The Unpaid pill names its package
+**State**: local `frontend-first` adds v0.22, v0.23, 50b069a and this entry on top of
+`origin` (d2b046a). The live site doesn't have 50b069a yet.
+**Done** (Herman's reports from testing with a 1-to-1 tester)
+- "A cancelled lesson stays in Package 1, and the next one goes to Package 2": not
+  reproduced. A rolled-back db test on dev (deleted afterwards) booked 4 lessons, cancelled
+  one 2 weeks ahead and booked again: Package 1 went to 3 booked, 1 left, and the new lesson
+  became lesson 4 of Package 1. The cancel refreshes the balance on the device that cancels;
+  on other devices the data goes stale after 30 s and reloads on the next tab focus or page
+  open (a tab left open and focused doesn't reload by itself).
+- "After a cancel they can book more than 1": BR-21 as built. With Package 1 paid,
+  `unpaid_packages_allowed` 1 lets them book 4 past it (5 after the cancel). Herman was
+  offered 0 (book only what's paid; nothing until the first payment) and hasn't chosen: it's
+  a Settings change, no code.
+- "The unpaid package should be 2, not 1": the Students table and cards and My classes put a
+  plain "Unpaid" beside "Package 1 · 0 used · 4 booked" (package_no counts used lessons). Herman
+  chose A: the pill now says "Package 2 unpaid" (`unpaidPillLabel`, the package the next
+  payment pays for, as Needs attention and Record payment already did). 50b069a, with PRD
+  BR-22 and DESIGN §3. Checked in demo mode at 390, 768 and 1280 (`frontend-plan/out/
+  unpaid-pill-*.png`). Unit tests: the affected folders passed (148); the full run before
+  the test edits failed only the 8 tests that expected "Unpaid".
+- Claude Code's auto-mode check refused a `db query --linked` meant for dev ("Production
+  Reads") and then a local `sed` of a migration.
+**Next**
+1. Herman: `git push origin frontend-first`; once CI is green, `git fetch . frontend-first:main`
+   and `git push origin main`. Then `npm run build` and `npx wrangler deploy`.
+2. Herman: choose "Unpaid packages allowed" (Settings → Packages): 1 as now, or 0.
+3. Then v0.23's Next 2 and 3.
+
 ## v0.23 · 7 Oct 2026 · Mailer, www and backups on production
 **State**: `origin/main` = `origin/frontend-first` = d2b046a. Local `frontend-first` adds
 v0.22 (62552ec) and this entry. No code changed since v0.22. Herman did the steps below
