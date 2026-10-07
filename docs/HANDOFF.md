@@ -4,11 +4,17 @@ Update this file at the end of every Claude Code session. Newest entry on top.
 Keep entries short; link to files instead of pasting code.
 
 ## v0.26 · 7 Oct 2026 · English and Chinese (in progress)
-**State**: on the `chinese` branch, on top of v0.25. v0.25 is live: Herman pushed (`origin/main`
-= `origin/frontend-first` = 9914226), ran the production `db push` (payment_limit) and
-`wrangler deploy` (7 Oct). Also on 7 Oct: `frontend-plan/sql/remove-three-customers.sql`
-(rehearsed on dev, rolled back) removes the accounts huishan, tester and uromom (students
-Huishan, tester, Niga123) with their lessons and payments; given to Herman to run.
+**State**: the working copy is on the local branch `chinese` (stage 1 and these notes), which
+isn't pushed. `frontend-first` = `origin/frontend-first` = `origin/main` = 9914226 = v0.25,
+which is live: Herman pushed, ran the production `db push` (payment_limit) and `wrangler
+deploy` on 7 Oct. Switch to `frontend-first` before Herman builds anything else for
+production: the build takes the working tree. `supabase/scripts/make-coach.sql` stays
+modified on purpose (Herman's email; never commit it).
+**Also done 7 Oct**: Herman ran `frontend-plan/sql/remove-three-customers.sql` on production
+(rehearsed on dev, rolled back): the accounts huishan (Hui Shan Ng), tester and uromom, with
+their students Huishan, tester and Niga123, their lessons and payments, are gone; the final
+check listed none. That also settles v0.25's "remove the tester's payments", and
+`remove-uromom.sql` is no longer needed.
 **Decisions** (Herman, 7 Oct: "1. Student screen only, 2. A, 3. B, 4. A")
 - Student screens switch: Book, Schedule, My classes, Account, Log in, Sign up, Forgot and
   Reset password, Waiting for approval, Not found. The coach's screens stay English
@@ -52,15 +58,37 @@ are in `model/words.ts` + `model/words.zh.ts` (app/ and shared/ beside the code)
 `app/providers/chinese.test.ts` checks every words.ts has its Chinese with the same key, that
 Chinese files import types only, and that every customer message has Chinese.
 **Don't deploy mid-way**: the student pages' tab bar is Chinese but Book, Schedule, My classes
-and Account aren't yet (stages 2 and 3). The work is on the `chinese` branch; the working
-copy was switched back to `frontend-first` so Herman's v0.25 deploy builds without it.
+and Account aren't yet (stages 2 and 3). The work stays on the `chinese` branch until stage 5.
 **For the reviewer** (`frontend-plan/out/zh/`, 390 and 1280 px each): `login`, `signup`,
 `forgot-password`, `reset-password` (the expired-link screen, as demo mode shows it),
 `no-such-page` (Not found), `my-classes` (the toggle and the Chinese tabs only). Waiting for
 approval has none yet: it needs a demo sign-up. Known: a refusal already on screen ("Wrong
 username or password") stays in its language when the toggle flips, until the next try.
 Scripts that drive the demo (`tools/app.mjs` flows) stay in English; zh shots are their own
-pass (`scratchpad` `zh-shots.mjs` sets `swimclass.language` first).
+pass: `node frontend-plan/tools/zh-shots.mjs /book /schedule --as=meiling` (it sets
+`swimclass.language` first; Herman's `npm run dev` on 5173 must be running).
+**Open**
+- Herman hasn't said whether to wait for his Chinese reader before stage 2: ask once; if he
+  doesn't mind, go on (a changed term is one edit in the glossary and the `*.zh.ts` files).
+- From earlier entries, still open: "Unpaid packages allowed" 1 or 0 (v0.24, a Settings
+  change Herman makes), PRODUCTION.md 1.3 (Auth SMTP, templates) and 1.8 (smoke test), the
+  signed-in first-load and Lighthouse checks, §2 students, HANDOFF v1.0 (v0.23's Next 2, 3).
+  The Chinese sign-up and reset emails (stage 4) depend on 1.3's templates.
+**Next: stage 2, Book and Schedule** (on `chinese`)
+- Pages `pages/book`, `pages/schedule`; features `book-lesson` (`model/summary.ts`'s
+  `usageLine` and `bookingSummaryState` build sentences: give them a `words` argument that
+  defaults to English, as the plan says); entities they use: `balance` (PackageSummary,
+  `bookPackageNote`, `packages.ts` counts and captions), `slot` (TimeChipGrid: its chip
+  names like "7:30 pm, available" are `aria-label`s the tests and `tools/app.mjs` flows find
+  by name), `group` (GroupPicker; `type_label` "1-to-2" → 一对二 from `size`), `schedule`
+  (the customer week view, `describe.ts`), `announcement` (CoachBanner frame; the text stays
+  as typed), `settings` (DocumentTitle). Shared kit words: DayStrip's "Days", Legend, Dialog's
+  "Close", WeekNav, the "Loading…" lines.
+- `messages.ts` is already Chinese for every customer code: pass `{ language }` at each
+  `messageFor` call on these screens, and use `messagesIn(language)` for the fixed lines
+  (`noGroups`, `dayFullyBooked`, `coachAway`).
+- Then: unit tests (full run about 7 min, `--maxWorkers=2`), zh screenshots of Book and
+  Schedule for the reviewer, commit on `chinese`, show Herman, stop.
 
 ## v0.25 · 7 Oct 2026 · Later packages show; payments at most one package ahead
 **State**: local `frontend-first` adds this work on top of v0.24 (949b71f); nothing pushed.
