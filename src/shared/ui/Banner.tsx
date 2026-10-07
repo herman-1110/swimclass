@@ -3,7 +3,7 @@ import type { ComponentPropsWithRef, ReactNode } from 'react'
 import { cn } from '@/shared/lib/cn'
 
 type BannerProps = ComponentPropsWithRef<'div'> & {
-  /** A bold lead-in, then a space: "Coach:", "How to pay:". */
+  /** A bold lead-in, then a space: "Coach:", "How to pay:" ("教练：" needs none). */
   label?: string
   /** neutral (default): the --subtle box. warn: a page-level problem (proposed). */
   tone?: 'neutral' | 'warn'
@@ -33,7 +33,8 @@ export function Banner({
   const text = (
     <>
       {label && <span className="font-semibold">{label}</span>}
-      {label && ' '}
+      {/* Chinese's full-width colon ("教练：") carries its own space. */}
+      {label && !label.endsWith('：') && ' '}
       {children}
     </>
   )

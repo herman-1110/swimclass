@@ -92,8 +92,10 @@ Waiting for approval has none yet: it needs a demo sign-up. Known: a refusal alr
 ("Wrong username or password") stays in its language when the toggle flips, until the next
 try. Scripts that drive the demo (`tools/app.mjs` flows) stay in English; zh shots are their
 own pass: `node frontend-plan/tools/zh-shots.mjs /book /schedule --as=meiling` (it sets
-`swimclass.language` first; Herman's `npm run dev` on 5173 must be running). The glossary has
-stage 2's terms in a second table.
+`swimclass.language` first; `--widths=360,390,1280` for more widths; Herman's `npm run dev` on
+5173 must be running), and `node frontend-plan/tools/zh-book-steps.mjs 390` for Book's three
+states. The glossary has stage 2's terms in a second table. Banner drops its space after a
+full-width colon, so the coach's message reads "教练：…".
 **Open**
 - From earlier entries, still open: "Unpaid packages allowed" 1 or 0 (v0.24, a Settings
   change Herman makes), PRODUCTION.md 1.3 (Auth SMTP, templates) and 1.8 (smoke test), the
