@@ -4,8 +4,11 @@ Update this file at the end of every Claude Code session. Newest entry on top.
 Keep entries short; link to files instead of pasting code.
 
 ## v0.26 · 7 Oct 2026 · English and Chinese (in progress)
-**State**: started on top of v0.25. Herman hasn't said whether v0.25's production `db push`
-and `wrangler deploy` ran: ask before stage 4 adds a second migration.
+**State**: on the `chinese` branch, on top of v0.25. v0.25 is live: Herman pushed (`origin/main`
+= `origin/frontend-first` = 9914226), ran the production `db push` (payment_limit) and
+`wrangler deploy` (7 Oct). Also on 7 Oct: `frontend-plan/sql/remove-three-customers.sql`
+(rehearsed on dev, rolled back) removes the accounts huishan, tester and uromom (students
+Huishan, tester, Niga123) with their lessons and payments; given to Herman to run.
 **Decisions** (Herman, 7 Oct: "1. Student screen only, 2. A, 3. B, 4. A")
 - Student screens switch: Book, Schedule, My classes, Account, Log in, Sign up, Forgot and
   Reset password, Waiting for approval, Not found. The coach's screens stay English
