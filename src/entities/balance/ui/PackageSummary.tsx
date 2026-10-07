@@ -13,6 +13,7 @@ import {
   packageCounts,
   packageTitle,
 } from '../model/packages'
+import { unpaidPillLabel } from '../model/status'
 import type { GroupBalance } from '../model/types'
 
 type PackageSummaryProps = {
@@ -38,7 +39,8 @@ type PackageSummaryProps = {
   | {
       /**
        * account: a block of My classes' Packages list. The names and type tag, the Unpaid pill
-       * while the group owes a payment (owesPayment) or `lastPaid` beside them, the bar,
+       * ("Package 2 unpaid") while the group owes a payment (owesPayment) or `lastPaid` beside
+       * them, the bar,
        * "Package 4 · 0 used · 2 booked · 2 left to book".
        */
       variant: 'account'
@@ -78,7 +80,11 @@ export function PackageSummary(props: PackageSummaryProps) {
             <span className="min-w-0 text-body font-semibold break-words">{props.names}</span>
             <Tag>{typeLabel}</Tag>
           </span>
-          {owesPayment(balance) ? <Pill tone="warn">Unpaid</Pill> : props.lastPaid}
+          {owesPayment(balance) ? (
+            <Pill tone="warn">{unpaidPillLabel(balance)}</Pill>
+          ) : (
+            props.lastPaid
+          )}
         </div>
       ) : (
         <div className="flex items-baseline justify-between gap-2">

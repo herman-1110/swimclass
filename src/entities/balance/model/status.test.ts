@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest'
 
-import { balanceBucket, balanceStatus, lastLessonLabel, unpaidPackageLabel } from './status'
+import {
+  balanceBucket,
+  balanceStatus,
+  lastLessonLabel,
+  unpaidPackageLabel,
+  unpaidPillLabel,
+} from './status'
 import type { GroupBalance } from './types'
 
 const NOW = '2026-09-26T12:00:00+08:00'
@@ -113,6 +119,17 @@ describe('balanceBucket', () => {
     expect(balanceBucket(hana)).toBe('unpaid')
     expect(balanceBucket(priya)).toBe('last-lesson')
     expect(balanceBucket(paid)).toBe('paid')
+  })
+})
+
+describe('unpaidPillLabel', () => {
+  it('names the package the next payment pays for, not the current one', () => {
+    // Herman, 7 Oct 2026: Package 1 paid, its 4 lessons booked and 1 more past it. The
+    // current package is still 1 (nothing used yet), but Package 2 is the unpaid one.
+    expect(unpaidPillLabel({ package_size: 4, paid_lessons: 4 })).toBe('Package 2 unpaid')
+    expect(unpaidPillLabel({ package_size: 4, paid_lessons: 0 })).toBe('Package 1 unpaid')
+    expect(unpaidPillLabel(hana)).toBe('Package 6 unpaid')
+    expect(unpaidPillLabel(weiJie)).toBe('Package 2 unpaid')
   })
 })
 

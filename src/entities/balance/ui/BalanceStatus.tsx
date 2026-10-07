@@ -1,7 +1,7 @@
 import type { Instant } from '@/shared/lib/time'
 import { Pill } from '@/shared/ui/Pill'
 
-import { balanceBucket, balanceStatus } from '../model/status'
+import { balanceBucket, balanceStatus, unpaidPillLabel } from '../model/status'
 import type { GroupBalance } from '../model/types'
 
 type BalanceStatusProps = {
@@ -21,8 +21,8 @@ type BalanceStatusProps = {
 
 /**
  * Paid or Unpaid as a pill, with its note under it (DESIGN §3 Status pill; coach-students spec
- * §5.2.4): the Students table's Status cell and the phone cards. Unpaid (orange) until the
- * group's payment comes in, then Paid.
+ * §5.2.4): the Students table's Status cell and the phone cards. Unpaid (orange, naming the
+ * package: "Package 2 unpaid") until the group's payment comes in, then Paid.
  */
 export function BalanceStatus({ balance, now, lastPaid, active = true }: BalanceStatusProps) {
   const status = balanceStatus(balance, now, active)
@@ -36,7 +36,7 @@ export function BalanceStatus({ balance, now, lastPaid, active = true }: Balance
       note={note}
       noteTone={status.noteTone}
     >
-      {status.label}
+      {status.label === 'Unpaid' ? unpaidPillLabel(balance) : status.label}
     </Pill>
   )
 }

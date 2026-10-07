@@ -79,7 +79,7 @@ describe('CoachStudentsPage actions', () => {
     const hana = await rowOf('Hana')
     await waitFor(() => expect(within(hana).getByText('Starts 3 Oct')).toBeTruthy())
     expect(within(hana).getByText('26 Sep').nextElementSibling?.textContent).toBe('Free lesson')
-    expect(within(hana).getByText('Unpaid')).toBeTruthy()
+    expect(within(hana).getByText('Package 6 unpaid')).toBeTruthy()
   })
 
   it('records Hana’s payment: she becomes Paid, and the figures and tabs follow', async () => {

@@ -166,7 +166,7 @@ describe('MyClassesPage', () => {
     ])
     expect(await screen.findByText('Farah’s account · Hana')).toBeTruthy()
     expect(await rowsOf('Packages')).toEqual([
-      'Hana1-to-1UnpaidPackage 6 · 0 used · 2 booked · 2 left to book' +
+      'Hana1-to-1Package 6 unpaidPackage 6 · 0 used · 2 booked · 2 left to book' +
         'Package 6 isn’t paid yet. Pay before or at its first lesson.',
     ])
   })
@@ -178,7 +178,7 @@ describe('MyClassesPage', () => {
         'Free to cancel until 1:30 pm, Fri 2 Oct.',
     ])
     expect(await rowsOf('Packages')).toEqual([
-      'Wei Jie1-to-1UnpaidPackage 2 · 2 used · 1 booked · 1 left to book' +
+      'Wei Jie1-to-1Package 2 unpaidPackage 2 · 2 used · 1 booked · 1 left to book' +
         'Package 2 isn’t paid yet. Pay your coach as soon as you can.',
     ])
     fireEvent.click(screen.getByRole('button', { name: 'Past lessons and receipts' }))

@@ -124,8 +124,11 @@ Every rule has an ID so code, tests and prompts can refer to it.
   Paid or Unpaid. Unpaid means used + booked lessons exceed paid lessons, or no payment
   covers the current package yet (a new group that hasn't paid). It is the group's status:
   Students & payments shows it until the payment comes in, then Paid; lessons don't carry
-  it (Herman, 2 Oct 2026). Book's package card says Paid or Unpaid for the package it
-  names. "Last lesson <date>" shows when an upcoming booked lesson is the last paid lesson.
+  it (Herman, 2 Oct 2026). On Students & payments and My classes the Unpaid pill names the
+  package the next payment pays for, "Package 2 unpaid", since the current package beside it
+  may be paid with lessons booked past it (Herman, 7 Oct 2026). Book's package card says
+  Paid or Unpaid for the package it names. "Last lesson <date>" shows when an upcoming
+  booked lesson is the last paid lesson.
 - **BR-23** Package numbers follow lesson order: lessons 1–4 are Package 1, 5–8 Package 2,
   and so on, per group.
 - **BR-24** Lessons don't expire (setting `lesson_expiry_months`, default off).

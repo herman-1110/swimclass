@@ -82,6 +82,18 @@ function unpaidNote(since: string | null, now: Instant, today: string): string {
 }
 
 /**
+ * The Unpaid pill's words on Students and My classes: the package the next payment pays for,
+ * "Package 2 unpaid", or "Package 1 unpaid" for a new group that hasn't paid. Herman, 7 Oct
+ * 2026: beside "Package 1 · 0 used · 4 booked", a plain "Unpaid" read as if Package 1, already
+ * paid, were the unpaid one, when lessons booked past it were.
+ */
+export function unpaidPillLabel(
+  balance: Pick<GroupBalance, 'package_size' | 'paid_lessons'>,
+): string {
+  return `Package ${nextPaymentPackageNo(balance)} unpaid`
+}
+
+/**
  * Needs attention's line for an unpaid group (coach-schedule spec §3.6): "Package 6 unpaid",
  * plus the lessons already used past what's paid: "Package 2 unpaid · 2 used".
  */
@@ -89,7 +101,7 @@ export function unpaidPackageLabel(
   balance: Pick<GroupBalance, 'package_size' | 'paid_lessons' | 'used_lessons'>,
 ): string {
   const owed = balance.used_lessons - balance.paid_lessons
-  const label = `Package ${nextPaymentPackageNo(balance)} unpaid`
+  const label = unpaidPillLabel(balance)
   return owed > 0 ? `${label} · ${owed} used` : label
 }
 

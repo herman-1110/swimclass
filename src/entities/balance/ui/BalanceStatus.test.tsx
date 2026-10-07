@@ -37,9 +37,9 @@ const hana: GroupBalance = {
 const priya: GroupBalance = { ...aimanSofia, last_lesson_at: '2026-10-01T09:30:00+00:00' }
 
 describe('BalanceStatus', () => {
-  it('shows Unpaid with its note in the table', () => {
+  it('shows Unpaid, naming the package to pay for, with its note in the table', () => {
     render(<BalanceStatus balance={hana} now={NOW} />)
-    expect(screen.getByText('Unpaid').className).toContain('bg-warn-tint')
+    expect(screen.getByText('Package 6 unpaid').className).toContain('bg-warn-tint')
     expect(screen.getByText('Starts today').className).toContain('text-muted')
   })
 
@@ -73,9 +73,9 @@ describe('BalanceStatus', () => {
       </>,
     )
     expect(screen.queryByText('Paid')).toBeNull()
-    // Unpaid in orange until the payment comes in (Herman, 2 Oct 2026).
+    // Unpaid in orange until the payment comes in (Herman, 2 Oct 2026), naming the package.
     const pills = [...container.querySelectorAll('.rounded-full')]
-    expect(pills.map((pill) => pill.textContent)).toEqual(['Unpaid', 'Unpaid'])
+    expect(pills.map((pill) => pill.textContent)).toEqual(['Package 1 unpaid', 'Package 1 unpaid'])
     expect(pills[0].className).toContain('text-warn')
     expect(screen.getByText('New student').className).toContain('text-muted')
     expect(screen.getByText('New student · no payments yet')).toBeTruthy()

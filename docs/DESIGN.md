@@ -88,7 +88,8 @@ uses Chip, `GroupPicker` (entity `group`) uses OptionRow. The tab bar and sideba
   ("0 used · 2 booked · 2 left to book").
 - **Tag** (`Tag`): small neutral pill for 1-to-1 / 1-to-2 / 1-to-3. **Status pill** (`Pill`): Paid
   (`--accent-tint` / accent), Unpaid (`--warn-tint` / `--warn`). It belongs to a group, never
-  to a lesson (PRD BR-22).
+  to a lesson (PRD BR-22). Unpaid names the package the next payment pays for: "Package 2
+  unpaid" (Herman, 7 Oct 2026).
 - **Table**: 1 px `--frame` border, radius 12, header `--table-head`, zebra rows,
   row divider `--line-row`, selected row `--accent-soft`. Where a table would be too
   cramped on a phone it becomes a list of cards with the same fields (§5).

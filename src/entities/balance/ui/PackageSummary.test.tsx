@@ -36,7 +36,13 @@ const sofia: GroupBalance = {
   left_in_package: 0,
   last_lesson_at: '2026-10-04T09:00:00+00:00',
 }
-const hana: GroupBalance = { ...aimanSofia, package_no: 6, unpaid: true }
+const hana: GroupBalance = {
+  ...aimanSofia,
+  paid_lessons: 20,
+  used_lessons: 20,
+  package_no: 6,
+  unpaid: true,
+}
 
 const NOTE = 'New bookings start Package 3. Pay for it before or at its first lesson.'
 
@@ -74,14 +80,14 @@ describe('PackageSummary on Book', () => {
   it('says Paid for a paid package even when a lesson booked past it isn’t paid', () => {
     // TECH_SPEC §10's Sofia case: Package 2 is paid and full, and an extra booking starts
     // Package 3, which isn't. The card names Package 2; the note speaks for Package 3. My
-    // classes' pill, which is about the group, says Unpaid.
+    // classes' pill, which is about the group, names the package to pay for: Package 3.
     const extra: GroupBalance = { ...sofia, booked_lessons: 2, unpaid: true }
     render(<PackageSummary balance={extra} typeLabel="1-to-1" note={NOTE} />)
     expect(screen.getByText('1-to-1 · Package 2')).toBeTruthy()
     expect(screen.getByText('Paid').className).toContain('text-muted')
     cleanup()
     render(<PackageSummary variant="account" balance={extra} typeLabel="1-to-1" names="Sofia" />)
-    expect(screen.getByText('Unpaid').className).toContain('bg-warn-tint')
+    expect(screen.getByText('Package 3 unpaid').className).toContain('bg-warn-tint')
   })
 
   it('says Unpaid for a package no payment covers', () => {
@@ -121,7 +127,7 @@ describe('PackageSummary on My classes', () => {
     expect(screen.getByText('Package 4 · 0 used · 2 booked · 2 left to book')).toBeTruthy()
   })
 
-  it('shows the Unpaid pill in place of the last payment', () => {
+  it('shows the Unpaid pill, naming the package, in place of the last payment', () => {
     render(
       <PackageSummary
         variant="account"
@@ -131,7 +137,7 @@ describe('PackageSummary on My classes', () => {
         lastPaid={<span>Paid 22 Aug · Cash</span>}
       />,
     )
-    expect(screen.getByText('Unpaid').className).toContain('bg-warn-tint')
+    expect(screen.getByText('Package 6 unpaid').className).toContain('bg-warn-tint')
     expect(screen.queryByText('Paid 22 Aug · Cash')).toBeNull()
   })
 

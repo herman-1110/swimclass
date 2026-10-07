@@ -98,7 +98,9 @@ describe('CoachStudentsPage', () => {
     expect(within(hana).getByText('Farah’s account · Sunrise Res.')).toBeTruthy()
     expect(within(hana).getByText('1-to-1')).toBeTruthy()
     expect(within(hana).getByRole('img', { name: '0 used, 2 booked, 2 left of 4' })).toBeTruthy()
-    expect(within(hana).getByText('Unpaid').nextElementSibling?.textContent).toBe('Starts today')
+    expect(within(hana).getByText('Package 6 unpaid').nextElementSibling?.textContent).toBe(
+      'Starts today',
+    )
     expect(within(hana).getByText('22 Aug').nextElementSibling?.textContent).toBe('Cash')
     expect(within(hana).getByRole('button', { name: 'Record payment for Hana' })).toBeTruthy()
     const priya = within(table).getAllByRole('row')[3]
