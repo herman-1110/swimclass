@@ -379,9 +379,13 @@ Built in prompt 04 (`supabase/migrations/…_coach_slot_check.sql`, `…_booking
 - `record_payment(p_group_id, p_lessons, p_amount_cents, p_method, p_paid_on date default null, p_note text default null) returns uuid`:
   coach only. A null amount is the type's package price × `p_lessons` /
   `lessons_per_package`, rounded to the cent (`price_not_set` while that price is empty);
-  a null date is today in MYT. Errors: `not_found`, `invalid_lessons` (under 1),
-  `invalid_amount` (negative), `invalid_method`, `invalid_date` (in the future),
-  `invalid_note` (over 500 characters).
+  a null date is today in MYT. At most one package ahead (Herman, 7 Oct 2026): with S the
+  package size, P paid and C used + booked, P must stay under (ceil(C / S) + 1) × S, or
+  `paid_ahead` {`package_no`: floor(P / S), where a lesson must be booked first}; and one
+  payment may not take P past that, beyond a whole package of S lessons, or
+  `too_many_lessons` {`max`}. A group that owes a payment can always pay. Errors: `not_found`,
+  `invalid_lessons` (under 1), `paid_ahead`, `too_many_lessons`, `invalid_amount` (negative),
+  `invalid_method`, `invalid_date` (in the future), `invalid_note` (over 500 characters).
 - `add_free_lesson(p_group_id, p_note text default null) returns uuid`: coach only;
   payment of 1 lesson, RM 0, method 'free', dated today (MYT). Errors: `not_found`,
   `invalid_note` (over 500 characters).

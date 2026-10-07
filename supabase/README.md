@@ -32,6 +32,7 @@ Migration names below drop the `supabase/migrations/` folder.
 | `20261004120000_add_login_limiter` | 05 | `login_attempts` gets `ip` and a username cap; `check_login_attempt`, `record_login_success` |
 | `20261005100000_pending_accounts` | 09 | `pending_accounts`: the accounts waiting for approval, with their email |
 | `20261006100000_mail_queue` | 11 | the reminder and digest templates, `queue_daily_emails`, `claim_outbox`, `ack_outbox`, `email_log`; an index on unsent emails |
+| `20261007100000_payment_limit` | Herman, 7 Oct | `record_payment` goes at most one package ahead of the lessons booked: `paid_ahead`, `too_many_lessons` |
 
 ## Tables
 
@@ -82,7 +83,7 @@ listed in each function's header comment in its migration.
 | `coach_slot_check` | `…100000_coach_slot_check` | coach | Add booking's live clash reason |
 | `coach_book` | `…100200_booking` | coach | Add booking, with the coach's overrides |
 | `excuse_booking` | `…100200_booking` | coach | excuse a lesson that has started |
-| `record_payment` | `…100200_booking` | coach | record a payment for a group |
+| `record_payment` | `…100000_payment_limit` | coach | record a payment for a group, at most one package ahead of the lessons booked |
 | `add_free_lesson` | `…100200_booking` | coach | a free lesson: a payment of 1 lesson, RM 0 |
 | `create_group` | `…100300_groups_accounts` | coach | Add students |
 | `update_group` | `…100300_groups_accounts` | coach | change a group's location and starting balances |

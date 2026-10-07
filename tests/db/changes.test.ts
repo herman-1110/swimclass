@@ -378,8 +378,10 @@ describe.skipIf(!hasDatabase)('record_payment and add_free_lesson (BR-20, BR-26)
     const cases: [string, number, number][] = [
       [SEED.groups.hana, 4, 26000],
       [SEED.groups.hana, 2, 13000],
-      [SEED.groups.aimanSofia, 4, 40000],
+      // 3 before 4: after 4, Aiman & Sofia's 20 paid lessons would reach one package past
+      // their last booked lesson, and the payment limit would refuse the 3.
       [SEED.groups.aimanSofia, 3, 30000],
+      [SEED.groups.aimanSofia, 4, 40000],
     ]
     for (const [group, lessons, amount] of cases) {
       const id = await recordPayment(db, group, lessons, null, 'transfer', '2026-09-20', ' Term 3 ')
@@ -455,3 +457,84 @@ describe.skipIf(!hasDatabase)('record_payment and add_free_lesson (BR-20, BR-26)
     ).toMatchObject({ message: 'invalid_note' })
   })
 })
+
+describe.skipIf(!hasDatabase)(
+  'record_payment: at most one package ahead (Herman, 7 Oct 2026)',
+  () => {
+    const db = useTestDb()
+    const sql = 'select public.record_payment($1, $2, $3, $4)'
+
+    /** A new 1-to-1 group of meiling's, added by the coach, who stays signed in. */
+    async function newGroup(openingUsed = 0, openingPaid = 0) {
+      const meiling = await db.idOf('meiling')
+      await db.as('herman')
+      const { rows } = await db.query<{ id: string }>(
+        `select public.create_group($1, '[{"name": "Test Kid"}]'::jsonb, 'Palm Court',
+                                  false, null, null, $2, $3) as id`,
+        [meiling, openingUsed, openingPaid],
+      )
+      return rows[0]?.id ?? ''
+    }
+
+    /** meiling books `weeks` weekly lessons at 7:30 pm from `day`; then the coach is signed in again. */
+    async function book(groupId: string, day: string, weeks: number) {
+      await db.as('meiling')
+      await db.query('select public.book_lesson($1, $2, 60, $3)', [
+        groupId,
+        `${day} 19:30+08`,
+        weeks,
+      ])
+      await db.as('herman')
+    }
+
+    it('lets the tester’s Package 2 be paid once, then waits for a lesson booked in it', async () => {
+      // Package 1 paid (as a starting balance), its 4 lessons booked.
+      const group = await newGroup(0, 4)
+      await book(group, '2026-09-29', 4)
+      await recordPayment(db, group, 4, 0, 'cash')
+      await db.as('herman')
+      expect(await failure(db, sql, [group, 4, 0, 'cash'])).toEqual({
+        message: 'paid_ahead',
+        detail: { package_no: 2 },
+      })
+      // A lesson booked in Package 2 opens payments again: Package 3.
+      await book(group, '2026-10-22', 1)
+      await recordPayment(db, group, 4, 0, 'cash')
+      await db.as('herman')
+      expect(await failure(db, sql, [group, 4, 0, 'cash'])).toMatchObject({
+        message: 'paid_ahead',
+        detail: { package_no: 3 },
+      })
+      expect(await balance(db, group)).toMatchObject({ paid_lessons: 12, booked_lessons: 5 })
+    })
+
+    it('lets a new group pay for Package 1 once before it books', async () => {
+      const group = await newGroup()
+      await recordPayment(db, group, 4, 0, 'cash')
+      await db.as('herman')
+      expect(await failure(db, sql, [group, 4, 0, 'cash'])).toEqual({
+        message: 'paid_ahead',
+        detail: { package_no: 1 },
+      })
+    })
+
+    it('refuses one payment that would pay further ahead, but always allows a whole package', async () => {
+      const group = await newGroup(0, 4)
+      await book(group, '2026-09-29', 4)
+      expect(await failure(db, sql, [group, 12, 0, 'cash'])).toEqual({
+        message: 'too_many_lessons',
+        detail: { max: 4 },
+      })
+      // A free lesson makes 5 paid: a normal package of 4 still goes through.
+      await db.query('select public.add_free_lesson($1)', [group])
+      await recordPayment(db, group, 4, 0, 'cash')
+      expect(await balance(db, group)).toMatchObject({ paid_lessons: 9 })
+    })
+
+    it('lets lessons used before the system be paid off in one go', async () => {
+      const group = await newGroup(10, 0)
+      await recordPayment(db, group, 12, 0, 'cash')
+      expect(await balance(db, group)).toMatchObject({ paid_lessons: 12, used_lessons: 10 })
+    })
+  },
+)
