@@ -147,6 +147,11 @@ export default defineConfig(({ command, mode }) => {
         treeshake: {
           moduleSideEffects: (id: string) => !OWN_MODULE.test(toPosix(id)),
         },
+        // All the Chinese words in one chunk, fetched only when someone picks 中文
+        // (app/providers/loadChinese.ts). Their imports are types only, so nothing else joins.
+        output: {
+          codeSplitting: { groups: [{ name: 'zh', test: /\.zh\.ts$/ }] },
+        },
       },
     },
     // PGlite loads its own WebAssembly and data files, so Vite must not pre-bundle it.

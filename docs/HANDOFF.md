@@ -3,6 +3,54 @@
 Update this file at the end of every Claude Code session. Newest entry on top.
 Keep entries short; link to files instead of pasting code.
 
+## v0.26 · 7 Oct 2026 · English and Chinese (in progress)
+**State**: started on top of v0.25. Herman hasn't said whether v0.25's production `db push`
+and `wrangler deploy` ran: ask before stage 4 adds a second migration.
+**Decisions** (Herman, 7 Oct: "1. Student screen only, 2. A, 3. B, 4. A")
+- Student screens switch: Book, Schedule, My classes, Account, Log in, Sign up, Forgot and
+  Reset password, Waiting for approval, Not found. The coach's screens stay English
+  (`CoachLayout` pins English); "View as customer" follows the toggle.
+- Simplified Chinese (简体).
+- Emails go in the student's language: needs a migration (stage 4).
+- An "EN | 中文" toggle at the top of every student page, remembered on each phone.
+- Typed text stays as typed: names, pools, announcements, payment instructions.
+- Claude writes the Chinese; a reader of Chinese checks it before it goes live (screenshots
+  in `frontend-plan/out/zh/`, words in `frontend-plan/notes/i18n-glossary.md`).
+**How it works**: each slice keeps its English words in a `words.ts` (`defineWords`, English
+by default, so the tests need nothing) and its Chinese in `words.zh.ts` beside it.
+`app/providers/LanguageProvider` loads every `*.zh.ts` at once, the first time 中文 is
+picked (one `zh` chunk, `codeSplitting` in vite.config.ts), then switches. Pure functions
+that build sentences take the words as an argument, defaulting to English.
+**Database text students see**: `group_details.type_label` ("1-to-2"; the browser builds it
+from `size` in Chinese) and `display_names` ("Aiman & Sofia", kept); the four student
+emails (`email_booked`, `email_cancelled`, `email_broadcast`, `email_reminder`); the Auth
+emails (confirm sign-up, reset password: Supabase templates, PRODUCTION.md 1.3). Error
+details carry raw times (`myt_text`), so the browser formats them.
+**Stages** (each: tests, zh screenshots, commit, show Herman, stop)
+1. The toggle, the mechanism, `<html lang>`, a CJK font fallback, Chinese dates and times,
+   the menu, Log in, Sign up, Forgot and Reset password, Waiting for approval, Not found.
+2. Book and Schedule, with the customer messages (`messages.ts`) and slot reasons.
+3. My classes and Account.
+4. Migration: `profiles.language` (set at sign-up and by the toggle), Chinese student
+   emails. Herman pushes it to dev; `test:db`; then production.
+5. The reviewer's corrections; deploy.
+
+**Stage 1** (done, not deployed): `shared/i18n/` (language.ts: the phone's choice in
+localStorage `swimclass.language`; words.ts: `defineWords`, `ZhWords`, `registerChinese`;
+context.ts: `useLanguage`, `useWords`; LanguageScope.tsx; pageLanguage.ts: `<html lang>`),
+`app/providers/LanguageProvider` + `loadChinese.ts`, `shared/ui/LanguageToggle` (top right of
+every student page; beside the business name on the sign-in card), the CJK font fallback,
+Chinese in `formatTime`/`formatDay`/`formatDayMonth`/`formatDayMonthYear`/`formatRange`/
+`formatDateList`/`formatHours`/`formatMinutes` (a `language` argument, English by default),
+`messages.ts` (`language` option, `messagesIn`, `Readers`; every customer code in
+`messages.zh.ts`), and Log in, Sign up, Forgot and Reset password, Waiting for approval, Not
+found, the route loading and error screens, Log out, the tabs and sidebar. Each slice's words
+are in `model/words.ts` + `model/words.zh.ts` (app/ and shared/ beside the code).
+`app/providers/chinese.test.ts` checks every words.ts has its Chinese with the same key, that
+Chinese files import types only, and that every customer message has Chinese.
+**Don't deploy mid-way**: the student pages' tab bar is Chinese but Book, Schedule, My classes
+and Account aren't yet (stages 2 and 3).
+
 ## v0.25 · 7 Oct 2026 · Later packages show; payments at most one package ahead
 **State**: local `frontend-first` adds this work on top of v0.24 (949b71f); nothing pushed.
 The new migration `20261007100000_payment_limit.sql` is on dev, not production: the

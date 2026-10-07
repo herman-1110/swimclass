@@ -1,6 +1,11 @@
+import { useWords } from '@/shared/i18n/context'
+
+import { layoutWords } from './words'
+
 // The first thing a keyboard user reaches: jumps past the sidebar to <main id="main">.
 // Hidden until focused.
 export function SkipLink() {
+  const w = useWords(layoutWords)
   return (
     <a
       href="#main"
@@ -8,7 +13,7 @@ export function SkipLink() {
       // classes would lose to it.
       className="sr-only font-semibold focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-20 focus:inline-flex focus:min-h-11 focus:items-center focus:rounded-small focus:border focus:border-field focus:bg-white focus:px-4"
     >
-      Skip to main content
+      {w.skipToContent}
     </a>
   )
 }

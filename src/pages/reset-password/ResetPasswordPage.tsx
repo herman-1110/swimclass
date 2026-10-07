@@ -3,12 +3,12 @@ import { useState } from 'react'
 import { useMyProfile, useSession } from '@/entities/account'
 import { NewPasswordForm } from '@/features/reset-password'
 import { DEFAULT_BUSINESS_NAME } from '@/shared/config/business'
+import { useWords } from '@/shared/i18n/context'
 import { PageHeader } from '@/shared/ui/PageHeader'
 
+import { resetPageWords } from './model/words'
 import { LinkExpired } from './ui/LinkExpired'
 import { PasswordSaved } from './ui/PasswordSaved'
-
-const TITLE = 'Set a new password'
 
 /**
  * Set a new password (auth spec §2.5, §6.4): where the reset and invite links land, signed in
@@ -19,6 +19,7 @@ const TITLE = 'Set a new password'
 export function ResetPasswordPage() {
   const session = useSession()
   const profile = useMyProfile()
+  const w = useWords(resetPageWords)
   const [result, setResult] = useState<'saved' | 'expired' | null>(null)
   // Whether the form has been on screen (it shows whenever someone is signed in), so the
   // expired state knows it replaced it: information kept from earlier renders.
@@ -36,26 +37,27 @@ export function ResetPasswordPage() {
   const username = profile.data?.username
   return (
     <>
-      <title>{`${TITLE} · ${DEFAULT_BUSINESS_NAME}`}</title>
+      <title>{`${w.title} · ${DEFAULT_BUSINESS_NAME}`}</title>
       <PageHeader
         size="auth"
-        title={TITLE}
+        title={w.title}
         titleId="reset-title"
         // Nothing to choose until the link has signed someone in: just "Loading…" below.
         description={
           loading ? undefined : username ? (
             <>
-              Your username is <span className="font-semibold text-ink">{username}</span>. Choose a
-              new password.
+              {w.yourUsernameIs}
+              <span className="font-semibold text-ink">{username}</span>
+              {w.chooseAfterUsername}
             </>
           ) : (
-            'Choose a new password.'
+            w.choose
           )
         }
       />
       {loading ? (
         <p role="status" className="text-sm text-muted">
-          Loading…
+          {w.loading}
         </p>
       ) : (
         <NewPasswordForm

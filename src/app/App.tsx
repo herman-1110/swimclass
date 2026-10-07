@@ -3,6 +3,7 @@ import { RouterProvider } from 'react-router/dom'
 
 import { installHoverMotion } from '@/shared/lib/motion'
 
+import { LanguageProvider } from './providers/LanguageProvider'
 import { QueryProvider } from './providers/QueryProvider'
 import { SessionProvider } from './providers/SessionProvider'
 import { router } from './router/router'
@@ -12,10 +13,12 @@ export function App() {
   useEffect(() => installHoverMotion(), [])
 
   return (
-    <QueryProvider>
-      <SessionProvider>
-        <RouterProvider router={router} />
-      </SessionProvider>
-    </QueryProvider>
+    <LanguageProvider>
+      <QueryProvider>
+        <SessionProvider>
+          <RouterProvider router={router} />
+        </SessionProvider>
+      </QueryProvider>
+    </LanguageProvider>
   )
 }

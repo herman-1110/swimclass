@@ -236,3 +236,29 @@ describe('parseDateKey', () => {
     expect(parseDateKey('2026-13-01')).toBeNull()
   })
 })
+
+// The student screens in Chinese (HANDOFF v0.26; frontend-plan/notes/i18n-glossary.md).
+describe('Chinese dates and times', () => {
+  it('puts the part of the day first: 上午 before noon, 下午 to 6 pm, 晚上 after', () => {
+    expect(formatTime('2026-10-03T09:00:00+08:00', 'zh')).toBe('上午9:00')
+    expect(formatTime('2026-10-03T12:00:00+08:00', 'zh')).toBe('下午12:00')
+    expect(formatTime('2026-10-03T17:30:00+08:00', 'zh')).toBe('下午5:30')
+    expect(formatTime('2026-10-03T19:30:00+08:00', 'zh')).toBe('晚上7:30')
+  })
+
+  it('writes days as month and day, then the weekday', () => {
+    expect(formatDay('2026-10-03T09:00:00+08:00', 'zh')).toBe('10月3日 周六')
+    expect(formatDayMonth('2026-09-19', undefined, 'zh')).toBe('9月19日')
+    expect(formatDayMonth('2025-12-18', '2026-09-26T12:00:00+08:00', 'zh')).toBe('2025年12月18日')
+    expect(formatDayMonthYear('2026-09-19', 'zh')).toBe('2026年9月19日')
+  })
+
+  it('writes the part of the day once in a range that stays in it', () => {
+    expect(formatRange('2026-09-29T19:30:00+08:00', '2026-09-29T20:30:00+08:00', 'zh')).toBe(
+      '晚上7:30–8:30',
+    )
+    expect(formatRange('2026-10-03T11:00:00+08:00', '2026-10-03T12:00:00+08:00', 'zh')).toBe(
+      '上午11:00–下午12:00',
+    )
+  })
+})

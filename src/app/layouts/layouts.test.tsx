@@ -84,7 +84,8 @@ describe('the business name', () => {
     queryClient.setQueryDefaults(settingsKeys.public(), { enabled: false })
     renderAt('/pending', queryClient)
     await screen.findByRole('heading', { level: 1, name: 'Waiting for approval' })
-    const name = screen.getByRole('main').previousElementSibling
+    // The row above the page holds the name, then the language toggle.
+    const name = screen.getByRole('main').previousElementSibling?.firstElementChild
     expect(name?.textContent).toBe('')
     expect(name?.className).toContain('min-h-[1lh]')
   })

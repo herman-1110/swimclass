@@ -2,7 +2,10 @@ import type { Ref } from 'react'
 
 import { normalizeUsername, type UsernameCheck } from '@/entities/account'
 import { messageFor } from '@/shared/config/messages'
+import { useLanguage, useWords } from '@/shared/i18n/context'
 import { Field } from '@/shared/ui/Field'
+
+import { signUpWords } from '../model/words'
 
 type UsernameFieldProps = {
   ref: Ref<HTMLInputElement>
@@ -35,31 +38,29 @@ export function UsernameField({
   sent,
   onLeave,
 }: UsernameFieldProps) {
+  const language = useLanguage()
+  const w = useWords(signUpWords)
   const wrongFormat =
     (check.state === 'invalid' && (left || sent)) || (check.state === 'empty' && sent)
   const status =
     check.state === 'checking' ? (
-      'Checking…'
+      w.checking
     ) : check.state === 'available' ? (
-      'That username is available.'
+      w.available
     ) : check.state === 'taken' ? (
-      <span className="text-warn">{messageFor({ code: 'username_taken' })}</span>
+      <span className="text-warn">{messageFor({ code: 'username_taken' }, { language })}</span>
     ) : null
 
   return (
     <Field
       ref={ref}
       id="signup-username"
-      label="Username"
+      label={w.username}
       size="lg"
-      help={
-        wrongFormat
-          ? undefined
-          : '3 to 30 small letters, numbers, dots or underscores. You’ll log in with it.'
-      }
+      help={wrongFormat ? undefined : w.usernameHelp}
       // null keeps the live line in the page before its first message (Field).
       status={status}
-      error={wrongFormat ? messageFor({ code: 'invalid_username' }) : undefined}
+      error={wrongFormat ? messageFor({ code: 'invalid_username' }, { language }) : undefined}
       aria-invalid={check.state === 'taken' || undefined}
       // As the log-in username (auth spec §7.3).
       autoComplete="username"

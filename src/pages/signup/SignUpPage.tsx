@@ -4,13 +4,13 @@ import { useNavigate } from 'react-router'
 import { SignUpForm } from '@/features/sign-up'
 import { DEFAULT_BUSINESS_NAME } from '@/shared/config/business'
 import { ROUTES } from '@/shared/config/routes'
+import { useWords } from '@/shared/i18n/context'
 import { ButtonLink } from '@/shared/ui/ButtonLink'
 import { CardFooter } from '@/shared/ui/CardFooter'
 import { PageHeader } from '@/shared/ui/PageHeader'
 
+import { signUpPageWords } from './model/words'
 import { SignUpSent } from './ui/SignUpSent'
-
-const TITLE = 'Create an account'
 
 /**
  * Sign up (auth spec §2.3; not drawn, so in Log in's card and style). Once the account
@@ -20,19 +20,15 @@ const TITLE = 'Create an account'
  */
 export function SignUpPage() {
   const navigate = useNavigate()
+  const w = useWords(signUpPageWords)
   const [sentTo, setSentTo] = useState<string | null>(null)
 
   if (sentTo !== null) return <SignUpSent email={sentTo} />
 
   return (
     <>
-      <title>{`${TITLE} · ${DEFAULT_BUSINESS_NAME}`}</title>
-      <PageHeader
-        size="auth"
-        title={TITLE}
-        titleId="signup-title"
-        description="Sign up to book lessons with your coach."
-      />
+      <title>{`${w.title} · ${DEFAULT_BUSINESS_NAME}`}</title>
+      <PageHeader size="auth" title={w.title} titleId="signup-title" description={w.description} />
       <SignUpForm
         labelledBy="signup-title"
         onSignedUp={({ email, confirmEmail }) => {
@@ -43,14 +39,12 @@ export function SignUpPage() {
       <CardFooter>
         <ButtonLink to={ROUTES.login} variant="text" tone="ink">
           <span>
-            Already have an account? <span className="font-semibold text-accent">Log in</span>
+            {w.haveAccount} <span className="font-semibold text-accent">{w.logIn}</span>
           </span>
         </ButtonLink>
         {/* Signed-out pages can't read require_approval, so these words hold whether the coach
             approves accounts or not (triage 7, 3 Oct 2026). */}
-        <p className="text-small leading-normal text-muted">
-          Your coach may need to approve your account before you can book.
-        </p>
+        <p className="text-small leading-normal text-muted">{w.approvalNote}</p>
       </CardFooter>
     </>
   )

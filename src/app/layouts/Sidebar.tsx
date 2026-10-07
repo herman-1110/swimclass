@@ -1,9 +1,11 @@
 import { Link } from 'react-router'
 
 import { LogOutButton } from '@/features/log-out'
+import { useWords } from '@/shared/i18n/context'
 import { cn } from '@/shared/lib/cn'
 
 import { type NavItem, type SidebarLink, useIsCurrent } from './navigation'
+import { layoutWords } from './words'
 
 type SidebarProps = {
   /** Names the navigation for screen readers: the same name as the tab bar's. */
@@ -37,10 +39,11 @@ export function Sidebar({
 }: SidebarProps) {
   const isCurrent = useIsCurrent()
   const hasBottomLinks = bottomItems.length > 0 || logOut
+  const w = useWords(layoutWords)
 
   return (
     <aside
-      aria-label={`${label} navigation`}
+      aria-label={w.navigation(label)}
       className="hidden w-[220px] shrink-0 flex-col gap-8 border-r border-line px-3.5 pt-7 pb-6 lg:sticky lg:top-0 lg:flex lg:h-dvh lg:self-start lg:overflow-y-auto"
     >
       {/* min-h keeps the line's height while the settings load, so nothing below moves. */}
@@ -78,7 +81,7 @@ export function Sidebar({
             <span
               className={cn('px-3 text-small text-muted wrap-anywhere', hasBottomLinks && 'pt-2')}
             >
-              Signed in as {signedInAs}
+              {w.signedInAs(signedInAs)}
             </span>
           )}
         </div>

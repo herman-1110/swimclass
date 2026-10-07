@@ -3,6 +3,7 @@ import { flushSync } from 'react-dom'
 
 import { toAppError } from '@/shared/api/rpc'
 import { messageFor, MIN_PASSWORD_LENGTH } from '@/shared/config/messages'
+import { useLanguage, useWords } from '@/shared/i18n/context'
 import { focusProblem } from '@/shared/lib/focusProblem'
 import { Button } from '@/shared/ui/Button'
 import { Field } from '@/shared/ui/Field'
@@ -14,6 +15,7 @@ import {
   type NewPasswordProblems,
   newPasswordProblems,
 } from '../model/resetChecks'
+import { resetPasswordWords } from '../model/words'
 
 type NewPasswordFormProps = {
   /** The id of the page's h1, which names the form (auth spec §7.2: "reset-title"). */
@@ -39,6 +41,8 @@ export function NewPasswordForm({ labelledBy, onSaved, onExpired }: NewPasswordF
   const passwordInput = useRef<HTMLInputElement>(null)
   const confirmInput = useRef<HTMLInputElement>(null)
   const save = useSetNewPassword()
+  const language = useLanguage()
+  const w = useWords(resetPasswordWords)
 
   // Event handlers only: refs are never read while rendering.
   const inputOf = (field: NewPasswordField) =>
@@ -59,10 +63,10 @@ export function NewPasswordForm({ labelledBy, onSaved, onExpired }: NewPasswordF
     // Committed before the focus moves, so the field is read with its message.
     flushSync(() => {
       if (onField) setProblems({ password: code })
-      else setRefusal(messageFor(error))
+      else setRefusal(messageFor(error, { language }))
     })
     // Said out loud also when Enter was pressed in that very field.
-    if (onField) focusProblem(inputOf('password'), messageFor({ code }))
+    if (onField) focusProblem(inputOf('password'), messageFor({ code }, { language }))
   }
 
   function submit(event: FormEvent<HTMLFormElement>) {
@@ -75,7 +79,7 @@ export function NewPasswordForm({ labelledBy, onSaved, onExpired }: NewPasswordF
     })
     const first = (['password', 'confirm'] as const).find((field) => found[field])
     if (first) {
-      focusProblem(inputOf(first), messageFor({ code: found[first] }))
+      focusProblem(inputOf(first), messageFor({ code: found[first] }, { language }))
       return
     }
     save.mutate(values.password, { onSuccess: onSaved, onError: refused })
@@ -83,7 +87,7 @@ export function NewPasswordForm({ labelledBy, onSaved, onExpired }: NewPasswordF
 
   const errorOf = (field: NewPasswordField) => {
     const code = problems[field]
-    return code && messageFor({ code })
+    return code && messageFor({ code }, { language })
   }
 
   return (
@@ -92,10 +96,10 @@ export function NewPasswordForm({ labelledBy, onSaved, onExpired }: NewPasswordF
         ref={passwordInput}
         id="reset-password"
         maxLength={72}
-        label="New password"
+        label={w.newPassword}
         type="password"
         size="lg"
-        help={`At least ${MIN_PASSWORD_LENGTH} characters.`}
+        help={w.passwordHelp(MIN_PASSWORD_LENGTH)}
         autoComplete="new-password"
         required
         value={values.password}
@@ -106,7 +110,7 @@ export function NewPasswordForm({ labelledBy, onSaved, onExpired }: NewPasswordF
         ref={confirmInput}
         id="reset-password-confirm"
         maxLength={72}
-        label="Confirm new password"
+        label={w.confirm}
         type="password"
         size="lg"
         autoComplete="new-password"
@@ -121,7 +125,7 @@ export function NewPasswordForm({ labelledBy, onSaved, onExpired }: NewPasswordF
         </p>
       )}
       <Button type="submit" size="xl" block pending={save.isPending} className="mt-2">
-        {save.isPending ? 'Saving…' : 'Save new password'}
+        {save.isPending ? w.saving : w.save}
       </Button>
     </form>
   )

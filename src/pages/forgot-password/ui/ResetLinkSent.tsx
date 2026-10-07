@@ -1,15 +1,16 @@
 import { DEFAULT_BUSINESS_NAME } from '@/shared/config/business'
 import { ROUTES } from '@/shared/config/routes'
+import { useWords } from '@/shared/i18n/context'
 import { ButtonLink } from '@/shared/ui/ButtonLink'
 import { CardFooter } from '@/shared/ui/CardFooter'
 import { PageHeader } from '@/shared/ui/PageHeader'
+
+import { forgotPageWords } from '../model/words'
 
 type ResetLinkSentProps = {
   /** The address the link was asked for. */
   email: string
 }
-
-const TITLE = 'Check your email'
 
 /**
  * Forgot password's result (auth spec §2.4, §6.3): the same words whether or not an account
@@ -17,16 +18,18 @@ const TITLE = 'Check your email'
  * since it replaces the form. Demo mode sends no email, and says what to do instead.
  */
 export function ResetLinkSent({ email }: ResetLinkSentProps) {
+  const w = useWords(forgotPageWords)
   return (
     <>
-      <title>{`${TITLE} · ${DEFAULT_BUSINESS_NAME}`}</title>
+      <title>{`${w.sentTitle} · ${DEFAULT_BUSINESS_NAME}`}</title>
       <PageHeader
         size="auth"
-        title={TITLE}
+        title={w.sentTitle}
         description={
           <>
-            If an account uses <span className="wrap-anywhere">{email}</span>, we’ve sent it a link
-            to set a new password.
+            {w.sentBefore}
+            <span className="wrap-anywhere">{email}</span>
+            {w.sentAfter}
           </>
         }
         focusOnMount
@@ -34,12 +37,12 @@ export function ResetLinkSent({ email }: ResetLinkSentProps) {
       {/* The build-time constant: a production build leaves the demo note out. */}
       {import.meta.env.VITE_DEMO === 'true' && (
         <p className="rounded-control bg-subtle px-3.5 py-3 text-label leading-normal text-muted">
-          Demo mode sends no email. Log in, then change the password on your Account page.
+          {w.demoNote}
         </p>
       )}
       <CardFooter>
         <ButtonLink to={ROUTES.login} variant="link">
-          Back to log in
+          {w.backToLogIn}
         </ButtonLink>
       </CardFooter>
     </>

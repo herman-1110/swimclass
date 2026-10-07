@@ -2,14 +2,18 @@ import { useEffect, useRef } from 'react'
 import { Link } from 'react-router'
 
 import { AppError } from '@/shared/api/rpc'
-import { GENERIC_MESSAGE, NETWORK_MESSAGE } from '@/shared/config/messages'
+import { messagesIn } from '@/shared/config/messages'
 import { ROUTES } from '@/shared/config/routes'
+import { useLanguage, useWords } from '@/shared/i18n/context'
+import type { Language } from '@/shared/i18n/language'
 
 import { useEndSession } from '../api/useEndSession'
+import { logOutWords } from '../model/words'
 
 // DESIGN §6: the network row, otherwise the generic message.
-function failureText(error: Error): string {
-  return error instanceof AppError && error.code === 'network' ? NETWORK_MESSAGE : GENERIC_MESSAGE
+function failureText(error: Error, language: Language): string {
+  const words = messagesIn(language)
+  return error instanceof AppError && error.code === 'network' ? words.network : words.generic
 }
 
 /**
@@ -20,6 +24,8 @@ function failureText(error: Error): string {
  */
 export function LoggingOut() {
   const endSession = useEndSession()
+  const language = useLanguage()
+  const w = useWords(logOutWords)
   const { mutate } = endSession
   const started = useRef(false)
 
@@ -34,7 +40,7 @@ export function LoggingOut() {
     return (
       <div className="flex flex-col items-center gap-2 p-8 text-center text-sm">
         <p role="alert" className="leading-normal text-warn">
-          {failureText(endSession.error)}
+          {failureText(endSession.error, language)}
         </p>
         <div className="flex flex-wrap justify-center gap-x-4">
           <button
@@ -42,10 +48,10 @@ export function LoggingOut() {
             onClick={() => mutate()}
             className="inline-flex min-h-11 items-center font-semibold text-accent hover:text-accent-hover"
           >
-            Try again
+            {w.tryAgain}
           </button>
           <Link to={ROUTES.home} replace className="inline-flex min-h-11 items-center">
-            Go to the start
+            {w.goToStart}
           </Link>
         </div>
       </div>
@@ -54,7 +60,7 @@ export function LoggingOut() {
 
   return (
     <p role="status" className="p-8 text-center text-sm text-muted">
-      Logging out…
+      {w.loggingOut}
     </p>
   )
 }

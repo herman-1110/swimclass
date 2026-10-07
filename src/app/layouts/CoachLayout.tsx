@@ -2,6 +2,7 @@ import { Outlet } from 'react-router'
 
 import { useMyProfile } from '@/entities/account'
 import { ROUTES } from '@/shared/config/routes'
+import { LanguageScope } from '@/shared/i18n/LanguageScope'
 import { CalendarIcon } from '@/shared/ui/icons/CalendarIcon'
 import { EyeIcon } from '@/shared/ui/icons/EyeIcon'
 import { SlidersIcon } from '@/shared/ui/icons/SlidersIcon'
@@ -45,23 +46,27 @@ export function CoachLayout() {
   const businessName = useBusinessName()
 
   return (
-    <div className="flex min-h-dvh flex-col bg-white lg:flex-row">
-      <SkipLink />
-      <Sidebar
-        label="Coach"
-        businessName={businessName}
-        items={sections}
-        bottomItems={[customerView]}
-        // The coach's own way out (auth spec Q10); customers log out on Account.
-        logOut
-        signedInAs={profile.data?.display_name}
-      />
-      {/* No padding: each coach page pads its own content as drawn, because its side
+    // The coach's screens stay English, whatever the student screens' toggle says (Herman,
+    // 7 Oct 2026).
+    <LanguageScope language="en" wholePage>
+      <div className="flex min-h-dvh flex-col bg-white lg:flex-row">
+        <SkipLink />
+        <Sidebar
+          label="Coach"
+          businessName={businessName}
+          items={sections}
+          bottomItems={[customerView]}
+          // The coach's own way out (auth spec Q10); customers log out on Account.
+          logOut
+          signedInAs={profile.data?.display_name}
+        />
+        {/* No padding: each coach page pads its own content as drawn, because its side
           columns (Schedule's 320 px, Record payment's 340 px) run to the edges. */}
-      <main id="main" tabIndex={-1} className="flex min-w-0 flex-1 flex-col">
-        <Outlet />
-      </main>
-      <TabBar label="Coach" items={tabs} />
-    </div>
+        <main id="main" tabIndex={-1} className="flex min-w-0 flex-1 flex-col">
+          <Outlet />
+        </main>
+        <TabBar label="Coach" items={tabs} />
+      </div>
+    </LanguageScope>
   )
 }

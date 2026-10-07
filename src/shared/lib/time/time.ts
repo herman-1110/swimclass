@@ -3,6 +3,7 @@ import { format, startOfWeek } from 'date-fns'
 
 import { DEMO_NOW } from '@/shared/config/demo'
 import { env } from '@/shared/config/env'
+import type { Language } from '@/shared/i18n/language'
 
 /**
  * Malaysia time. All business dates and all display use this zone (CLAUDE.md rule 2),
@@ -104,14 +105,30 @@ export function mytWeekStart(value: Instant | DateKey): DateKey {
   return format(startOfWeek(toMyt(day), { weekStartsOn: 1 }), 'yyyy-MM-dd')
 }
 
-/** "7:30 pm", "12:00 pm" (noon), "12:00 am" (midnight). */
-export function formatTime(instant: Instant): string {
-  return format(toMyt(instant), 'h:mm aaa')
+// Chinese (the student screens, Herman 7 Oct 2026): the period word goes first, "上午7:30",
+// "下午5:00", "晚上7:30" (from 6 pm); days are "10月3日 周六" (frontend-plan/notes/i18n-glossary.md).
+const ZH_WEEKDAYS = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
+
+function zhPeriod(time: TZDate): string {
+  const hour = time.getHours()
+  return hour < 12 ? '上午' : hour < 18 ? '下午' : '晚上'
 }
 
-/** "Sat 3 Oct". */
-export function formatDay(instant: Instant): string {
-  return format(toMyt(instant), 'EEE d MMM')
+/** "周六": a moment's weekday in Chinese. */
+export function zhWeekday(instant: Instant): string {
+  return ZH_WEEKDAYS[toMyt(instant).getDay()] ?? ''
+}
+
+/** "7:30 pm", "12:00 pm" (noon), "12:00 am" (midnight); Chinese "晚上7:30", "下午12:00". */
+export function formatTime(instant: Instant, language: Language = 'en'): string {
+  const time = toMyt(instant)
+  return language === 'zh' ? `${zhPeriod(time)}${format(time, 'h:mm')}` : format(time, 'h:mm aaa')
+}
+
+/** "Sat 3 Oct"; Chinese "10月3日 周六". */
+export function formatDay(instant: Instant, language: Language = 'en'): string {
+  const day = toMyt(instant)
+  return language === 'zh' ? `${format(day, 'M月d日')} ${zhWeekday(day)}` : format(day, 'EEE d MMM')
 }
 
 // A date column ("2026-09-19") is read at noon Malaysia time, so it names that day in any
@@ -126,15 +143,20 @@ function dayOf(value: Instant | DateKey): TZDate {
  * A day as "26 Sep", from a moment or a date column ("2026-09-19"), in Malaysia time. With
  * `now`, a day in another year shows the year too: "18 Dec 2025".
  */
-export function formatDayMonth(value: Instant | DateKey, now?: Instant): string {
+export function formatDayMonth(
+  value: Instant | DateKey,
+  now?: Instant,
+  language: Language = 'en',
+): string {
   const day = dayOf(value)
   const sameYear = now === undefined || toMyt(now).getFullYear() === day.getFullYear()
+  if (language === 'zh') return format(day, sameYear ? 'M月d日' : 'yyyy年M月d日')
   return format(day, sameYear ? 'd MMM' : 'd MMM yyyy')
 }
 
-/** A day with its year, "19 Sep 2026", from a moment or a date column. */
-export function formatDayMonthYear(value: Instant | DateKey): string {
-  return format(dayOf(value), 'd MMM yyyy')
+/** A day with its year, "19 Sep 2026" (Chinese "2026年9月19日"), from a moment or a date column. */
+export function formatDayMonthYear(value: Instant | DateKey, language: Language = 'en'): string {
+  return format(dayOf(value), language === 'zh' ? 'yyyy年M月d日' : 'd MMM yyyy')
 }
 
 const DAY_MS = 24 * 60 * 60 * 1000
@@ -156,10 +178,18 @@ export function weekDays(weekStart: DateKey): DateKey[] {
 /**
  * A time range with an en dash. The am/pm is written once when both ends share it:
  * "9:00–10:00 am", "5:30–6:30 pm", and on both ends when they don't: "11:00 am–12:00 pm".
+ * Chinese puts the period word first, once when both ends share it: "晚上7:30–8:30",
+ * "上午11:00–下午12:00".
  */
-export function formatRange(start: Instant, end: Instant): string {
+export function formatRange(start: Instant, end: Instant, language: Language = 'en'): string {
   const from = toMyt(start)
   const to = toMyt(end)
+  if (language === 'zh') {
+    const fromPeriod = zhPeriod(from)
+    const toPeriod = zhPeriod(to)
+    const until = toPeriod === fromPeriod ? format(to, 'h:mm') : formatTime(to, 'zh')
+    return `${formatTime(from, 'zh')}–${until}`
+  }
   const fromHalf = format(from, 'aaa')
   const toHalf = format(to, 'aaa')
   if (fromHalf === toHalf) {

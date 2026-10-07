@@ -1,4 +1,7 @@
+import { useWords } from '@/shared/i18n/context'
+
 import { useLogOut } from '../api/useLogOut'
+import { logOutWords } from '../model/words'
 
 type LogOutButtonProps = {
   /**
@@ -14,9 +17,10 @@ type LogOutButtonProps = {
  */
 export function LogOutButton({ className }: LogOutButtonProps) {
   const logOut = useLogOut()
+  const w = useWords(logOutWords)
   return (
     <button type="button" className={className} onClick={logOut}>
-      Log out
+      {w.logOut}
     </button>
   )
 }

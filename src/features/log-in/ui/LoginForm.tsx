@@ -4,6 +4,7 @@ import { flushSync } from 'react-dom'
 import { toAppError } from '@/shared/api/rpc'
 import { messageFor } from '@/shared/config/messages'
 import { ROUTES } from '@/shared/config/routes'
+import { useLanguage, useWords } from '@/shared/i18n/context'
 import { focusProblem } from '@/shared/lib/focusProblem'
 import { useCaptcha } from '@/shared/lib/hooks/useCaptcha'
 import { Button } from '@/shared/ui/Button'
@@ -12,6 +13,7 @@ import { Field } from '@/shared/ui/Field'
 
 import { useLogIn } from '../api/useLogIn'
 import { type LogInField, type LogInProblems, logInProblems } from '../model/logInChecks'
+import { logInWords } from '../model/words'
 
 type LoginFormProps = {
   /** The id of the page's h1, which names the form (auth spec §7.2: "login-title"). */
@@ -38,6 +40,8 @@ export function LoginForm({ labelledBy }: LoginFormProps) {
   const passwordInput = useRef<HTMLInputElement>(null)
   const logIn = useLogIn()
   const captcha = useCaptcha()
+  const language = useLanguage()
+  const w = useWords(logInWords)
 
   // Event handlers only: refs are never read while rendering.
   const inputOf = (field: LogInField) =>
@@ -54,7 +58,7 @@ export function LoginForm({ labelledBy }: LoginFormProps) {
     // Committed before the focus moves, so the field is read with its new description.
     flushSync(() => {
       if (wrongDetails) setValues((current) => ({ ...current, password: '' }))
-      setRefusal({ message: messageFor(error), wrongDetails })
+      setRefusal({ message: messageFor(error, { language }), wrongDetails })
     })
     // The refusal is an alert of its own: focus only needs to reach the cleared password.
     if (wrongDetails) inputOf('password')?.focus()
@@ -71,11 +75,14 @@ export function LoginForm({ labelledBy }: LoginFormProps) {
     const first = (['username', 'password'] as const).find((field) => found[field])
     if (first) {
       // Said out loud also when Enter was pressed in that very field.
-      focusProblem(inputOf(first), messageFor({ code: found[first] }))
+      focusProblem(inputOf(first), messageFor({ code: found[first] }, { language }))
       return
     }
     if (captcha.missing) {
-      setRefusal({ message: messageFor({ code: 'captcha_required' }), wrongDetails: false })
+      setRefusal({
+        message: messageFor({ code: 'captcha_required' }, { language }),
+        wrongDetails: false,
+      })
       return
     }
     logIn.mutate({ ...values, captchaToken: captcha.token }, { onError: refused })
@@ -83,7 +90,7 @@ export function LoginForm({ labelledBy }: LoginFormProps) {
 
   const errorOf = (field: LogInField) => {
     const code = problems[field]
-    return code && messageFor({ code })
+    return code && messageFor({ code }, { language })
   }
 
   return (
@@ -92,9 +99,9 @@ export function LoginForm({ labelledBy }: LoginFormProps) {
         ref={usernameInput}
         id="login-username"
         maxLength={64}
-        label="Username"
+        label={w.username}
         size="lg"
-        placeholder="e.g. meiling"
+        placeholder={w.usernamePlaceholder}
         autoComplete="username"
         autoCapitalize="none"
         autoCorrect="off"
@@ -109,10 +116,10 @@ export function LoginForm({ labelledBy }: LoginFormProps) {
         ref={passwordInput}
         id="login-password"
         maxLength={72}
-        label="Password"
+        label={w.password}
         type="password"
         size="lg"
-        placeholder="Your password"
+        placeholder={w.passwordPlaceholder}
         autoComplete="current-password"
         enterKeyHint="go"
         required
@@ -129,10 +136,10 @@ export function LoginForm({ labelledBy }: LoginFormProps) {
       )}
       {/* 8 px more above the button than between the fields, as drawn. */}
       <Button type="submit" size="xl" block pending={logIn.isPending} className="mt-2">
-        {logIn.isPending ? 'Logging in…' : 'Log in'}
+        {logIn.isPending ? w.loggingIn : w.logIn}
       </Button>
       <ButtonLink to={ROUTES.forgotPassword} variant="text" className="self-center">
-        Forgot username or password?
+        {w.forgot}
       </ButtonLink>
     </form>
   )

@@ -1,4 +1,6 @@
 import { AppError, toAppError } from '@/shared/api/rpc'
+import type { Language } from '@/shared/i18n/language'
+import { defineWords, wordsIn } from '@/shared/i18n/words'
 import { formatDateList, formatHours, formatMinutes, plural, possessive } from '@/shared/lib/format'
 import { formatRange, formatTime } from '@/shared/lib/time'
 
@@ -90,6 +92,8 @@ export type MessageOptions = {
    * `{ travel_gap_minutes: 'Travel gap', … }`. A column without a label gets the generic message.
    */
   fieldLabels?: Readonly<Record<string, string>>
+  /** The student screens' language (default English; the coach's screens are English). */
+  language?: Language
 }
 
 /** A link inside a message: `duplicate_group`'s “that group” opens that group (DESIGN §6). */
@@ -100,7 +104,12 @@ export type MessagePart = string | MessageLink
 
 type Detail = Readonly<Record<string, unknown>>
 type Filled = string | readonly MessagePart[] | null
-type Words = string | ((detail: Detail, options: MessageOptions) => Filled)
+/**
+ * A message: its text, or a function of the error's detail and the options. The third
+ * argument reads values in the message's language; Chinese messages (messages.zh.ts) use it,
+ * since that file may import nothing at run time.
+ */
+export type Words = string | ((detail: Detail, options: MessageOptions, read: Readers) => Filled)
 
 // --- Reading values from an error's detail (TECH_SPEC §5) and from the options. Each gives
 // null when the value is missing or unusable, which turns the message generic.
@@ -192,6 +201,78 @@ function given<T, W extends Filled>(value: T | null, words: (value: T) => W): W 
 /** The words, when both values they need are there. */
 function givenBoth<A, B>(a: A | null, b: B | null, words: (a: A, b: B) => string): string | null {
   return a === null || b === null ? null : words(a, b)
+}
+
+/** Reading a detail's values for a message in one language (the Chinese table's tools). */
+export type Readers = {
+  textOf: (value: unknown) => string | null
+  wholeOf: (value: unknown) => number | null
+  countOf: (value: unknown) => number | null
+  /** "6:30 pm" / "晚上6:30" */
+  timeOf: (value: unknown) => string | null
+  /** "5:30–6:30 pm" / "下午5:30–6:30" */
+  rangeOf: (detail: Detail) => string | null
+  /** "Tue 13 Oct and Tue 20 Oct" / "10月13日 周二、10月20日 周二" */
+  datesOf: (value: unknown) => string | null
+  /** "1 hour", "90 minutes" / "1 小时", "90 分钟" */
+  gapOf: (options: MessageOptions) => string | null
+  given: typeof given
+  givenBoth: typeof givenBoth
+  /** The shortest password weak_password asks for. */
+  minPasswordLength: number
+}
+
+function readersIn(language: Language): Readers {
+  if (language === 'en') return ENGLISH_READERS
+  return {
+    ...ENGLISH_READERS,
+    timeOf: (value) => {
+      const instant = textOf(value)
+      if (instant === null) return null
+      try {
+        return formatTime(instant, language)
+      } catch {
+        return null
+      }
+    },
+    rangeOf: (detail) => {
+      const start = textOf(detail.starts_at)
+      const end = textOf(detail.ends_at)
+      if (start === null || end === null) return null
+      try {
+        return formatRange(start, end, language)
+      } catch {
+        return null
+      }
+    },
+    datesOf: (value) => {
+      if (!Array.isArray(value) || value.length === 0) return null
+      const dates: readonly unknown[] = value
+      if (!dates.every((date): date is string => typeof date === 'string')) return null
+      try {
+        return formatDateList(dates, language)
+      } catch {
+        return null
+      }
+    },
+    gapOf: (options) => {
+      const minutes = countOf(options.gapMinutes)
+      return minutes === null ? null : formatMinutes(minutes, language)
+    },
+  }
+}
+
+const ENGLISH_READERS: Readers = {
+  textOf,
+  wholeOf,
+  countOf,
+  timeOf,
+  rangeOf,
+  datesOf,
+  gapOf,
+  given,
+  givenBoth,
+  minPasswordLength: MIN_PASSWORD_LENGTH,
 }
 
 // --- DESIGN §6's first table, read by every screen. Coach screens reach it after theirs.
@@ -288,6 +369,26 @@ const CUSTOMER: Readonly<Record<string, Words>> = {
   // Only if the owner makes the phone required at sign-up (the auth spec, open question 3).
   phone_required: 'Enter your phone number.',
   password_mismatch: 'The passwords don’t match. Type the same password twice.',
+}
+
+/**
+ * The words the student screens show in their language (Herman, 7 Oct 2026): the customer
+ * table and the fixed messages. Chinese in messages.zh.ts; the coach table stays English.
+ */
+export const messageWords = defineWords('messages', {
+  generic: GENERIC_MESSAGE,
+  network: NETWORK_MESSAGE,
+  noGroups: NO_GROUPS_MESSAGE,
+  noGroupsCoach: NO_GROUPS_COACH_MESSAGE,
+  dayFullyBooked: DAY_FULLY_BOOKED_MESSAGE,
+  coachAwayDay: COACH_AWAY_DAY_MESSAGE,
+  coachAway: coachAwayMessage,
+  customer: CUSTOMER,
+})
+
+/** The fixed messages and the customer table in `language`. */
+export function messagesIn(language: Language = 'en'): typeof messageWords.en {
+  return wordsIn(messageWords, language)
 }
 
 // --- DESIGN §6's coach table. Coach screens try it first.
@@ -453,15 +554,16 @@ function readError(error: unknown): { code: string; detail: Detail } {
   return toAppError(error)
 }
 
-function wordsFor(code: string, audience: Audience): Words | undefined {
+function wordsFor(code: string, audience: Audience, language: Language): Words | undefined {
   if (audience === 'coach' && Object.hasOwn(COACH, code)) return COACH[code]
-  return Object.hasOwn(CUSTOMER, code) ? CUSTOMER[code] : undefined
+  const table = messagesIn(language).customer
+  return Object.hasOwn(table, code) ? table[code] : undefined
 }
 
 function fill(words: Words, detail: Detail, options: MessageOptions): Filled {
   if (typeof words === 'string') return words
   try {
-    return words(detail, options)
+    return words(detail, options, readersIn(options.language ?? 'en'))
   } catch {
     return null
   }
@@ -474,9 +576,10 @@ function fill(words: Words, detail: Detail, options: MessageOptions): Filled {
  */
 export function messageParts(error: unknown, options: MessageOptions = {}): readonly MessagePart[] {
   const { code, detail } = readError(error)
-  const words = wordsFor(code, options.audience ?? 'customer')
+  const language = options.language ?? 'en'
+  const words = wordsFor(code, options.audience ?? 'customer', language)
   const filled = words === undefined ? null : fill(words, detail, options)
-  if (filled === null) return [GENERIC_MESSAGE]
+  if (filled === null) return [messagesIn(language).generic]
   return typeof filled === 'string' ? [filled] : filled
 }
 

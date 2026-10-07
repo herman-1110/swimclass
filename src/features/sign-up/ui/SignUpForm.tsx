@@ -4,6 +4,7 @@ import { flushSync } from 'react-dom'
 import { useUsernameAvailable } from '@/entities/account'
 import { toAppError } from '@/shared/api/rpc'
 import { messageFor, MIN_PASSWORD_LENGTH } from '@/shared/config/messages'
+import { useLanguage, useWords } from '@/shared/i18n/context'
 import { focusProblem } from '@/shared/lib/focusProblem'
 import { useCaptcha } from '@/shared/lib/hooks/useCaptcha'
 import { Button } from '@/shared/ui/Button'
@@ -20,6 +21,7 @@ import {
   signUpProblems,
   type SignUpValues,
 } from '../model/signUpChecks'
+import { signUpWords } from '../model/words'
 import { UsernameField } from './UsernameField'
 
 type SignUpFormProps = {
@@ -54,6 +56,8 @@ export function SignUpForm({ labelledBy, onSignedUp }: SignUpFormProps) {
   const check = useUsernameAvailable(values.username)
   const signUp = useSignUp()
   const captcha = useCaptcha()
+  const language = useLanguage()
+  const w = useWords(signUpWords)
 
   // Event handlers only: refs are never read while rendering.
   function inputOf(field: SignUpField) {
@@ -80,12 +84,12 @@ export function SignUpForm({ labelledBy, onSignedUp }: SignUpFormProps) {
     // Committed before the focus moves, so the field is read with its message.
     flushSync(() => {
       if (field) setProblems({ [field]: code })
-      else setRefusal(messageFor(error))
+      else setRefusal(messageFor(error, { language }))
     })
     // A taken username is said by the username's own live line (the answer lands in its
     // check); the other fields' messages are said even when Enter was pressed in that field.
     if (field === 'username') inputOf(field)?.focus()
-    else if (field) focusProblem(inputOf(field), messageFor({ code }))
+    else if (field) focusProblem(inputOf(field), messageFor({ code }, { language }))
   }
 
   function submit(event: FormEvent<HTMLFormElement>) {
@@ -100,11 +104,11 @@ export function SignUpForm({ labelledBy, onSignedUp }: SignUpFormProps) {
     const first = SIGN_UP_FIELDS.find((field) => found[field])
     if (first) {
       // Said out loud also when Enter was pressed in that very field.
-      focusProblem(inputOf(first), messageFor({ code: found[first] }))
+      focusProblem(inputOf(first), messageFor({ code: found[first] }, { language }))
       return
     }
     if (captcha.missing) {
-      setRefusal(messageFor({ code: 'captcha_required' }))
+      setRefusal(messageFor({ code: 'captcha_required' }, { language }))
       return
     }
     const input = { ...signUpInput(values), captchaToken: captcha.token }
@@ -118,7 +122,7 @@ export function SignUpForm({ labelledBy, onSignedUp }: SignUpFormProps) {
   // show their codes here.
   const errorOf = (field: Exclude<SignUpField, 'username' | 'phone'>) => {
     const code = problems[field]
-    return code && messageFor({ code })
+    return code && messageFor({ code }, { language })
   }
 
   return (
@@ -135,9 +139,9 @@ export function SignUpForm({ labelledBy, onSignedUp }: SignUpFormProps) {
       <Field
         ref={nameInput}
         id="signup-name"
-        label="Name"
+        label={w.name}
         size="lg"
-        help="Your own name. Your coach adds your students."
+        help={w.nameHelp}
         autoComplete="name"
         maxLength={100}
         required
@@ -148,11 +152,11 @@ export function SignUpForm({ labelledBy, onSignedUp }: SignUpFormProps) {
       <Field
         ref={emailInput}
         id="signup-email"
-        label="Email"
+        label={w.email}
         type="email"
         inputMode="email"
         size="lg"
-        help="We’ll email you a link to confirm it."
+        help={w.emailHelp}
         autoComplete="email"
         autoCapitalize="none"
         maxLength={254}
@@ -165,7 +169,7 @@ export function SignUpForm({ labelledBy, onSignedUp }: SignUpFormProps) {
         ref={phoneInput}
         id="signup-phone"
         // Optional, as every optional field says (auth Q3: until the owner makes it required).
-        label="Phone (optional)"
+        label={w.phone}
         type="tel"
         inputMode="tel"
         size="lg"
@@ -178,10 +182,10 @@ export function SignUpForm({ labelledBy, onSignedUp }: SignUpFormProps) {
         ref={passwordInput}
         id="signup-password"
         maxLength={72}
-        label="Password"
+        label={w.password}
         type="password"
         size="lg"
-        help={`At least ${MIN_PASSWORD_LENGTH} characters.`}
+        help={w.passwordHelp(MIN_PASSWORD_LENGTH)}
         autoComplete="new-password"
         required
         value={values.password}
@@ -192,7 +196,7 @@ export function SignUpForm({ labelledBy, onSignedUp }: SignUpFormProps) {
         ref={confirmInput}
         id="signup-password-confirm"
         maxLength={72}
-        label="Confirm password"
+        label={w.confirm}
         type="password"
         size="lg"
         autoComplete="new-password"
@@ -208,7 +212,7 @@ export function SignUpForm({ labelledBy, onSignedUp }: SignUpFormProps) {
         </p>
       )}
       <Button type="submit" size="xl" block pending={signUp.isPending} className="mt-2">
-        {signUp.isPending ? 'Creating account…' : 'Create account'}
+        {signUp.isPending ? w.creating : w.create}
       </Button>
     </form>
   )

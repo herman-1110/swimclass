@@ -1,6 +1,7 @@
 import { Outlet } from 'react-router'
 
 import { DEFAULT_BUSINESS_NAME } from '@/shared/config/business'
+import { LanguageToggle } from '@/shared/ui/LanguageToggle'
 
 type AuthLayoutProps = {
   /**
@@ -22,8 +23,12 @@ export function AuthLayout({ businessName = DEFAULT_BUSINESS_NAME }: AuthLayoutP
       className="flex min-h-dvh bg-white md:items-center md:justify-center md:bg-subtle md:p-10"
     >
       <div className="flex flex-1 flex-col gap-10 bg-white px-7 pt-18 pb-10 md:w-full md:max-w-[420px] md:flex-none md:gap-8 md:rounded-2xl md:border md:border-frame md:p-10">
-        <div className="min-h-[1lh] text-sm leading-[normal] font-semibold text-accent">
-          {businessName}
+        {/* The business name, and EN | 中文 beside it (Herman, 7 Oct 2026). */}
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-h-[1lh] text-sm leading-[normal] font-semibold text-accent">
+            {businessName}
+          </div>
+          <LanguageToggle />
         </div>
         <main className="flex flex-1 flex-col gap-10 md:gap-8">
           <Outlet />

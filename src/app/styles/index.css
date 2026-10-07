@@ -64,8 +64,12 @@
   --color-tag: var(--tag);
   --color-tag-ink: var(--tag-ink);
 
-  /* Figtree is the only typeface (self-hosted with @fontsource/figtree in main.tsx). */
-  --font-sans: 'Figtree', system-ui, sans-serif;
+  /* Figtree is the only typeface (self-hosted with @fontsource/figtree in main.tsx). It has no
+     Chinese characters: for those the browser takes the phone's own Chinese font, the first
+     one here it has (no web font: one would be several MB). */
+  --font-sans:
+    'Figtree', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans SC',
+    'Noto Sans CJK SC', system-ui, sans-serif;
 
   /* Type scale (DESIGN §2). rem so text follows the phone's font-size setting. */
   --text-small: 0.75rem; /* 12px: small text, table headers */

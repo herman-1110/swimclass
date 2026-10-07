@@ -1,15 +1,16 @@
 import { DEFAULT_BUSINESS_NAME } from '@/shared/config/business'
 import { ROUTES } from '@/shared/config/routes'
+import { useWords } from '@/shared/i18n/context'
 import { ButtonLink } from '@/shared/ui/ButtonLink'
 import { CardFooter } from '@/shared/ui/CardFooter'
 import { PageHeader } from '@/shared/ui/PageHeader'
+
+import { signUpPageWords } from '../model/words'
 
 type SignUpSentProps = {
   /** Where the confirmation link went. */
   email: string
 }
-
-const TITLE = 'Confirm your email'
 
 /**
  * Sign up's result (auth spec §2.3, §6.2): check your email, then log in; the coach may need
@@ -18,29 +19,27 @@ const TITLE = 'Confirm your email'
  * address as confirmed, and says so.
  */
 export function SignUpSent({ email }: SignUpSentProps) {
+  const w = useWords(signUpPageWords)
   return (
     <>
-      <title>{`${TITLE} · ${DEFAULT_BUSINESS_NAME}`}</title>
-      <PageHeader
-        size="auth"
-        title={TITLE}
-        description="Check your email to confirm, then log in. Your coach may need to approve your account first."
-        focusOnMount
-      />
+      <title>{`${w.sentTitle} · ${DEFAULT_BUSINESS_NAME}`}</title>
+      <PageHeader size="auth" title={w.sentTitle} description={w.sentDescription} focusOnMount />
       <div className="flex flex-col gap-4">
         <p className="text-body leading-normal">
-          We sent the link to <span className="wrap-anywhere">{email}</span>.
+          {w.sentBefore}
+          <span className="wrap-anywhere">{email}</span>
+          {w.sentAfter}
         </p>
         {/* The build-time constant: a production build leaves the demo note out. */}
         {import.meta.env.VITE_DEMO === 'true' && (
           <p className="rounded-control bg-subtle px-3.5 py-3 text-label leading-normal text-muted">
-            Demo mode sends no email, and the address counts as confirmed: you can log in now.
+            {w.demoNote}
           </p>
         )}
       </div>
       <CardFooter>
         <ButtonLink to={ROUTES.login} variant="link">
-          Back to log in
+          {w.backToLogIn}
         </ButtonLink>
       </CardFooter>
     </>

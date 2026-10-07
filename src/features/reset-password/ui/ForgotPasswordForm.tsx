@@ -3,6 +3,7 @@ import { flushSync } from 'react-dom'
 
 import { toAppError } from '@/shared/api/rpc'
 import { messageFor } from '@/shared/config/messages'
+import { useLanguage, useWords } from '@/shared/i18n/context'
 import { focusProblem } from '@/shared/lib/focusProblem'
 import { useCaptcha } from '@/shared/lib/hooks/useCaptcha'
 import { Button } from '@/shared/ui/Button'
@@ -10,6 +11,7 @@ import { Field } from '@/shared/ui/Field'
 
 import { useSendPasswordReset } from '../api/useSendPasswordReset'
 import { emailProblem } from '../model/resetChecks'
+import { resetPasswordWords } from '../model/words'
 
 type ForgotPasswordFormProps = {
   /** The id of the page's h1, which names the form (auth spec §7.2: "forgot-title"). */
@@ -31,6 +33,8 @@ export function ForgotPasswordForm({ labelledBy, onSent }: ForgotPasswordFormPro
   const input = useRef<HTMLInputElement>(null)
   const send = useSendPasswordReset()
   const captcha = useCaptcha()
+  const language = useLanguage()
+  const w = useWords(resetPasswordWords)
 
   function refused(error: Error) {
     captcha.reset()
@@ -38,10 +42,10 @@ export function ForgotPasswordForm({ labelledBy, onSent }: ForgotPasswordFormPro
     // Committed before the focus moves, so the field is read with its message.
     flushSync(() => {
       if (onField) setProblem('email_address_invalid')
-      else setRefusal(messageFor(error))
+      else setRefusal(messageFor(error, { language }))
     })
     // Said out loud also when Enter was pressed in the field.
-    if (onField) focusProblem(input.current, messageFor(error))
+    if (onField) focusProblem(input.current, messageFor(error, { language }))
   }
 
   function submit(event: FormEvent<HTMLFormElement>) {
@@ -53,11 +57,11 @@ export function ForgotPasswordForm({ labelledBy, onSent }: ForgotPasswordFormPro
       setRefusal(null)
     })
     if (found) {
-      focusProblem(input.current, messageFor({ code: found }))
+      focusProblem(input.current, messageFor({ code: found }, { language }))
       return
     }
     if (captcha.missing) {
-      setRefusal(messageFor({ code: 'captcha_required' }))
+      setRefusal(messageFor({ code: 'captcha_required' }, { language }))
       return
     }
     const address = email.trim()
@@ -72,7 +76,7 @@ export function ForgotPasswordForm({ labelledBy, onSent }: ForgotPasswordFormPro
       <Field
         ref={input}
         id="forgot-email"
-        label="Email"
+        label={w.email}
         type="email"
         inputMode="email"
         size="lg"
@@ -85,7 +89,7 @@ export function ForgotPasswordForm({ labelledBy, onSent }: ForgotPasswordFormPro
           setEmail(event.target.value)
           setProblem(null)
         }}
-        error={problem ? messageFor({ code: problem }) : undefined}
+        error={problem ? messageFor({ code: problem }, { language }) : undefined}
       />
       {captcha.widget}
       {refusal && (
@@ -94,7 +98,7 @@ export function ForgotPasswordForm({ labelledBy, onSent }: ForgotPasswordFormPro
         </p>
       )}
       <Button type="submit" size="xl" block pending={send.isPending} className="mt-2">
-        {send.isPending ? 'Sending…' : 'Send reset link'}
+        {send.isPending ? w.sending : w.send}
       </Button>
     </form>
   )

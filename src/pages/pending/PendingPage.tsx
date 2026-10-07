@@ -1,11 +1,12 @@
 import { useMyProfile } from '@/entities/account'
 import { DocumentTitle } from '@/entities/settings'
 import { LogOutButton } from '@/features/log-out'
+import { useWords } from '@/shared/i18n/context'
 import { buttonClasses } from '@/shared/ui/buttonClasses'
 import { CardFooter } from '@/shared/ui/CardFooter'
 import { PageHeader } from '@/shared/ui/PageHeader'
 
-const TITLE = 'Waiting for approval'
+import { pendingPageWords } from './model/words'
 
 // Asks again every minute (and when the tab comes back), so an approval shows without a
 // reload: RequirePending then sends the account home (auth spec R2, §6.5, Q12).
@@ -17,20 +18,17 @@ const POLL_MS = 60_000
  */
 export function PendingPage() {
   const profile = useMyProfile({ refetchInterval: POLL_MS })
+  const w = useWords(pendingPageWords)
 
   return (
     <>
-      <DocumentTitle page={TITLE} />
-      <PageHeader
-        size="auth"
-        title={TITLE}
-        description="Your coach needs to approve your account before you can book. You can book as soon as that’s done."
-      />
+      <DocumentTitle page={w.title} />
+      <PageHeader size="auth" title={w.title} description={w.description} />
       <CardFooter>
         <LogOutButton className={buttonClasses({ variant: 'link' })} />
         {profile.data && (
           <p className="text-small leading-normal text-muted wrap-anywhere">
-            Signed in as {profile.data.display_name} ({profile.data.username}).
+            {w.signedInAs(profile.data.display_name, profile.data.username)}
           </p>
         )}
       </CardFooter>
