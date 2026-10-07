@@ -49,7 +49,15 @@ are in `model/words.ts` + `model/words.zh.ts` (app/ and shared/ beside the code)
 `app/providers/chinese.test.ts` checks every words.ts has its Chinese with the same key, that
 Chinese files import types only, and that every customer message has Chinese.
 **Don't deploy mid-way**: the student pages' tab bar is Chinese but Book, Schedule, My classes
-and Account aren't yet (stages 2 and 3).
+and Account aren't yet (stages 2 and 3). The work is on the `chinese` branch; the working
+copy was switched back to `frontend-first` so Herman's v0.25 deploy builds without it.
+**For the reviewer** (`frontend-plan/out/zh/`, 390 and 1280 px each): `login`, `signup`,
+`forgot-password`, `reset-password` (the expired-link screen, as demo mode shows it),
+`no-such-page` (Not found), `my-classes` (the toggle and the Chinese tabs only). Waiting for
+approval has none yet: it needs a demo sign-up. Known: a refusal already on screen ("Wrong
+username or password") stays in its language when the toggle flips, until the next try.
+Scripts that drive the demo (`tools/app.mjs` flows) stay in English; zh shots are their own
+pass (`scratchpad` `zh-shots.mjs` sets `swimclass.language` first).
 
 ## v0.25 · 7 Oct 2026 · Later packages show; payments at most one package ahead
 **State**: local `frontend-first` adds this work on top of v0.24 (949b71f); nothing pushed.
