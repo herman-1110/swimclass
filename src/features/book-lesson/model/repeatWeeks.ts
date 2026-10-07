@@ -1,5 +1,9 @@
 import { formatDayKey } from '@/entities/schedule'
+import type { Language } from '@/shared/i18n/language'
+import { wordsIn } from '@/shared/i18n/words'
 import { addDays, type DateKey } from '@/shared/lib/time'
+
+import { bookLessonWords } from './words'
 
 // "Repeat weekly" (prompt 06 TASK 5; PRD BR-13; book spec §5.2.4, C1–C3). A preview only:
 // book_lesson books every week or none, and answers repeat_conflict or credit_exceeded.
@@ -47,8 +51,7 @@ export function repeatWeeks({
  * The checkbox's label for N weeks: "Repeat weekly: also book Tue 6 Oct" for two weeks,
  * "Repeat weekly for 4 weeks" otherwise (prompt 06 TASK 5; DESIGN §4 item 7).
  */
-export function repeatLabel(weeks: number, day: DateKey): string {
-  return weeks === 2
-    ? `Repeat weekly: also book ${formatDayKey(addDays(day, 7))}`
-    : `Repeat weekly for ${weeks} weeks`
+export function repeatLabel(weeks: number, day: DateKey, language: Language = 'en'): string {
+  const second = formatDayKey(addDays(day, 7), language)
+  return wordsIn(bookLessonWords, language).repeat(weeks, second)
 }

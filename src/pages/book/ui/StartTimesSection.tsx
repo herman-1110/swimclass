@@ -1,13 +1,16 @@
 import { formatDayKey } from '@/entities/schedule'
 import { type Slot, TimeChipGrid, TimeChipGridSkeleton } from '@/entities/slot'
-import { DAY_FULLY_BOOKED_MESSAGE } from '@/shared/config/messages'
+import { messagesIn } from '@/shared/config/messages'
 import { ROUTES } from '@/shared/config/routes'
+import { useLanguage } from '@/shared/i18n/context'
+import { wordsIn } from '@/shared/i18n/words'
 import { cn } from '@/shared/lib/cn'
 import type { DateKey } from '@/shared/lib/time'
 import { ButtonLink } from '@/shared/ui/ButtonLink'
 import { SectionLabel } from '@/shared/ui/SectionLabel'
 
 import type { CoachAway } from '../model/coachAway'
+import { bookPageWords } from '../model/words'
 import { RetryMessage } from './RetryMessage'
 
 type StartTimesSectionProps = {
@@ -53,11 +56,13 @@ export function StartTimesSection({
   coachAway,
   className,
 }: StartTimesSectionProps) {
+  const language = useLanguage()
+  const w = wordsIn(bookPageWords, language)
   return (
     <section aria-labelledby={headingId} className={cn('flex flex-col gap-3.5', className)}>
       <div className="flex items-center justify-between gap-2">
         <SectionLabel as="h2" id={headingId} tabIndex={-1}>
-          {day ? `Start time · ${formatDayKey(day)}` : 'Start time'}
+          {day ? w.startTimeOn(formatDayKey(day, language)) : w.startTime}
         </SectionLabel>
         <ButtonLink
           variant="link"
@@ -65,7 +70,7 @@ export function StartTimesSection({
           flush
           to={`${ROUTES.schedule}?week=${weekStart}`}
         >
-          See the week
+          {w.seeWeek}
         </ButtonLink>
       </div>
       {failure ? (
@@ -73,7 +78,7 @@ export function StartTimesSection({
       ) : daySlots === null ? (
         <div aria-busy="true">
           <p role="status" className="sr-only">
-            Loading start times…
+            {w.loadingTimes}
           </p>
           <TimeChipGridSkeleton />
         </div>
@@ -81,16 +86,14 @@ export function StartTimesSection({
         <>
           {coachAway && <p className="text-label text-ink">{coachAway.text}</p>}
           {!coachAway?.wholeDay && !daySlots.some((slot) => slot.ok) && (
-            <p className="text-label text-ink">{DAY_FULLY_BOOKED_MESSAGE}</p>
+            <p className="text-label text-ink">{messagesIn(language).dayFullyBooked}</p>
           )}
           {/* It names groups: a one-word name of up to 100 characters breaks inside (§6.6). */}
           {alreadyBooked && <p className="text-label wrap-anywhere text-accent">{alreadyBooked}</p>}
           <TimeChipGrid slots={daySlots} selected={selected} onSelect={onSelect} />
         </>
       )}
-      <p className="text-small leading-[1.45] text-muted">
-        Crossed-out times clash with another lesson or your coach’s travel time. Tap one to see why.
-      </p>
+      <p className="text-small leading-[1.45] text-muted">{w.crossedOutHelp}</p>
     </section>
   )
 }

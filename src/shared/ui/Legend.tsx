@@ -1,4 +1,7 @@
+import { useWords } from '@/shared/i18n/context'
 import { cn } from '@/shared/lib/cn'
+
+import { uiWords } from './words'
 
 // Swatch colours: the week grid's block colours (DESIGN §2).
 const swatches = {
@@ -26,11 +29,12 @@ type LegendProps = {
  * swatches, radius 3, before 12 px muted words.
  */
 export function Legend({ items, spacing = 'tight', hideOnPhones = false }: LegendProps) {
+  const w = useWords(uiWords)
   return (
     // role="list": Safari drops list semantics from lists without bullets.
     <ul
       role="list"
-      aria-label="Legend"
+      aria-label={w.legend}
       className={cn(
         'm-0 list-none flex-wrap items-center p-0 text-small text-muted',
         hideOnPhones ? 'hidden md:flex' : 'flex',

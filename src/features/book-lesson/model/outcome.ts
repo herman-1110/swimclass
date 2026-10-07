@@ -1,9 +1,8 @@
 import { type GroupBalance, packageCaption } from '@/entities/balance'
 import type { Slot } from '@/entities/slot'
 import { toAppError } from '@/shared/api/rpc'
+import type { Language } from '@/shared/i18n/language'
 import type { DateKey } from '@/shared/lib/time'
-
-import { bookedHeading, bookedWhen } from './booked'
 
 /**
  * The choice the summary is about: the group, the day, the length and the picked start as
@@ -22,10 +21,12 @@ export type BookedOutcome = {
   kind: 'booked'
   /** The choice it belongs to (outcomeFits). */
   choice: Choice
-  /** "Booked 7:30 pm for Aiman & Sofia": the group booked, whatever is chosen since. */
-  heading: string
-  /** "Tue 29 Sep · 7:30–8:30 pm", or every date of a weekly booking. */
-  when: string
+  /**
+   * What was booked, for the panel to write in the screen's language (bookedHeading,
+   * bookedWhen): the first start, the length, how many weeks, and the group's names as they
+   * were when Book was pressed, whatever is chosen since.
+   */
+  lessons: { startsAt: string; minutes: number; weeks: number; names: string }
   /** The group booked. */
   groupId: string
   /** The balance row on screen when it was booked: the package line waits for a newer one. */
@@ -98,8 +99,12 @@ export function bookedOutcome(
   return {
     kind: 'booked',
     choice,
-    heading: bookedHeading(booked.startsAt, booked.names),
-    when: bookedWhen(booked.startsAt, booked.minutes, weeks),
+    lessons: {
+      startsAt: booked.startsAt,
+      minutes: booked.minutes,
+      weeks: Math.max(1, weeks),
+      names: booked.names,
+    },
     groupId: booked.groupId,
     balanceBefore,
   }
@@ -111,7 +116,11 @@ export function bookedOutcome(
  * until then, or if it fails, the row is the one from before the booking and the line waits.
  * Null too while the summary shows another group than the one booked.
  */
-export function bookedPackageLine(outcome: BookedOutcome, balance: GroupBalance): string | null {
+export function bookedPackageLine(
+  outcome: BookedOutcome,
+  balance: GroupBalance,
+  language: Language = 'en',
+): string | null {
   const refreshed = balance.group_id === outcome.groupId && balance !== outcome.balanceBefore
-  return refreshed ? packageCaption(balance) : null
+  return refreshed ? packageCaption(balance, language) : null
 }

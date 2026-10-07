@@ -11,12 +11,15 @@ import {
 import { DocumentTitle, usePublicSettings } from '@/entities/settings'
 import { bookableWindow } from '@/entities/slot'
 import { ROUTES } from '@/shared/config/routes'
+import { useLanguage } from '@/shared/i18n/context'
+import { wordsIn } from '@/shared/i18n/words'
 import { useNow } from '@/shared/lib/hooks/useNow'
 import { useReadFailure } from '@/shared/lib/hooks/useReadFailure'
 import { addDays, type DateKey, mytDateKey, mytWeekStart, parseDateKey } from '@/shared/lib/time'
 import { PageHeader } from '@/shared/ui/PageHeader'
 import { WeekNav } from '@/shared/ui/WeekNav'
 
+import { schedulePageWords } from './model/words'
 import { WeekError } from './ui/WeekError'
 
 /** ?week=YYYY-MM-DD as its Monday, never before this week; this week if missing or not a
@@ -59,6 +62,8 @@ function withWeek(search: URLSearchParams, week: DateKey): URLSearchParams {
  * Book on that day. Read-only: nothing here changes data.
  */
 export function SchedulePage() {
+  const language = useLanguage()
+  const w = wordsIn(schedulePageWords, language)
   const [params, setParams] = useSearchParams()
   // useNow moves on while the page stays open, so "this week" follows the calendar.
   const today = mytDateKey(useNow())
@@ -91,16 +96,16 @@ export function SchedulePage() {
   return (
     // Stops at 1100 px, in the middle of the space beside the sidebar (DESIGN §5).
     <div className="mx-auto flex w-full max-w-[1100px] flex-col gap-3.5 md:gap-4.5">
-      <DocumentTitle page="Schedule" />
+      <DocumentTitle page={w.title} />
       <PageHeader
         size="customer"
-        title="Schedule"
-        eyebrow="Your coach’s timetable"
+        title={w.title}
+        eyebrow={w.eyebrow}
         actions={
           <WeekNav
             stretch
             // No label while a later week waits for the window: it may not be the one shown.
-            label={week === null ? '' : formatWeekLabel(week)}
+            label={week === null ? '' : formatWeekLabel(week, language)}
             onPrevious={() => step(-7)}
             onNext={() => step(7)}
             previousDisabled={week === null || week <= thisWeek}
@@ -121,9 +126,7 @@ export function SchedulePage() {
           error={failure && <WeekError failure={failure} />}
         />
       </div>
-      <p className="mt-1 text-small leading-normal text-muted">
-        Other students’ lessons show as Booked, without names. Tap a day to book it.
-      </p>
+      <p className="mt-1 text-small leading-normal text-muted">{w.footnote}</p>
     </div>
   )
 }

@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
+import { registerAllChinese } from '@/shared/i18n/registerAllChinese'
+
 import { dayStripDays } from './days'
 
 describe('dayStripDays', () => {
@@ -56,5 +58,19 @@ describe('dayStripDays', () => {
   it('shows the dates without counts while the start times load', () => {
     const days = dayStripDays('2026-09-28', '2026-09-26', null)
     expect(days[0]).toEqual({ key: '2026-09-28', weekday: 'Mon', date: '28', label: 'Mon 28 Sep' })
+  })
+})
+
+describe('dayStripDays in Chinese', () => {
+  registerAllChinese()
+
+  it('takes the weekday and date from the day itself', () => {
+    const days = dayStripDays('2026-09-28', '2026-09-29', new Map([['2026-09-30', 3]]), 'zh')
+    expect(days.slice(0, 4).map(({ weekday, date, label }) => [weekday, date, label])).toEqual([
+      ['周一', '28', '9月28日 周一，已过'],
+      ['周二', '29', '9月29日 周二，已约满'],
+      ['周三', '30', '9月30日 周三，3 个空闲时间'],
+      ['周四', '1', '10月1日 周四，已约满'],
+    ])
   })
 })

@@ -1,8 +1,10 @@
 import { type ReactNode, useRef } from 'react'
 
+import { useWords } from '@/shared/i18n/context'
 import { cn } from '@/shared/lib/cn'
 import { StickyBar } from '@/shared/ui/StickyBar'
 
+import { bookLessonWords } from '../model/words'
 import { useFooterScrollPadding } from './useFooterScrollPadding'
 
 type SummaryFrameProps = {
@@ -20,6 +22,7 @@ const CARD_FROM_MD =
 
 /** The booking summary's box: a sticky footer on phones, a sticky side card from 768 px. */
 export function SummaryFrame({ children, className }: SummaryFrameProps) {
+  const w = useWords(bookLessonWords)
   const ref = useRef<HTMLDivElement>(null)
   useFooterScrollPadding(ref)
   return (
@@ -27,7 +30,7 @@ export function SummaryFrame({ children, className }: SummaryFrameProps) {
       ref={ref}
       padding="md"
       role="region"
-      aria-label="Booking summary"
+      aria-label={w.summary}
       className={cn(CARD_FROM_MD, className)}
     >
       {children}

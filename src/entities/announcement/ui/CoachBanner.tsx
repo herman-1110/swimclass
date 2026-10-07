@@ -1,4 +1,7 @@
+import { useWords } from '@/shared/i18n/context'
 import { Banner } from '@/shared/ui/Banner'
+
+import { announcementWords } from '../model/words'
 
 type CoachBannerProps = {
   /** The coach's pinned message, as posted (`useLatestAnnouncement().data.message`). */
@@ -13,8 +16,9 @@ type CoachBannerProps = {
  * with the line breaks the coach typed. Render it only when there is a message.
  */
 export function CoachBanner({ message, className }: CoachBannerProps) {
+  const w = useWords(announcementWords)
   return (
-    <Banner label="Coach:" className={className}>
+    <Banner label={w.coach} className={className}>
       <span className="whitespace-pre-line">{message}</span>
     </Banner>
   )

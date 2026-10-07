@@ -3,9 +3,9 @@
 Update this file at the end of every Claude Code session. Newest entry on top.
 Keep entries short; link to files instead of pasting code.
 
-## v0.26 · 7 Oct 2026 · English and Chinese (in progress)
-**State**: the working copy is on the local branch `chinese` (stage 1 and these notes), which
-isn't pushed. `frontend-first` = `origin/frontend-first` = `origin/main` = 9914226 = v0.25,
+## v0.26 · 7–8 Oct 2026 · English and Chinese (in progress)
+**State**: the working copy is on the local branch `chinese` (stages 1 and 2 and these notes),
+which isn't pushed. `frontend-first` = `origin/frontend-first` = `origin/main` = 9914226 = v0.25,
 which is live: Herman pushed, ran the production `db push` (payment_limit) and `wrangler
 deploy` on 7 Oct. Switch to `frontend-first` before Herman builds anything else for
 production: the build takes the working tree. `supabase/scripts/make-coach.sql` stays
@@ -57,38 +57,62 @@ found, the route loading and error screens, Log out, the tabs and sidebar. Each 
 are in `model/words.ts` + `model/words.zh.ts` (app/ and shared/ beside the code).
 `app/providers/chinese.test.ts` checks every words.ts has its Chinese with the same key, that
 Chinese files import types only, and that every customer message has Chinese.
-**Don't deploy mid-way**: the student pages' tab bar is Chinese but Book, Schedule, My classes
-and Account aren't yet (stages 2 and 3). The work stays on the `chinese` branch until stage 5.
-**For the reviewer** (`frontend-plan/out/zh/`, 390 and 1280 px each): `login`, `signup`,
-`forgot-password`, `reset-password` (the expired-link screen, as demo mode shows it),
-`no-such-page` (Not found), `my-classes` (the toggle and the Chinese tabs only). Waiting for
-approval has none yet: it needs a demo sign-up. Known: a refusal already on screen ("Wrong
-username or password") stays in its language when the toggle flips, until the next try.
-Scripts that drive the demo (`tools/app.mjs` flows) stay in English; zh shots are their own
-pass: `node frontend-plan/tools/zh-shots.mjs /book /schedule --as=meiling` (it sets
-`swimclass.language` first; Herman's `npm run dev` on 5173 must be running).
+**Stage 2** (done 8 Oct, not deployed; Herman: "continue … start now", so no wait for the
+reader): Book and Schedule. New word pairs: `shared/ui/words.ts` (the kit: Days, Week,
+Previous/Next week, Today, Legend, Close), `entities/{announcement,balance,group,schedule,
+slot}/model/words.ts`, `features/book-lesson/model/words.ts`, `pages/{book,schedule}/model/
+words.ts`. Pure functions that build sentences take a last `language` argument, English by
+default, and read their words with `wordsIn` (as `messagesIn` does), so the coach's callers
+and the old tests are unchanged: `packageTitle`/`packageCounts`/`packageCaption`/
+`laterPackageCounts`/`unpaidPillLabel`/`bookPackageNote`, `formatDayKey`/`dayHeading`/
+`formatWeekLabel`/`customerHourLabel`/`describeCustomerDay`, `unavailableTitle`,
+`usageLine`/`lessonTitle`/`bookingSummaryState` (`language` in its input)/`pickATime`/
+`cancelPolicyNote`/`repeatLabel`/`bookedHeading`/`bookedWhen`/`bookedPackageLine`,
+`dayStripDays`/`coachAwayText`/`alreadyBookedText`. Components use `useLanguage`/`useWords`,
+and CoachLayout keeps the coach's screens English.
+- Chinese dates are built from the date (`zhParts` in `entities/schedule/model/labels.ts`):
+  splitting "10月3日 周六" on spaces, as the English is split, gave weekday "10月3日".
+- The type tag comes from the group's size in Chinese: `typeLabelIn(group, language)` in
+  `entities/group` (一对一/一对二/一对三); English keeps the database's `type_label`.
+- The success panel keeps what was booked (`BookedOutcome.lessons`) and writes the words when
+  it shows, so the toggle changes it too.
+- Schedule's hour lines are 24-hour in Chinese ("7:00" … "21:00"): "上午10" and "下午12" took
+  two lines in the phone's 34 px column.
+- Tests: `shared/i18n/registerAllChinese.ts` (tests only) registers every `*.zh.ts`; Chinese
+  cases in labels, days and summary tests. The full unit run passed (see the commit).
+**Don't deploy mid-way**: My classes and Account are still English (stage 3). The work stays on
+the `chinese` branch until stage 5.
+**For the reviewer** (`frontend-plan/out/zh/`, 390 and 1280 px each unless named): stage 1:
+`login`, `signup`, `forgot-password`, `reset-password` (the expired-link screen, as demo mode
+shows it), `no-such-page` (Not found), `my-classes` (the toggle and the Chinese tabs only);
+stage 2: `book`, `book@360`, `book-crossed-out`, `book-picked`, `book-booked` (Tue 29 Sep, as
+meiling: a crossed-out 7:00 pm, 7:30 pm picked, then booked), `schedule`, `schedule@360`.
+Waiting for approval has none yet: it needs a demo sign-up. Known: a refusal already on screen
+("Wrong username or password") stays in its language when the toggle flips, until the next
+try. Scripts that drive the demo (`tools/app.mjs` flows) stay in English; zh shots are their
+own pass: `node frontend-plan/tools/zh-shots.mjs /book /schedule --as=meiling` (it sets
+`swimclass.language` first; Herman's `npm run dev` on 5173 must be running). The glossary has
+stage 2's terms in a second table.
 **Open**
-- Herman hasn't said whether to wait for his Chinese reader before stage 2: ask once; if he
-  doesn't mind, go on (a changed term is one edit in the glossary and the `*.zh.ts` files).
 - From earlier entries, still open: "Unpaid packages allowed" 1 or 0 (v0.24, a Settings
   change Herman makes), PRODUCTION.md 1.3 (Auth SMTP, templates) and 1.8 (smoke test), the
   signed-in first-load and Lighthouse checks, §2 students, HANDOFF v1.0 (v0.23's Next 2, 3).
   The Chinese sign-up and reset emails (stage 4) depend on 1.3's templates.
-**Next: stage 2, Book and Schedule** (on `chinese`)
-- Pages `pages/book`, `pages/schedule`; features `book-lesson` (`model/summary.ts`'s
-  `usageLine` and `bookingSummaryState` build sentences: give them a `words` argument that
-  defaults to English, as the plan says); entities they use: `balance` (PackageSummary,
-  `bookPackageNote`, `packages.ts` counts and captions), `slot` (TimeChipGrid: its chip
-  names like "7:30 pm, available" are `aria-label`s the tests and `tools/app.mjs` flows find
-  by name), `group` (GroupPicker; `type_label` "1-to-2" → 一对二 from `size`), `schedule`
-  (the customer week view, `describe.ts`), `announcement` (CoachBanner frame; the text stays
-  as typed), `settings` (DocumentTitle). Shared kit words: DayStrip's "Days", Legend, Dialog's
-  "Close", WeekNav, the "Loading…" lines.
-- `messages.ts` is already Chinese for every customer code: pass `{ language }` at each
-  `messageFor` call on these screens, and use `messagesIn(language)` for the fixed lines
-  (`noGroups`, `dayFullyBooked`, `coachAway`).
-- Then: unit tests (full run about 7 min, `--maxWorkers=2`), zh screenshots of Book and
-  Schedule for the reviewer, commit on `chinese`, show Herman, stop.
+**Next: stage 3, My classes and Account** (on `chinese`)
+- Pages `pages/my-classes` (header, upcoming rows, packages, past lessons and receipts, the
+  section errors) and `pages/account` (summary, skeleton, home-screen hint); features
+  `cancel-lesson` (the dialog: Dialog's "Close" is already Chinese), `change-password`,
+  `update-profile`, `log-out` (done in stage 1); entities `booking` (lesson rows, positions
+  "lesson 2 of 4"), `payment` (LastPaid, receipts), `account`, `group` (the rest of its words),
+  `balance`'s `accountPackageNote` (My classes' note: give it the same last `language`
+  argument), and PackageSummary's account variant (its words are already Chinese; pass
+  `typeLabelIn(group, language)` as its `typeLabel`).
+- The same pattern as stage 2: a `model/words.ts` + `words.zh.ts` per slice, pure functions
+  take `language` last, `messageFor(…, { language })`, `formatX(…, language)` for dates,
+  `registerAllChinese()` in tests that check Chinese.
+- Then: unit tests (full run about 7 min, `--maxWorkers=2`), zh screenshots of My classes and
+  Account (`zh-shots.mjs /my-classes /account --as=meiling`, and the cancel dialog), glossary,
+  commit on `chinese`, show Herman, stop.
 
 ## v0.25 · 7 Oct 2026 · Later packages show; payments at most one package ahead
 **State**: local `frontend-first` adds this work on top of v0.24 (949b71f); nothing pushed.

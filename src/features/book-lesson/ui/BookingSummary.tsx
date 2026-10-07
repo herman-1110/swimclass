@@ -5,11 +5,14 @@ import type { UpcomingLesson } from '@/entities/booking'
 import type { Group } from '@/entities/group'
 import type { PublicSettings } from '@/entities/settings'
 import type { Slot } from '@/entities/slot'
+import { useLanguage } from '@/shared/i18n/context'
+import { wordsIn } from '@/shared/i18n/words'
 import type { DateKey } from '@/shared/lib/time'
 import { Button } from '@/shared/ui/Button'
 import { Checkbox } from '@/shared/ui/Checkbox'
 
 import { type BookLessonInput, useBookLesson } from '../api/useBookLesson'
+import { bookedHeading, bookedWhen } from '../model/booked'
 import {
   bookedOutcome,
   bookedPackageLine,
@@ -21,6 +24,7 @@ import {
 import { lessonsBookedBefore } from '../model/position'
 import { lessonsPerBooking, repeatLabel, repeatWeeks } from '../model/repeatWeeks'
 import { bookingSummaryState, cancelPolicyNote } from '../model/summary'
+import { bookLessonWords } from '../model/words'
 import { BookedActions } from './BookedActions'
 import { BookedText } from './BookedText'
 import { SummaryFrame } from './SummaryFrame'
@@ -80,6 +84,8 @@ type Submission = BookLessonInput & {
  */
 export function BookingSummary(props: BookingSummaryProps) {
   const { group, balance, settings, day, slot, minutes, lastBookableDay } = props
+  const language = useLanguage()
+  const w = wordsIn(bookLessonWords, language)
   const choice: Choice = { groupId: group.group_id, day, minutes, time: props.time }
   const [repeat, setRepeat] = useState(false)
   // book_lesson is running ("Booking…"); the refresh after it is not part of it.
@@ -131,6 +137,7 @@ export function BookingSummary(props: BookingSummaryProps) {
       gapMinutes: settings.travel_gap_minutes,
       windowWeeks: settings.booking_window_weeks,
     },
+    language,
   })
 
   function submit() {
@@ -152,9 +159,14 @@ export function BookingSummary(props: BookingSummaryProps) {
       <div aria-live="polite" className="flex flex-col gap-0.5">
         {outcome?.kind === 'booked' ? (
           <BookedText
-            heading={outcome.heading}
-            when={outcome.when}
-            packageLine={bookedPackageLine(outcome, balance)}
+            heading={bookedHeading(outcome.lessons.startsAt, outcome.lessons.names, language)}
+            when={bookedWhen(
+              outcome.lessons.startsAt,
+              outcome.lessons.minutes,
+              outcome.lessons.weeks,
+              language,
+            )}
+            packageLine={bookedPackageLine(outcome, balance, language)}
           />
         ) : (
           <SummaryText state={state} />
@@ -173,7 +185,7 @@ export function BookingSummary(props: BookingSummaryProps) {
             <Checkbox
               id="book-repeat"
               size="md"
-              label={repeatLabel(weeks, lesson.day)}
+              label={repeatLabel(weeks, lesson.day, language)}
               checked={repeat}
               disabled={submitting}
               onChange={(event) => setRepeat(event.target.checked)}
@@ -186,12 +198,12 @@ export function BookingSummary(props: BookingSummaryProps) {
             aria-disabled={!state.canBook || submitting || undefined}
             onClick={submit}
           >
-            {submitting ? 'Booking…' : state.buttonLabel}
+            {submitting ? w.booking : state.buttonLabel}
           </Button>
         </>
       )}
       <p className="text-center text-small text-muted">
-        {cancelPolicyNote(settings.cancel_cutoff_hours)}
+        {cancelPolicyNote(settings.cancel_cutoff_hours, language)}
       </p>
     </SummaryFrame>
   )

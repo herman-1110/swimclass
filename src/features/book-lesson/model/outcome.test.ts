@@ -81,8 +81,7 @@ describe('bookedOutcome', () => {
     expect(bookedOutcome(BOOKED, 1, choice, BALANCE)).toEqual({
       kind: 'booked',
       choice,
-      heading: 'Booked 7:30 pm for Aiman & Sofia',
-      when: 'Tue 29 Sep · 7:30–8:30 pm',
+      lessons: { startsAt: TUE_730.starts_at, minutes: 60, weeks: 1, names: 'Aiman & Sofia' },
       groupId: A_AND_S,
       balanceBefore: BALANCE,
     })

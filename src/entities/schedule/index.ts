@@ -4,7 +4,13 @@ export { useCoachHoursOnDay, useCustomerWeek, useOwnLessonsOnDay } from './api/u
 export { coachWeekQuery, customerWeekQuery } from './api/weekQueries'
 export { minutesIntoDay } from './model/days'
 export { lessonLine, lessonNotes, lessonPlace } from './model/describe'
-export { formatCoachWeekLabel, formatDayKey, formatDayLong, formatWeekLabel } from './model/labels'
+export {
+  dayHeading,
+  formatCoachWeekLabel,
+  formatDayKey,
+  formatDayLong,
+  formatWeekLabel,
+} from './model/labels'
 export { bookedLessons, isWeekOf, ownLessonsOn, weekExceptions } from './model/select'
 export {
   coachDayTimeline,

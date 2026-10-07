@@ -1,7 +1,10 @@
 import { type ReactNode, type RefObject, useId, useLayoutEffect, useRef } from 'react'
 
+import { useWords } from '@/shared/i18n/context'
 import { cn } from '@/shared/lib/cn'
 import { useModalDialog } from '@/shared/lib/hooks/useModalDialog'
+
+import { uiWords } from './words'
 
 // Card widths from 768 px (proposed: no dialog is drawn). Under 768 px it fills the screen.
 const widths = {
@@ -95,6 +98,7 @@ export function Dialog({
   busy = false,
   dismissible = !busy,
 }: DialogProps) {
+  const w = useWords(uiWords)
   const ref = useRef<HTMLDialogElement>(null)
   const titleRef = useRef<HTMLHeadingElement>(null)
   const actionsRef = useRef<HTMLDivElement>(null)
@@ -158,7 +162,7 @@ export function Dialog({
             }}
             className="inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center px-1 text-sm font-semibold text-accent hover:text-accent-hover aria-disabled:cursor-default aria-disabled:text-muted"
           >
-            Close
+            {w.close}
           </button>
         )}
       </div>

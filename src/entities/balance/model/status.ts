@@ -1,7 +1,10 @@
+import type { Language } from '@/shared/i18n/language'
+import { wordsIn } from '@/shared/i18n/words'
 import { formatDay, formatDayMonth, type Instant, mytDateKey, toMyt } from '@/shared/lib/time'
 
 import { nextPaymentPackageNo, owesPayment } from './packages'
 import type { GroupBalance } from './types'
+import { balanceWords } from './words'
 
 // Paid or unpaid, and what needs the coach's attention (DESIGN §4 Students & payments; the
 // coach-students spec §5.2; the coach-schedule spec §3.6). Unpaid is owesPayment: the
@@ -89,8 +92,9 @@ function unpaidNote(since: string | null, now: Instant, today: string): string {
  */
 export function unpaidPillLabel(
   balance: Pick<GroupBalance, 'package_size' | 'paid_lessons'>,
+  language: Language = 'en',
 ): string {
-  return `Package ${nextPaymentPackageNo(balance)} unpaid`
+  return wordsIn(balanceWords, language).unpaidPill(nextPaymentPackageNo(balance))
 }
 
 /**

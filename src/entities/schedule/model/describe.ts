@@ -1,11 +1,14 @@
+import type { Language } from '@/shared/i18n/language'
+import { wordsIn } from '@/shared/i18n/words'
 import { joinWithAnd, plural } from '@/shared/lib/format'
-import { formatRange, formatTime } from '@/shared/lib/time'
+import { formatRange, formatTime, type Instant } from '@/shared/lib/time'
 
 import { atMinute } from './days'
 import { dayButtonDate, formatDayKey, formatDayLong } from './labels'
 import { bookedLessons } from './select'
 import { customerDayTimeline, type GridHours } from './timeline'
 import type { CoachDay, CoachLesson, CustomerDay } from './types'
+import { scheduleWords } from './words'
 
 // The words the week views say about a day or a lesson.
 
@@ -15,23 +18,27 @@ import type { CoachDay, CoachLesson, CustomerDay } from './types'
  * "Thu 1 Oct: no free time", "Sat 10 Oct: closed". Other people's lessons, travel and
  * closed time are the rest of the day.
  */
-export function describeCustomerDay(day: CustomerDay, hours: GridHours): string {
+export function describeCustomerDay(
+  day: CustomerDay,
+  hours: GridHours,
+  language: Language = 'en',
+): string {
+  const w = wordsIn(scheduleWords, language)
+  const time = (instant: Instant) => formatTime(instant, language)
   const items = customerDayTimeline(day, hours)
   const parts = items.flatMap((item) => {
     if (item.kind === 'free') {
-      const from = formatTime(atMinute(day.day, item.start))
-      return [`free ${from} to ${formatTime(atMinute(day.day, item.end))}`]
+      return [w.free(time(atMinute(day.day, item.start)), time(atMinute(day.day, item.end)))]
     }
     if (item.kind === 'lesson' && item.lesson.mine) {
-      const { starts_at, ends_at } = item.lesson
-      return [`your lesson ${formatTime(starts_at)} to ${formatTime(ends_at)}`]
+      return [w.yourLesson(time(item.lesson.starts_at), time(item.lesson.ends_at))]
     }
     return []
   })
   const open = day.open.length > 0
-  if (open && !items.some((item) => item.kind === 'free')) parts.push('no free time')
-  if (!open && parts.length === 0) parts.push('closed')
-  return `${formatDayKey(day.day)}: ${parts.join(', ')}`
+  if (open && !items.some((item) => item.kind === 'free')) parts.push(w.noFreeTime)
+  if (!open && parts.length === 0) parts.push(w.closed)
+  return w.dayLine(formatDayKey(day.day, language), parts)
 }
 
 /**

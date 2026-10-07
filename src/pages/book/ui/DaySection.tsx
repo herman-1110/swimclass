@@ -1,10 +1,13 @@
 import { formatWeekLabel } from '@/entities/schedule'
 import type { BookableWindow } from '@/entities/slot'
+import { useLanguage } from '@/shared/i18n/context'
+import { wordsIn } from '@/shared/i18n/words'
 import type { DateKey } from '@/shared/lib/time'
 import { DayStrip } from '@/shared/ui/DayStrip'
 import { WeekNav } from '@/shared/ui/WeekNav'
 
 import { dayStripDays } from '../model/days'
+import { bookPageWords } from '../model/words'
 
 type DaySectionProps = {
   /** The Monday of the week shown. */
@@ -38,18 +41,19 @@ export function DaySection({
   onMoveWeek,
   className,
 }: DaySectionProps) {
+  const language = useLanguage()
   return (
     <div className={className}>
       <DayStrip
-        days={dayStripDays(weekStart, today, counts)}
+        days={dayStripDays(weekStart, today, counts, language)}
         selected={selected ?? ''}
         onSelect={onSelect}
         heading={{
-          label: 'Day',
+          label: wordsIn(bookPageWords, language).day,
           range: (
             <WeekNav
               size="sm"
-              label={formatWeekLabel(weekStart)}
+              label={formatWeekLabel(weekStart, language)}
               previousDisabled={weekStart <= bookable.thisWeek}
               nextDisabled={weekStart >= bookable.lastWeek}
               onPrevious={() => onMoveWeek(-1)}

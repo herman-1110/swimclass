@@ -1,6 +1,10 @@
 import { messageFor } from '@/shared/config/messages'
+import { useLanguage } from '@/shared/i18n/context'
+import { wordsIn } from '@/shared/i18n/words'
 import { Banner } from '@/shared/ui/Banner'
 import { Button } from '@/shared/ui/Button'
+
+import { bookPageWords } from '../model/words'
 
 type RetryMessageProps = {
   /** What failed: its words come from messages.ts (network or generic). */
@@ -17,16 +21,17 @@ type RetryMessageProps = {
  * out without the button's name.
  */
 export function RetryMessage({ error, onRetry, className }: RetryMessageProps) {
+  const language = useLanguage()
   return (
     <Banner
       className={className}
       action={
         <Button variant="quiet" size="sm" tone="accent" onClick={onRetry}>
-          Try again
+          {wordsIn(bookPageWords, language).tryAgain}
         </Button>
       }
     >
-      <p role="alert">{messageFor(error)}</p>
+      <p role="alert">{messageFor(error, { language })}</p>
     </Banner>
   )
 }

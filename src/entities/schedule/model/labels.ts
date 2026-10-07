@@ -1,3 +1,4 @@
+import type { Language } from '@/shared/i18n/language'
 import {
   addDays,
   type DateKey,
@@ -7,6 +8,7 @@ import {
   type Instant,
   mytInstant,
   toMyt,
+  zhWeekday,
 } from '@/shared/lib/time'
 
 // Words for the week views, built from shared/lib/time's own formats ("Sat 3 Oct",
@@ -27,8 +29,13 @@ function clock(minute: number) {
   return { hour: hour % 12 === 0 ? 12 : hour % 12, half: hour < 12 ? 'am' : 'pm' }
 }
 
-/** The customer grid's hour lines (design/Schedule.dc.html): "7am", "12pm", "12am". */
-export function customerHourLabel(minute: number): string {
+/**
+ * The customer grid's hour lines (design/Schedule.dc.html): "7am", "12pm", "12am". Chinese
+ * uses the 24-hour clock, "7:00", "12:00", "19:00": with the period word ("上午10") two of
+ * them took two lines in the phone's 34 px column.
+ */
+export function customerHourLabel(minute: number, language: Language = 'en'): string {
+  if (language === 'zh') return `${Math.floor(minute / 60) % 24}:00`
   const { hour, half } = clock(minute)
   return `${hour}${half}`
 }
@@ -39,10 +46,23 @@ export function coachHourLabel(minute: number): string {
   return `${hour} ${half}`
 }
 
-/** A date: "Sat 3 Oct". */
-export function formatDayKey(day: DateKey): string {
+/** A date: "Sat 3 Oct"; Chinese "10月3日 周六". */
+export function formatDayKey(day: DateKey, language: Language = 'en'): string {
   // Noon MYT names the right day whatever the device's zone.
-  return formatDay(mytInstant(day, '12:00'))
+  return formatDay(mytInstant(day, '12:00'), language)
+}
+
+/**
+ * A date's parts in Chinese, from the date itself (its formatDayKey, "10月3日 周六", doesn't
+ * split as the English does): weekday "周六", date "3", month "10".
+ */
+function zhParts(day: DateKey) {
+  const noon = toMyt(mytInstant(day, '12:00'))
+  return {
+    weekday: zhWeekday(noon),
+    date: String(noon.getDate()),
+    month: String(noon.getMonth() + 1),
+  }
 }
 
 /** A date's parts: "Sat 3 Oct" → weekday "Sat", date "3", month "Oct". */
@@ -51,9 +71,12 @@ function parts(day: DateKey) {
   return { weekday, date, month }
 }
 
-/** A day header's two parts: { weekday: "Mon", date: "28" }. */
-export function dayHeading(day: DateKey): { weekday: string; date: string } {
-  const { weekday, date } = parts(day)
+/** A day header's two parts: { weekday: "Mon", date: "28" }; Chinese { "周一", "28" }. */
+export function dayHeading(
+  day: DateKey,
+  language: Language = 'en',
+): { weekday: string; date: string } {
+  const { weekday, date } = language === 'zh' ? zhParts(day) : parts(day)
   return { weekday, date }
 }
 
@@ -71,9 +94,15 @@ export function formatDayLong(day: DateKey): string {
 
 /**
  * The customer's week (design/Schedule.dc.html, Main.dc.html): "28 Sep – 4 Oct", and inside
- * one month "21–27 Sep", the coach's pattern without the year (triage 10).
+ * one month "21–27 Sep", the coach's pattern without the year (triage 10). Chinese
+ * "9月28日 – 10月4日", inside one month "9月21日–27日".
  */
-export function formatWeekLabel(weekStart: DateKey): string {
+export function formatWeekLabel(weekStart: DateKey, language: Language = 'en'): string {
+  if (language === 'zh') {
+    const [first, last] = [zhParts(weekStart), zhParts(addDays(weekStart, 6))]
+    if (first.month === last.month) return `${first.month}月${first.date}日–${last.date}日`
+    return `${first.month}月${first.date}日 – ${last.month}月${last.date}日`
+  }
   const first = parts(weekStart)
   const last = parts(addDays(weekStart, 6))
   if (first.month === last.month) return `${first.date}–${last.date} ${last.month}`

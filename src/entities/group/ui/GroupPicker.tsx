@@ -1,10 +1,14 @@
 import type { ReactNode } from 'react'
 
+import { useLanguage } from '@/shared/i18n/context'
+import { wordsIn } from '@/shared/i18n/words'
 import { Fieldset } from '@/shared/ui/Fieldset'
 import { OptionRow } from '@/shared/ui/OptionRow'
 import { Tag } from '@/shared/ui/Tag'
 
+import { typeLabelIn } from '../model/typeLabel'
 import type { Group } from '../model/types'
+import { groupWords } from '../model/words'
 
 type GroupPickerProps = {
   /** The groups to choose from, in the order to show them (Book: the active ones). */
@@ -60,21 +64,23 @@ export function GroupPicker({
   groups,
   value,
   onChange,
-  legend = 'Who’s this lesson for?',
+  legend,
   hideLegend = false,
-  help = 'Your coach sets up who books together. Ask them if you need a new group.',
+  help,
   name = 'book-group',
   secondary,
   emptyText,
   layout = 'grid',
   className,
 }: GroupPickerProps) {
+  const language = useLanguage()
+  const w = wordsIn(groupWords, language)
   return (
     <Fieldset
-      legend={legend}
+      legend={legend ?? w.legend}
       hideLegend={hideLegend}
       spacing="loose"
-      help={help}
+      help={help === undefined ? w.help : help}
       className={className}
     >
       {groups.length > 0 && (
@@ -97,7 +103,7 @@ export function GroupPicker({
                   group.display_names
                 )
               }
-              trailing={<Tag>{group.type_label}</Tag>}
+              trailing={<Tag>{typeLabelIn(group, language)}</Tag>}
             />
           ))}
         </div>

@@ -1,9 +1,12 @@
+import { useLanguage } from '@/shared/i18n/context'
+import { wordsIn } from '@/shared/i18n/words'
 import type { DateKey } from '@/shared/lib/time'
 
 import { describeCustomerDay } from '../model/describe'
 import { formatWeekLabel } from '../model/labels'
 import type { GridHours } from '../model/timeline'
 import type { CustomerWeek } from '../model/types'
+import { scheduleWords } from '../model/words'
 
 type CustomerWeekTextProps = {
   weekStart: DateKey
@@ -16,12 +19,14 @@ type CustomerWeekTextProps = {
  * free times and the viewer's own lessons. WeekGrid shows it to screen readers only.
  */
 export function CustomerWeekText({ weekStart, week, hours }: CustomerWeekTextProps) {
+  const language = useLanguage()
+  const w = wordsIn(scheduleWords, language)
   return (
     // role="list": Safari drops list semantics, and with them this name, from lists without
     // bullets.
-    <ul role="list" aria-label={`Free times and your lessons, ${formatWeekLabel(weekStart)}`}>
+    <ul role="list" aria-label={w.weekText(formatWeekLabel(weekStart, language))}>
       {week.map((day) => (
-        <li key={day.day}>{describeCustomerDay(day, hours)}</li>
+        <li key={day.day}>{describeCustomerDay(day, hours, language)}</li>
       ))}
     </ul>
   )

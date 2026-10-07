@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react'
 
+import { useLanguage } from '@/shared/i18n/context'
+import { wordsIn } from '@/shared/i18n/words'
 import { cn } from '@/shared/lib/cn'
 import { Banner } from '@/shared/ui/Banner'
 import { Pill } from '@/shared/ui/Pill'
@@ -17,6 +19,7 @@ import {
 } from '../model/packages'
 import { unpaidPillLabel } from '../model/status'
 import type { GroupBalance } from '../model/types'
+import { balanceWords } from '../model/words'
 
 type PackageSummaryProps = {
   balance: GroupBalance
@@ -70,10 +73,12 @@ type PackageSummaryProps = {
  */
 export function PackageSummary(props: PackageSummaryProps) {
   const { balance, typeLabel, note } = props
+  const language = useLanguage()
+  const w = wordsIn(balanceWords, language)
   const account = props.variant === 'account'
   const instructions = account ? props.howToPay?.trim() : undefined
   // Book's word is about the package it names; My classes' pill is about the group.
-  const status = isPackagePaid(balance) ? 'Paid' : 'Unpaid'
+  const paid = isPackagePaid(balance)
 
   return (
     <div className="flex flex-col gap-2">
@@ -84,16 +89,18 @@ export function PackageSummary(props: PackageSummaryProps) {
             <Tag>{typeLabel}</Tag>
           </span>
           {owesPayment(balance) ? (
-            <Pill tone="warn">{unpaidPillLabel(balance)}</Pill>
+            <Pill tone="warn">{unpaidPillLabel(balance, language)}</Pill>
           ) : (
             props.lastPaid
           )}
         </div>
       ) : (
         <div className="flex items-baseline justify-between gap-2">
-          <span className="text-body font-semibold">{packageTitle(typeLabel, balance)}</span>
-          <span className={cn('text-label', status === 'Unpaid' ? 'text-warn' : 'text-muted')}>
-            {status}
+          <span className="text-body font-semibold">
+            {packageTitle(typeLabel, balance, language)}
+          </span>
+          <span className={cn('text-label', paid ? 'text-muted' : 'text-warn')}>
+            {paid ? w.paid : w.unpaid}
           </span>
         </div>
       )}
@@ -103,13 +110,13 @@ export function PackageSummary(props: PackageSummaryProps) {
         booked={balance.booked_in_package}
       />
       <span className="text-label text-muted">
-        {account ? packageCaption(balance) : packageCounts(balance)}
+        {account ? packageCaption(balance, language) : packageCounts(balance, language)}
       </span>
       {laterPackages(balance).map((later) => (
         <div key={later.package_no} className="mt-1 flex flex-col gap-2">
           <SegmentBar total={later.package_size} used={0} booked={later.booked} />
           <span className="text-label text-muted">
-            Package {later.package_no} · {laterPackageCounts(later)}
+            {w.packageName(later.package_no)} · {laterPackageCounts(later, language)}
           </span>
         </div>
       ))}
@@ -117,7 +124,7 @@ export function PackageSummary(props: PackageSummaryProps) {
         <p className={cn('m-0 text-label leading-normal text-warn', account && 'mt-1')}>{note}</p>
       )}
       {note && instructions && (
-        <Banner label="How to pay:" className="mt-1 whitespace-pre-line">
+        <Banner label={w.howToPay} className="mt-1 whitespace-pre-line">
           {instructions}
         </Banner>
       )}

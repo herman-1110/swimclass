@@ -1,10 +1,13 @@
 import { useId } from 'react'
 
+import { useLanguage } from '@/shared/i18n/context'
+import { wordsIn } from '@/shared/i18n/words'
 import { formatTime, toMyt } from '@/shared/lib/time'
 import { Chip } from '@/shared/ui/Chip'
 
 import { splitByPartOfDay } from '../model/partOfDay'
 import type { Slot } from '../model/types'
+import { slotWords } from '../model/words'
 import { CHIP_GRID } from './chipGrid'
 
 type TimeChipGridProps = {
@@ -16,10 +19,7 @@ type TimeChipGridProps = {
   onSelect: (slot: Slot) => void
 }
 
-const PARTS = [
-  { key: 'morning', label: 'Morning' },
-  { key: 'evening', label: 'Evening' },
-] as const
+const PARTS = ['morning', 'evening'] as const
 
 function sameInstant(a: string, b: string): boolean {
   return toMyt(a).getTime() === toMyt(b).getTime()
@@ -34,12 +34,14 @@ function sameInstant(a: string, b: string): boolean {
  */
 export function TimeChipGrid({ slots, selected, onSelect }: TimeChipGridProps) {
   const id = useId()
+  const language = useLanguage()
+  const w = wordsIn(slotWords, language)
   if (slots.length === 0) return null
   const parts = splitByPartOfDay(slots)
 
   return (
     <div className="flex flex-col gap-3.5">
-      {PARTS.map(({ key, label }) =>
+      {PARTS.map((key) =>
         parts[key].length === 0 ? null : (
           <div
             key={key}
@@ -48,18 +50,18 @@ export function TimeChipGrid({ slots, selected, onSelect }: TimeChipGridProps) {
             className="flex flex-col gap-2"
           >
             <span id={`${id}-${key}`} className="text-small text-muted">
-              {label}
+              {w[key]}
             </span>
             <div className={CHIP_GRID}>
               {parts[key].map((slot) => {
-                const time = formatTime(slot.starts_at)
+                const time = formatTime(slot.starts_at, language)
                 return (
                   <Chip
                     key={slot.starts_at}
                     label={time}
                     state={slot.ok ? 'free' : 'clash'}
                     selected={selected !== null && sameInstant(slot.starts_at, selected)}
-                    accessibleLabel={`${time}, ${slot.ok ? 'available' : 'not available'}`}
+                    accessibleLabel={slot.ok ? w.available(time) : w.notAvailable(time)}
                     onClick={() => onSelect(slot)}
                   />
                 )

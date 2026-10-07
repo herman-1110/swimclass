@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import type { Slot } from '@/entities/slot'
 import { AppError } from '@/shared/api/rpc'
 import { GENERIC_MESSAGE, NETWORK_MESSAGE } from '@/shared/config/messages'
+import { registerAllChinese } from '@/shared/i18n/registerAllChinese'
 
 import {
   bookingSummaryState,
@@ -16,7 +17,7 @@ import {
 // The seed's balances at Sat 26 Sep 2026 12:00 (data-contracts Appendix C), and Tue 29 Sep's
 // start times for an hour (book §8.2).
 const AIMAN_AND_SOFIA = {
-  group: { display_names: 'Aiman & Sofia', type_label: '1-to-2' as const },
+  group: { display_names: 'Aiman & Sofia', type_label: '1-to-2' as const, size: 2 as const },
   balance: {
     package_size: 4,
     package_no: 4,
@@ -28,7 +29,7 @@ const AIMAN_AND_SOFIA = {
   },
 }
 const SOFIA = {
-  group: { display_names: 'Sofia', type_label: '1-to-1' as const },
+  group: { display_names: 'Sofia', type_label: '1-to-1' as const, size: 1 as const },
   balance: {
     package_size: 4,
     package_no: 2,
@@ -40,7 +41,7 @@ const SOFIA = {
   },
 }
 const WEI_JIE = {
-  group: { display_names: 'Wei Jie', type_label: '1-to-1' as const },
+  group: { display_names: 'Wei Jie', type_label: '1-to-1' as const, size: 1 as const },
   balance: {
     package_size: 4,
     package_no: 2,
@@ -52,7 +53,7 @@ const WEI_JIE = {
   },
 }
 const NURUL = {
-  group: { display_names: 'Nurul', type_label: '1-to-1' as const },
+  group: { display_names: 'Nurul', type_label: '1-to-1' as const, size: 1 as const },
   balance: {
     package_size: 4,
     package_no: 1,
@@ -186,7 +187,7 @@ describe('bookingSummaryState', () => {
   it('says a lesson isn’t paid yet while its package still has room (states-14)', () => {
     // Every paid lesson used, none booked: Package 2 has 4 to book, and none is paid.
     const exact = {
-      group: { display_names: 'Elena', type_label: '1-to-1' as const },
+      group: { display_names: 'Elena', type_label: '1-to-1' as const, size: 1 as const },
       balance: {
         package_size: 4,
         package_no: 2,
@@ -202,7 +203,7 @@ describe('bookingSummaryState', () => {
     )
     // A group nothing has paid for yet.
     const neverPaid = {
-      group: { display_names: 'Aiman', type_label: '1-to-1' as const },
+      group: { display_names: 'Aiman', type_label: '1-to-1' as const, size: 1 as const },
       balance: { ...exact.balance, package_no: 1, paid_lessons: 0, used_lessons: 0 },
     }
     expect(state(neverPaid).useLine).toBe(
@@ -310,5 +311,36 @@ describe('cancelPolicyNote', () => {
 
   it('says "until the lesson starts" with no cutoff (Q16)', () => {
     expect(cancelPolicyNote(0)).toBe('Free to cancel or reschedule until the lesson starts.')
+  })
+})
+
+describe('in Chinese', () => {
+  registerAllChinese()
+  const zh = (input: Partial<SummaryInput> & Pick<SummaryInput, 'group' | 'balance'>) =>
+    state({ ...input, language: 'zh' })
+
+  it('writes the lesson, what it uses and the button in Chinese', () => {
+    expect(zh(AIMAN_AND_SOFIA)).toMatchObject({
+      title: '9月29日 周二 · 晚上7:30–8:30',
+      useLine: '一对二 · Aiman & Sofia · 用配套 4 的 1 节课，之后还可预约 1 节',
+      buttonLabel: '为 Aiman & Sofia 预约晚上7:30',
+    })
+    expect(zh({ ...NURUL, minutes: 120, bookedBefore: 1 }).useLine).toBe(
+      '一对一 · Nurul · 用 2 节课：配套 1 的最后一节和配套 2 的第一节（还没付款）',
+    )
+    expect(zh({ ...AIMAN_AND_SOFIA, slot: null })).toMatchObject({ title: '请选择开始时间' })
+  })
+
+  it('explains a crossed-out start with the Chinese reason', () => {
+    expect(zh({ ...AIMAN_AND_SOFIA, slot: GAP_700 })).toMatchObject({
+      title: '晚上7:00不可预约',
+      useLine: '这节课离晚上6:30结束的课太近。教练需要 1 小时 赶到下一节课。',
+      buttonLabel: '请选一个空闲时间',
+    })
+  })
+
+  it('writes the cancel note with the cutoff in Chinese', () => {
+    expect(cancelPolicyNote(6, 'zh')).toBe('开课 6 小时前都可以免费取消或改期。')
+    expect(cancelPolicyNote(0, 'zh')).toBe('开课前都可以免费取消或改期。')
   })
 })

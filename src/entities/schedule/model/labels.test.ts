@@ -13,7 +13,12 @@ import {
 
 describe('hour labels', () => {
   it('writes the customer’s without a space (design/Schedule.dc.html)', () => {
-    expect([420, 720, 780, 1260].map(customerHourLabel)).toEqual(['7am', '12pm', '1pm', '9pm'])
+    expect([420, 720, 780, 1260].map((minute) => customerHourLabel(minute))).toEqual([
+      '7am',
+      '12pm',
+      '1pm',
+      '9pm',
+    ])
     expect(customerHourLabel(0)).toBe('12am')
   })
 
@@ -68,5 +73,25 @@ describe('formatRangeCompact', () => {
     expect(formatRangeCompact('2026-10-04T11:30:00+08:00', '2026-10-04T12:30:00+08:00')).toBe(
       '11:30 am–12:30 pm',
     )
+  })
+})
+
+describe('in Chinese', () => {
+  it('writes days and weeks from the date itself, not by splitting the English', () => {
+    expect(formatDayKey('2026-10-03', 'zh')).toBe('10月3日 周六')
+    expect(dayHeading('2026-09-28', 'zh')).toEqual({ weekday: '周一', date: '28' })
+    expect(dayHeading('2026-10-04', 'zh')).toEqual({ weekday: '周日', date: '4' })
+    expect(formatWeekLabel('2026-09-28', 'zh')).toBe('9月28日 – 10月4日')
+    expect(formatWeekLabel('2026-09-21', 'zh')).toBe('9月21日–27日')
+  })
+
+  it('writes the hour lines on the 24-hour clock', () => {
+    expect([420, 720, 780, 1080, 1260].map((minute) => customerHourLabel(minute, 'zh'))).toEqual([
+      '7:00',
+      '12:00',
+      '13:00',
+      '18:00',
+      '21:00',
+    ])
   })
 })

@@ -1,9 +1,12 @@
 import { messageFor } from '@/shared/config/messages'
+import type { Language } from '@/shared/i18n/language'
+import { wordsIn } from '@/shared/i18n/words'
 import { formatRinggit, possessive } from '@/shared/lib/format'
 import { formatDayMonth, type Instant, toMyt } from '@/shared/lib/time'
 
 import { isNextLessonPaid, nextBookingPackageNo } from './packages'
 import type { GroupBalance } from './types'
+import { balanceWords } from './words'
 
 // The orange line under a package (DESIGN §4): what the customer should pay, and when. Display
 // only: the database decides the balance, and whether a booking may go ahead.
@@ -17,15 +20,19 @@ import type { GroupBalance } from './types'
  * before or at its first lesson." A group that can book nothing more (can_still_book 0 or less)
  * gets DESIGN §6's credit_exceeded words instead.
  */
-export function bookPackageNote(balance: GroupBalance, priceCents: number | null): string | null {
+export function bookPackageNote(
+  balance: GroupBalance,
+  priceCents: number | null,
+  language: Language = 'en',
+): string | null {
   if (isNextLessonPaid(balance)) return null
   const counted = balance.used_lessons + balance.booked_lessons
   const startsUnpaidPackage =
     counted === balance.paid_lessons && counted % balance.package_size === 0
   if (balance.left_in_package > 0 && !startsUnpaidPackage) return null
-  if (balance.can_still_book <= 0) return messageFor({ code: 'credit_exceeded' })
-  const pay = priceCents === null ? 'Pay for it' : `Pay ${formatRinggit(priceCents)}`
-  return `New bookings start Package ${nextBookingPackageNo(balance)}. ${pay} before or at its first lesson.`
+  if (balance.can_still_book <= 0) return messageFor({ code: 'credit_exceeded' }, { language })
+  const price = priceCents === null ? null : formatRinggit(priceCents)
+  return wordsIn(balanceWords, language).bookNote(nextBookingPackageNo(balance), price)
 }
 
 /** What My classes' note needs besides the balance. */

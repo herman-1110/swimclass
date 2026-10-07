@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react'
 
+import { useLanguage } from '@/shared/i18n/context'
+import { wordsIn } from '@/shared/i18n/words'
 import { type DateKey, weekDays } from '@/shared/lib/time'
 import { WeekGrid, type WeekGridBlock } from '@/shared/ui/WeekGrid'
 
@@ -12,12 +14,9 @@ import {
   type GridHours,
 } from '../model/timeline'
 import type { CustomerWeek } from '../model/types'
+import { scheduleWords } from '../model/words'
 import { CustomerWeekText } from './CustomerWeekText'
 import { WeekLoading } from './WeekLoading'
-
-// The picture's description, as drawn (design/Schedule.dc.html).
-const PICTURE =
-  'Week timetable showing free, booked, travel and closed times. The Book tab lists every free start time.'
 
 type CustomerWeekGridProps = {
   /** The Monday of the week shown. The headers show its dates before the data arrives. */
@@ -37,14 +36,14 @@ type CustomerWeekGridProps = {
 }
 
 /** The blocks of a week: closed, travel, other people's lessons, and the viewer's own ("You"). Free time stays white. */
-function blocksOf(week: CustomerWeek, hours: GridHours): WeekGridBlock[] {
+function blocksOf(week: CustomerWeek, hours: GridHours, you: string): WeekGridBlock[] {
   return week.flatMap((day, column) =>
     customerDayTimeline(day, hours).flatMap((item): WeekGridBlock[] => {
       const block = { key: `${day.day}-${item.start}`, column, start: item.start, end: item.end }
       if (item.kind === 'lesson') {
         return [
           item.lesson.mine
-            ? { ...block, tone: 'accent', content: 'You' }
+            ? { ...block, tone: 'accent', content: you }
             : { ...block, tone: 'booked-other' },
         ]
       }
@@ -61,29 +60,29 @@ function blocksOf(week: CustomerWeek, hours: GridHours): WeekGridBlock[] {
  * after it.
  */
 export function CustomerWeekGrid({ weekStart, week, dayHref, error }: CustomerWeekGridProps) {
+  const language = useLanguage()
+  const w = wordsIn(scheduleWords, language)
   const shown = !error && week && isWeekOf(week, weekStart) ? week : undefined
   const hours = shown ? customerWeekHours(shown) : DEFAULT_HOURS
   const days = weekDays(weekStart).map((day) => ({
     key: day,
-    ...dayHeading(day),
-    label: `Book on ${formatDayKey(day)}`,
+    ...dayHeading(day, language),
+    label: w.bookOn(formatDayKey(day, language)),
     to: dayHref(day),
   }))
   return (
     <WeekGrid
       size="compact"
       days={days}
-      blocks={shown ? blocksOf(shown, hours) : []}
+      blocks={shown ? blocksOf(shown, hours, w.you) : []}
       from={hours.from}
       to={hours.to}
-      hourLabel={customerHourLabel}
-      label={PICTURE}
+      hourLabel={(minute) => customerHourLabel(minute, language)}
+      label={w.picture}
       summary={
         shown ? <CustomerWeekText weekStart={weekStart} week={shown} hours={hours} /> : undefined
       }
-      overlay={
-        shown ? undefined : (error ?? <WeekLoading size="compact" status="Loading the timetable" />)
-      }
+      overlay={shown ? undefined : (error ?? <WeekLoading size="compact" status={w.loading} />)}
       busy={!shown && !error}
     />
   )

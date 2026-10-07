@@ -1,6 +1,9 @@
 import { type ReactNode, useId } from 'react'
 
+import { useWords } from '@/shared/i18n/context'
 import { cn } from '@/shared/lib/cn'
+
+import { uiWords } from './words'
 
 export type DayStripDay = {
   /** The day as a DateKey ("2026-09-29"); onSelect gets it back. */
@@ -40,7 +43,8 @@ type DayStripProps = {
  * 76 px tall, weekday over a 36 px date circle (accent when picked), then a dot or a caption.
  * Seven equal columns 2 px apart, so each is 44 px wide at 360 px.
  */
-export function DayStrip({ days, selected, onSelect, heading, label = 'Days' }: DayStripProps) {
+export function DayStrip({ days, selected, onSelect, heading, label }: DayStripProps) {
+  const w = useWords(uiWords)
   const headingId = useId()
   const rangeIsText = typeof heading?.range === 'string'
   return (
@@ -65,7 +69,7 @@ export function DayStrip({ days, selected, onSelect, heading, label = 'Days' }: 
       <div
         role="group"
         aria-labelledby={heading ? headingId : undefined}
-        aria-label={heading ? undefined : label}
+        aria-label={heading ? undefined : (label ?? w.days)}
         className="grid grid-cols-7 gap-0.5"
       >
         {days.map((day) => {

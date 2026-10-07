@@ -1,10 +1,12 @@
 import { PackageSummarySkeleton } from '@/entities/balance'
 import { TimeChipGridSkeleton } from '@/entities/slot'
 import { BookingSummaryPlaceholder } from '@/features/book-lesson'
+import { useWords } from '@/shared/i18n/context'
 import { cn } from '@/shared/lib/cn'
 import { Card } from '@/shared/ui/Card'
 import { Skeleton } from '@/shared/ui/Skeleton'
 
+import { bookPageWords } from '../model/words'
 import { AREA, BOOK_GRID } from './bookGrid'
 
 type BookSkeletonProps = {
@@ -18,10 +20,11 @@ type BookSkeletonProps = {
  * in state A, all in the real grid so nothing moves when the data arrives.
  */
 export function BookSkeleton({ cutoffHours }: BookSkeletonProps) {
+  const w = useWords(bookPageWords)
   return (
     <div aria-busy="true" className={BOOK_GRID}>
       <p role="status" className="sr-only">
-        Loading…
+        {w.loading}
       </p>
       {/* The legend, the option rows and the help line, which takes two lines below 1280 px. */}
       <div className={cn(AREA.group, 'flex flex-col gap-2')}>

@@ -4,9 +4,13 @@ import { useEffect } from 'react'
 import { accountKeys } from '@/entities/account'
 import { toAppError } from '@/shared/api/rpc'
 import { messageFor } from '@/shared/config/messages'
+import { useLanguage } from '@/shared/i18n/context'
+import { wordsIn } from '@/shared/i18n/words'
 import type { ReadFailure } from '@/shared/lib/hooks/useReadFailure'
 import { Banner } from '@/shared/ui/Banner'
 import { Button } from '@/shared/ui/Button'
+
+import { schedulePageWords } from '../model/words'
 
 type WeekErrorProps = {
   /** Why the week couldn't be read (an AppError), kept while "Try again" reads it again:
@@ -22,6 +26,7 @@ type WeekErrorProps = {
  * its profile read again, so the guard sends it to Waiting for approval.
  */
 export function WeekError({ failure }: WeekErrorProps) {
+  const language = useLanguage()
   const queryClient = useQueryClient()
   const code = toAppError(failure.error).code
 
@@ -41,7 +46,7 @@ export function WeekError({ failure }: WeekErrorProps) {
             pending={failure.retrying}
             onClick={failure.retry}
           >
-            Try again
+            {wordsIn(schedulePageWords, language).tryAgain}
           </Button>
         )
       }
@@ -49,7 +54,7 @@ export function WeekError({ failure }: WeekErrorProps) {
       {/* A new alert for each failure: one that fails again is read out again. The button
           stays, so it keeps focus. */}
       <p key={failure.failedAt} role="alert">
-        {messageFor(failure.error)}
+        {messageFor(failure.error, { language })}
       </p>
     </Banner>
   )

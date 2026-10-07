@@ -2,11 +2,13 @@ import { useId } from 'react'
 
 import { bookPackageNote, type GroupBalance, PackageSummary } from '@/entities/balance'
 import { useUpcomingLessons } from '@/entities/booking'
-import { type Group, GroupPicker } from '@/entities/group'
+import { type Group, GroupPicker, typeLabelIn } from '@/entities/group'
 import { useCoachHoursOnDay, useOwnLessonsOnDay } from '@/entities/schedule'
 import { packagePriceCents, type PublicSettings } from '@/entities/settings'
 import { freeCountByDay } from '@/entities/slot'
 import { BookingSummary } from '@/features/book-lesson'
+import { useLanguage } from '@/shared/i18n/context'
+import { wordsIn } from '@/shared/i18n/words'
 import { formatMinutes } from '@/shared/lib/format'
 import { Card } from '@/shared/ui/Card'
 import { Segmented } from '@/shared/ui/Segmented'
@@ -14,6 +16,7 @@ import { Segmented } from '@/shared/ui/Segmented'
 import { alreadyBookedText } from '../model/alreadyBooked'
 import { coachAwayText } from '../model/coachAway'
 import { useBookSelection } from '../model/useBookSelection'
+import { bookPageWords } from '../model/words'
 import { AREA, BOOK_GRID } from './bookGrid'
 import { DaySection } from './DaySection'
 import { StartTimesSection } from './StartTimesSection'
@@ -32,6 +35,7 @@ type BookScreenProps = {
  * the drawing's order, which is also the order keyboard focus takes (book spec §7.1).
  */
 export function BookScreen({ settings, groups, balances }: BookScreenProps) {
+  const language = useLanguage()
   const book = useBookSelection(settings, groups)
   const startTimesId = useId()
   const own = useOwnLessonsOnDay(book.weekStart, book.day ?? book.weekStart)
@@ -57,8 +61,8 @@ export function BookScreen({ settings, groups, balances }: BookScreenProps) {
       <Card framedFrom="md" className={AREA.package}>
         <PackageSummary
           balance={balance}
-          typeLabel={group.type_label}
-          note={bookPackageNote(balance, packagePriceCents(settings, group.size))}
+          typeLabel={typeLabelIn(group, language)}
+          note={bookPackageNote(balance, packagePriceCents(settings, group.size), language)}
         />
       </Card>
       <DaySection
@@ -74,11 +78,11 @@ export function BookScreen({ settings, groups, balances }: BookScreenProps) {
       {book.lengths.length > 1 && (
         <Segmented
           name="book-length"
-          legend="Lesson length"
+          legend={wordsIn(bookPageWords, language).lessonLength}
           hideLegend
           options={book.lengths.map((length) => ({
             value: String(length),
-            label: formatMinutes(length),
+            label: formatMinutes(length, language),
           }))}
           value={String(book.minutes)}
           onChange={(value) => book.selectLength(Number(value))}
@@ -108,8 +112,8 @@ export function BookScreen({ settings, groups, balances }: BookScreenProps) {
         }
         selected={book.picked?.starts_at ?? null}
         onSelect={book.selectTime}
-        alreadyBooked={book.day && own.data ? alreadyBookedText(own.data, groups) : null}
-        coachAway={book.day && hours.data ? coachAwayText(hours.data) : null}
+        alreadyBooked={book.day && own.data ? alreadyBookedText(own.data, groups, language) : null}
+        coachAway={book.day && hours.data ? coachAwayText(hours.data, language) : null}
         className={AREA.times}
       />
       <BookingSummary

@@ -189,7 +189,7 @@ describe('laterPackages', () => {
     expect(laterPackageUsage(next)).toBe('1 booked · 3 left')
     expect(laterPackageBarLabel(next)).toBe('1 booked, 3 left of 4')
     // After 2 lessons used, 2 booked in Package 1 and 6 past it: Packages 2 and 3.
-    expect(laterPackages(tester(8, 8, 2)).map(laterPackageCounts)).toEqual([
+    expect(laterPackages(tester(8, 8, 2)).map((later) => laterPackageCounts(later))).toEqual([
       '4 booked · fully booked',
       '2 booked · 2 left to book',
     ])

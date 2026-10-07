@@ -1,5 +1,6 @@
 import type { TimeRange } from '@/entities/schedule'
-import { COACH_AWAY_DAY_MESSAGE, coachAwayMessage } from '@/shared/config/messages'
+import { messagesIn } from '@/shared/config/messages'
+import type { Language } from '@/shared/i18n/language'
 import { formatRange } from '@/shared/lib/time'
 
 export type CoachAway = {
@@ -15,12 +16,16 @@ export type CoachAway = {
  * otherwise each blocked range, "Your coach isn’t available 9:00 am–12:00 pm." Null without
  * blocked time.
  */
-export function coachAwayText(day: {
-  open: readonly TimeRange[]
-  closed: readonly TimeRange[]
-}): CoachAway | null {
+export function coachAwayText(
+  day: {
+    open: readonly TimeRange[]
+    closed: readonly TimeRange[]
+  },
+  language: Language = 'en',
+): CoachAway | null {
   if (day.closed.length === 0) return null
-  if (day.open.length === 0) return { text: COACH_AWAY_DAY_MESSAGE, wholeDay: true }
-  const ranges = day.closed.map((range) => formatRange(range.starts_at, range.ends_at))
-  return { text: coachAwayMessage(ranges), wholeDay: false }
+  const messages = messagesIn(language)
+  if (day.open.length === 0) return { text: messages.coachAwayDay, wholeDay: true }
+  const ranges = day.closed.map((range) => formatRange(range.starts_at, range.ends_at, language))
+  return { text: messages.coachAway(ranges), wholeDay: false }
 }

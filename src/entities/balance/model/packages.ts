@@ -1,4 +1,8 @@
+import type { Language } from '@/shared/i18n/language'
+import { wordsIn } from '@/shared/i18n/words'
+
 import type { GroupBalance } from './types'
+import { balanceWords } from './words'
 
 // Package words and numbers for display (DESIGN §3, §4; TECH_SPEC §10). They only show what
 // group_balance says: the database decides every count, and whether a booking may go ahead.
@@ -10,23 +14,33 @@ type Totals = Pick<
 >
 
 /** "1-to-2 · Package 4": the package card's title on Book and in the coach's lesson details. */
-export function packageTitle(typeLabel: string, balance: Pick<GroupBalance, 'package_no'>): string {
-  return `${typeLabel} · Package ${balance.package_no}`
+export function packageTitle(
+  typeLabel: string,
+  balance: Pick<GroupBalance, 'package_no'>,
+  language: Language = 'en',
+): string {
+  return `${typeLabel} · ${wordsIn(balanceWords, language).packageName(balance.package_no)}`
 }
 
 /**
  * "0 used · 2 booked · 2 left to book", or "3 used · 1 booked · fully booked" when nothing is
  * left (Book, lesson details; the drawing's script, Main.dc.html:375).
  */
-export function packageCounts(balance: Counts): string {
-  const left =
-    balance.left_in_package > 0 ? `${balance.left_in_package} left to book` : 'fully booked'
-  return `${packageUsage(balance)} · ${left}`
+export function packageCounts(balance: Counts, language: Language = 'en'): string {
+  return wordsIn(balanceWords, language).counts(
+    balance.used_in_package,
+    balance.booked_in_package,
+    balance.left_in_package,
+  )
 }
 
 /** "Package 4 · 0 used · 2 booked · 2 left to book": My classes' caption under the bar. */
-export function packageCaption(balance: Counts & Pick<GroupBalance, 'package_no'>): string {
-  return `Package ${balance.package_no} · ${packageCounts(balance)}`
+export function packageCaption(
+  balance: Counts & Pick<GroupBalance, 'package_no'>,
+  language: Language = 'en',
+): string {
+  const name = wordsIn(balanceWords, language).packageName(balance.package_no)
+  return `${name} · ${packageCounts(balance, language)}`
 }
 
 /** "0 used · 2 booked": the Students table and cards (AdminStudents.dc.html). */
@@ -77,8 +91,8 @@ export function laterPackages(
 }
 
 /** "1 booked · 3 left to book", or "4 booked · fully booked": a later package's counts. */
-export function laterPackageCounts(later: LaterPackage): string {
-  return `${later.booked} booked · ${later.left > 0 ? `${later.left} left to book` : 'fully booked'}`
+export function laterPackageCounts(later: LaterPackage, language: Language = 'en'): string {
+  return wordsIn(balanceWords, language).laterCounts(later.booked, later.left)
 }
 
 /** "1 booked · 3 left": a later package's counts on the Students table and cards. */

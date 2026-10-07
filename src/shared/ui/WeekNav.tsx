@@ -1,8 +1,10 @@
+import { useWords } from '@/shared/i18n/context'
 import { cn } from '@/shared/lib/cn'
 
 import { IconButton } from './IconButton'
 import { ChevronLeftIcon } from './icons/ChevronLeftIcon'
 import { ChevronRightIcon } from './icons/ChevronRightIcon'
+import { uiWords } from './words'
 
 // The week label's three looks.
 const labelLooks = {
@@ -50,11 +52,12 @@ export function WeekNav({
   stretch = false,
   size = 'md',
 }: WeekNavProps) {
+  const w = useWords(uiWords)
   const labelLook = size === 'sm' ? 'small' : stretch ? 'stretch' : 'packed'
   return (
     <div
       role="group"
-      aria-label="Week"
+      aria-label={w.week}
       className={cn(
         'flex items-center',
         stretch ? 'justify-between md:justify-start md:gap-2' : 'gap-1',
@@ -62,7 +65,7 @@ export function WeekNav({
     >
       {/* aria-disabled, not disabled: a disabled button would drop focus to the page. */}
       <IconButton
-        label="Previous week"
+        label={w.previousWeek}
         aria-disabled={previousDisabled || undefined}
         onClick={() => {
           if (!previousDisabled) onPrevious()
@@ -74,7 +77,7 @@ export function WeekNav({
         {label}
       </span>
       <IconButton
-        label="Next week"
+        label={w.nextWeek}
         aria-disabled={nextDisabled || undefined}
         onClick={() => {
           if (!nextDisabled) onNext()
@@ -88,7 +91,7 @@ export function WeekNav({
           onClick={onToday}
           className="inline-flex h-11 shrink-0 cursor-pointer items-center rounded-control px-3 text-sm font-medium text-accent hover:bg-subtle"
         >
-          Today
+          {w.today}
         </button>
       )}
     </div>
