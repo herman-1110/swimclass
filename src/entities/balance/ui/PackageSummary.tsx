@@ -8,6 +8,8 @@ import { Tag } from '@/shared/ui/Tag'
 
 import {
   isPackagePaid,
+  laterPackageCounts,
+  laterPackages,
   owesPayment,
   packageCaption,
   packageCounts,
@@ -62,8 +64,9 @@ type PackageSummaryProps = {
 /**
  * A group's current package: title, bar, counts and what to pay next (DESIGN §3 package bar,
  * §4 Book 3 and My classes; Main.dc.html:85-99, MyClasses.dc.html:94-127). The bar is hidden
- * from screen readers: the counts beside it say the same (DESIGN §3). The page frames it
- * (Book's card from 768 px, My classes' list item).
+ * from screen readers: the counts beside it say the same (DESIGN §3). Each later package with
+ * lessons booked in it follows as a bar and "Package 2 · 1 booked · 3 left to book" (Herman,
+ * 7 Oct 2026). The page frames it (Book's card from 768 px, My classes' list item).
  */
 export function PackageSummary(props: PackageSummaryProps) {
   const { balance, typeLabel, note } = props
@@ -102,6 +105,14 @@ export function PackageSummary(props: PackageSummaryProps) {
       <span className="text-label text-muted">
         {account ? packageCaption(balance) : packageCounts(balance)}
       </span>
+      {laterPackages(balance).map((later) => (
+        <div key={later.package_no} className="mt-1 flex flex-col gap-2">
+          <SegmentBar total={later.package_size} used={0} booked={later.booked} />
+          <span className="text-label text-muted">
+            Package {later.package_no} · {laterPackageCounts(later)}
+          </span>
+        </div>
+      ))}
       {note && (
         <p className={cn('m-0 text-label leading-normal text-warn', account && 'mt-1')}>{note}</p>
       )}

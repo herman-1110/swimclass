@@ -141,6 +141,35 @@ describe('PackageSummary on My classes', () => {
     expect(screen.queryByText('Paid 22 Aug · Cash')).toBeNull()
   })
 
+  it('adds a later package with lessons booked in it, on My classes and on Book', () => {
+    // The tester (Herman, 7 Oct 2026): Package 1 paid, its 4 lessons booked and 1 more.
+    const tester: GroupBalance = {
+      ...aimanSofia,
+      paid_lessons: 4,
+      used_lessons: 0,
+      booked_lessons: 5,
+      package_no: 1,
+      used_in_package: 0,
+      booked_in_package: 4,
+      left_in_package: 0,
+      unpaid: true,
+    }
+    const { container } = render(
+      <PackageSummary variant="account" balance={tester} typeLabel="1-to-1" names="Kid" />,
+    )
+    expect(screen.getByText('Package 1 · 0 used · 4 booked · fully booked')).toBeTruthy()
+    expect(screen.getByText('Package 2 · 1 booked · 3 left to book')).toBeTruthy()
+    expect(screen.getByText('Package 2 unpaid')).toBeTruthy()
+    expect(segments(container)).toEqual([
+      ...['booked', 'booked', 'booked', 'booked'],
+      ...['booked', 'free', 'free', 'free'],
+    ])
+    cleanup()
+    render(<PackageSummary balance={tester} typeLabel="1-to-1" />)
+    expect(screen.getByText('1-to-1 · Package 1')).toBeTruthy()
+    expect(screen.getByText('Package 2 · 1 booked · 3 left to book')).toBeTruthy()
+  })
+
   it('shows how to pay under a note, keeping the coach’s text', () => {
     const { rerender } = render(
       <PackageSummary

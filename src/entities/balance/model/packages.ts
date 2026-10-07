@@ -44,6 +44,53 @@ export function packageBarLabel(balance: Counts & Pick<GroupBalance, 'package_si
   return `${balance.used_in_package} used, ${balance.booked_in_package} booked, ${balance.left_in_package} left of ${balance.package_size}`
 }
 
+/** A package after the current one with lessons booked in it (laterPackages). */
+export type LaterPackage = {
+  package_no: number
+  package_size: number
+  booked: number
+  left: number
+}
+
+/**
+ * The packages after the current one that already have lessons booked, in order (Herman, 7 Oct
+ * 2026: "why can't I see their package 2"). The current package moves on only as lessons are
+ * used, so lessons booked past it had no bar. They fill the next packages in order: Package 1
+ * with 4 booked and 1 more booked gives Package 2 with 1 booked, 3 left. Empty while the
+ * current package still has room.
+ */
+export function laterPackages(
+  balance: Pick<
+    GroupBalance,
+    'package_no' | 'package_size' | 'booked_lessons' | 'booked_in_package'
+  >,
+): LaterPackage[] {
+  const size = balance.package_size
+  const later: LaterPackage[] = []
+  let rest = balance.booked_lessons - balance.booked_in_package
+  for (let no = balance.package_no + 1; rest > 0; no += 1) {
+    const booked = Math.min(rest, size)
+    later.push({ package_no: no, package_size: size, booked, left: size - booked })
+    rest -= booked
+  }
+  return later
+}
+
+/** "1 booked · 3 left to book", or "4 booked · fully booked": a later package's counts. */
+export function laterPackageCounts(later: LaterPackage): string {
+  return `${later.booked} booked · ${later.left > 0 ? `${later.left} left to book` : 'fully booked'}`
+}
+
+/** "1 booked · 3 left": a later package's counts on the Students table and cards. */
+export function laterPackageUsage(later: LaterPackage): string {
+  return `${later.booked} booked · ${later.left} left`
+}
+
+/** "1 booked, 3 left of 4": a later package's bar, for screen readers. */
+export function laterPackageBarLabel(later: LaterPackage): string {
+  return `${later.booked} booked, ${later.left} left of ${later.package_size}`
+}
+
 /**
  * The package the next booked lesson goes into: floor((used + booked) / size) + 1. Book's
  * "New bookings start Package 3" and "uses 1 lesson from Package 4". It is package_no while
@@ -61,6 +108,20 @@ export function nextPaymentPackageNo(
   balance: Pick<Totals, 'package_size' | 'paid_lessons'>,
 ): number {
   return Math.floor(balance.paid_lessons / balance.package_size) + 1
+}
+
+/**
+ * Whether record_payment would refuse the next payment as paid_ahead (Herman, 7 Oct 2026): a
+ * payment may start at most one package past the last package with a lesson used or booked,
+ * so paid must stay under (ceil((used + booked) / size) + 1) × size. Null while a payment may
+ * go ahead (always, for a group that owes one), else the package a lesson must be booked in
+ * first: with Package 2 paid and nothing booked in it, 2. A preview: the database decides.
+ */
+export function paidAheadPackageNo(balance: Totals): number | null {
+  const size = balance.package_size
+  const counted = balance.used_lessons + balance.booked_lessons
+  const limit = (Math.ceil(counted / size) + 1) * size
+  return balance.paid_lessons >= limit ? Math.floor(balance.paid_lessons / size) : null
 }
 
 /**

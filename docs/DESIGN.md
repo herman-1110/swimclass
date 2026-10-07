@@ -85,7 +85,8 @@ uses Chip, `GroupPicker` (entity `group`) uses OptionRow. The tab bar and sideba
   selected: `--warn-tint` fill, `--warn` border and text.
 - **Package bar** (`SegmentBar`): 4 segments (lessons per package), 4 px tall (6 px in tables):
   used accent, booked `--seg-booked`, free `--seg-free`. Always paired with text
-  ("0 used · 2 booked · 2 left to book").
+  ("0 used · 2 booked · 2 left to book"). Lessons booked past the current package get a bar
+  per later package under it: "Package 2 · 1 booked · 3 left to book" (Herman, 7 Oct 2026).
 - **Tag** (`Tag`): small neutral pill for 1-to-1 / 1-to-2 / 1-to-3. **Status pill** (`Pill`): Paid
   (`--accent-tint` / accent), Unpaid (`--warn-tint` / `--warn`). It belongs to a group, never
   to a lesson (PRD BR-22). Unpaid names the package the next payment pays for: "Package 2
@@ -342,6 +343,8 @@ message needs gets the generic message.
 | invalid_reason | The reason is too long. Shorten it to 500 characters. |
 | price_not_set | No price is set for this lesson type. Type the amount, or set the price in Settings. |
 | invalid_lessons | A payment needs at least 1 lesson. Change the number of lessons. |
+| paid_ahead | Package {package_no} is already paid and has no lessons booked yet. Record the next payment once a lesson is booked in Package {package_no}. |
+| too_many_lessons | That pays more than one package ahead of the lessons booked. Record at most {max} lessons now. |
 | invalid_amount | The amount can't be negative. Enter RM 0 or more. |
 | invalid_method | Choose how they paid: Cash, Transfer or FPX. |
 | invalid_date | The payment date is in the future. Pick today or an earlier date. |

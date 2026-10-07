@@ -21,7 +21,8 @@ import {
 
 export type PaymentFormInput = {
   group: Pick<Group, 'group_id' | 'size' | 'type_label'>
-  balance: Pick<GroupBalance, 'package_size' | 'paid_lessons'>
+  /** used and booked: whether a payment may go ahead at all (paidAheadPackageNo). */
+  balance: Pick<GroupBalance, 'package_size' | 'paid_lessons' | 'used_lessons' | 'booked_lessons'>
   settings: PriceSettings
   today: DateKey
   onCancel?: () => void

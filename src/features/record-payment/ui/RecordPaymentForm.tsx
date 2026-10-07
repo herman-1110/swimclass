@@ -1,5 +1,6 @@
 import { useRef } from 'react'
 
+import { paidAheadPackageNo } from '@/entities/balance'
 import { messageFor } from '@/shared/config/messages'
 import { Button } from '@/shared/ui/Button'
 import { Field } from '@/shared/ui/Field'
@@ -28,13 +29,25 @@ type RecordPaymentFormProps = PaymentFormInput & {
  * type's price; with no price, the price_not_set words up front), Paid by, Date paid
  * (today, at most today), Note, then "Save payment", which reads "Payment saved" until
  * anything changes. Cancel resets it, then calls onCancel. Key it by the group, so another
- * group starts afresh.
+ * group starts afresh. A group already paid one package past its lessons gets paid_ahead's
+ * words in its place (Herman, 7 Oct 2026), until a lesson is booked in that package.
  */
 export function RecordPaymentForm({ accountName, ...input }: RecordPaymentFormProps) {
   const { group, balance, today } = input
   const formRef = useRef<HTMLFormElement>(null)
   const form = usePaymentForm(input, formRef)
   const { draft, change, errorAt, pending } = form
+  const aheadNo = paidAheadPackageNo(balance)
+
+  // Not while "Payment saved" shows: the payment that just went through is often the one
+  // that reaches the limit.
+  if (aheadNo !== null && !form.saved) {
+    return (
+      <p className="text-label leading-normal text-muted">
+        {messageFor({ code: 'paid_ahead', detail: { package_no: aheadNo } }, { audience: 'coach' })}
+      </p>
+    )
+  }
 
   return (
     <form ref={formRef} noValidate onSubmit={form.submit} className="flex flex-col gap-4.5">

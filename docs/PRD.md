@@ -116,7 +116,9 @@ Every rule has an ID so code, tests and prompts can refer to it.
   counts as 2. Cancelled and excused lessons never count.
 - **BR-20** Payments are recorded per group: lessons bought (normally 4), amount,
   method (cash, transfer, FPX, free) and date. A free lesson is a payment of 1 lesson
-  with RM 0.
+  with RM 0. Payments go at most one package ahead of the lessons booked (Herman, 7 Oct
+  2026): with Package 1's lessons booked, Package 2 can be paid once; the next payment waits
+  until a lesson is booked in Package 2. A group that owes a payment can always pay.
 - **BR-21** Credit: a group may book up to `unpaid_packages_allowed` (default 1)
   package beyond what it has paid for. Lessons booked beyond that are refused with a
   clear message ("Pay for the current package before booking more lessons").

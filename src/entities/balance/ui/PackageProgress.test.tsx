@@ -42,4 +42,29 @@ describe('PackageProgress', () => {
     expect(bar.className).not.toContain('w-[113px]')
     expect(bar.previousElementSibling?.textContent).toBe('Package 22 used · 1 booked')
   })
+
+  it('adds each later package with lessons booked in it (Herman, 7 Oct 2026)', () => {
+    // The tester: Package 1 paid, its 4 lessons booked and 1 more past it.
+    const tester: GroupBalance = {
+      ...weiJie,
+      paid_lessons: 4,
+      used_lessons: 0,
+      booked_lessons: 5,
+      package_no: 1,
+      used_in_package: 0,
+      booked_in_package: 4,
+      left_in_package: 0,
+    }
+    for (const variant of ['table', 'card'] as const) {
+      render(<PackageProgress balance={tester} variant={variant} />)
+      expect(screen.getByRole('img', { name: '0 used, 4 booked, 0 left of 4' })).toBeTruthy()
+      const later = screen.getByRole('img', { name: '1 booked, 3 left of 4' })
+      expect(later.children).toHaveLength(4)
+      expect(screen.getByText('Package 2')).toBeTruthy()
+      expect(screen.getByText('1 booked · 3 left')).toBeTruthy()
+      cleanup()
+    }
+    render(<PackageProgress balance={weiJie} variant="table" />)
+    expect(screen.getAllByRole('img')).toHaveLength(1)
+  })
 })

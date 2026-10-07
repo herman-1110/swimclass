@@ -31,12 +31,17 @@ beforeAll(async () => {
 
 afterEach(cleanup)
 
+// Hana's balance in the seed: 20 paid, 20 used, 2 booked.
+const HANA_BALANCE = { package_size: 4, paid_lessons: 20, used_lessons: 20, booked_lessons: 2 }
+
 function renderForm({
   group = HANA,
   settings = NO_PRICES,
+  balance = HANA_BALANCE,
 }: {
   group?: typeof HANA | { group_id: string; size: 1; type_label: '1-to-1' }
   settings?: PriceSettings
+  balance?: typeof HANA_BALANCE
 } = {}) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   const onCancel = vi.fn()
@@ -45,7 +50,7 @@ function renderForm({
     <QueryClientProvider client={queryClient}>
       <RecordPaymentForm
         group={group}
-        balance={{ package_size: 4, paid_lessons: 20 }}
+        balance={balance}
         settings={settings}
         accountName="Farah"
         today="2026-09-26"
@@ -171,6 +176,36 @@ describe('RecordPaymentForm', () => {
     await waitFor(() => expect(note.getAttribute('aria-invalid')).toBe('true'))
     expect(errorOf(note)).toContain('The note is too long. Shorten it to 500 characters.')
     expect(document.activeElement).toBe(note)
+  })
+
+  it('says how many lessons can be recorded when a payment would pay too far ahead', async () => {
+    // Hana: lessons up to Package 6, so payments may reach the end of Package 7: 8 more.
+    await logIn('herman', DEMO_PASSWORD)
+    renderForm()
+    fireEvent.change(screen.getByRole('combobox', { name: 'Package' }), {
+      target: { value: 'custom' },
+    })
+    const lessons = screen.getByRole('spinbutton', { name: 'Number of lessons' })
+    fireEvent.change(lessons, { target: { value: '9' } })
+    fireEvent.change(amount(), { target: { value: '240' } })
+    fireEvent.click(save())
+    await waitFor(() => expect(lessons.getAttribute('aria-invalid')).toBe('true'))
+    expect(errorOf(lessons)).toContain(
+      'That pays more than one package ahead of the lessons booked. Record at most 8 lessons now.',
+    )
+  })
+
+  it('says why no payment can go ahead yet, in place of the form (Herman, 7 Oct 2026)', () => {
+    // The tester: Packages 1 and 2 paid, Package 1's 4 lessons booked, none in Package 2.
+    renderForm({
+      balance: { package_size: 4, paid_lessons: 8, used_lessons: 0, booked_lessons: 4 },
+    })
+    expect(
+      screen.getByText(
+        'Package 2 is already paid and has no lessons booked yet. Record the next payment once a lesson is booked in Package 2.',
+      ),
+    ).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Save payment' })).toBeNull()
   })
 
   it('shows other refusals above the buttons', async () => {

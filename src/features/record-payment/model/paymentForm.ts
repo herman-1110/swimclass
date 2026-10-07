@@ -117,6 +117,7 @@ export type PaymentField = 'lessons' | 'amount' | 'method' | 'date' | 'note' | '
 
 const FIELDS: Partial<Record<string, PaymentField>> = {
   invalid_lessons: 'lessons',
+  too_many_lessons: 'lessons',
   amount_format: 'amount',
   price_not_set: 'amount',
   invalid_amount: 'amount',

@@ -328,6 +328,19 @@ const COACH: Readonly<Record<string, Words>> = {
   price_not_set:
     'No price is set for this lesson type. Type the amount, or set the price in Settings.',
   invalid_lessons: 'A payment needs at least 1 lesson. Change the number of lessons.',
+  // Payments go at most one package ahead of the lessons booked (Herman, 7 Oct 2026).
+  paid_ahead: (d) =>
+    given(
+      wholeOf(d.package_no),
+      (no) =>
+        `Package ${no} is already paid and has no lessons booked yet. Record the next payment once a lesson is booked in Package ${no}.`,
+    ),
+  too_many_lessons: (d) =>
+    given(
+      wholeOf(d.max),
+      (max) =>
+        `That pays more than one package ahead of the lessons booked. Record at most ${plural(max, 'lesson')} now.`,
+    ),
   invalid_amount: 'The amount can’t be negative. Enter RM 0 or more.',
   invalid_method: 'Choose how they paid: Cash, Transfer or FPX.',
   invalid_date: 'The payment date is in the future. Pick today or an earlier date.',
