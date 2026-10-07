@@ -3,6 +3,33 @@
 Update this file at the end of every Claude Code session. Newest entry on top.
 Keep entries short; link to files instead of pasting code.
 
+## v0.25 · 7 Oct 2026 · Later packages show; payments at most one package ahead
+**State**: local `frontend-first` adds this work on top of v0.24 (949b71f); nothing pushed.
+The new migration `20261007100000_payment_limit.sql` is on neither dev nor production: the
+auto-mode check refused Claude's `npx supabase db push` to dev ("Production Deploy"), so
+`npm run test:db` hasn't run with it. Demo mode (PGlite) runs it: the form's
+`too_many_lessons` test passed there.
+**Done** (Herman chose 1A, 2A and "remove payments")
+- 1A: lessons booked past the current package get a bar per later package under it:
+  "Package 3 · 1 booked · 3 left to book" on Book and My classes, "Package 3" / "1 booked ·
+  3 left" on the Students table and cards (`laterPackages` in `entities/balance`). Checked in
+  demo mode after booking Sofia an extra lesson (`frontend-plan/out/later-pkg-*.png`).
+- 2A: `record_payment` refuses a payment that starts more than one package past the last
+  package with a lesson (`paid_ahead` {package_no}), and one payment that would pay further
+  than that, beyond a whole package (`too_many_lessons` {max}). A group that owes a payment
+  can always pay (a unit test sweeps the balances). The panel shows paid_ahead's words in
+  place of the form (`paidAheadPackageNo`); free lessons and excusing stay. The pro-rata db
+  test now pays Aiman & Sofia 3 before 4.
+- "Remove payments": waiting for Herman to run the read-only listing of payments since
+  6 Oct on production (given in chat) and say which to delete; then a `DELETE` by id with the
+  group's balance before and after, as `frontend-plan/sql/remove-tester-payments.sql`.
+**Next**
+1. Herman: `npx supabase db push` on dev (the CLI is linked to dev); Claude then runs
+   `npm run test:db`.
+2. Herman: push; production `db push` (PRODUCTION.md §3: link prod, `--dry-run`, push, link
+   dev straight back); `npm run build`; `npx wrangler deploy`.
+3. The tester's payments; "Unpaid packages allowed" (v0.24 Next 2); then v0.23's Next 2, 3.
+
 ## v0.24 · 7 Oct 2026 · The Unpaid pill names its package
 **State**: local `frontend-first` adds v0.22, v0.23, 50b069a and this entry on top of
 `origin` (d2b046a). The live site doesn't have 50b069a yet.
