@@ -795,6 +795,22 @@ export type Database = {
           subject: string
         }[]
       }
+      email_booked_en: {
+        Args: { p_series_id: string }
+        Returns: {
+          body_html: string
+          body_text: string
+          subject: string
+        }[]
+      }
+      email_booked_zh: {
+        Args: { p_series_id: string }
+        Returns: {
+          body_html: string
+          body_text: string
+          subject: string
+        }[]
+      }
       email_broadcast: {
         Args: { p_account_id: string; p_announcement_id: string }
         Returns: {
@@ -803,7 +819,39 @@ export type Database = {
           subject: string
         }[]
       }
+      email_broadcast_en: {
+        Args: { p_account_id: string; p_announcement_id: string }
+        Returns: {
+          body_html: string
+          body_text: string
+          subject: string
+        }[]
+      }
+      email_broadcast_zh: {
+        Args: { p_account_id: string; p_announcement_id: string }
+        Returns: {
+          body_html: string
+          body_text: string
+          subject: string
+        }[]
+      }
       email_cancelled: {
+        Args: { p_booking_id: string }
+        Returns: {
+          body_html: string
+          body_text: string
+          subject: string
+        }[]
+      }
+      email_cancelled_en: {
+        Args: { p_booking_id: string }
+        Returns: {
+          body_html: string
+          body_text: string
+          subject: string
+        }[]
+      }
+      email_cancelled_zh: {
         Args: { p_booking_id: string }
         Returns: {
           body_html: string
@@ -840,6 +888,22 @@ export type Database = {
         }[]
       }
       email_reminder: {
+        Args: { p_account_id: string; p_for_date: string }
+        Returns: {
+          body_html: string
+          body_text: string
+          subject: string
+        }[]
+      }
+      email_reminder_en: {
+        Args: { p_account_id: string; p_for_date: string }
+        Returns: {
+          body_html: string
+          body_text: string
+          subject: string
+        }[]
+      }
+      email_reminder_zh: {
         Args: { p_account_id: string; p_for_date: string }
         Returns: {
           body_html: string
@@ -886,13 +950,24 @@ export type Database = {
       }
       my_account_id: { Args: never; Returns: string }
       myt_day_text: { Args: { p_at: string }; Returns: string }
+      myt_day_text_zh: { Args: { p_at: string }; Returns: string }
+      myt_period_zh: { Args: { p_at: string }; Returns: string }
       myt_range_text: {
+        Args: { p_ends_at: string; p_starts_at: string }
+        Returns: string
+      }
+      myt_range_text_zh: {
         Args: { p_ends_at: string; p_starts_at: string }
         Returns: string
       }
       myt_text: { Args: { p_at: string }; Returns: string }
       myt_time_text: { Args: { p_at: string }; Returns: string }
+      myt_time_text_zh: { Args: { p_at: string }; Returns: string }
       myt_when_text: {
+        Args: { p_ends_at: string; p_starts_at: string }
+        Returns: string
+      }
+      myt_when_text_zh: {
         Args: { p_ends_at: string; p_starts_at: string }
         Returns: string
       }

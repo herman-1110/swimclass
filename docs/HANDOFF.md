@@ -5,8 +5,8 @@ Keep entries short; link to files instead of pasting code.
 
 ## v0.26 · 7–8 Oct 2026 · English and Chinese (in progress)
 **State**: the working copy is on the local branch `chinese` (stages 1 to 4 and these notes),
-which isn't pushed. Stage 4's migration waits for Herman's `db push` to dev (Next). `frontend-first` = `origin/frontend-first` = `origin/main` = 9914226 = v0.25,
-which is live: Herman pushed, ran the production `db push` (payment_limit) and `wrangler
+which isn't pushed. Stage 4's migration is on dev (Herman pushed it 8 Oct), not production.
+`frontend-first` = `origin/frontend-first` = `origin/main` = 9914226 = v0.25, which is live: Herman pushed, ran the production `db push` (payment_limit) and `wrangler
 deploy` on 7 Oct. Switch to `frontend-first` before Herman builds anything else for
 production: the build takes the working tree. `supabase/scripts/make-coach.sql` stays
 modified on purpose (Herman's email; never commit it).
@@ -102,7 +102,7 @@ get an email.") stay English and out of the word files; CoachLayout keeps those 
 - Tests: Chinese cases in position, when, past, notes, cancelWindow and copy tests. Full unit
   run: 250 files, 1891 tests passed; the `zh` chunk is now 6.0 kB gzipped, the main bundle has
   no Chinese.
-**Stage 4** (written 8 Oct, Herman: "1. A, 2. B"; tested in the demo database, not yet on dev):
+**Stage 4** (done 8 Oct, Herman: "1. A, 2. B"; on dev, not production):
 - Migration `20261008100000_profile_language.sql`: `profiles.language` ('en', 'zh', or null for
   never chose; null reads as English), updatable by the account holder (column grant, like
   name and phone); `handle_new_user` reads `language` from Sign up's metadata; Chinese date and
@@ -110,8 +110,9 @@ get an email.") stay English and out of the word files; CoachLayout keeps those 
   templates are renamed `email_*_en`, unchanged, and `email_booked`/`email_cancelled`/
   `email_broadcast`/`email_reminder` now pick one by the account's language, so the callers and
   dedupe keys are as before. The coach's late alert and digest stay English.
-  `supabase/README.md` updated; `database.types.ts` edited by hand (`language: string | null`):
-  run `npm run db:types` after the push to confirm it matches.
+  `supabase/README.md` updated. After Herman's push to dev, `npm run test:db` passed (13 files,
+  296 tests) and `db:types` matched the hand edit of `profiles`; the generated file (it also
+  lists the new internal functions) replaced it.
 - Browser: Sign up sends the screen's language (`SignUpInput.language`, Supabase and demo);
   `app/providers/AccountLanguage` (inside SessionProvider) saves the toggle on the account while
   signed in (`features/save-language`), and settles once per sign-in: the account's language
@@ -122,14 +123,14 @@ get an email.") stay English and out of the word files; CoachLayout keeps those 
   (`{{ if and .Data.language (eq .Data.language "zh") }}`); the subject stays English. Herman
   pastes it in PRODUCTION.md 1.3 (updated). Invite (coach-made accounts have no language) and
   reset (metadata from sign-up time, not the toggle) stay English.
-- Tests (full unit run: 251 files, 1895 passed): `AccountLanguage.test.tsx` (demo database: account wins, null takes the phone's,
-  toggle saves and doesn't flip back); `tests/db/language.test.ts` (sign-up language, the
-  grant and its check, each Chinese email, English kept for null) and `rls.test.ts` (the
-  column) run once the migration is on dev. `frontend-plan/tools/zh-emails.mjs` renders the
+- Tests (full unit run: 251 files, 1895 passed): `AccountLanguage.test.tsx` (demo database:
+  account wins, null takes the phone's, toggle saves and doesn't flip back);
+  `tests/db/language.test.ts` (sign-up language, the grant and its check, each Chinese email,
+  English kept for null) and `rls.test.ts` (the column). `frontend-plan/tools/zh-emails.mjs` renders the
   Chinese emails from the demo database into `frontend-plan/out/zh/emails.txt` and `.html`
   (pgq.mjs now loads PGlite from the repo).
 **Don't deploy mid-way**: the reviewer hasn't read the Chinese yet, and the migration isn't on
-dev or production. The work stays on the `chinese` branch until stage 5.
+production. The work stays on the `chinese` branch until stage 5.
 **For the reviewer** (`frontend-plan/out/zh/`, 390 and 1280 px each unless named): stage 1:
 `login`, `signup`, `forgot-password`, `reset-password` (the expired-link screen, as demo mode
 shows it), `no-such-page` (Not found), `my-classes` (the toggle and the Chinese tabs only);
@@ -153,12 +154,8 @@ drops its space after a full-width colon, so the coach's message reads "教练�
   signed-in first-load and Lighthouse checks, §2 students, HANDOFF v1.0 (v0.23's Next 2, 3).
   The Chinese sign-up and reset emails (stage 4) depend on 1.3's templates.
 **Next**
-1. Herman, in PowerShell in `D:\DOWNLOAD\Swimming\swimclass` (the CLI is linked to dev), one
-   at a time: `npx supabase db push --dry-run` (it should list only
-   `20261008100000_profile_language.sql`), then `npx supabase db push`.
-2. Claude: `npm run test:db` (with `language.test.ts`), `npm run db:types` and compare with
-   the hand edit; fix anything, commit.
-3. Stage 5: the reviewer's corrections (screens, `emails.txt`, the glossary); Waiting for
+1. Herman's reader reads the screens (`frontend-plan/out/zh/`), `emails.txt` and the glossary.
+2. Stage 5: the reviewer's corrections (screens, `emails.txt`, the glossary); Waiting for
    approval's shot (a demo sign-up); then merge `chinese` into `frontend-first`, Herman pushes,
    the production `db push` (PRODUCTION.md §3), `npm run build`, `npx wrangler deploy`, and
    the new `confirmation.html` in the production dashboard (1.3).
