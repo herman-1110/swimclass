@@ -109,7 +109,7 @@ stage 2: `book`, `book@360`, `book-crossed-out`, `book-picked`, `book-booked` (T
 meiling: a crossed-out 7:00 pm, 7:30 pm picked, then booked), `schedule`, `schedule@360`;
 stage 3 (360, 390 and 1280 px): `my-classes` (replaces stage 1's), `account`, and at 390 and
 1280 `my-classes-past` (past lessons and receipts open), `my-classes-cancel` (the
-confirmation; 390 only), `my-classes-cancelled` (the notice), from
+confirmation), `my-classes-cancelled` (the notice), from
 `node frontend-plan/tools/zh-my-classes-steps.mjs 390`.
 Waiting for approval has none yet: it needs a demo sign-up. Known: a refusal already on screen
 ("Wrong username or password") stays in its language when the toggle flips, until the next
