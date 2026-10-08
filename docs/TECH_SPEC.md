@@ -389,6 +389,10 @@ Built in prompt 04 (`supabase/migrations/…_coach_slot_check.sql`, `…_booking
 - `add_free_lesson(p_group_id, p_note text default null) returns uuid`: coach only;
   payment of 1 lesson, RM 0, method 'free', dated today (MYT). Errors: `not_found`,
   `invalid_note` (over 500 characters).
+- `remove_payment(p_payment_id)`: coach only (Herman, 9 Oct 2026: a payment saved by
+  mistake); deletes the payment or free lesson, under the group's lock as `record_payment`
+  takes it, so the balance is as it was without it. Nobody is emailed. Errors: `not_found`
+  (none, or already removed), `online_payment` (`gateway_ref` is set).
 
 ### 5.3 Students, groups and accounts
 Built in prompt 04 (`…_groups_accounts.sql`, tested in `tests/db/groups.test.ts`).

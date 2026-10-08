@@ -1,6 +1,6 @@
 // Cancelling, excusing and payments (TECH_SPEC §5.2, prompt 04; PRD BR-15 to BR-20,
-// BR-26, BR-34, BR-35): cancel_booking, excuse_booking, record_payment and
-// add_free_lesson against the seed, with the clock at Sat 26 Sep 2026 12:00 MYT unless a
+// BR-26, BR-34, BR-35): cancel_booking, excuse_booking, record_payment,
+// add_free_lesson and remove_payment against the seed, with the clock at Sat 26 Sep 2026 12:00 MYT unless a
 // test says otherwise.
 import { describe, expect, it } from 'vitest'
 
@@ -538,3 +538,51 @@ describe.skipIf(!hasDatabase)(
     })
   },
 )
+
+describe.skipIf(!hasDatabase)('remove_payment (Herman, 9 Oct 2026)', () => {
+  const db = useTestDb()
+  const sql = 'select public.remove_payment($1)'
+
+  it('removes Hana’s payment saved by mistake: her balance is as before it', async () => {
+    const before = await balance(db, SEED.groups.hana)
+    await db.as('herman')
+    const id = await recordPayment(db, SEED.groups.hana, 4, 24000, 'cash')
+    expect(await balance(db, SEED.groups.hana)).toMatchObject({ unpaid: false })
+    await db.as('herman')
+    await db.query(sql, [id])
+    expect(await payment(db, id)).toBeUndefined()
+    expect(await balance(db, SEED.groups.hana)).toEqual(before)
+    expect(before).toMatchObject({ unpaid: true })
+  })
+
+  it('removes a free lesson the same way', async () => {
+    await db.as('herman')
+    const { rows } = await db.query<{ id: string }>('select public.add_free_lesson($1) as id', [
+      SEED.groups.nurul,
+    ])
+    const id = rows[0]?.id ?? ''
+    expect(await balance(db, SEED.groups.nurul)).toMatchObject({ paid_lessons: 5 })
+    await db.as('herman')
+    await db.query(sql, [id])
+    expect(await balance(db, SEED.groups.nurul)).toMatchObject({ paid_lessons: 4 })
+  })
+
+  it('refuses one already removed, an online payment, and customers', async () => {
+    await db.as('herman')
+    const id = await recordPayment(db, SEED.groups.hana, 4, 24000, 'cash')
+    await db.as('herman')
+    await db.query(sql, [id])
+    expect(await failure(db, sql, [id])).toMatchObject({ message: 'not_found' })
+
+    const online = await recordPayment(db, SEED.groups.hana, 4, 24000, 'fpx')
+    await db.asOwner()
+    await db.query("update public.payments set gateway_ref = 'fpx-test-1' where id = $1", [online])
+    await db.as('herman')
+    expect(await failure(db, sql, [online])).toMatchObject({ message: 'online_payment' })
+    expect(await payment(db, online)).toMatchObject({ lessons: 4 })
+
+    await db.as('farah')
+    expect(await failure(db, sql, [online])).toMatchObject({ message: 'not_coach' })
+    expect(await payment(db, online)).toBeDefined()
+  })
+})

@@ -123,7 +123,7 @@ src/
 │   ├── log-in/                   username + password → login Edge Function
 │   ├── log-out/                  both
 │   ├── post-announcement/        coach: message all customers → post_announcement
-│   ├── record-payment/           coach: payment panel, free lesson → record_payment
+│   ├── record-payment/           coach: payment panel, free lesson, remove → record_payment
 │   ├── reset-password/           forgot and reset forms
 │   ├── set-time-exception/       coach: Block time / Open extra time → add_exception
 │   ├── sign-up/                  sign-up form with username check
@@ -323,7 +323,7 @@ possible later step; for now the missing grants do that job.
 | every signed-in account | `get_public_settings` |
 | approved customers (their own groups) and the coach | `week_slots`, `week_busy`, `cancel_booking` |
 | approved customers | `book_lesson` |
-| the coach only (checked inside) | `coach_week`, `coach_slot_check`, `coach_book`, `excuse_booking`, `record_payment`, `add_free_lesson`, `create_group`, `update_group`, `set_group_active`, `approve_account`, `set_open_hours`, `add_exception`, `remove_exception`, `update_settings`, `post_announcement`, `remove_announcement`, `pending_accounts`, `email_log` |
+| the coach only (checked inside) | `coach_week`, `coach_slot_check`, `coach_book`, `excuse_booking`, `record_payment`, `add_free_lesson`, `remove_payment`, `create_group`, `update_group`, `set_group_active`, `approve_account`, `set_open_hours`, `add_exception`, `remove_exception`, `update_settings`, `post_announcement`, `remove_announcement`, `pending_accounts`, `email_log` |
 | the service role (Edge Functions) | `check_login_attempt`, `record_login_success` (login); `queue_daily_emails`, `claim_outbox`, `ack_outbox` (mail-queue) |
 
 ### 4.3 Migrations

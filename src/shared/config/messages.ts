@@ -446,6 +446,8 @@ const COACH: Readonly<Record<string, Words>> = {
   invalid_method: 'Choose how they paid: Cash, Transfer or FPX.',
   invalid_date: 'The payment date is in the future. Pick today or an earlier date.',
   invalid_note: 'The note is too long. Shorten it to 500 characters.',
+  // remove_payment (Herman, 9 Oct 2026): a payment gateway's record stays.
+  online_payment: 'This payment was made online, so it can’t be removed here.',
   // “that group” links to the group (messageParts), so the message needs its id: without
   // it, generic (DESIGN §6; data-contracts §4.2 lists detail.group_id as its placeholder).
   duplicate_group: (d) =>

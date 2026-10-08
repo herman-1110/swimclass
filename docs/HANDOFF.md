@@ -3,9 +3,10 @@
 Update this file at the end of every Claude Code session. Newest entry on top.
 Keep entries short; link to files instead of pasting code.
 
-## v0.26 · 7–8 Oct 2026 · English and Chinese (in progress)
-**State**: the working copy is on the local branch `chinese` (stages 1 to 4 and these notes),
-which isn't pushed. Stage 4's migration is on dev (Herman pushed it 8 Oct), not production.
+## v0.26 · 7–9 Oct 2026 · English and Chinese; removing a payment (in progress)
+**State**: the working copy is on the local branch `chinese` (stages 1 to 4, Remove payment
+and these notes), which isn't pushed. Stage 4's migration is on dev (Herman pushed it 8 Oct),
+not production; Remove payment's isn't on dev yet (Next 1).
 `frontend-first` = `origin/frontend-first` = `origin/main` = 9914226 = v0.25, which is live: Herman pushed, ran the production `db push` (payment_limit) and `wrangler
 deploy` on 7 Oct. Switch to `frontend-first` before Herman builds anything else for
 production: the build takes the working tree. `supabase/scripts/make-coach.sql` stays
@@ -148,17 +149,41 @@ own pass: `node frontend-plan/tools/zh-shots.mjs /book /schedule --as=meiling` (
 5173 must be running), and `node frontend-plan/tools/zh-book-steps.mjs 390` for Book's three
 states. The glossary has stage 2's and stage 3's terms in a second and third table. Banner
 drops its space after a full-width colon, so the coach's message reads "教练：…".
+**Remove payment** (Herman, 9 Oct: "when i misclicked a package for a student i can remove
+it"; on `chinese`, so it ships with stage 5):
+- Migration `20261009100000_remove_payment.sql`: `remove_payment(p_payment_id)`, coach only;
+  deletes the payment (a free lesson too), so `group_balance` is as it was without it and it
+  leaves the customer's receipts; nobody is emailed. Takes the group's lock like
+  `record_payment`. Errors `not_coach`, `not_found` (none, or already removed),
+  `online_payment` (`gateway_ref` set: a payment gateway's record stays). A starting
+  balance isn't a payment: Edit group changes it. `database.types.ts` has its entry by hand
+  until `db:types` after the push.
+- Students → a group's History → Payments: each payment has "Remove" ("Remove the RM 240
+  payment of 22 Aug"), then "Remove this payment?" with what it was and what removing changes,
+  focus on "Keep payment". After it, "Payment removed." takes focus (the row goes), and the
+  package counts, payments and week refresh. Removed meanwhile in another tab: "This payment
+  was already removed." (`features/record-payment`: `useRemovePayment`,
+  `RemovePaymentButton`, `RemovePaymentConfirm`; `PaymentRow`'s history variant takes an
+  `action`; `online_payment`'s words in the coach table.)
+- Tests: unit (demo database) in `mutations.test.tsx`, `RemovePaymentConfirm.test.tsx` and
+  `CoachStudentsPage.actions.test.tsx`; `tests/db/changes.test.ts` (a payment, a free lesson,
+  the refusals) and `rls.test.ts` (the grant) run once it is on dev.
 **Open**
 - From earlier entries, still open: "Unpaid packages allowed" 1 or 0 (v0.24, a Settings
   change Herman makes), PRODUCTION.md 1.3 (Auth SMTP, templates) and 1.8 (smoke test), the
   signed-in first-load and Lighthouse checks, §2 students, HANDOFF v1.0 (v0.23's Next 2, 3).
   The Chinese sign-up and reset emails (stage 4) depend on 1.3's templates.
 **Next**
-1. Herman's reader reads the screens (`frontend-plan/out/zh/`), `emails.txt` and the glossary.
-2. Stage 5: the reviewer's corrections (screens, `emails.txt`, the glossary); Waiting for
+1. Herman, in PowerShell in `D:DOWNLOADSwimmingswimclass` (the CLI is linked to dev), one
+   at a time: `npx supabase db push --dry-run` (it should list only
+   `20261009100000_remove_payment.sql`), then `npx supabase db push`. Claude: `npm run test:db`,
+   `npm run db:types` and compare with the hand edit; commit.
+2. Herman's reader reads the screens (`frontend-plan/out/zh/`), `emails.txt` and the glossary.
+3. Stage 5: the reviewer's corrections (screens, `emails.txt`, the glossary); Waiting for
    approval's shot (a demo sign-up); then merge `chinese` into `frontend-first`, Herman pushes,
-   the production `db push` (PRODUCTION.md §3), `npm run build`, `npx wrangler deploy`, and
-   the new `confirmation.html` in the production dashboard (1.3).
+   the production `db push` (PRODUCTION.md §3; two migrations: profile_language and
+   remove_payment), `npm run build`, `npx wrangler deploy`, and the new `confirmation.html` in
+   the production dashboard (1.3).
 
 ## v0.25 · 7 Oct 2026 · Later packages show; payments at most one package ahead
 **State**: local `frontend-first` adds this work on top of v0.24 (949b71f); nothing pushed.

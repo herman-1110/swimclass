@@ -384,6 +384,7 @@ describe.skipIf(!hasDatabase)('security checklist (TECH_SPEC §13)', () => {
       'record_payment(uuid,integer,integer,payment_method,date,text)',
       'remove_announcement(uuid)',
       'remove_exception(uuid)',
+      'remove_payment(uuid)', // Herman, 9 Oct 2026
       'set_group_active(uuid,boolean)',
       'set_open_hours(jsonb)',
       'update_group(uuid,text,integer,integer)',
@@ -411,6 +412,7 @@ describe.skipIf(!hasDatabase)('security checklist (TECH_SPEC §13)', () => {
       `select public.set_open_hours('[]')`,
       `select public.add_exception('closed', '2026-10-06 17:30+08', '2026-10-06 19:00+08')`,
       `select public.remove_exception('${SEED.groups.hana}')`,
+      `select public.remove_payment('${SEED.groups.hana}')`,
       `select public.update_settings('{"travel_gap_minutes": 0}')`,
       `select public.post_announcement('Free lessons for all')`,
       `select public.remove_announcement('${SEED.groups.hana}')`,

@@ -7,11 +7,13 @@ import { balanceKeys } from '@/entities/balance'
 import { paymentKeys } from '@/entities/payment'
 import { scheduleKeys } from '@/entities/schedule'
 import { getSession, logIn, logOut } from '@/shared/api/auth'
-import { readRows } from '@/shared/api/rpc'
+import { demoDb } from '@/shared/api/demo/db'
+import { readRows, rpc } from '@/shared/api/rpc'
 import { DEMO_PASSWORD } from '@/shared/config/demo'
 
 import { useAddFreeLesson } from './useAddFreeLesson'
 import { useRecordPayment } from './useRecordPayment'
+import { useRemovePayment } from './useRemovePayment'
 
 // Demo mode: the real migrations and seed in PGlite, clock at Sat 26 Sep 2026 12:00 MYT.
 const HANA = 'c0000000-0000-4000-8000-000000000003'
@@ -131,5 +133,67 @@ describe('useAddFreeLesson', () => {
     act(() => result.current.mutate({ groupId: PRIYA, note: 'x'.repeat(501) }))
     await waitFor(() => expect(result.current.isError).toBe(true))
     expect(result.current.error).toMatchObject({ code: 'invalid_note' })
+  })
+})
+
+describe('useRemovePayment', () => {
+  /** Saves a payment for Hana as the coach and returns its id. */
+  async function hanaPays() {
+    await logIn('herman', DEMO_PASSWORD)
+    return rpc('record_payment', {
+      p_group_id: HANA,
+      p_lessons: 4,
+      p_amount_cents: 24000,
+      p_method: 'transfer',
+    })
+  }
+
+  it('removes a payment saved by mistake, then refreshes like a payment', async () => {
+    const before = await balanceOf(HANA)
+    const id = await hanaPays()
+    const onRemoved = vi.fn()
+    const { result, invalidate } = renderMutation(() => useRemovePayment({ onRemoved }))
+    act(() => result.current.mutate({ paymentId: id }))
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    expect(onRemoved).toHaveBeenCalledWith('removed', { paymentId: id })
+    expect(refreshed(invalidate)).toEqual([balanceKeys.all, paymentKeys.all, scheduleKeys.all])
+    expect(await readRows('payments', { eq: { id } })).toEqual([])
+    expect(await balanceOf(HANA)).toEqual(before)
+  })
+
+  it('takes one already removed (another tab) as removed', async () => {
+    const id = await hanaPays()
+    await rpc('remove_payment', { p_payment_id: id })
+    const onRemoved = vi.fn()
+    const { result } = renderMutation(() => useRemovePayment({ onRemoved }))
+    act(() => result.current.mutate({ paymentId: id }))
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    expect(onRemoved).toHaveBeenCalledWith('already-removed', { paymentId: id })
+  })
+
+  it('keeps an online payment', async () => {
+    const id = await hanaPays()
+    const db = await demoDb()
+    await db.query(`update public.payments set gateway_ref = 'fpx-test-1' where id = $1`, [id])
+    const { result } = renderMutation(() => useRemovePayment())
+    act(() => result.current.mutate({ paymentId: id }))
+    await waitFor(() => expect(result.current.isError).toBe(true))
+    expect(result.current.error).toMatchObject({ code: 'online_payment' })
+    expect(await readRows('payments', { eq: { id } })).toHaveLength(1)
+    // Hana can't pay further ahead: leave her as she was.
+    await db.query('update public.payments set gateway_ref = null where id = $1', [id])
+    await rpc('remove_payment', { p_payment_id: id })
+  })
+
+  it('is refused for a customer', async () => {
+    const id = await hanaPays()
+    await logIn('meiling', DEMO_PASSWORD)
+    const { result } = renderMutation(() => useRemovePayment())
+    act(() => result.current.mutate({ paymentId: id }))
+    await waitFor(() => expect(result.current.isError).toBe(true))
+    expect(result.current.error).toMatchObject({ code: 'not_coach' })
+    await logIn('herman', DEMO_PASSWORD)
+    expect(await readRows('payments', { eq: { id } })).toHaveLength(1)
+    await rpc('remove_payment', { p_payment_id: id })
   })
 })

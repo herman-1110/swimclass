@@ -1056,6 +1056,7 @@ export type Database = {
       }
       remove_announcement: { Args: { p_id: string }; Returns: undefined }
       remove_exception: { Args: { p_id: string }; Returns: undefined }
+      remove_payment: { Args: { p_payment_id: string }; Returns: undefined }
       ringgit_text: { Args: { p_cents: number }; Returns: string }
       set_group_active: {
         Args: { p_active: boolean; p_group_id: string }

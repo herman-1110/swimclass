@@ -277,4 +277,27 @@ describe('CoachStudentsPage actions', () => {
       expect(document.activeElement).toBe(within(drawer).getByRole('heading', { level: 2 })),
     )
   })
+
+  it('removes Priya’s payment saved by mistake from History: focus goes to the notice', async () => {
+    // The payment the test above recorded from History.
+    await renderAs('herman', `/coach/students?history=${GROUP.priya}`)
+    const drawer = await screen.findByRole('dialog', { name: 'History' }, { timeout: 5000 })
+    const payments = within(drawer).getByRole('region', { name: 'Payments' })
+    const name = 'Remove the RM 240 payment of 26 Sep'
+    press(await within(payments).findByRole('button', { name }))
+    const confirm = screen.getByRole('alertdialog', { name: 'Remove this payment?' })
+    expect(document.activeElement).toBe(
+      within(confirm).getByRole('button', { name: 'Keep payment' }),
+    )
+    fireEvent.click(within(confirm).getByRole('button', { name: 'Remove payment' }))
+    const notice = await within(payments).findByText('Payment removed.')
+    expect(notice.getAttribute('role')).toBe('status')
+    expect(screen.queryByRole('alertdialog')).toBeNull()
+    await waitFor(() => expect(within(payments).queryByRole('button', { name })).toBeNull())
+    expect(document.activeElement).toBe(notice)
+    const left = await readRows('payments', {
+      eq: { group_id: GROUP.priya, paid_on: '2026-09-26' },
+    })
+    expect(left).toEqual([])
+  })
 })

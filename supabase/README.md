@@ -34,6 +34,7 @@ Migration names below drop the `supabase/migrations/` folder.
 | `20261006100000_mail_queue` | 11 | the reminder and digest templates, `queue_daily_emails`, `claim_outbox`, `ack_outbox`, `email_log`; an index on unsent emails |
 | `20261007100000_payment_limit` | Herman, 7 Oct | `record_payment` goes at most one package ahead of the lessons booked: `paid_ahead`, `too_many_lessons` |
 | `20261008100000_profile_language` | HANDOFF v0.26 | `profiles.language` (sign-up, the account holder); Chinese dates and times; the four student emails in Chinese (the English ones renamed `…_en`) |
+| `20261009100000_remove_payment` | Herman, 9 Oct | `remove_payment`: the coach deletes a payment saved by mistake |
 
 ## Tables
 
@@ -86,6 +87,7 @@ listed in each function's header comment in its migration.
 | `excuse_booking` | `…100200_booking` | coach | excuse a lesson that has started |
 | `record_payment` | `…100000_payment_limit` | coach | record a payment for a group, at most one package ahead of the lessons booked |
 | `add_free_lesson` | `…100200_booking` | coach | a free lesson: a payment of 1 lesson, RM 0 |
+| `remove_payment` | `…100000_remove_payment` | coach | delete a payment or free lesson saved by mistake (not an online one) |
 | `create_group` | `…100300_groups_accounts` | coach | Add students |
 | `update_group` | `…100300_groups_accounts` | coach | change a group's location and starting balances |
 | `set_group_active` | `…100300_groups_accounts` | coach | deactivate or reactivate a group |

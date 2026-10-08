@@ -7,3 +7,5 @@ export {
 } from './model/paymentForm'
 export { AddFreeLesson } from './ui/AddFreeLesson'
 export { RecordPaymentForm } from './ui/RecordPaymentForm'
+export { RemovePaymentButton } from './ui/RemovePaymentButton'
+export { RemovePaymentConfirm } from './ui/RemovePaymentConfirm'

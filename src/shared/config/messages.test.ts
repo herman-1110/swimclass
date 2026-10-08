@@ -176,6 +176,7 @@ const COACH_CASES: Case[] = [
   ['invalid_method', {}, 'Choose how they paid: Cash, Transfer or FPX.'],
   ['invalid_date', {}, 'The payment date is in the future. Pick today or an earlier date.'],
   ['invalid_note', {}, 'The note is too long. Shorten it to 500 characters.'],
+  ['online_payment', {}, 'This payment was made online, so it can’t be removed here.'],
   [
     'duplicate_group',
     { group_id: 'c0000000-0000-4000-8000-000000000001' },

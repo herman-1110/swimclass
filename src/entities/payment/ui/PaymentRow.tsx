@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react'
+
 import { useLanguage } from '@/shared/i18n/context'
 import { wordsIn } from '@/shared/i18n/words'
 import { formatRinggit } from '@/shared/lib/format'
@@ -32,6 +34,8 @@ type PaymentRowProps = {
       variant: 'history'
       /** useNow(): a date in another year shows the year. */
       now?: Instant
+      /** A control on the right of the row: the coach's Remove. */
+      action?: ReactNode
     }
 )
 
@@ -46,13 +50,26 @@ export function PaymentRow(props: PaymentRowProps) {
   const method = methodLabel(payment.method, language)
 
   if (props.variant === 'history') {
-    return (
-      <Element className="flex flex-col gap-0.5 border-b border-line py-3 break-words">
+    const lines = (
+      <>
         <span className="text-sm leading-[normal] font-semibold">{`${amount} · ${lessons}`}</span>
         <span className="text-label">
           {`${formatDayMonth(payment.paid_on, props.now, language)} · ${method}`}
         </span>
         {payment.note && <span className="text-label text-muted">{payment.note}</span>}
+      </>
+    )
+    if (!props.action) {
+      return (
+        <Element className="flex flex-col gap-0.5 border-b border-line py-3 break-words">
+          {lines}
+        </Element>
+      )
+    }
+    return (
+      <Element className="flex items-start justify-between gap-3 border-b border-line py-3">
+        <span className="flex min-w-0 flex-col gap-0.5 break-words">{lines}</span>
+        {props.action}
       </Element>
     )
   }
