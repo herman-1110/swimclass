@@ -5,8 +5,8 @@ Keep entries short; link to files instead of pasting code.
 
 ## v0.26 · 7–9 Oct 2026 · English and Chinese; removing a payment (in progress)
 **State**: the working copy is on the local branch `chinese` (stages 1 to 4, Remove payment
-and these notes), which isn't pushed. Stage 4's migration is on dev (Herman pushed it 8 Oct),
-not production; Remove payment's isn't on dev yet (Next 1).
+and these notes), which isn't pushed. Stage 4's and Remove payment's migrations are on dev
+(Herman pushed them 8 and 9 Oct), not production.
 `frontend-first` = `origin/frontend-first` = `origin/main` = 9914226 = v0.25, which is live: Herman pushed, ran the production `db push` (payment_limit) and `wrangler
 deploy` on 7 Oct. Switch to `frontend-first` before Herman builds anything else for
 production: the build takes the working tree. `supabase/scripts/make-coach.sql` stays
@@ -156,8 +156,8 @@ it"; on `chinese`, so it ships with stage 5):
   leaves the customer's receipts; nobody is emailed. Takes the group's lock like
   `record_payment`. Errors `not_coach`, `not_found` (none, or already removed),
   `online_payment` (`gateway_ref` set: a payment gateway's record stays). A starting
-  balance isn't a payment: Edit group changes it. `database.types.ts` has its entry by hand
-  until `db:types` after the push.
+  balance isn't a payment: Edit group changes it. Herman pushed it to dev on 9 Oct;
+  `db:types` from dev gives the same `database.types.ts` as the hand-written entry.
 - Students → a group's History → Payments: each payment has "Remove" ("Remove the RM 240
   payment of 22 Aug"), then "Remove this payment?" with what it was and what removing changes,
   focus on "Keep payment". After it, "Payment removed." takes focus (the row goes), and the
@@ -167,19 +167,16 @@ it"; on `chinese`, so it ships with stage 5):
   `action`; `online_payment`'s words in the coach table.)
 - Tests: unit (demo database) in `mutations.test.tsx`, `RemovePaymentConfirm.test.tsx` and
   `CoachStudentsPage.actions.test.tsx`; `tests/db/changes.test.ts` (a payment, a free lesson,
-  the refusals) and `rls.test.ts` (the grant) run once it is on dev.
+  the refusals) and `rls.test.ts` (the grant). `npm run test:db` on dev: 13 files, 299 tests
+  pass (296 + 3).
 **Open**
 - From earlier entries, still open: "Unpaid packages allowed" 1 or 0 (v0.24, a Settings
   change Herman makes), PRODUCTION.md 1.3 (Auth SMTP, templates) and 1.8 (smoke test), the
   signed-in first-load and Lighthouse checks, §2 students, HANDOFF v1.0 (v0.23's Next 2, 3).
   The Chinese sign-up and reset emails (stage 4) depend on 1.3's templates.
 **Next**
-1. Herman, in PowerShell in `D:DOWNLOADSwimmingswimclass` (the CLI is linked to dev), one
-   at a time: `npx supabase db push --dry-run` (it should list only
-   `20261009100000_remove_payment.sql`), then `npx supabase db push`. Claude: `npm run test:db`,
-   `npm run db:types` and compare with the hand edit; commit.
-2. Herman's reader reads the screens (`frontend-plan/out/zh/`), `emails.txt` and the glossary.
-3. Stage 5: the reviewer's corrections (screens, `emails.txt`, the glossary); Waiting for
+1. Herman's reader reads the screens (`frontend-plan/out/zh/`), `emails.txt` and the glossary.
+2. Stage 5: the reviewer's corrections (screens, `emails.txt`, the glossary); Waiting for
    approval's shot (a demo sign-up); then merge `chinese` into `frontend-first`, Herman pushes,
    the production `db push` (PRODUCTION.md §3; two migrations: profile_language and
    remove_payment), `npm run build`, `npx wrangler deploy`, and the new `confirmation.html` in
