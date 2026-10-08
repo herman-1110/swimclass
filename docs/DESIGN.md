@@ -349,6 +349,7 @@ message needs gets the generic message.
 | invalid_method | Choose how they paid: Cash, Transfer or FPX. |
 | invalid_date | The payment date is in the future. Pick today or an earlier date. |
 | invalid_note | The note is too long. Shorten it to 500 characters. |
+| online_payment | This payment was made online, so it can't be removed here. |
 | duplicate_group | These students already have an active group. Use that group, or deactivate it first. ("That group" links to {group_id}.) |
 | has_upcoming_lessons | This group has {count} upcoming lessons. Cancel them first, then deactivate it. Each cancellation emails the customer. (One lesson: "1 upcoming lesson. Cancel it first".) |
 | group_full | A lesson can have up to {max} students. Remove one, or change "Students per lesson" in Settings. |
