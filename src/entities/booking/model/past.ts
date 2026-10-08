@@ -1,20 +1,17 @@
+import type { Language } from '@/shared/i18n/language'
+import { wordsIn } from '@/shared/i18n/words'
 import { formatDayMonth, type Instant } from '@/shared/lib/time'
 
 import { packagePosition } from './position'
 import type { GroupLesson, PastLesson, PastLessonStatus } from './types'
+import { bookingWords } from './words'
 
 // Lessons that are over or off (my-classes spec §2.7, §5.2 Past lesson row; the coach's
 // History, coach-students spec §3.9).
 
-const PAST_LABELS: Record<PastLessonStatus, string> = {
-  done: 'Done',
-  cancelled: 'Cancelled',
-  excused: 'Excused',
-}
-
 /** A past row's right side: "Done", "Cancelled" or "Excused". */
-export function pastStatusLabel(status: PastLessonStatus): string {
-  return PAST_LABELS[status]
+export function pastStatusLabel(status: PastLessonStatus, language: Language = 'en'): string {
+  return wordsIn(bookingWords, language)[status]
 }
 
 /**
@@ -26,9 +23,11 @@ export function pastLessonDetail(
   names: string,
   typeLabel: string,
   packageSize: number,
+  language: Language = 'en',
 ): string {
   const group = `${names} · ${typeLabel}`
-  return lesson.position ? `${group} · ${packagePosition(lesson.position, packageSize)}` : group
+  if (!lesson.position) return group
+  return `${group} · ${packagePosition(lesson.position, packageSize, undefined, language)}`
 }
 
 /**
@@ -40,15 +39,16 @@ export function pastLessonNote(
   lesson: Pick<PastLesson, 'status' | 'cancelled_at' | 'cancelled_by' | 'cancel_reason'>,
   myAccountId: string | null,
   now?: Instant,
+  language: Language = 'en',
 ): string | null {
-  if (lesson.status === 'excused') return 'Your coach excused it, so it doesn’t count.'
+  const w = wordsIn(bookingWords, language)
+  if (lesson.status === 'excused') return w.excusedNote
   if (lesson.status !== 'cancelled') return null
-  const who =
-    lesson.cancelled_by !== null && lesson.cancelled_by === myAccountId ? 'you' : 'your coach'
-  const on = lesson.cancelled_at ? ` on ${formatDayMonth(lesson.cancelled_at, now)}` : ''
-  const reason =
-    who === 'your coach' && lesson.cancel_reason ? ` Reason: ${lesson.cancel_reason}` : ''
-  return `Cancelled by ${who}${on}.${reason}`
+  const byYou = lesson.cancelled_by !== null && lesson.cancelled_by === myAccountId
+  const on = lesson.cancelled_at ? formatDayMonth(lesson.cancelled_at, now, language) : null
+  // The coach's reason, as typed.
+  const reason = !byYou && lesson.cancel_reason ? lesson.cancel_reason : null
+  return w.cancelledNote(byYou, on, reason)
 }
 
 /** A lesson of the coach's History: booked and ahead, used (ended), cancelled or excused. */

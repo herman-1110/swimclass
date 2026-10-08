@@ -1,7 +1,7 @@
 import { messageFor } from '@/shared/config/messages'
 import type { Language } from '@/shared/i18n/language'
 import { wordsIn } from '@/shared/i18n/words'
-import { formatRinggit, possessive } from '@/shared/lib/format'
+import { formatRinggit } from '@/shared/lib/format'
 import { formatDayMonth, type Instant, toMyt } from '@/shared/lib/time'
 
 import { isNextLessonPaid, nextBookingPackageNo } from './packages'
@@ -62,28 +62,25 @@ export type AccountNoteInput = {
 export function accountPackageNote(
   balance: GroupBalance,
   { names, typeLabel, priceCents, now }: AccountNoteInput,
+  language: Language = 'en',
 ): string | null {
   if (isNextLessonPaid(balance)) return null
+  const w = wordsIn(balanceWords, language)
   const paid = balance.paid_lessons
   const counted = balance.used_lessons + balance.booked_lessons
   const size = balance.package_size
-  const price = priceCents === null ? '' : ` ${formatRinggit(priceCents)}`
+  const price = priceCents === null ? null : formatRinggit(priceCents)
 
   if (counted === paid) {
     const after = balance.last_lesson_at
-      ? `After ${formatDayMonth(balance.last_lesson_at, now)}, `
-      : ''
-    const next = `${after}${possessive(names)} next ${typeLabel} lesson`
-    if (paid % size === 0) {
-      return `${next} starts Package ${paid / size + 1}. Pay${price} before or at its first lesson.`
-    }
-    return `${next} isn’t paid yet. Pay before or at that lesson.`
+      ? formatDayMonth(balance.last_lesson_at, now, language)
+      : null
+    if (paid % size === 0) return w.nextStarts(after, names, typeLabel, paid / size + 1, price)
+    return w.nextUnpaid(after, names, typeLabel)
   }
 
-  const unpaid = `Package ${Math.floor(paid / size) + 1} isn’t paid yet.`
+  const unpaidNo = Math.floor(paid / size) + 1
   const ahead =
     balance.unpaid_since !== null && toMyt(balance.unpaid_since).getTime() > toMyt(now).getTime()
-  return ahead
-    ? `${unpaid} Pay${price} before or at its first lesson.`
-    : `${unpaid} Pay your coach${price} as soon as you can.`
+  return ahead ? w.unpaidAhead(unpaidNo, price) : w.unpaidNow(unpaidNo, price)
 }

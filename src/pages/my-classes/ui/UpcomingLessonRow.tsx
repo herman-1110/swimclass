@@ -4,12 +4,13 @@ import {
   type UpcomingLesson,
   upcomingPosition,
 } from '@/entities/booking'
-import type { Group } from '@/entities/group'
+import { type Group, typeLabelIn } from '@/entities/group'
 import { CancelLessonButton, cancelNote } from '@/features/cancel-lesson'
+import { useLanguage } from '@/shared/i18n/context'
 
 type UpcomingLessonRowProps = {
   lesson: UpcomingLesson
-  group: Pick<Group, 'display_names' | 'type_label'>
+  group: Pick<Group, 'display_names' | 'type_label' | 'size'>
   /** group_balance.package_no: a lesson in a later package says so ("Package 3, lesson 1 of
    *  4"); null when the balance isn't known. */
   currentPackageNo: number | null
@@ -39,12 +40,13 @@ export function UpcomingLessonRow({
   now,
   onCancelled,
 }: UpcomingLessonRowProps) {
+  const language = useLanguage()
   const noteId = `lesson-${lesson.id}-note`
-  const position = upcomingPosition(lesson.position, packageSize, currentPackageNo)
+  const position = upcomingPosition(lesson.position, packageSize, currentPackageNo, language)
   return (
     <LessonRowLayout
-      when={lessonWhen(lesson.starts_at, lesson.ends_at, now)}
-      detail={`${group.display_names} · ${group.type_label} · ${position}`}
+      when={lessonWhen(lesson.starts_at, lesson.ends_at, now, language)}
+      detail={`${group.display_names} · ${typeLabelIn(group, language)} · ${position}`}
       location={lesson.location}
       aside={
         <CancelLessonButton
@@ -60,7 +62,7 @@ export function UpcomingLessonRow({
           onCancelled={onCancelled}
         />
       }
-      note={cancelNote(lesson.starts_at, cutoffHours, now)}
+      note={cancelNote(lesson.starts_at, cutoffHours, now, language)}
       noteId={noteId}
     />
   )

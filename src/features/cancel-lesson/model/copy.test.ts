@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
+import { registerAllChinese } from '@/shared/i18n/registerAllChinese'
+
 import { cancelDescription, cancelLabel, cancelledNotice, cancelTitle, reasonHelp } from './copy'
 import type { CancelableLesson } from './types'
 
@@ -59,6 +61,23 @@ describe('the cancel confirmation’s words', () => {
     )
     expect(cancelledNotice(CUSTOMER_LESSON, 'coach')).toBe(
       'Lesson cancelled. The customer will get an email.',
+    )
+  })
+})
+
+describe('the cancel confirmation in Chinese', () => {
+  registerAllChinese()
+
+  it('writes the customer’s words in Chinese; the coach’s stay English', () => {
+    expect(cancelTitle(CUSTOMER_LESSON, 'zh')).toBe(
+      '要取消 Aiman & Sofia 10月3日 周六 上午9:00–10:00的课吗？',
+    )
+    expect(cancelDescription('customer', 'zh')).toBe('这节课会回到你的配套。')
+    expect(cancelledNotice(CUSTOMER_LESSON, 'customer', 'zh')).toBe(
+      '已取消 Aiman & Sofia 10月3日 周六 上午9:00–10:00的课。这节课已回到你的配套。',
+    )
+    expect(cancelledNotice(COACH_LESSON, 'coach', 'zh')).toBe(
+      'Lesson cancelled. Grace will get an email.',
     )
   })
 })

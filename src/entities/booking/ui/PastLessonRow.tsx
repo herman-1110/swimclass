@@ -1,3 +1,4 @@
+import { useLanguage } from '@/shared/i18n/context'
 import type { Instant } from '@/shared/lib/time'
 
 import { pastLessonDetail, pastLessonNote, pastStatusLabel } from '../model/past'
@@ -35,18 +36,19 @@ export function PastLessonRow({
   now,
   as,
 }: PastLessonRowProps) {
+  const language = useLanguage()
   return (
     <LessonRowLayout
       as={as}
-      when={lessonWhen(lesson.starts_at, lesson.ends_at, now)}
-      detail={pastLessonDetail(lesson, names, typeLabel, packageSize)}
+      when={lessonWhen(lesson.starts_at, lesson.ends_at, now, language)}
+      detail={pastLessonDetail(lesson, names, typeLabel, packageSize, language)}
       location={lesson.location}
       aside={
         <span className="text-label whitespace-nowrap text-muted">
-          {pastStatusLabel(lesson.status)}
+          {pastStatusLabel(lesson.status, language)}
         </span>
       }
-      note={pastLessonNote(lesson, myAccountId, now)}
+      note={pastLessonNote(lesson, myAccountId, now, language)}
     />
   )
 }

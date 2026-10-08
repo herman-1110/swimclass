@@ -3,6 +3,8 @@ import { flushSync } from 'react-dom'
 
 import { toAppError } from '@/shared/api/rpc'
 import { messageFor, MIN_PASSWORD_LENGTH } from '@/shared/config/messages'
+import { useLanguage } from '@/shared/i18n/context'
+import { wordsIn } from '@/shared/i18n/words'
 import { focusProblem } from '@/shared/lib/focusProblem'
 import { Button } from '@/shared/ui/Button'
 import { Field } from '@/shared/ui/Field'
@@ -14,6 +16,7 @@ import {
   type PasswordProblems,
   passwordProblems,
 } from '../model/passwordChecks'
+import { changePasswordWords } from '../model/words'
 
 type ChangePasswordFormProps = {
   /** The id of the section heading that names the form ("Password"). */
@@ -29,6 +32,8 @@ const NO_PASSWORD = { password: '', confirm: '' }
  * the button until the next edit.
  */
 export function ChangePasswordForm({ labelledBy }: ChangePasswordFormProps) {
+  const language = useLanguage()
+  const w = wordsIn(changePasswordWords, language)
   const [values, setValues] = useState<Record<PasswordField, string>>(NO_PASSWORD)
   const [problems, setProblems] = useState<PasswordProblems>({})
   const [refusal, setRefusal] = useState<string | null>(null)
@@ -53,10 +58,10 @@ export function ChangePasswordForm({ labelledBy }: ChangePasswordFormProps) {
     // Committed before the focus moves, so the field is read with its message.
     flushSync(() => {
       if (onField) setProblems({ password: code })
-      else setRefusal(messageFor(error))
+      else setRefusal(messageFor(error, { language }))
     })
     // Said out loud also when Enter was pressed in that very field.
-    if (onField) focusProblem(inputOf('password'), messageFor({ code }))
+    if (onField) focusProblem(inputOf('password'), messageFor({ code }, { language }))
   }
 
   function submit(event: FormEvent<HTMLFormElement>) {
@@ -70,7 +75,7 @@ export function ChangePasswordForm({ labelledBy }: ChangePasswordFormProps) {
     })
     const first = (['password', 'confirm'] as const).find((field) => found[field])
     if (first) {
-      focusProblem(inputOf(first), messageFor({ code: found[first] }))
+      focusProblem(inputOf(first), messageFor({ code: found[first] }, { language }))
       return
     }
     change.mutate(values.password, {
@@ -84,7 +89,7 @@ export function ChangePasswordForm({ labelledBy }: ChangePasswordFormProps) {
 
   const errorOf = (field: PasswordField) => {
     const code = problems[field]
-    return code && messageFor({ code })
+    return code && messageFor({ code }, { language })
   }
 
   return (
@@ -93,10 +98,10 @@ export function ChangePasswordForm({ labelledBy }: ChangePasswordFormProps) {
         ref={passwordInput}
         id="account-password"
         maxLength={72}
-        label="New password"
+        label={w.newPassword}
         type="password"
         size="lg"
-        help={`At least ${MIN_PASSWORD_LENGTH} characters.`}
+        help={w.help(MIN_PASSWORD_LENGTH)}
         autoComplete="new-password"
         required
         value={values.password}
@@ -107,7 +112,7 @@ export function ChangePasswordForm({ labelledBy }: ChangePasswordFormProps) {
         ref={confirmInput}
         id="account-password-confirm"
         maxLength={72}
-        label="Confirm new password"
+        label={w.confirm}
         type="password"
         size="lg"
         autoComplete="new-password"
@@ -123,11 +128,11 @@ export function ChangePasswordForm({ labelledBy }: ChangePasswordFormProps) {
       )}
       <div className="mt-2 flex flex-col">
         <Button type="submit" size="xl" block pending={change.isPending}>
-          {change.isPending ? 'Saving…' : 'Save new password'}
+          {change.isPending ? w.saving : w.save}
         </Button>
         {/* Always in the page, so the news is read out; empty, it takes no room. */}
         <p role="status" className="text-label leading-normal text-muted not-empty:mt-3">
-          {saved ? 'New password saved.' : null}
+          {saved ? w.saved : null}
         </p>
       </div>
     </form>

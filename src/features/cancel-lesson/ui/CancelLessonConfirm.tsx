@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 
+import { useLanguage } from '@/shared/i18n/context'
+import { wordsIn } from '@/shared/i18n/words'
 import { Button } from '@/shared/ui/Button'
 import { Dialog } from '@/shared/ui/Dialog'
 import { Textarea } from '@/shared/ui/Textarea'
@@ -9,6 +11,7 @@ import { useCancelLesson } from '../api/useCancelLesson'
 import { cancelDescription, cancelledNotice, cancelTitle, reasonHelp } from '../model/copy'
 import { cancelErrorOutcome, refreshesAfter } from '../model/errorOutcome'
 import type { CancelableLesson, CancelAudience } from '../model/types'
+import { cancelLessonWords } from '../model/words'
 
 /** The limit `cancel_booking` checks (`invalid_reason`). */
 const REASON_MAX_LENGTH = 500
@@ -32,15 +35,18 @@ export function CancelLessonConfirm({
   cutoffHours,
   onCancelled,
 }: CancelLessonConfirmProps) {
+  // The coach cancels under CoachLayout, which keeps it English.
+  const language = useLanguage()
+  const w = wordsIn(cancelLessonWords, language)
   const keep = useRef<HTMLButtonElement>(null)
   const reasonBox = useRef<HTMLTextAreaElement>(null)
   const [reason, setReason] = useState('')
   const refresh = useRefreshLessons()
   const cancel = useCancelLesson({
-    onCancelled: () => onCancelled(cancelledNotice(lesson, audience)),
+    onCancelled: () => onCancelled(cancelledNotice(lesson, audience, language)),
   })
   const outcome = cancel.isError
-    ? cancelErrorOutcome(cancel.error, { audience, cutoffHours })
+    ? cancelErrorOutcome(cancel.error, { audience, cutoffHours, language })
     : null
   // Nothing more to try: "Cancel lesson" goes and "Keep lesson" reads "Close".
   const final = outcome !== null && !outcome.canRetry
@@ -68,8 +74,8 @@ export function CancelLessonConfirm({
       hideClose
       busy={cancel.isPending}
       initialFocus={keep}
-      title={cancelTitle(lesson)}
-      description={cancelDescription(audience)}
+      title={cancelTitle(lesson, language)}
+      description={cancelDescription(audience, language)}
       actions={
         <>
           {!final && (
@@ -84,7 +90,7 @@ export function CancelLessonConfirm({
                 })
               }
             >
-              {cancel.isPending ? 'Cancelling…' : 'Cancel lesson'}
+              {cancel.isPending ? w.cancelling : w.cancelLesson}
             </Button>
           )}
           <Button
@@ -94,7 +100,7 @@ export function CancelLessonConfirm({
             aria-disabled={cancel.isPending || undefined}
             onClick={close}
           >
-            {final ? 'Close' : 'Keep lesson'}
+            {final ? w.close : w.keepLesson}
           </Button>
         </>
       }

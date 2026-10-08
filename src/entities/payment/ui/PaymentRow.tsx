@@ -1,8 +1,11 @@
-import { formatRinggit, plural } from '@/shared/lib/format'
+import { useLanguage } from '@/shared/i18n/context'
+import { wordsIn } from '@/shared/i18n/words'
+import { formatRinggit } from '@/shared/lib/format'
 import { formatDayMonth, formatDayMonthYear, type Instant } from '@/shared/lib/time'
 
 import { methodLabel } from '../model/method'
 import type { Payment } from '../model/types'
+import { paymentWords } from '../model/words'
 
 type PaymentRowProps = {
   payment: Payment
@@ -35,16 +38,19 @@ type PaymentRowProps = {
 /** One payment (my-classes spec §2.7; coach-students spec §3.9): what, when and how. */
 export function PaymentRow(props: PaymentRowProps) {
   const { payment, as: Element = 'li' } = props
+  const language = useLanguage()
+  const w = wordsIn(paymentWords, language)
   const free = payment.method === 'free'
-  const amount = free ? 'Free' : formatRinggit(payment.amount_cents)
-  const lessons = plural(payment.lessons, 'lesson')
+  const amount = free ? w.free : formatRinggit(payment.amount_cents)
+  const lessons = w.lessons(payment.lessons)
+  const method = methodLabel(payment.method, language)
 
   if (props.variant === 'history') {
     return (
       <Element className="flex flex-col gap-0.5 border-b border-line py-3 break-words">
         <span className="text-sm leading-[normal] font-semibold">{`${amount} · ${lessons}`}</span>
         <span className="text-label">
-          {`${formatDayMonth(payment.paid_on, props.now)} · ${methodLabel(payment.method)}`}
+          {`${formatDayMonth(payment.paid_on, props.now, language)} · ${method}`}
         </span>
         {payment.note && <span className="text-label text-muted">{payment.note}</span>}
       </Element>
@@ -54,11 +60,13 @@ export function PaymentRow(props: PaymentRowProps) {
   return (
     <Element className="flex items-center justify-between gap-3 border-b border-line py-4">
       <span className="flex min-w-0 flex-col gap-0.5 break-words">
-        <span className="text-body font-semibold">{formatDayMonthYear(payment.paid_on)}</span>
+        <span className="text-body font-semibold">
+          {formatDayMonthYear(payment.paid_on, language)}
+        </span>
         <span className="text-label text-ink">
           {`${props.names} · ${props.typeLabel} · ${lessons}`}
         </span>
-        <span className="text-label text-muted">{methodLabel(payment.method)}</span>
+        <span className="text-label text-muted">{method}</span>
       </span>
       <span className="text-body font-semibold whitespace-nowrap">{amount}</span>
     </Element>

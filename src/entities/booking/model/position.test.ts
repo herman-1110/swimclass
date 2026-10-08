@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
+import { registerAllChinese } from '@/shared/i18n/registerAllChinese'
+
 import {
   formatLessonPosition,
   lessonNumbers,
@@ -101,5 +103,21 @@ describe('positionOf', () => {
         used: false,
       } as typeof second),
     ).toEqual(second)
+  })
+})
+
+describe('in Chinese', () => {
+  registerAllChinese()
+
+  it('numbers lessons and packages in Chinese', () => {
+    expect(lessonNumbers(second, 4, 'zh')).toBe('第 2 节，共 4 节')
+    expect(lessonNumbers(twoHours, 4, 'zh')).toBe('第 1–2 节，共 4 节')
+    expect(lessonNumbers({ package_no: 1, lesson_in_package: 4, lessons: 2 }, 4, 'zh')).toBe(
+      '配套 1 的最后一节和配套 2 的第一节',
+    )
+    expect(upcomingPosition({ ...second, package_no: 3 }, 4, 2, 'zh')).toBe(
+      '配套 3 · 第 2 节，共 4 节',
+    )
+    expect(packagePosition(second, 4, undefined, 'zh')).toBe('配套 4 · 第 2 节，共 4 节')
   })
 })

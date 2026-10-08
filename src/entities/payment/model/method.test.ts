@@ -7,7 +7,13 @@ const METHODS: PaymentMethod[] = ['cash', 'transfer', 'fpx', 'free', 'other']
 
 describe('methodLabel', () => {
   it('names each method as the Students screen does', () => {
-    expect(METHODS.map(methodLabel)).toEqual(['Cash', 'Transfer', 'FPX', 'Free lesson', 'Other'])
+    expect(METHODS.map((method) => methodLabel(method))).toEqual([
+      'Cash',
+      'Transfer',
+      'FPX',
+      'Free lesson',
+      'Other',
+    ])
   })
 })
 

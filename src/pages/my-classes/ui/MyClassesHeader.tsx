@@ -3,10 +3,13 @@ import type { ReactNode } from 'react'
 import type { Student } from '@/entities/account'
 import { CoachBanner } from '@/entities/announcement'
 import type { Group } from '@/entities/group'
+import { useWords } from '@/shared/i18n/context'
 import { cn } from '@/shared/lib/cn'
-import { joinNames, possessive } from '@/shared/lib/format'
+import { joinNames } from '@/shared/lib/format'
 import { PageHeader } from '@/shared/ui/PageHeader'
 import { Skeleton } from '@/shared/ui/Skeleton'
+
+import { type MyClassesPageWords, myClassesPageWords } from '../model/words'
 
 type MyClassesHeaderProps = {
   /** The account holder's name (profiles.display_name): undefined while it loads, null if it
@@ -27,10 +30,15 @@ type MyClassesHeaderProps = {
  * of the account's active groups, each once, in name order, joined as the database joins a
  * group's names. Just "Herman’s account" when there are none.
  */
-function accountSubtitle(name: string, groups: readonly Group[], students: readonly Student[]) {
+function accountSubtitle(
+  name: string,
+  groups: readonly Group[],
+  students: readonly Student[],
+  w: MyClassesPageWords,
+) {
   const inActiveGroups = new Set(groups.filter((g) => g.active).flatMap((g) => g.student_ids))
   const names = students.filter((s) => inActiveGroups.has(s.id)).map((s) => s.name)
-  const account = `${possessive(name)} account`
+  const account = w.account(name)
   return names.length > 0 ? `${account} · ${joinNames(names)}` : account
 }
 
@@ -45,16 +53,17 @@ export function MyClassesHeader({
   announcement,
   className,
 }: MyClassesHeaderProps) {
+  const w = useWords(myClassesPageWords)
   let subtitle: ReactNode = null
   if (displayName === undefined || !groups || !students) {
     // 16 × 180 px while the name and the students load (my-classes §6).
     subtitle = <Skeleton shape="line" className="h-4 w-45 max-w-full" />
   } else if (displayName !== null) {
-    subtitle = accountSubtitle(displayName, groups, students)
+    subtitle = accountSubtitle(displayName, groups, students, w)
   }
   return (
     <div className={cn('flex flex-col', className)}>
-      <PageHeader size="customer" title="My classes" eyebrow={subtitle} />
+      <PageHeader size="customer" title={w.title} eyebrow={subtitle} />
       {announcement && <CoachBanner message={announcement} className="mt-6" />}
     </div>
   )

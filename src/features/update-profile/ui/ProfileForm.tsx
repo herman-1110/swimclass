@@ -3,6 +3,8 @@ import { flushSync } from 'react-dom'
 
 import type { Profile } from '@/entities/account'
 import { messageFor } from '@/shared/config/messages'
+import { useLanguage } from '@/shared/i18n/context'
+import { wordsIn } from '@/shared/i18n/words'
 import { focusProblem } from '@/shared/lib/focusProblem'
 import { Button } from '@/shared/ui/Button'
 import { Field } from '@/shared/ui/Field'
@@ -15,6 +17,7 @@ import {
   type ProfileValues,
   profileValues,
 } from '../model/profileChecks'
+import { updateProfileWords } from '../model/words'
 
 type ProfileFormProps = {
   /** The signed-in account's saved details. */
@@ -30,6 +33,8 @@ type ProfileFormProps = {
  * until the next edit.
  */
 export function ProfileForm({ profile, labelledBy }: ProfileFormProps) {
+  const language = useLanguage()
+  const w = wordsIn(updateProfileWords, language)
   const [values, setValues] = useState<ProfileValues>(() => profileValues(profile))
   const [nameProblem, setNameProblem] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
@@ -53,7 +58,7 @@ export function ProfileForm({ profile, labelledBy }: ProfileFormProps) {
     })
     if (found) {
       // Said out loud also when Enter was pressed in the name itself.
-      focusProblem(nameInput.current, messageFor({ code: found }))
+      focusProblem(nameInput.current, messageFor({ code: found }, { language }))
       return
     }
     const details = profileUpdate(values)
@@ -74,19 +79,19 @@ export function ProfileForm({ profile, labelledBy }: ProfileFormProps) {
       <Field
         ref={nameInput}
         id="account-name"
-        label="Name"
+        label={w.name}
         size="lg"
         autoComplete="name"
         maxLength={100}
         required
         value={values.name}
         onChange={(event) => edit('name', event.target.value)}
-        error={nameProblem ? messageFor({ code: nameProblem }) : undefined}
+        error={nameProblem ? messageFor({ code: nameProblem }, { language }) : undefined}
       />
       <Field
         id="account-phone"
         // Optional, as every optional field says (auth Q3: until the owner makes it required).
-        label="Phone (optional)"
+        label={w.phone}
         type="tel"
         inputMode="tel"
         size="lg"
@@ -97,7 +102,7 @@ export function ProfileForm({ profile, labelledBy }: ProfileFormProps) {
       />
       {update.isError && (
         <p role="alert" className="text-label leading-normal text-warn">
-          {messageFor(update.error)}
+          {messageFor(update.error, { language })}
         </p>
       )}
       <div className="mt-2 flex flex-col">
@@ -108,11 +113,11 @@ export function ProfileForm({ profile, labelledBy }: ProfileFormProps) {
           pending={update.isPending}
           aria-disabled={!changed && !update.isPending}
         >
-          {update.isPending ? 'Saving…' : 'Save details'}
+          {update.isPending ? w.saving : w.save}
         </Button>
         {/* Always in the page, so the news is read out; empty, it takes no room. */}
         <p role="status" className="text-label leading-normal text-muted not-empty:mt-3">
-          {saved ? 'Details saved.' : null}
+          {saved ? w.saved : null}
         </p>
       </div>
     </form>

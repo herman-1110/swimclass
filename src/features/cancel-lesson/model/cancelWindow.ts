@@ -1,5 +1,9 @@
+import type { Language } from '@/shared/i18n/language'
+import { wordsIn } from '@/shared/i18n/words'
 import { formatHours } from '@/shared/lib/format'
 import { formatDay, formatTime, type Instant, toMyt } from '@/shared/lib/time'
+
+import { cancelLessonWords } from './words'
 
 /**
  * Whether a customer can still cancel a lesson, as My classes shows it (BR-15): `open` until
@@ -32,15 +36,21 @@ export function cancelState(startsAt: Instant, cutoffHours: number, now: Instant
  * cancelled and counts even if missed." or, once it has begun, "It has started, so it
  * can’t be cancelled and counts even if missed."
  */
-export function cancelNote(startsAt: Instant, cutoffHours: number, now: Instant): string {
+export function cancelNote(
+  startsAt: Instant,
+  cutoffHours: number,
+  now: Instant,
+  language: Language = 'en',
+): string {
+  const w = wordsIn(cancelLessonWords, language)
   switch (cancelState(startsAt, cutoffHours, now)) {
     case 'open': {
       const deadline = cancelDeadline(startsAt, cutoffHours)
-      return `Free to cancel until ${formatTime(deadline)}, ${formatDay(deadline)}.`
+      return w.openNote(formatTime(deadline, language), formatDay(deadline, language))
     }
     case 'locked':
-      return `Under ${formatHours(cutoffHours)} to go, so it can’t be cancelled and counts even if missed.`
+      return w.lockedNote(formatHours(cutoffHours, language))
     case 'started':
-      return 'It has started, so it can’t be cancelled and counts even if missed.'
+      return w.startedNote
   }
 }

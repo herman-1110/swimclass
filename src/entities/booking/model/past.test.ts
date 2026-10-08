@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
+import { registerAllChinese } from '@/shared/i18n/registerAllChinese'
+
 import {
   groupLessonState,
   historyLessonLine,
@@ -93,5 +95,31 @@ describe('the coach’s History rows', () => {
       'Palm Court · Gap override',
     )
     expect(historyPlaceLine({ location: 'Sunrise Res.', gap_override: false })).toBe('Sunrise Res.')
+  })
+})
+
+describe('past lesson rows in Chinese', () => {
+  registerAllChinese()
+
+  it('labels, numbers and explains in Chinese; the coach’s reason stays as typed', () => {
+    expect(pastStatusLabel('done', 'zh')).toBe('已上')
+    expect(pastLessonDetail({ position }, 'Wei Jie', '一对一', 4, 'zh')).toBe(
+      'Wei Jie · 一对一 · 配套 2 · 第 2 节，共 4 节',
+    )
+    const cancelled = {
+      status: 'cancelled' as const,
+      cancelled_at: '2026-09-26T04:00:00+00:00',
+      cancel_reason: 'Pool closed',
+    }
+    expect(pastLessonNote({ ...cancelled, cancelled_by: ME }, ME, undefined, 'zh')).toBe(
+      '9月26日由你取消。',
+    )
+    expect(pastLessonNote({ ...cancelled, cancelled_by: COACH }, ME, undefined, 'zh')).toBe(
+      '9月26日由教练取消。原因：Pool closed',
+    )
+    const none = { cancelled_at: null, cancelled_by: null, cancel_reason: null }
+    expect(pastLessonNote({ ...none, status: 'excused' }, ME, undefined, 'zh')).toBe(
+      '教练已豁免这节课，所以不算在配套里。',
+    )
   })
 })

@@ -2,9 +2,11 @@ import type { UseQueryResult } from '@tanstack/react-query'
 
 import type { Group } from '@/entities/group'
 import type { PublicSettings } from '@/entities/settings'
+import { useWords } from '@/shared/i18n/context'
 import { cn } from '@/shared/lib/cn'
 import { Button } from '@/shared/ui/Button'
 
+import { myClassesPageWords } from '../model/words'
 import { PastPanel } from './PastPanel'
 
 const PANEL_ID = 'my-classes-past'
@@ -36,6 +38,7 @@ export function PastSection({
   onToggle,
   className,
 }: PastSectionProps) {
+  const w = useWords(myClassesPageWords)
   return (
     <div className={cn('flex flex-col', className)}>
       <Button
@@ -46,7 +49,7 @@ export function PastSection({
         aria-controls={PANEL_ID}
         onClick={onToggle}
       >
-        Past lessons and receipts
+        {w.pastToggle}
       </Button>
       <div id={PANEL_ID} hidden={!open} className="mt-4 flex flex-col gap-8">
         {open && <PastPanel groups={groups} settings={settings} me={me} now={now} />}

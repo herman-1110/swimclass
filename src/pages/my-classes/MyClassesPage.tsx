@@ -6,10 +6,13 @@ import { useAccountBalances } from '@/entities/balance'
 import { useUpcomingLessons } from '@/entities/booking'
 import { useMyGroups } from '@/entities/group'
 import { DocumentTitle, usePublicSettings } from '@/entities/settings'
-import { noGroupsMessage } from '@/shared/config/messages'
+import { messagesIn } from '@/shared/config/messages'
+import { useLanguage } from '@/shared/i18n/context'
+import { wordsIn } from '@/shared/i18n/words'
 import { useNow } from '@/shared/lib/hooks/useNow'
 import { EmptyState } from '@/shared/ui/EmptyState'
 
+import { myClassesPageWords } from './model/words'
 import { MyClassesHeader } from './ui/MyClassesHeader'
 import { PackagesSection } from './ui/PackagesSection'
 import { PastSection } from './ui/PastSection'
@@ -22,6 +25,7 @@ import { UpcomingSection } from './ui/UpcomingSection'
  * coach everyone's, and his "View as customer" must find none of his own.
  */
 export function MyClassesPage() {
+  const language = useLanguage()
   const me = useUserId()
   const now = useNow()
   const profile = useMyProfile()
@@ -40,7 +44,7 @@ export function MyClassesPage() {
   return (
     // Stops at 1100 px, in the middle of the space beside the sidebar (DESIGN §5).
     <div className="mx-auto grid w-full max-w-[1100px] grid-cols-1 gap-y-8 md:grid-cols-[minmax(0,1fr)_minmax(280px,380px)] md:grid-rows-[auto_auto_1fr] md:items-start md:gap-x-12">
-      <DocumentTitle page="My classes" />
+      <DocumentTitle page={wordsIn(myClassesPageWords, language).title} />
       <MyClassesHeader
         className="md:col-span-2"
         // A failed read leaves its part out rather than loading for ever.
@@ -52,7 +56,11 @@ export function MyClassesPage() {
       {groups.data?.length === 0 ? (
         // No groups (the coach's "View as customer" too): nothing to list, and no Past.
         <div className="md:col-span-2">
-          <EmptyState framed>{noGroupsMessage(profile.data?.role === 'coach')}</EmptyState>
+          <EmptyState framed>
+            {profile.data?.role === 'coach'
+              ? messagesIn(language).noGroupsCoach
+              : messagesIn(language).noGroups}
+          </EmptyState>
         </div>
       ) : (
         <>

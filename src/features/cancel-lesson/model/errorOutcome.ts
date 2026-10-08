@@ -1,5 +1,6 @@
 import { toAppError } from '@/shared/api/rpc'
 import { messageFor } from '@/shared/config/messages'
+import type { Language } from '@/shared/i18n/language'
 
 import type { CancelAudience } from './types'
 
@@ -20,10 +21,14 @@ export type CancelOutcome = {
  */
 export function cancelErrorOutcome(
   error: unknown,
-  { audience, cutoffHours }: { audience: CancelAudience; cutoffHours?: number | null },
+  {
+    audience,
+    cutoffHours,
+    language = 'en',
+  }: { audience: CancelAudience; cutoffHours?: number | null; language?: Language },
 ): CancelOutcome {
   const { code } = toAppError(error)
-  const message = messageFor(error, { audience, cutoffHours })
+  const message = messageFor(error, { audience, cutoffHours, language })
   if (code === 'network') return { message, canRetry: true, field: null }
   if (code === 'invalid_reason' && audience === 'coach') {
     return { message, canRetry: true, field: 'reason' }

@@ -7,12 +7,15 @@ import {
   PastLessonRow,
   usePastLessons,
 } from '@/entities/booking'
-import type { Group } from '@/entities/group'
+import { type Group, typeLabelIn } from '@/entities/group'
 import { PAYMENT_LIMIT, PaymentRow, usePayments } from '@/entities/payment'
 import type { PublicSettings } from '@/entities/settings'
+import { useLanguage } from '@/shared/i18n/context'
+import { wordsIn } from '@/shared/i18n/words'
 import { type ReadFailure, useReadFailure } from '@/shared/lib/hooks/useReadFailure'
 import { SectionLabel } from '@/shared/ui/SectionLabel'
 
+import { myClassesPageWords } from '../model/words'
 import { SectionError } from './SectionError'
 
 const LESSONS_HEADING_ID = 'past-lessons-heading'
@@ -55,6 +58,8 @@ const moreLine = 'pt-3 text-small leading-normal text-muted'
  * the panel is open, so nothing is read until it opens.
  */
 export function PastPanel({ groups, settings, me, now }: PastPanelProps) {
+  const language = useLanguage()
+  const w = wordsIn(myClassesPageWords, language)
   const groupIds = groups.map((group) => group.group_id)
   const past = usePastLessons(groupIds)
   const payments = usePayments(groupIds)
@@ -65,13 +70,13 @@ export function PastPanel({ groups, settings, me, now }: PastPanelProps) {
   const lessonsLoading = !lessonsFailure && (!settings.data || !past.data)
   let lessons: ReactNode
   if (lessonsFailure || !settings.data || !past.data) {
-    lessons = notReady(lessonsFailure, 'Loading your past lessons…')
+    lessons = notReady(lessonsFailure, w.loadingPast)
   } else {
     const packageSize = settings.data.lessons_per_package
     lessons = (
       <>
         {past.data.lessons.length === 0 ? (
-          <p className={emptyLine}>No past or cancelled lessons yet.</p>
+          <p className={emptyLine}>{w.noPast}</p>
         ) : (
           <ul role="list">
             {past.data.lessons.map((lesson) => {
@@ -82,7 +87,7 @@ export function PastPanel({ groups, settings, me, now }: PastPanelProps) {
                     key={lesson.id}
                     lesson={lesson}
                     names={group.display_names}
-                    typeLabel={group.type_label}
+                    typeLabel={typeLabelIn(group, language)}
                     packageSize={packageSize}
                     myAccountId={me}
                     now={now}
@@ -92,9 +97,7 @@ export function PastPanel({ groups, settings, me, now }: PastPanelProps) {
             })}
           </ul>
         )}
-        {past.data.hasMore && (
-          <p className={moreLine}>{`Showing your last ${PAST_LESSON_LIMIT} lessons.`}</p>
-        )}
+        {past.data.hasMore && <p className={moreLine}>{w.showingLessons(PAST_LESSON_LIMIT)}</p>}
       </>
     )
   }
@@ -102,12 +105,12 @@ export function PastPanel({ groups, settings, me, now }: PastPanelProps) {
   const paymentsLoading = !paymentsFailure && !payments.data
   let receipts: ReactNode
   if (paymentsFailure || !payments.data) {
-    receipts = notReady(paymentsFailure, 'Loading your payments…')
+    receipts = notReady(paymentsFailure, w.loadingPayments)
   } else {
     receipts = (
       <>
         {payments.data.payments.length === 0 ? (
-          <p className={emptyLine}>No payments yet.</p>
+          <p className={emptyLine}>{w.noPayments}</p>
         ) : (
           <ul role="list">
             {payments.data.payments.map((payment) => {
@@ -119,16 +122,14 @@ export function PastPanel({ groups, settings, me, now }: PastPanelProps) {
                     variant="account"
                     payment={payment}
                     names={group.display_names}
-                    typeLabel={group.type_label}
+                    typeLabel={typeLabelIn(group, language)}
                   />
                 )
               )
             })}
           </ul>
         )}
-        {payments.data.hasMore && (
-          <p className={moreLine}>{`Showing your last ${PAYMENT_LIMIT} payments.`}</p>
-        )}
+        {payments.data.hasMore && <p className={moreLine}>{w.showingPayments(PAYMENT_LIMIT)}</p>}
       </>
     )
   }
@@ -137,13 +138,13 @@ export function PastPanel({ groups, settings, me, now }: PastPanelProps) {
     <>
       <section aria-labelledby={LESSONS_HEADING_ID} aria-busy={lessonsLoading || undefined}>
         <SectionLabel as="h2" id={LESSONS_HEADING_ID} tabIndex={-1} className="mb-1">
-          Past and cancelled lessons
+          {w.pastHeading}
         </SectionLabel>
         {lessons}
       </section>
       <section aria-labelledby={PAYMENTS_HEADING_ID} aria-busy={paymentsLoading || undefined}>
         <SectionLabel as="h2" id={PAYMENTS_HEADING_ID} tabIndex={-1} className="mb-1">
-          Payments
+          {w.payments}
         </SectionLabel>
         {receipts}
       </section>

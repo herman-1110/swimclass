@@ -1,7 +1,10 @@
+import { useLanguage } from '@/shared/i18n/context'
+import { wordsIn } from '@/shared/i18n/words'
 import { formatDayMonth, type Instant } from '@/shared/lib/time'
 
 import type { LastPaidInput } from '../model/lastPaid'
 import { methodLabel } from '../model/method'
+import { paymentWords } from '../model/words'
 
 type LastPaidProps = LastPaidInput & {
   /**
@@ -19,22 +22,20 @@ type LastPaidProps = LastPaidInput & {
  * group_balance's last_paid_on and last_payment_method.
  */
 export function LastPaid({ paidOn, method, openingPaid = 0, variant, now }: LastPaidProps) {
-  const date = paidOn === null ? null : formatDayMonth(paidOn, now)
-  const how = method === null ? null : methodLabel(method)
+  const language = useLanguage()
+  const w = wordsIn(paymentWords, language)
+  const date = paidOn === null ? null : formatDayMonth(paidOn, now, language)
+  const how = method === null ? null : methodLabel(method, language)
 
   if (variant === 'inline') {
     if (date === null) return null
-    return (
-      <span className="text-label whitespace-nowrap text-muted">
-        {how ? `Paid ${date} · ${how}` : `Paid ${date}`}
-      </span>
-    )
+    return <span className="text-label whitespace-nowrap text-muted">{w.paid(date, how)}</span>
   }
 
   if (date === null) {
     return (
       <span className="text-label text-muted">
-        {openingPaid > 0 ? 'Starting balance' : 'None yet'}
+        {openingPaid > 0 ? w.startingBalance : w.noneYet}
       </span>
     )
   }

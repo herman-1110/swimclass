@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
+import { registerAllChinese } from '@/shared/i18n/registerAllChinese'
+
 import { isSameMytDay, lessonDateRange, lessonWhen } from './when'
 
 const NOW = '2026-09-26T12:00:00+08:00'
@@ -51,5 +53,21 @@ describe('isSameMytDay', () => {
     // 11:30 pm and 4:30 pm UTC on 30 Sep are 1 Oct and 1 Oct in Malaysia.
     expect(isSameMytDay('2026-09-30T23:30:00Z', '2026-09-30T16:30:00Z')).toBe(true)
     expect(isSameMytDay('2026-09-30T15:59:00Z', '2026-09-30T16:00:00Z')).toBe(false)
+  })
+})
+
+describe('in Chinese', () => {
+  registerAllChinese()
+
+  it('says 今天 for today, and the day otherwise', () => {
+    expect(lessonWhen('2026-09-26T09:00:00+00:00', '2026-09-26T10:00:00+00:00', NOW, 'zh')).toBe(
+      '今天 下午5:00–晚上6:00',
+    )
+    expect(lessonWhen('2026-10-03T01:00:00+00:00', '2026-10-03T02:00:00+00:00', NOW, 'zh')).toBe(
+      '10月3日 周六 上午9:00–10:00',
+    )
+    expect(lessonDateRange('2025-12-12T11:30:00Z', '2025-12-12T12:30:00Z', NOW, 'zh')).toBe(
+      '2025年12月12日 周五 晚上7:30–8:30',
+    )
   })
 })

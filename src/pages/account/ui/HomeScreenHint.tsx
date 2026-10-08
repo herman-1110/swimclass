@@ -1,5 +1,8 @@
+import { useWords } from '@/shared/i18n/context'
 import { useMediaQuery } from '@/shared/lib/hooks/useMediaQuery'
 import { SectionLabel } from '@/shared/ui/SectionLabel'
+
+import { accountPageWords } from '../model/words'
 
 /** iPhones opened from the home screen say so here rather than through display-mode. */
 function openedFromIosHomeScreen(): boolean {
@@ -12,6 +15,7 @@ function openedFromIosHomeScreen(): boolean {
  * the site is already open from the home screen.
  */
 export function HomeScreenHint() {
+  const w = useWords(accountPageWords)
   const standalone = useMediaQuery('(display-mode: standalone)')
   if (standalone || openedFromIosHomeScreen()) return null
 
@@ -21,12 +25,12 @@ export function HomeScreenHint() {
       className="flex flex-col gap-3 border-t border-line pt-6"
     >
       <SectionLabel as="h2" id="account-home-screen-heading">
-        Home screen
+        {w.homeScreen}
       </SectionLabel>
-      <p className="text-body">Add this site to your phone’s home screen to open it like an app.</p>
+      <p className="text-body">{w.homeScreenIntro}</p>
       <ul className="flex flex-col gap-1.5 text-small leading-[1.45] text-muted">
-        <li>iPhone: in Safari, tap Share, then Add to Home Screen.</li>
-        <li>Android: in Chrome, tap the ⋮ menu, then Add to home screen.</li>
+        <li>{w.iphone}</li>
+        <li>{w.android}</li>
       </ul>
     </section>
   )

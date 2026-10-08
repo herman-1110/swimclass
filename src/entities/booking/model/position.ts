@@ -1,4 +1,8 @@
+import type { Language } from '@/shared/i18n/language'
+import { wordsIn } from '@/shared/i18n/words'
+
 import type { BookingStatus, LessonPosition } from './types'
+import { bookingWords } from './words'
 
 // "lesson 2 of 4": where a lesson sits in its package (BR-23; my-classes spec §5.2,
 // coach-schedule spec §3.5). The numbers are the database's (booking_ledger, coach_week);
@@ -23,13 +27,16 @@ function spansPackages(position: LessonPosition, packageSize: number): boolean {
  * of Package 3" when it starts on its package's last lesson. `packageSize` is
  * lessons_per_package (settings) or group_balance.package_size.
  */
-export function lessonNumbers(position: LessonPosition, packageSize: number): string {
+export function lessonNumbers(
+  position: LessonPosition,
+  packageSize: number,
+  language: Language = 'en',
+): string {
+  const w = wordsIn(bookingWords, language)
   const first = position.lesson_in_package
-  if (position.lessons <= 1) return `lesson ${first} of ${packageSize}`
-  if (spansPackages(position, packageSize)) {
-    return `last lesson of Package ${position.package_no} and first of Package ${position.package_no + 1}`
-  }
-  return `lessons ${first}–${first + position.lessons - 1} of ${packageSize}`
+  if (position.lessons <= 1) return w.lessonOf(first, packageSize)
+  if (spansPackages(position, packageSize)) return w.acrossPackages(position.package_no)
+  return w.lessonsOf(first, first + position.lessons - 1, packageSize)
 }
 
 /**
@@ -41,28 +48,33 @@ export function upcomingPosition(
   position: LessonPosition,
   packageSize: number,
   currentPackageNo: number | null = null,
+  language: Language = 'en',
 ): string {
-  const numbers = lessonNumbers(position, packageSize)
+  const w = wordsIn(bookingWords, language)
+  const numbers = lessonNumbers(position, packageSize, language)
   const later = currentPackageNo !== null && position.package_no !== currentPackageNo
   return later && !spansPackages(position, packageSize)
-    ? `Package ${position.package_no}, ${numbers}`
+    ? `${w.packageName(position.package_no)}${w.positionSeparator}${numbers}`
     : numbers
 }
 
 /**
  * The package and the lesson numbers: "Package 2, lesson 2 of 4" (My classes' past rows), or
  * with `separator` " · " "Package 6 · lesson 2 of 4" (the coach's History, excuse options and
- * lesson details). A lesson across two packages names both already.
+ * lesson details). A lesson across two packages names both already. Chinese "配套 2 · 第 2 节，
+ * 共 4 节".
  */
 export function packagePosition(
   position: LessonPosition,
   packageSize: number,
-  separator = ', ',
+  separator?: string,
+  language: Language = 'en',
 ): string {
-  const numbers = lessonNumbers(position, packageSize)
+  const w = wordsIn(bookingWords, language)
+  const numbers = lessonNumbers(position, packageSize, language)
   return spansPackages(position, packageSize)
     ? numbers
-    : `Package ${position.package_no}${separator}${numbers}`
+    : `${w.packageName(position.package_no)}${separator ?? w.positionSeparator}${numbers}`
 }
 
 /** A lesson of the coach's week (coach_week): the fields its position text needs. */

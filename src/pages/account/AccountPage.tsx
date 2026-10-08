@@ -5,6 +5,8 @@ import { LogOutButton } from '@/features/log-out'
 import { ProfileForm } from '@/features/update-profile'
 import { messageFor } from '@/shared/config/messages'
 import { ROUTES } from '@/shared/config/routes'
+import { useLanguage } from '@/shared/i18n/context'
+import { wordsIn } from '@/shared/i18n/words'
 import { Banner } from '@/shared/ui/Banner'
 import { Button } from '@/shared/ui/Button'
 import { buttonClasses } from '@/shared/ui/buttonClasses'
@@ -12,11 +14,10 @@ import { ButtonLink } from '@/shared/ui/ButtonLink'
 import { PageHeader } from '@/shared/ui/PageHeader'
 import { SectionLabel } from '@/shared/ui/SectionLabel'
 
+import { accountPageWords } from './model/words'
 import { AccountSkeleton } from './ui/AccountSkeleton'
 import { AccountSummary } from './ui/AccountSummary'
 import { HomeScreenHint } from './ui/HomeScreenHint'
-
-const TITLE = 'Account'
 
 /**
  * Account (auth spec §2.7; not drawn, so in the customer pages' style): the details only the
@@ -25,6 +26,8 @@ const TITLE = 'Account'
  * view" here.
  */
 export function AccountPage() {
+  const language = useLanguage()
+  const w = wordsIn(accountPageWords, language)
   const session = useSession()
   const profile = useMyProfile()
   const email = session.status === 'signed-in' ? session.session.email : null
@@ -35,13 +38,13 @@ export function AccountPage() {
     // columns: your details on the left, the password and home screen on the right (Herman,
     // 6 Oct 2026: the lone column left the rest of a laptop screen blank).
     <div className="flex w-full max-w-[420px] flex-col gap-8 xl:mx-auto xl:max-w-[1100px]">
-      <DocumentTitle page={TITLE} />
-      <PageHeader size="customer" title={TITLE} />
+      <DocumentTitle page={w.title} />
+      <PageHeader size="customer" title={w.title} />
       {profile.data ? (
         <div className="flex flex-col gap-8 xl:grid xl:grid-cols-2 xl:items-start xl:gap-x-16">
           <section aria-labelledby="account-details-heading" className="flex flex-col gap-4">
             <SectionLabel as="h2" id="account-details-heading">
-              Your details
+              {w.yourDetails}
             </SectionLabel>
             <AccountSummary
               username={profile.data.username}
@@ -60,7 +63,7 @@ export function AccountPage() {
               className="flex flex-col gap-4 border-t border-line pt-6 xl:border-t-0 xl:pt-0"
             >
               <SectionLabel as="h2" id="account-password-heading">
-                Password
+                {w.password}
               </SectionLabel>
               <ChangePasswordForm labelledBy="account-password-heading" />
             </section>
@@ -69,7 +72,7 @@ export function AccountPage() {
           <div className="flex flex-col items-start border-t border-line pt-6 xl:col-span-2">
             {profile.data.role === 'coach' && (
               <ButtonLink to={ROUTES.coachSchedule} variant="link" flush>
-                Back to coach view
+                {w.backToCoachView}
               </ButtonLink>
             )}
             <LogOutButton className={buttonClasses({ variant: 'link', flush: true })} />
@@ -81,11 +84,11 @@ export function AccountPage() {
           tone="warn"
           action={
             <Button variant="link" onClick={() => void profile.refetch()}>
-              Try again
+              {w.tryAgain}
             </Button>
           }
         >
-          {messageFor(profile.error)}
+          {messageFor(profile.error, { language })}
         </Banner>
       ) : (
         // As wide as the details column it stands in for.

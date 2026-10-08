@@ -4,7 +4,7 @@ Update this file at the end of every Claude Code session. Newest entry on top.
 Keep entries short; link to files instead of pasting code.
 
 ## v0.26 · 7–8 Oct 2026 · English and Chinese (in progress)
-**State**: the working copy is on the local branch `chinese` (stages 1 and 2 and these notes),
+**State**: the working copy is on the local branch `chinese` (stages 1 to 3 and these notes),
 which isn't pushed. `frontend-first` = `origin/frontend-first` = `origin/main` = 9914226 = v0.25,
 which is live: Herman pushed, ran the production `db push` (payment_limit) and `wrangler
 deploy` on 7 Oct. Switch to `frontend-first` before Herman builds anything else for
@@ -81,41 +81,68 @@ and CoachLayout keeps the coach's screens English.
 - Tests: `shared/i18n/registerAllChinese.ts` (tests only) registers every `*.zh.ts`; Chinese
   cases in labels, days and summary tests. Full unit run: 250 files, 1884 tests passed; the build
   keeps every Chinese word in the `zh` chunk (4.8 kB gzipped). Commit 9e6f354.
-**Don't deploy mid-way**: My classes and Account are still English (stage 3). The work stays on
-the `chinese` branch until stage 5.
+**Stage 3** (done 8 Oct, not deployed; Herman: "A", go on before the reader): My classes and
+Account. New word pairs: `entities/{booking,payment}/model/words.ts`, `features/{cancel-lesson,
+change-password,update-profile}/model/words.ts`, `pages/{my-classes,account}/model/words.ts`;
+`balance` gained My classes' notes. Same pattern as stage 2 (a last `language` argument,
+English by default): `lessonNumbers`/`upcomingPosition`/`packagePosition` (its separator is
+now optional: ", " in English, " · " in Chinese, since "第 2 节，共 4 节" has a comma),
+`lessonWhen`/`lessonDateRange`, `pastStatusLabel`/`pastLessonDetail`/`pastLessonNote`,
+`methodLabel`, `accountPackageNote`, `cancelNote`/`cancelLabel`/`cancelTitle`/
+`cancelDescription`/`cancelledNotice`, `cancelErrorOutcome` (`language` in its options).
+The coach's words in the same files (History, the reason field, "Lesson cancelled. Grace will
+get an email.") stay English and out of the word files; CoachLayout keeps those screens English.
+- The tag and the type in every line come from `typeLabelIn(group, language)`.
+- Known: My classes' "Lesson cancelled: …" notice and a refusal already shown stay in the
+  language they were written in when the toggle flips (as on Log in); everything else follows.
+- The dev server once served `LastPaid.tsx` as an empty module (Vite read it mid-write, so
+  the page failed with "does not provide an export named"); re-saving the file fixed it.
+- Tests: Chinese cases in position, when, past, notes, cancelWindow and copy tests. Full unit
+  run: 250 files, 1891 tests passed; the `zh` chunk is now 6.0 kB gzipped, the main bundle has
+  no Chinese.
+**Don't deploy mid-way**: the emails are still English (stage 4) and the reviewer hasn't read
+the Chinese yet. The work stays on the `chinese` branch until stage 5.
 **For the reviewer** (`frontend-plan/out/zh/`, 390 and 1280 px each unless named): stage 1:
 `login`, `signup`, `forgot-password`, `reset-password` (the expired-link screen, as demo mode
 shows it), `no-such-page` (Not found), `my-classes` (the toggle and the Chinese tabs only);
 stage 2: `book`, `book@360`, `book-crossed-out`, `book-picked`, `book-booked` (Tue 29 Sep, as
-meiling: a crossed-out 7:00 pm, 7:30 pm picked, then booked), `schedule`, `schedule@360`.
+meiling: a crossed-out 7:00 pm, 7:30 pm picked, then booked), `schedule`, `schedule@360`;
+stage 3 (360, 390 and 1280 px): `my-classes` (replaces stage 1's), `account`, and at 390 and
+1280 `my-classes-past` (past lessons and receipts open), `my-classes-cancel` (the
+confirmation; 390 only), `my-classes-cancelled` (the notice), from
+`node frontend-plan/tools/zh-my-classes-steps.mjs 390`.
 Waiting for approval has none yet: it needs a demo sign-up. Known: a refusal already on screen
 ("Wrong username or password") stays in its language when the toggle flips, until the next
 try. Scripts that drive the demo (`tools/app.mjs` flows) stay in English; zh shots are their
 own pass: `node frontend-plan/tools/zh-shots.mjs /book /schedule --as=meiling` (it sets
 `swimclass.language` first; `--widths=360,390,1280` for more widths; Herman's `npm run dev` on
 5173 must be running), and `node frontend-plan/tools/zh-book-steps.mjs 390` for Book's three
-states. The glossary has stage 2's terms in a second table. Banner drops its space after a
-full-width colon, so the coach's message reads "教练：…".
+states. The glossary has stage 2's and stage 3's terms in a second and third table. Banner
+drops its space after a full-width colon, so the coach's message reads "教练：…".
 **Open**
 - From earlier entries, still open: "Unpaid packages allowed" 1 or 0 (v0.24, a Settings
   change Herman makes), PRODUCTION.md 1.3 (Auth SMTP, templates) and 1.8 (smoke test), the
   signed-in first-load and Lighthouse checks, §2 students, HANDOFF v1.0 (v0.23's Next 2, 3).
   The Chinese sign-up and reset emails (stage 4) depend on 1.3's templates.
-**Next: stage 3, My classes and Account** (on `chinese`)
-- Pages `pages/my-classes` (header, upcoming rows, packages, past lessons and receipts, the
-  section errors) and `pages/account` (summary, skeleton, home-screen hint); features
-  `cancel-lesson` (the dialog: Dialog's "Close" is already Chinese), `change-password`,
-  `update-profile`, `log-out` (done in stage 1); entities `booking` (lesson rows, positions
-  "lesson 2 of 4"), `payment` (LastPaid, receipts), `account`, `group` (the rest of its words),
-  `balance`'s `accountPackageNote` (My classes' note: give it the same last `language`
-  argument), and PackageSummary's account variant (its words are already Chinese; pass
-  `typeLabelIn(group, language)` as its `typeLabel`).
-- The same pattern as stage 2: a `model/words.ts` + `words.zh.ts` per slice, pure functions
-  take `language` last, `messageFor(…, { language })`, `formatX(…, language)` for dates,
-  `registerAllChinese()` in tests that check Chinese.
-- Then: unit tests (full run about 7 min, `--maxWorkers=2`), zh screenshots of My classes and
-  Account (`zh-shots.mjs /my-classes /account --as=meiling`, and the cancel dialog), glossary,
-  commit on `chinese`, show Herman, stop.
+**Next: stage 4, the student emails in Chinese** (on `chinese`; a migration)
+- DIAGNOSE first: where `handle_new_user` (sign-up) and the four student emails are defined
+  now (`supabase/README.md`, the database map: `email_booked` in `…110000_update_email_links`,
+  `email_cancelled` and `email_broadcast` in `…100100_emails`, `email_reminder` in
+  `…100000_mail_queue`; later migrations may replace them), how a customer may update their
+  own profile row (RLS, column grants), and that demo mode runs the new migration too.
+- One migration: `profiles.language` ('en' | 'zh', default 'en'), set from the sign-up's
+  metadata and by the toggle when signed in (a small `set_my_language` function, or the
+  profile update the RLS allows); each student email chooses its words by the account's
+  language. The coach's emails (late alert, digest) stay English. Typed text (names, pools,
+  announcements, payment instructions) stays as typed. Dates and times in Chinese as the
+  screens write them (10月3日 周六, 晚上7:30).
+- The browser: Sign up sends the chosen language; the toggle saves it once signed in (and on
+  sign-in, a phone's stored choice wins if it differs? ask Herman: A the phone's choice, B
+  the account's).
+- Then: `supabase/README.md` in the same commit, `npm run db:types`, unit tests, Herman pushes
+  the migration to dev (Claude's `db push` is refused by the auto-mode check), then
+  `npm run test:db`, Chinese email samples for the reviewer, commit, show Herman, stop.
+- The Chinese sign-up and reset emails (Supabase Auth templates) depend on PRODUCTION.md 1.3.
 
 ## v0.25 · 7 Oct 2026 · Later packages show; payments at most one package ahead
 **State**: local `frontend-first` adds this work on top of v0.24 (949b71f); nothing pushed.

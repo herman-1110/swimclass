@@ -1,4 +1,7 @@
+import { useWords } from '@/shared/i18n/context'
 import { Skeleton } from '@/shared/ui/Skeleton'
+
+import { accountPageWords } from '../model/words'
 
 /**
  * "Your details" while the profile loads (auth spec §6.6): two rows, two 48 px fields and a
@@ -6,10 +9,11 @@ import { Skeleton } from '@/shared/ui/Skeleton'
  * already, so this rarely shows.
  */
 export function AccountSkeleton() {
+  const w = useWords(accountPageWords)
   return (
     <div aria-busy="true" className="flex flex-col gap-4">
       <p role="status" className="sr-only">
-        Loading…
+        {w.loading}
       </p>
       <Skeleton shape="line" className="h-4 w-24" />
       {['username', 'email'].map((row) => (

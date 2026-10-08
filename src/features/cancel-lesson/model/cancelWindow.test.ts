@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
+import { registerAllChinese } from '@/shared/i18n/registerAllChinese'
+
 import { cancelDeadline, cancelNote, cancelState } from './cancelWindow'
 
 // meiling's Sat 3 Oct 9:00 am lesson (seed booking d0…02), as the bookings table sends it.
@@ -58,6 +60,20 @@ describe('cancelNote', () => {
   it('explains a lesson that has started', () => {
     expect(cancelNote('2026-09-26T03:30:00+00:00', 6, DEMO_NOW)).toBe(
       'It has started, so it can’t be cancelled and counts even if missed.',
+    )
+  })
+})
+
+describe('cancelNote in Chinese', () => {
+  registerAllChinese()
+
+  it('gives the deadline, or why it is locked, in Chinese', () => {
+    expect(cancelNote(SAT_9AM, 6, DEMO_NOW, 'zh')).toBe('10月3日 周六 上午3:00前可以免费取消。')
+    expect(cancelNote(TODAY_5PM, 6, DEMO_NOW, 'zh')).toBe(
+      '离上课不到 6 小时，所以不能取消，缺课也会算一节。',
+    )
+    expect(cancelNote(TODAY_5PM, 6, '2026-09-26T17:30:00+08:00', 'zh')).toBe(
+      '这节课已经开始，所以不能取消，缺课也会算一节。',
     )
   })
 })

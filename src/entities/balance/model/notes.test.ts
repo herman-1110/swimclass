@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
+import { registerAllChinese } from '@/shared/i18n/registerAllChinese'
+
 import { accountPackageNote, bookPackageNote } from './notes'
 import type { GroupBalance } from './types'
 
@@ -188,6 +190,23 @@ describe('accountPackageNote', () => {
     // Unpaid lessons in the starting balance have no start time: already owed.
     expect(accountPackageNote({ ...weiJie, unpaid_since: null }, input)).toBe(
       'Package 2 isn’t paid yet. Pay your coach as soon as you can.',
+    )
+  })
+})
+
+describe('accountPackageNote in Chinese', () => {
+  registerAllChinese()
+  const input = { names: 'Sofia', typeLabel: '一对一', priceCents: 24000, now: NOW }
+
+  it('writes each note in Chinese', () => {
+    expect(accountPackageNote(sofia, input, 'zh')).toBe(
+      '10月4日之后，Sofia 的下一节一对一课从配套 3 开始。请在这个配套的第一节课之前或当天付 RM 240。',
+    )
+    expect(accountPackageNote(hana, { ...input, names: 'Hana', priceCents: null }, 'zh')).toBe(
+      '配套 6 还没付款。请在这个配套的第一节课之前或当天付款。',
+    )
+    expect(accountPackageNote(weiJie, { ...input, names: 'Wei Jie' }, 'zh')).toBe(
+      '配套 2 还没付款。请尽快付 RM 240 给教练。',
     )
   })
 })

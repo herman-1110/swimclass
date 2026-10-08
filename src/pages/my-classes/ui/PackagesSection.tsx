@@ -7,14 +7,17 @@ import {
   PackageSummary,
   PackageSummarySkeleton,
 } from '@/entities/balance'
-import type { Group } from '@/entities/group'
+import { type Group, typeLabelIn } from '@/entities/group'
 import { LastPaid } from '@/entities/payment'
 import { packagePriceCents, type PublicSettings } from '@/entities/settings'
+import { useLanguage } from '@/shared/i18n/context'
+import { wordsIn } from '@/shared/i18n/words'
 import { cn } from '@/shared/lib/cn'
 import { useReadFailure } from '@/shared/lib/hooks/useReadFailure'
 import { Card } from '@/shared/ui/Card'
 import { SectionLabel } from '@/shared/ui/SectionLabel'
 
+import { myClassesPageWords } from '../model/words'
 import { SectionError } from './SectionError'
 
 // The h2: it names the section, and takes focus once "Try again" has brought the packages.
@@ -43,6 +46,8 @@ export function PackagesSection({
   now,
   className,
 }: PackagesSectionProps) {
+  const language = useLanguage()
+  const w = wordsIn(myClassesPageWords, language)
   const failure = useReadFailure([settings, groups, balances], () =>
     document.getElementById(HEADING_ID),
   )
@@ -59,7 +64,7 @@ export function PackagesSection({
     body = (
       <>
         <p role="status" className="sr-only">
-          Loading your packages…
+          {w.loadingPackages}
         </p>
         <ul aria-hidden="true" className="divide-y divide-line">
           {[1, 2].map((key) => (
@@ -78,19 +83,24 @@ export function PackagesSection({
           const balance = byGroup.get(group.group_id)
           // Paused groups have no package to show (my-classes §6).
           if (!group.active || !balance) return null
-          const note = accountPackageNote(balance, {
-            names: group.display_names,
-            typeLabel: group.type_label,
-            priceCents: packagePriceCents(ready.settings, group.size),
-            now,
-          })
+          const typeLabel = typeLabelIn(group, language)
+          const note = accountPackageNote(
+            balance,
+            {
+              names: group.display_names,
+              typeLabel,
+              priceCents: packagePriceCents(ready.settings, group.size),
+              now,
+            },
+            language,
+          )
           return (
             <li key={group.group_id} className="py-4">
               <PackageSummary
                 variant="account"
                 balance={balance}
                 names={group.display_names}
-                typeLabel={group.type_label}
+                typeLabel={typeLabel}
                 lastPaid={
                   <LastPaid
                     variant="inline"
@@ -119,7 +129,7 @@ export function PackagesSection({
       className={cn('flex flex-col', className)}
     >
       <SectionLabel as="h2" id={HEADING_ID} tabIndex={-1} className="mt-3 mb-1">
-        Packages
+        {w.packages}
       </SectionLabel>
       {body}
     </Card>

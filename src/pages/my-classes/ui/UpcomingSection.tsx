@@ -6,6 +6,7 @@ import { LessonRowSkeleton, notEnded, type UpcomingLesson } from '@/entities/boo
 import type { Group } from '@/entities/group'
 import type { PublicSettings } from '@/entities/settings'
 import { ROUTES } from '@/shared/config/routes'
+import { useWords } from '@/shared/i18n/context'
 import { cn } from '@/shared/lib/cn'
 import { useFocusFallback } from '@/shared/lib/hooks/useFocusFallback'
 import { useReadFailure } from '@/shared/lib/hooks/useReadFailure'
@@ -14,6 +15,7 @@ import { ButtonLink } from '@/shared/ui/ButtonLink'
 import { EmptyState } from '@/shared/ui/EmptyState'
 import { SectionLabel } from '@/shared/ui/SectionLabel'
 
+import { myClassesPageWords } from '../model/words'
 import { SectionError } from './SectionError'
 import { UpcomingLessonRow } from './UpcomingLessonRow'
 
@@ -52,6 +54,7 @@ export function UpcomingSection({
   onCancelled,
   className,
 }: UpcomingSectionProps) {
+  const w = useWords(myClassesPageWords)
   const noticeRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
     if (notice) noticeRef.current?.focus()
@@ -78,7 +81,7 @@ export function UpcomingSection({
     body = (
       <>
         <p role="status" className="sr-only">
-          Loading your lessons…
+          {w.loadingLessons}
         </p>
         <LessonRowSkeleton />
         <LessonRowSkeleton />
@@ -95,11 +98,11 @@ export function UpcomingSection({
           <EmptyState
             action={
               <ButtonLink to={ROUTES.book} variant="link" flush>
-                Book a lesson
+                {w.bookLesson}
               </ButtonLink>
             }
           >
-            No upcoming lessons.
+            {w.noUpcoming}
           </EmptyState>
         </div>
       ) : (
@@ -133,7 +136,7 @@ export function UpcomingSection({
       className={cn('flex flex-col', className)}
     >
       <SectionLabel as="h2" id={HEADING_ID} tabIndex={-1} className="mb-1">
-        Upcoming
+        {w.upcoming}
       </SectionLabel>
       {notice && (
         <Banner ref={noticeRef} role="status" tabIndex={-1} className="mt-2">

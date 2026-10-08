@@ -1,10 +1,13 @@
 import { useState } from 'react'
 
+import { useLanguage } from '@/shared/i18n/context'
+import { wordsIn } from '@/shared/i18n/words'
 import { Button } from '@/shared/ui/Button'
 
 import { cancelState } from '../model/cancelWindow'
 import { cancelLabel } from '../model/copy'
 import type { CancelableLesson } from '../model/types'
+import { cancelLessonWords } from '../model/words'
 import { CancelLessonDialog } from './CancelLessonDialog'
 
 type CancelLessonButtonProps = {
@@ -32,6 +35,8 @@ export function CancelLessonButton({
   describedBy,
   onCancelled,
 }: CancelLessonButtonProps) {
+  const language = useLanguage()
+  const w = wordsIn(cancelLessonWords, language)
   const [open, setOpen] = useState(false)
   const state = cancelState(lesson.starts_at, cutoffHours, now)
 
@@ -41,15 +46,15 @@ export function CancelLessonButton({
         <Button
           variant="link"
           className="shrink-0"
-          aria-label={cancelLabel(lesson)}
+          aria-label={cancelLabel(lesson, language)}
           aria-describedby={describedBy}
           aria-haspopup="dialog"
           onClick={() => setOpen(true)}
         >
-          Cancel
+          {w.cancel}
         </Button>
       ) : (
-        <span className="text-label whitespace-nowrap text-muted">Locked</span>
+        <span className="text-label whitespace-nowrap text-muted">{w.locked}</span>
       )}
       {/* Stays open if the deadline passes meanwhile: the database answers `locked` then. */}
       <CancelLessonDialog
