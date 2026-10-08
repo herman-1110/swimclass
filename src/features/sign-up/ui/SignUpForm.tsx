@@ -111,7 +111,7 @@ export function SignUpForm({ labelledBy, onSignedUp }: SignUpFormProps) {
       setRefusal(messageFor({ code: 'captcha_required' }, { language }))
       return
     }
-    const input = { ...signUpInput(values), captchaToken: captcha.token }
+    const input = { ...signUpInput(values), language, captchaToken: captcha.token }
     signUp.mutate(input, {
       onSuccess: ({ confirmEmail }) => onSignedUp({ email: input.email, confirmEmail }),
       onError: refused,

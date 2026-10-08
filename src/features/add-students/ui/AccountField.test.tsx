@@ -13,6 +13,7 @@ const meiling: CustomerAccount = {
   username: 'meiling',
   display_name: 'Mei Ling',
   phone: null,
+  language: null,
   role: 'customer',
   approved: true,
   created_at: '2026-09-26T04:00:00+00:00',

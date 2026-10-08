@@ -1,3 +1,11 @@
+{{ if and .Data.language (eq .Data.language "zh") }}
+<p>你好：</p>
+<p>请确认你的电子邮件，完成 Swim Class 游泳课的注册：</p>
+<p><a href="{{ .ConfirmationURL }}">确认我的电子邮件</a></p>
+<p>你的用户名是 {{ .Data.username }}。确认之后，教练批准你的账户，你就可以预约。</p>
+<p>如果你没有注册，请忽略这封电子邮件。</p>
+<p>由 Swim Class 发送。回复这封电子邮件就能联系教练。</p>
+{{ else }}
 <p>Hi,</p>
 <p>Confirm your email to finish signing up for swim lessons with Swim Class:</p>
 <p><a href="{{ .ConfirmationURL }}">Confirm my email</a></p>
@@ -7,3 +15,4 @@
 </p>
 <p>If you didn't sign up, ignore this email.</p>
 <p>Sent by Swim Class. Reply to this email to reach your coach.</p>
+{{ end }}

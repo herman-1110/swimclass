@@ -9,6 +9,7 @@ function profile(overrides: Partial<Profile>): Profile {
     username: 'someone',
     display_name: 'Someone',
     phone: null,
+    language: null,
     role: 'customer',
     approved: true,
     created_at: '2026-09-29T16:05:07.107+00:00',

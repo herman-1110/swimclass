@@ -100,6 +100,7 @@ export async function demoSignUp(
           username: input.username,
           display_name: input.displayName,
           phone: input.phone,
+          language: input.language ?? null,
         }),
       ],
     )

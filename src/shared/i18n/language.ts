@@ -8,7 +8,8 @@ export const HTML_LANG: Readonly<Record<Language, string>> = { en: 'en', zh: 'zh
 
 const KEY = 'swimclass.language'
 
-function isLanguage(value: unknown): value is Language {
+/** Whether a stored or saved value is one of the two languages. */
+export function isLanguage(value: unknown): value is Language {
   return value === 'en' || value === 'zh'
 }
 

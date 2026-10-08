@@ -154,7 +154,12 @@ export function createSupabaseBackend(): Backend {
           email: input.email,
           password: input.password,
           options: {
-            data: { username: input.username, display_name: input.displayName, phone: input.phone },
+            data: {
+              username: input.username,
+              display_name: input.displayName,
+              phone: input.phone,
+              language: input.language ?? null,
+            },
             emailRedirectTo: redirectTo,
             captchaToken: input.captchaToken ?? undefined,
           },

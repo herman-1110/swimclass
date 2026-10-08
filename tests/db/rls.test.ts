@@ -92,10 +92,10 @@ describe.skipIf(!hasDatabase)('a customer (meiling)', () => {
     }
   })
 
-  it('can change her own name and phone, but not her role, approval or username', async () => {
+  it('can change her own name, phone and language, but not her role, approval or username', async () => {
     await db.as('meiling')
     const updated = await db.query(
-      `update public.profiles set display_name = 'Mei Ling Tan', phone = '012-345 6789'
+      `update public.profiles set display_name = 'Mei Ling Tan', phone = '012-345 6789', language = 'zh'
        where username = 'meiling'`,
     )
     expect(updated.rowCount).toBe(1)
@@ -337,7 +337,7 @@ describe.skipIf(!hasDatabase)('security checklist (TECH_SPEC §13)', () => {
        order by 1, 2`,
     )
     expect(rows.map((r) => `${r.name} ${r.privilege}`)).toEqual([
-      'profiles UPDATE', // display_name and phone only (checked above)
+      'profiles UPDATE', // display_name, phone and language only (checked above)
     ])
   })
 

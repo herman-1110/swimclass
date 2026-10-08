@@ -77,7 +77,9 @@ ref is `uhrgtttvzqjrdtdzyzkr`.
 4. **Rate Limits → Rate limit for sending emails**: 25 an hour (check it after step 3, which
    may change it). It stops strangers making your Gmail send sign-up and reset emails.
 5. **Emails → Templates**, from `supabase/templates/`, with "Swim Class" replaced by the
-   business name; keep `{{ .ConfirmationURL }}` and `{{ .Data.username }}` as they are:
+   business name; keep `{{ .ConfirmationURL }}`, `{{ .Data.username }}` and the
+   `{{ if … .Data.language … }}` lines as they are (`confirmation.html` is in Chinese for a
+   sign-up made in 中文, HANDOFF v0.26):
    Confirm signup "Confirm your email" (`confirmation.html`), Invite user "Your swim lesson
    account" (`invite.html`), Reset password "Reset your password" (`recovery.html`).
 

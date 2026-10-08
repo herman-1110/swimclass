@@ -1,4 +1,5 @@
 import { ROUTES } from '@/shared/config/routes'
+import type { Language } from '@/shared/i18n/language'
 
 import { getBackend } from './backend'
 import { toAppError } from './rpc'
@@ -9,12 +10,14 @@ import { toAppError } from './rpc'
 /** Who is signed in: the account id (`profiles.id`) and their email. */
 export type AuthSession = { userId: string; email: string | null }
 
-/** What sign-up sends; the profile trigger reads username, display name and phone. */
+/** What sign-up sends; the profile trigger reads username, display name, phone and language. */
 export type SignUpInput = {
   username: string
   displayName: string
   email: string
   phone: string | null
+  /** The language the sign-up screen shows: the account's emails go out in it. */
+  language?: Language
   password: string
   /** The CAPTCHA's token when it is on (TECH_SPEC §9); Auth checks it. */
   captchaToken?: string | null

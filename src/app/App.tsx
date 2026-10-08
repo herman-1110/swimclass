@@ -3,6 +3,7 @@ import { RouterProvider } from 'react-router/dom'
 
 import { installHoverMotion } from '@/shared/lib/motion'
 
+import { AccountLanguage } from './providers/AccountLanguage'
 import { LanguageProvider } from './providers/LanguageProvider'
 import { QueryProvider } from './providers/QueryProvider'
 import { SessionProvider } from './providers/SessionProvider'
@@ -16,7 +17,9 @@ export function App() {
     <LanguageProvider>
       <QueryProvider>
         <SessionProvider>
-          <RouterProvider router={router} />
+          <AccountLanguage>
+            <RouterProvider router={router} />
+          </AccountLanguage>
         </SessionProvider>
       </QueryProvider>
     </LanguageProvider>

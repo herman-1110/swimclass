@@ -33,12 +33,13 @@ Migration names below drop the `supabase/migrations/` folder.
 | `20261005100000_pending_accounts` | 09 | `pending_accounts`: the accounts waiting for approval, with their email |
 | `20261006100000_mail_queue` | 11 | the reminder and digest templates, `queue_daily_emails`, `claim_outbox`, `ack_outbox`, `email_log`; an index on unsent emails |
 | `20261007100000_payment_limit` | Herman, 7 Oct | `record_payment` goes at most one package ahead of the lessons booked: `paid_ahead`, `too_many_lessons` |
+| `20261008100000_profile_language` | HANDOFF v0.26 | `profiles.language` (sign-up, the account holder); Chinese dates and times; the four student emails in Chinese (the English ones renamed `…_en`) |
 
 ## Tables
 
 | Table | Defined in | What it's for |
 |---|---|---|
-| `profiles` | `…100000_schema` | one per auth user (made by `handle_new_user`): username, name, phone, role, approved |
+| `profiles` | `…100000_schema` (`language`: `…100000_profile_language`) | one per auth user (made by `handle_new_user`): username, name, phone, role, approved, language ('en', 'zh', or null: never chose) |
 | `students` | `…100000_schema` | the swimmers of an account |
 | `groups` | `…100000_schema` | 1 to 3 students of one account who book together; location, starting balances, active |
 | `group_members` | `…100000_schema` | which students are in which group |
@@ -119,7 +120,7 @@ the caller or read settings.
 
 | Function | Defined in | What it does |
 |---|---|---|
-| `handle_new_user` | `…100100_triggers` | trigger: a profile for every new auth user |
+| `handle_new_user` | `…100000_profile_language` | trigger: a profile for every new auth user, with the language Sign up sends |
 | `check_group_member` | `…100100_triggers` | trigger: members belong to the group's account; group size limit |
 | `check_group_not_empty` | `…100100_triggers` | trigger, checked at commit: a group keeps at least one member |
 | `check_account_change` | `…100100_triggers` | trigger: groups and students never move to another account |
@@ -134,10 +135,14 @@ the caller or read settings.
 | `email_html` | `…110100_fix_email_link_pattern` | an email's HTML from its text, with the templates' links |
 | `account_email` | `…100100_emails` | an account's address from `auth.users` (also read by `pending_accounts`) |
 | `queue_email` | `…100100_emails` | add one email to the outbox, once per dedupe key |
-| `email_booked` | `…110000_update_email_links` | the booking confirmation |
-| `email_cancelled`, `email_late_alert`, `email_broadcast` | `…100100_emails` | the other three templates |
+| `email_booked`, `email_cancelled`, `email_broadcast`, `email_reminder` | `…100000_profile_language` | the student emails: each picks `…_zh` for an account whose language is 'zh', else `…_en` |
+| `email_booked_en` | `…110000_update_email_links` (renamed in `…100000_profile_language`) | the booking confirmation in English |
+| `email_cancelled_en`, `email_broadcast_en` | `…100100_emails` (renamed in `…100000_profile_language`) | a cancelled lesson, the coach's message, in English |
+| `email_late_alert` | `…100100_emails` | the coach's late-change alert |
+| `email_booked_zh`, `email_cancelled_zh`, `email_broadcast_zh`, `email_reminder_zh` | `…100000_profile_language` | the same four student emails in Chinese |
+| `myt_period_zh`, `myt_day_text_zh`, `myt_time_text_zh`, `myt_range_text_zh`, `myt_when_text_zh` | `…100000_profile_language` | dates and times in Chinese: 10月3日 周六 晚上7:30–8:30 |
 | `queue_booked_emails`, `queue_cancelled_emails`, `queue_broadcast_emails` | `…100100_emails` | who gets which email after a change |
-| `email_reminder` | `…100000_mail_queue` | the evening reminder to one account: its lessons on a date, each with its cancel deadline |
+| `email_reminder_en` | `…100000_mail_queue` (renamed in `…100000_profile_language`) | the evening reminder to one account in English: its lessons on a date, each with its cancel deadline |
 | `email_digest` | `…100000_mail_queue` | the coach's "Tomorrow's schedule": lessons with travel gaps, unpaid and last-lesson groups among them, sign-ups waiting |
 | `ringgit_text`, `duration_text` | `…100000_mail_queue` | "RM 260", "1 hour 30 min" for emails |
 | `lock_booking_dates` | `…100200_booking` | the booking-date locks that stop two bookings racing |
