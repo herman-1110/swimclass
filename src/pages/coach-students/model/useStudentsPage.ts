@@ -4,7 +4,7 @@ import { useDebouncedValue } from '@/shared/lib/hooks/useDebouncedValue'
 import { useMediaQuery } from '@/shared/lib/hooks/useMediaQuery'
 import { useNow } from '@/shared/lib/hooks/useNow'
 
-import { returnFocusToRow, scrollToRow } from '../ui/rowFocus'
+import { focusNotice, returnFocusToRow, scrollToRow } from '../ui/rowFocus'
 import { listAnnouncement, studentsAdded } from './copy'
 import type { StudentsFilter } from './rows'
 import { useStaleParams } from './useStaleParams'
@@ -51,6 +51,8 @@ export function useStudentsPage(refs: PageRefs) {
     wide && url.pay !== null && url.history === null ? url.pay : null,
   )
   const [panelFocus, setPanelFocus] = useState(0)
+  // After Delete group, History closes on a group that has gone: focus goes to the notice.
+  const focusNoticeOnClose = useRef(false)
 
   const { rows } = data
   const loaded = rows !== null
@@ -88,13 +90,17 @@ export function useStudentsPage(refs: PageRefs) {
     title.focus()
   }, [panelFocus, url.pay, url.history, refs.panelTitle, loaded])
   // The payment panel (a modal below 1280 px) or History has closed: focus goes back to the
-  // row's button, which `kept` keeps on screen.
+  // row's button, which `kept` keeps on screen, or to the notice once its group was deleted.
   const modalOpen = url.history !== null || (!wide && url.pay !== null)
   const wasOpen = useRef(modalOpen)
   useEffect(() => {
     const closed = wasOpen.current && !modalOpen
     wasOpen.current = modalOpen
-    if (closed && kept !== null) returnFocusToRow(kept)
+    if (!closed) return
+    if (focusNoticeOnClose.current) {
+      focusNoticeOnClose.current = false
+      focusNotice()
+    } else if (kept !== null) returnFocusToRow(kept)
   }, [modalOpen, kept])
   // A group just added shows on screen once the list is in.
   const addedShown = view.addedRow !== null
@@ -151,6 +157,13 @@ export function useStudentsPage(refs: PageRefs) {
     openHistory: (groupId: string) => {
       setKept(groupId)
       url.openHistory(groupId)
+    },
+    /** History's "Delete group" deleted its group: close History and say so. */
+    groupDeleted: (text: string) => {
+      setNotice(text)
+      setKept(null)
+      focusNoticeOnClose.current = true
+      url.closeHistory()
     },
     /** The coach worked on the panel's group: from 1280 px it then stays there. */
     engage: (groupId: string) => {

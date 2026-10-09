@@ -3,32 +3,66 @@
 Update this file at the end of every Claude Code session. Newest entry on top.
 Keep entries short; link to files instead of pasting code.
 
-## v0.27 · 9 Oct 2026 · Going live: English and Chinese, Remove payment
-**State**: `chinese` (v0.26: stages 1 to 4 and Remove payment) is fast-forwarded into
-`frontend-first` to go live (Herman, 9 Oct: "now i just have to make the system goes live with
-the update i made"). The reader hasn't read the Chinese yet: their corrections ship later as
-an ordinary website deploy. Not pushed or deployed when this was written.
-**Checked before the merge**: typecheck, lint, format:check, unit (252 files, 1908 tests), a
-production `vite build` into the scratchpad (names the production project; the `zh` chunk is
-6.0 kB gzipped). `npm run test:db` on dev passed on 9 Oct with both migrations (299, v0.26).
+## v0.27 · 9 Oct 2026 · Going live: English and Chinese, Remove payment, Delete group
+**State**: the working copy is on the local branch `delete-group` (from `frontend-first`
+a1d8b3f, which is `chinese`, v0.26, fast-forwarded). Herman, 9 Oct: "now i just have to make
+the system goes live with the update i made", then "i also want it to be able to remove … the
+group that i accidentally added the student into to be gone", so the deploy waits for Delete
+group. The reader hasn't read the Chinese yet; their corrections ship later as an ordinary
+website deploy. Not pushed or deployed when this was written. `frontend-first` still points
+at a1d8b3f (Chinese and Remove payment only): it moves to `delete-group` once Delete group is
+on dev and `test:db` passes.
 **Decided**: "Unpaid packages allowed" stays 1 (Herman, 9 Oct: "can just remain 1 for now").
-**Deploy** (Herman, PRODUCTION.md §3). The database goes before the website: the new site
-reads `profiles.language` and calls `remove_payment`, so a site deployed first fails on every
-signed-in page.
-1. `git push origin frontend-first`; CI green; `git fetch . frontend-first:main`;
-   `git push origin main`.
-2. `npx supabase link --project-ref lzpvvgbnyyqzzohwncxc`; `npx supabase db push --dry-run`
-   must list exactly `20261008100000_profile_language.sql` and
-   `20261009100000_remove_payment.sql`; `npx supabase db push`; straight away
-   `npx supabase link --project-ref uhrgtttvzqjrdtdzyzkr` (back to dev).
-3. `npm run build`; `npx wrangler deploy`.
-4. Claude checks the live site: headers, a deep link, the `zh` chunk, the toggle on /login.
-5. PRODUCTION.md 1.3: Confirm signup template = the new `confirmation.html`. Until then a
+**Delete group** (Herman, 9 Oct; on `delete-group`, not yet on dev):
+- Migration `20261009120000_delete_group.sql`: `delete_group(p_group_id)`, coach only. Under
+  the group's lock (`for update`), deletes its lessons (past, cancelled, excused), its payments
+  and the group (members and starting balance with it), then those of its students no other
+  group has. The account stays; nobody is emailed; queued cancellation emails still go.
+  Refused while the group has upcoming lessons (`group_has_upcoming_lessons` {count},
+  `set_group_active`'s exact test) or has an online payment (`group_online_payment`); also
+  `not_found`, `not_coach`. Past lessons and payments don't block it (the confirmation says
+  they go). `supabase/README.md`, TECH_SPEC §5.3, PRD BR-6, ARCHITECTURE updated; the hand
+  entry in `database.types.ts` (`db:types` from dev must give the same).
+- Students → History → Group: "Delete group" under "Deactivate group", then "Delete Yusuf’s
+  1-to-1 group?" ("It goes from Students & payments with its payments, lessons and starting
+  balance. Zulaikha’s account stays. Nobody is emailed. This can’t be undone."), focus on
+  "Keep group". After it History closes, the page's notice "Yusuf’s 1-to-1 group deleted."
+  takes focus, and the row goes (`features/edit-group`: `useDeleteGroup`, `DeleteGroupButton`,
+  `DeleteGroupDialog`; `useStudentsPage.groupDeleted`; `rowFocus.focusNotice`). A refusal
+  shows in the dialog and its button reads "Close".
+- Tests: unit (demo database) in `edit-group/api/mutations.test.tsx`,
+  `DeleteGroupDialog.test.tsx`, `CoachStudentsPage.actions.test.tsx`; `messages.test.ts`;
+  `tests/db/groups.test.ts` (Sofia's group with its lesson and payment, Sofia kept in Aiman &
+  Sofia; a new student going with a new group; the refusals) and `rls.test.ts` (the grant).
+  Full unit run: 253 files, 1919 tests passed; typecheck, lint, format clean. In Chrome (demo,
+  1280 and 390): `frontend-plan/tools/delete-group-steps.mjs` → `out/delete-group-{history,
+  confirm,deleted,refused}@…` (focus on Keep group, then on the notice; no console errors).
+**Checked before the merge of `chinese`**: typecheck, lint, format:check, unit (252 files,
+1908 tests), a production `vite build` into the scratchpad (names the production project;
+the `zh` chunk is 6.0 kB gzipped). `npm run test:db` on dev passed on 9 Oct with v0.26's two
+migrations (299).
+**Deploy**, in this order:
+1. Dev (Herman, the CLI linked to dev): `npx supabase db push --dry-run` lists only
+   `20261009120000_delete_group.sql`; `npx supabase db push`. Then Claude: `npm run test:db`,
+   `npm run db:types` (same file as the hand edit), and `frontend-first` fast-forwarded to
+   `delete-group`.
+2. GitHub (Herman): `git push origin frontend-first`; CI green; `git fetch .
+   frontend-first:main`; `git push origin main`.
+3. Production database (Herman): `npx supabase link --project-ref lzpvvgbnyyqzzohwncxc`;
+   `npx supabase db push --dry-run` must list exactly `20261008100000_profile_language.sql`,
+   `20261009100000_remove_payment.sql` and `20261009120000_delete_group.sql`;
+   `npx supabase db push`; straight away `npx supabase link --project-ref
+   uhrgtttvzqjrdtdzyzkr` (back to dev). The database goes before the website: the new site
+   reads `profiles.language` and calls the new functions, so a site deployed first fails on
+   every signed-in page.
+4. Website (Herman): `npm run build`; `npx wrangler deploy`.
+5. Claude checks the live site: headers, a deep link, the `zh` chunk, the toggle on /login.
+6. PRODUCTION.md 1.3: Confirm signup template = the new `confirmation.html`. Until then a
    sign-up made in 中文 gets the English email.
-**Next**: the live checks after the deploy; then v0.26 Next 1 and 2 (the reader, Waiting for
-approval's shot, the corrections). Still open: PRODUCTION.md 1.3 and 1.8, the signed-in
-first-load and Lighthouse checks, §2 students, HANDOFF v1.0. The local `chinese` branch can
-go once `frontend-first` is pushed.
+**Next**: the deploy above; then v0.26 Next 1 and 2 (the reader, Waiting for approval's shot,
+the corrections). Still open: PRODUCTION.md 1.3 and 1.8, the signed-in first-load and
+Lighthouse checks, §2 students, HANDOFF v1.0. The local `chinese` and `delete-group` branches
+can go once `frontend-first` is pushed.
 
 ## v0.26 · 7–9 Oct 2026 · English and Chinese; removing a payment
 **State**: the working copy is on the local branch `chinese` (stages 1 to 4, Remove payment

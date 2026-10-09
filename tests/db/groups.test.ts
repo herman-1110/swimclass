@@ -1,6 +1,6 @@
 // Groups and accounts (TECH_SPEC §5.3, prompt 04; PRD BR-1, BR-2, BR-6, BR-7, BR-25):
-// create_group, update_group, set_group_active, approve_account and username_available
-// against the seed, with the clock at Sat 26 Sep 2026 12:00 MYT.
+// create_group, update_group, set_group_active, delete_group, approve_account and
+// username_available against the seed, with the clock at Sat 26 Sep 2026 12:00 MYT.
 import { describe, expect, it } from 'vitest'
 
 import { SEED } from './fixture'
@@ -414,6 +414,107 @@ describe.skipIf(!hasDatabase)('set_group_active', () => {
     expect(
       await failure(db, 'select public.set_group_active($1, false)', [SEED.groups.sofia]),
     ).toMatchObject({ message: 'not_coach' })
+  })
+})
+
+describe.skipIf(!hasDatabase)('delete_group (Herman, 9 Oct 2026)', () => {
+  const db = useTestDb()
+  const sql = 'select public.delete_group($1)'
+
+  /** How many of the group's rows are left in each table (read as the owner). */
+  async function left(groupId: string, studentId: string) {
+    await db.asOwner()
+    const { rows } = await db.query<Record<string, number>>(
+      `select (select count(*)::int from public.groups where id = $1) as groups,
+              (select count(*)::int from public.group_members where group_id = $1) as members,
+              (select count(*)::int from public.bookings where group_id = $1) as lessons,
+              (select count(*)::int from public.payments where group_id = $1) as payments,
+              (select count(*)::int from public.students where id = $2) as student`,
+      [groupId, studentId],
+    )
+    return rows[0]
+  }
+
+  it('won’t delete a group with upcoming lessons, as Deactivate won’t', async () => {
+    await db.as('herman')
+    expect(await failure(db, sql, [SEED.groups.aimanSofia])).toEqual({
+      message: 'group_has_upcoming_lessons',
+      detail: { count: 2 },
+    })
+  })
+
+  it('deletes Sofia’s group with its lessons and payment; Sofia stays in Aiman & Sofia', async () => {
+    await db.as('herman')
+    await db.query('select public.cancel_booking($1)', [SEED.bookings.sofiaSun4])
+    expect(await left(SEED.groups.sofia, SEED.students.sofia)).toEqual({
+      groups: 1,
+      members: 1,
+      lessons: 1,
+      payments: 1,
+      student: 1,
+    })
+    await db.as('herman')
+    await db.query(sql, [SEED.groups.sofia])
+    expect(await left(SEED.groups.sofia, SEED.students.sofia)).toEqual({
+      groups: 0,
+      members: 0,
+      lessons: 0,
+      payments: 0,
+      student: 1,
+    })
+    expect(await group(db, SEED.groups.aimanSofia)).toMatchObject({
+      display_names: 'Aiman & Sofia',
+      active: true,
+    })
+    expect(await failure(db, sql, [SEED.groups.sofia])).toMatchObject({ message: 'not_found' })
+  })
+
+  it('takes a new student added with the group, and its first payment, with it', async () => {
+    await db.as('herman')
+    const meiling = await db.idOf('meiling')
+    const id = await createGroup(db, meiling, [{ name: 'Lina' }], 'Palm Court', {
+      firstPackagePaid: true,
+      amountCents: 24000,
+      method: 'cash',
+    })
+    await db.asOwner()
+    const { rows } = await db.query<{ student_id: string }>(
+      'select student_id from public.group_members where group_id = $1',
+      [id],
+    )
+    const lina = rows[0]?.student_id ?? ''
+    expect(await left(id, lina)).toMatchObject({ groups: 1, payments: 1, student: 1 })
+    await db.as('herman')
+    await db.query(sql, [id])
+    expect(await left(id, lina)).toEqual({
+      groups: 0,
+      members: 0,
+      lessons: 0,
+      payments: 0,
+      student: 0,
+    })
+    // The account stays.
+    await db.asOwner()
+    const account = await db.query('select 1 from public.profiles where id = $1', [meiling])
+    expect(account.rows).toHaveLength(1)
+  })
+
+  it('refuses a group with an online payment, groups that don’t exist, and customers', async () => {
+    await db.as('herman')
+    await db.query('select public.cancel_booking($1)', [SEED.bookings.sofiaSun4])
+    await db.asOwner()
+    await db.query("update public.payments set gateway_ref = 'fpx-test-2' where group_id = $1", [
+      SEED.groups.sofia,
+    ])
+    await db.as('herman')
+    expect(await failure(db, sql, [SEED.groups.sofia])).toMatchObject({
+      message: 'group_online_payment',
+    })
+    expect(await group(db, SEED.groups.sofia)).toBeDefined()
+    await db.as('herman')
+    expect(await failure(db, sql, [MISSING_GROUP])).toMatchObject({ message: 'not_found' })
+    await db.as('meiling')
+    expect(await failure(db, sql, [SEED.groups.sofia])).toMatchObject({ message: 'not_coach' })
   })
 })
 

@@ -786,6 +786,7 @@ export type Database = {
         }
         Returns: string
       }
+      delete_group: { Args: { p_group_id: string }; Returns: undefined }
       duration_text: { Args: { p_minutes: number }; Returns: string }
       email_booked: {
         Args: { p_series_id: string }

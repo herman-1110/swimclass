@@ -463,6 +463,14 @@ const COACH: Readonly<Record<string, Words>> = {
       (count) =>
         `This group has ${plural(count, 'upcoming lesson')}. Cancel ${count === 1 ? 'it' : 'them'} first, then deactivate it. Each cancellation emails the customer.`,
     ),
+  // delete_group (Herman, 9 Oct 2026): Deactivate's test, with Delete's words.
+  group_has_upcoming_lessons: (d) =>
+    given(
+      countOf(d.count),
+      (count) =>
+        `This group has ${plural(count, 'upcoming lesson')}. Cancel ${count === 1 ? 'it' : 'them'} first, then delete the group. Each cancellation emails the customer.`,
+    ),
+  group_online_payment: 'This group has a payment made online, so it can’t be deleted here.',
   group_full: (d) =>
     given(
       countOf(d.max),

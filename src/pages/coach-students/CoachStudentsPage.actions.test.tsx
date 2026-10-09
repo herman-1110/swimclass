@@ -300,4 +300,34 @@ describe('CoachStudentsPage actions', () => {
     })
     expect(left).toEqual([])
   })
+
+  it('deletes a group added by mistake from History: the drawer closes, focus goes to the notice', async () => {
+    // Every seed group has lessons ahead: add one for Zulaikha first, with its first package.
+    await logIn('herman', DEMO_PASSWORD)
+    const groupId = await rpc('create_group', {
+      p_account_id: 'a0000000-0000-4000-8000-000000000006',
+      p_students: [{ name: 'Yusuf' }],
+      p_location: 'Maple Condo',
+      p_first_package_paid: true,
+      p_amount_cents: 24000,
+      p_method: 'cash',
+    })
+    const router = await renderAs('herman', `/coach/students?history=${groupId}`)
+    const drawer = await screen.findByRole('dialog', { name: 'History' }, { timeout: 5000 })
+    const group = within(drawer).getByRole('region', { name: 'Group' })
+    press(within(group).getByRole('button', { name: 'Delete group' }))
+    const confirm = screen.getByRole('alertdialog', { name: 'Delete Yusuf’s 1-to-1 group?' })
+    expect(confirm.textContent).toContain('Zulaikha’s account stays.')
+    expect(document.activeElement).toBe(within(confirm).getByRole('button', { name: 'Keep group' }))
+    fireEvent.click(within(confirm).getByRole('button', { name: 'Delete group' }))
+
+    const notice = await screen.findByText('Yusuf’s 1-to-1 group deleted.')
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: 'History' })).toBeNull())
+    expect(screen.queryByRole('alertdialog')).toBeNull()
+    expect(router.state.location.search).not.toContain('history')
+    await waitFor(() => expect(document.activeElement).toBe(notice.closest('[tabindex="-1"]')))
+    await waitFor(async () => expect(tableNames(await findTable())).not.toContain('Yusuf'))
+    expect(await readRows('groups', { eq: { id: groupId } })).toEqual([])
+    expect(await readRows('payments', { eq: { group_id: groupId } })).toEqual([])
+  })
 })

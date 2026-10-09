@@ -1,4 +1,5 @@
-import { accountLabel } from '@/entities/group'
+import { accountLabel, type Group } from '@/entities/group'
+import { possessive } from '@/shared/lib/format'
 
 import type { EditableGroup } from './types'
 
@@ -30,3 +31,26 @@ export function deactivateTitle(group: Pick<EditableGroup, 'display_names'>): st
 /** What deactivating does, under the title. */
 export const DEACTIVATE_DESCRIPTION =
   'They can’t book until you reactivate the group. Their packages and history stay.'
+
+// Deleting a group added by mistake, from History's Group section (Herman, 9 Oct 2026).
+
+/** The group as Delete names it: its students and type. */
+type NamedGroup = Pick<Group, 'display_names' | 'type_label'>
+
+export const DELETE_GROUP = 'Delete group'
+export const KEEP_GROUP = 'Keep group'
+
+/** The confirmation's title: "Delete Aiman & Sofia’s 1-to-2 group?". */
+export function deleteGroupTitle(group: NamedGroup): string {
+  return `Delete ${possessive(group.display_names)} ${group.type_label} group?`
+}
+
+/** What deleting does, under the title; the account named is the one that stays. */
+export function deleteGroupDescription(accountName: string): string {
+  return `It goes from Students & payments with its payments, lessons and starting balance. ${possessive(accountName)} account stays. Nobody is emailed. This can’t be undone.`
+}
+
+/** The Students page's notice once it has gone: "Aiman & Sofia’s 1-to-2 group deleted.". */
+export function groupDeleted(group: NamedGroup): string {
+  return `${possessive(group.display_names)} ${group.type_label} group deleted.`
+}

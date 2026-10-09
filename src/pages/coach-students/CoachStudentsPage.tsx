@@ -77,6 +77,7 @@ export function CoachStudentsPage() {
         row={view.historyRow}
         onClose={url.closeHistory}
         onRecordPayment={(groupId) => page.recordPayment(groupId, true)}
+        onGroupDeleted={page.groupDeleted}
         now={now}
       />
     </div>

@@ -414,6 +414,13 @@ Built in prompt 04 (`…_groups_accounts.sql`, tested in `tests/db/groups.test.t
   lessons can't be deactivated (`has_upcoming_lessons` {`count`}: cancel them first);
   reactivating is refused while an active group has the same students
   (`duplicate_group` {`group_id`}). Errors also `invalid_active`, `not_found`.
+- `delete_group(p_group_id)`: coach only (Herman, 9 Oct 2026: a group added by mistake;
+  `…20261009120000_delete_group`, tested in `tests/db/groups.test.ts`). Under the group's
+  lock, deletes its lessons (past, cancelled, excused), its payments and the group (starting
+  balance and members with it), then those of its students no other group has; the account
+  stays. Nobody is emailed; cancellation emails already queued still go. Errors:
+  `group_has_upcoming_lessons` {`count`} (`set_group_active`'s test: cancel them first),
+  `group_online_payment` (a payment has `gateway_ref`), `not_found`.
 - `approve_account(p_account_id)`: coach only (`not_found`).
 - `pending_accounts() returns table (id, username, display_name, phone, email, email_confirmed, created_at)`:
   coach only (`not_coach`; prompt 09, `…20261005100000_pending_accounts`, tested in

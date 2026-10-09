@@ -188,6 +188,16 @@ const COACH_CASES: Case[] = [
     'This group has 2 upcoming lessons. Cancel them first, then deactivate it. Each cancellation emails the customer.',
   ],
   [
+    'group_has_upcoming_lessons',
+    { count: 1 },
+    'This group has 1 upcoming lesson. Cancel it first, then delete the group. Each cancellation emails the customer.',
+  ],
+  [
+    'group_online_payment',
+    {},
+    'This group has a payment made online, so it can’t be deleted here.',
+  ],
+  [
     'group_full',
     { max: 3 },
     'A lesson can have up to 3 students. Remove one, or change “Students per lesson” in Settings.',
@@ -462,6 +472,8 @@ describe('a code without the detail its message needs gets the generic message',
     ['duplicate_group', { group_id: ' ' }, COACH],
     ['has_upcoming_lessons', {}, COACH],
     ['has_upcoming_lessons', { count: 0 }, COACH],
+    ['group_has_upcoming_lessons', {}, COACH],
+    ['group_has_upcoming_lessons', { count: 0 }, COACH],
     ['group_full', {}, COACH],
     // create_group's "not a list, or empty", set_open_hours' "not an array", the triggers.
     ['invalid_students', {}, COACH],

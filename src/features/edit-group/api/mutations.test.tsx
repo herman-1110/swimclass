@@ -3,14 +3,17 @@ import { act, cleanup, renderHook, waitFor } from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 
+import { accountKeys } from '@/entities/account'
 import { balanceKeys } from '@/entities/balance'
 import { bookingKeys } from '@/entities/booking'
 import { groupKeys } from '@/entities/group'
+import { paymentKeys } from '@/entities/payment'
 import { scheduleKeys } from '@/entities/schedule'
 import { getSession, logIn, logOut } from '@/shared/api/auth'
 import { readRows, rpc } from '@/shared/api/rpc'
 import { DEMO_PASSWORD } from '@/shared/config/demo'
 
+import { useDeleteGroup } from './useDeleteGroup'
 import { useSetGroupActive } from './useSetGroupActive'
 import { useUpdateGroup } from './useUpdateGroup'
 
@@ -136,5 +139,48 @@ describe('useSetGroupActive', () => {
       code: 'duplicate_group',
       detail: { group_id: second },
     })
+  })
+})
+
+describe('useDeleteGroup', () => {
+  it('is refused while the group has lessons ahead, saying how many', async () => {
+    await logIn('herman', DEMO_PASSWORD)
+    const { result } = renderMutation(() => useDeleteGroup())
+    act(() => result.current.mutate({ groupId: HANA }))
+    await waitFor(() => expect(result.current.isError).toBe(true))
+    expect(result.current.error).toMatchObject({
+      code: 'group_has_upcoming_lessons',
+      detail: { count: 2 },
+    })
+    expect(await groupOf(HANA)).toBeDefined()
+  })
+
+  it('deletes a group added by mistake with its new student, says so first, then refreshes', async () => {
+    await logIn('herman', DEMO_PASSWORD)
+    const groupId = await rpc('create_group', {
+      p_account_id: ZULAIKHA,
+      p_students: [{ name: 'Yusuf' }],
+      p_location: 'Maple Condo',
+      p_first_package_paid: true,
+      p_amount_cents: 24000,
+      p_method: 'cash',
+    })
+    const [yusuf] = (await groupOf(groupId))?.student_ids ?? []
+    const onDeleted = vi.fn()
+    const { result, refreshed } = renderMutation(() => useDeleteGroup({ onDeleted }))
+    act(() => result.current.mutate({ groupId }))
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    expect(onDeleted).toHaveBeenCalledWith({ groupId })
+    expect(refreshed()).toEqual([
+      groupKeys.all,
+      balanceKeys.all,
+      bookingKeys.all,
+      paymentKeys.all,
+      scheduleKeys.all,
+      accountKeys.students(),
+    ])
+    expect(await groupOf(groupId)).toBeUndefined()
+    expect(await readRows('payments', { eq: { group_id: groupId } })).toEqual([])
+    expect(await readRows('students', { eq: { id: yusuf ?? '' } })).toEqual([])
   })
 })

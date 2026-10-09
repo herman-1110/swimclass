@@ -18,6 +18,8 @@ type HistoryDrawerProps = {
   onClose: () => void
   /** "Record payment": the payment panel for this group (paying ahead, coach-students C7). */
   onRecordPayment: (groupId: string) => void
+  /** "Delete group" deleted it: the page closes this drawer and shows the notice. */
+  onGroupDeleted: (notice: string) => void
   now: Instant
 }
 
@@ -26,7 +28,13 @@ type HistoryDrawerProps = {
  * from 768 px, over the 1280 px payment column; the full screen on phones). The package with
  * its status and "Record payment", then Payments, Lessons and the Group actions.
  */
-export function HistoryDrawer({ row, onClose, onRecordPayment, now }: HistoryDrawerProps) {
+export function HistoryDrawer({
+  row,
+  onClose,
+  onRecordPayment,
+  onGroupDeleted,
+  now,
+}: HistoryDrawerProps) {
   const titleRef = useRef<HTMLHeadingElement>(null)
   const groupId = row?.group.group_id ?? null
   // "that group" (a refused reactivation) shows another group in the open drawer, and the
@@ -73,7 +81,7 @@ export function HistoryDrawer({ row, onClose, onRecordPayment, now }: HistoryDra
           </div>
           <HistoryPayments group={row.group} now={now} />
           <HistoryLessons group={row.group} packageSize={row.balance.package_size} now={now} />
-          <HistoryGroup row={row} />
+          <HistoryGroup row={row} onDeleted={onGroupDeleted} />
         </div>
       )}
     </SidePanel>

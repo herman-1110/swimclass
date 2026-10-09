@@ -371,6 +371,7 @@ describe.skipIf(!hasDatabase)('security checklist (TECH_SPEC §13)', () => {
       'coach_slot_check(uuid,timestamp with time zone,integer,boolean,boolean)',
       'coach_week(date)', // prompt 03; checks is_coach() first
       'create_group(uuid,jsonb,text,boolean,integer,payment_method,integer,integer)',
+      'delete_group(uuid)', // Herman, 9 Oct 2026
       'email_log(integer)', // prompt 11
       'excuse_booking(uuid)',
       'get_public_settings()',
@@ -406,6 +407,7 @@ describe.skipIf(!hasDatabase)('security checklist (TECH_SPEC §13)', () => {
       `select public.create_group('${SEED.groups.hana}', '[{"name": "X"}]', 'Pool')`,
       `select public.update_group('${SEED.groups.hana}', 'Pool')`,
       `select public.set_group_active('${SEED.groups.hana}', false)`,
+      `select public.delete_group('${SEED.groups.hana}')`,
       `select public.approve_account('${SEED.groups.hana}')`,
       `select * from public.pending_accounts()`,
       `select * from public.email_log()`,

@@ -72,7 +72,8 @@ Every rule has an ID so code, tests and prompts can refer to it.
 ### Groups
 - **BR-6** Only the coach creates, edits and deactivates groups. A group has 1 to
   `max_students_per_lesson` (default 3) students, all from the same account, and a
-  pool location.
+  pool location. The coach can delete a group added by mistake once it has no upcoming
+  lessons (Herman, 9 Oct 2026); its lessons and payments go with it, the account stays.
 - **BR-7** When booking, customers choose from their active groups only. They cannot
   combine students into a new group themselves.
 

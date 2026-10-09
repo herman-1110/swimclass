@@ -1,6 +1,8 @@
+export { type DeleteGroupInput, useDeleteGroup } from './api/useDeleteGroup'
 export { type SetGroupActiveInput, useSetGroupActive } from './api/useSetGroupActive'
 export { useUpdateGroup } from './api/useUpdateGroup'
 export type { UpdateGroupInput } from './model/groupChanges'
 export type { EditableGroup } from './model/types'
+export { DeleteGroupButton } from './ui/DeleteGroupButton'
 export { EditGroupButton } from './ui/EditGroupButton'
 export { GroupActiveButton } from './ui/GroupActiveButton'

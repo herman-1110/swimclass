@@ -12,6 +12,14 @@ export function rowActionId(layout: RowLayout, groupId: string): string {
 /** The filter tabs' wrapper (StudentsList), where focus goes when a row has left the tab. */
 export const FILTER_TABS_ID = 'students-filter-tabs'
 
+/** The page's notice (StudentsList's Banner). */
+export const NOTICE_ID = 'students-notice'
+
+/** Focus the page's notice: after Delete group, whose row has gone. */
+export function focusNotice(): void {
+  document.getElementById(NOTICE_ID)?.focus()
+}
+
 /** The chosen filter tab, or null while the tabs aren't shown. */
 export function chosenTab(): HTMLElement | null {
   return document.querySelector<HTMLElement>(`#${FILTER_TABS_ID} [aria-pressed="true"]`)

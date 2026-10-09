@@ -9,7 +9,7 @@ import { Tabs } from '@/shared/ui/Tabs'
 import { readFilter } from '../model/params'
 import { filterCounts, inFilter, type PackageRow, type StudentsFilter } from '../model/rows'
 import { PackagesList } from './PackagesList'
-import { FILTER_TABS_ID } from './rowFocus'
+import { FILTER_TABS_ID, NOTICE_ID } from './rowFocus'
 import { StudentsLoading } from './StudentsLoading'
 import { WaitingList } from './WaitingList'
 
@@ -53,7 +53,7 @@ export function StudentsList(props: StudentsListProps) {
       {/* Takes no room while empty, but stays in place so a new notice is read out. */}
       <div role="status" className="empty:-mb-3">
         {props.notice && (
-          <Banner ref={noticeRef} tabIndex={-1}>
+          <Banner ref={noticeRef} id={NOTICE_ID} tabIndex={-1}>
             {props.notice}
           </Banner>
         )}

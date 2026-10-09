@@ -35,6 +35,7 @@ Migration names below drop the `supabase/migrations/` folder.
 | `20261007100000_payment_limit` | Herman, 7 Oct | `record_payment` goes at most one package ahead of the lessons booked: `paid_ahead`, `too_many_lessons` |
 | `20261008100000_profile_language` | HANDOFF v0.26 | `profiles.language` (sign-up, the account holder); Chinese dates and times; the four student emails in Chinese (the English ones renamed `…_en`) |
 | `20261009100000_remove_payment` | Herman, 9 Oct | `remove_payment`: the coach deletes a payment saved by mistake |
+| `20261009120000_delete_group` | Herman, 9 Oct | `delete_group`: the coach deletes a group added by mistake |
 
 ## Tables
 
@@ -91,6 +92,7 @@ listed in each function's header comment in its migration.
 | `create_group` | `…100300_groups_accounts` | coach | Add students |
 | `update_group` | `…100300_groups_accounts` | coach | change a group's location and starting balances |
 | `set_group_active` | `…100300_groups_accounts` | coach | deactivate or reactivate a group |
+| `delete_group` | `…120000_delete_group` | coach | delete a group added by mistake, with its lessons and payments (none ahead) |
 | `approve_account` | `…100300_groups_accounts` | coach | approve a sign-up |
 | `pending_accounts` | `…100000_pending_accounts` | coach | the accounts waiting for approval, with their email from `auth.users` |
 | `email_log` | `…100000_mail_queue` | coach | the latest emails (50 by default, at most 200), newest first: when, to whom, kind, sent, tries, last error |
