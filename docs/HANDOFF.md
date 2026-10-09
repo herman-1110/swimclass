@@ -3,13 +3,21 @@
 Update this file at the end of every Claude Code session. Newest entry on top.
 Keep entries short; link to files instead of pasting code.
 
-## v0.27 · 9 Oct 2026 · Going live: English and Chinese, Remove payment, Delete group
-**State**: the working copy is on `frontend-first`, fast-forwarded through `chinese` (v0.26)
-and then `delete-group` (this entry). Herman, 9 Oct: "now i just have to make
-the system goes live with the update i made", then "i also want it to be able to remove … the
-group that i accidentally added the student into to be gone", so the deploy waits for Delete
-group. The reader hasn't read the Chinese yet; their corrections ship later as an ordinary
-website deploy. Not pushed or deployed when this was written: Deploy step 1 is done, 2 is next.
+## v0.27 · 9 Oct 2026 · Live: English and Chinese, Remove payment; Delete group next
+**State**: v0.26 (English and Chinese, Remove payment) is live since about 2 pm on 9 Oct:
+Herman pushed `frontend-first` = `main` = a1d8b3f (13:57), ran the production `db push` of
+`profile_language` and `remove_payment`, built and ran `wrangler deploy`, without waiting for
+the reader (Herman, 9 Oct: "now i just have to make the system goes live with the update i
+made"). Checked by Claude afterwards: the live `index-Ya6uipIH.js` is that build;
+production's API knows `myt_time_text_zh` and `remove_payment` and not `delete_group`
+(signed-out calls: "permission denied" vs "not found"); `pwa-check` on the live site ALL OK
+(15); on the live /login, 中文 loads `zh-DgTA2XHH.js` (200), `<html lang>` becomes zh-Hans,
+"欢迎回来" (`frontend-plan/out/zh/live-login@390.png`). The two console lines "%c%d
+font-size:0…" there come from the Turnstile box, not the app.
+Then Herman asked for Delete group ("i also want it to be able to remove … the group that i
+accidentally added the student into to be gone"), built below on `delete-group` and
+fast-forwarded into `frontend-first` (local, not pushed). The reader hasn't read the Chinese
+yet; their corrections ship as an ordinary website deploy.
 **Decided**: "Unpaid packages allowed" stays 1 (Herman, 9 Oct: "can just remain 1 for now").
 **Delete group** (Herman, 9 Oct; on dev 9 Oct, not production):
 - Migration `20261009120000_delete_group.sql`: `delete_group(p_group_id)`, coach only. Under
@@ -41,24 +49,21 @@ website deploy. Not pushed or deployed when this was written: Deploy step 1 is d
 1908 tests), a production `vite build` into the scratchpad (names the production project;
 the `zh` chunk is 6.0 kB gzipped). `npm run test:db` on dev passed on 9 Oct with v0.26's two
 migrations (299).
-**Deploy**, in this order:
-1. Done 9 Oct. Dev (Herman, the CLI linked to dev): `npx supabase db push --dry-run` lists only
-   `20261009120000_delete_group.sql`; `npx supabase db push`. Then Claude: `npm run test:db`,
-   `npm run db:types` (same file as the hand edit), and `frontend-first` fast-forwarded to
-   `delete-group`.
+**Deploy of Delete group**, in this order:
+1. Done 9 Oct. Dev (Herman): `npx supabase db push`. Then Claude: `npm run test:db` (303
+   passed), `npm run db:types` (same file), `frontend-first` fast-forwarded to `delete-group`.
 2. GitHub (Herman): `git push origin frontend-first`; CI green; `git fetch .
    frontend-first:main`; `git push origin main`.
 3. Production database (Herman): `npx supabase link --project-ref lzpvvgbnyyqzzohwncxc`;
-   `npx supabase db push --dry-run` must list exactly `20261008100000_profile_language.sql`,
-   `20261009100000_remove_payment.sql` and `20261009120000_delete_group.sql`;
+   `npx supabase db push --dry-run` must list only `20261009120000_delete_group.sql`;
    `npx supabase db push`; straight away `npx supabase link --project-ref
-   uhrgtttvzqjrdtdzyzkr` (back to dev). The database goes before the website: the new site
-   reads `profiles.language` and calls the new functions, so a site deployed first fails on
-   every signed-in page.
+   uhrgtttvzqjrdtdzyzkr` (back to dev). The database goes first: the new site's Delete group
+   calls `delete_group`.
 4. Website (Herman): `npm run build`; `npx wrangler deploy`.
-5. Claude checks the live site: headers, a deep link, the `zh` chunk, the toggle on /login.
-6. PRODUCTION.md 1.3: Confirm signup template = the new `confirmation.html`. Until then a
-   sign-up made in 中文 gets the English email.
+5. Claude checks: the live bundle is the new build and `delete_group` exists (a signed-out
+   call says "permission denied", not "not found").
+6. Still to do from v0.26: PRODUCTION.md 1.3, Confirm signup template = the new
+   `confirmation.html`. Until then a sign-up made in 中文 gets the English email.
 **Next**: the deploy above; then v0.26 Next 1 and 2 (the reader, Waiting for approval's shot,
 the corrections). Still open: PRODUCTION.md 1.3 and 1.8, the signed-in first-load and
 Lighthouse checks, §2 students, HANDOFF v1.0. The local `chinese` and `delete-group` branches
