@@ -170,9 +170,11 @@ it"; on `chinese`, so it ships with stage 5):
   the refusals) and `rls.test.ts` (the grant). `npm run test:db` on dev: 13 files, 299 tests
   pass (296 + 3).
 **Open**
-- From earlier entries, still open: "Unpaid packages allowed" 1 or 0 (v0.24, a Settings
-  change Herman makes), PRODUCTION.md 1.3 (Auth SMTP, templates) and 1.8 (smoke test), the
-  signed-in first-load and Lighthouse checks, §2 students, HANDOFF v1.0 (v0.23's Next 2, 3).
+- Settled 9 Oct: "Unpaid packages allowed" stays 1 for now (Herman: "can just remain 1 for
+  now"; v0.24's question), so Settings is unchanged.
+- From earlier entries, still open: PRODUCTION.md 1.3 (Auth SMTP, templates) and 1.8 (smoke
+  test), the signed-in first-load and Lighthouse checks, §2 students, HANDOFF v1.0 (v0.23's
+  Next 2, 3).
   The Chinese sign-up and reset emails (stage 4) depend on 1.3's templates.
 **Next**
 1. Herman's reader reads the screens (`frontend-plan/out/zh/`), `emails.txt` and the glossary.
