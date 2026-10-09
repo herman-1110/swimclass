@@ -466,6 +466,7 @@ describe.skipIf(!hasDatabase)('delete_group (Herman, 9 Oct 2026)', () => {
       display_names: 'Aiman & Sofia',
       active: true,
     })
+    await db.as('herman')
     expect(await failure(db, sql, [SEED.groups.sofia])).toMatchObject({ message: 'not_found' })
   })
 

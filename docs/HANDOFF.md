@@ -4,16 +4,14 @@ Update this file at the end of every Claude Code session. Newest entry on top.
 Keep entries short; link to files instead of pasting code.
 
 ## v0.27 · 9 Oct 2026 · Going live: English and Chinese, Remove payment, Delete group
-**State**: the working copy is on the local branch `delete-group` (from `frontend-first`
-a1d8b3f, which is `chinese`, v0.26, fast-forwarded). Herman, 9 Oct: "now i just have to make
+**State**: the working copy is on `frontend-first`, fast-forwarded through `chinese` (v0.26)
+and then `delete-group` (this entry). Herman, 9 Oct: "now i just have to make
 the system goes live with the update i made", then "i also want it to be able to remove … the
 group that i accidentally added the student into to be gone", so the deploy waits for Delete
 group. The reader hasn't read the Chinese yet; their corrections ship later as an ordinary
-website deploy. Not pushed or deployed when this was written. `frontend-first` still points
-at a1d8b3f (Chinese and Remove payment only): it moves to `delete-group` once Delete group is
-on dev and `test:db` passes.
+website deploy. Not pushed or deployed when this was written: Deploy step 1 is done, 2 is next.
 **Decided**: "Unpaid packages allowed" stays 1 (Herman, 9 Oct: "can just remain 1 for now").
-**Delete group** (Herman, 9 Oct; on `delete-group`, not yet on dev):
+**Delete group** (Herman, 9 Oct; on dev 9 Oct, not production):
 - Migration `20261009120000_delete_group.sql`: `delete_group(p_group_id)`, coach only. Under
   the group's lock (`for update`), deletes its lessons (past, cancelled, excused), its payments
   and the group (members and starting balance with it), then those of its students no other
@@ -34,6 +32,8 @@ on dev and `test:db` passes.
   `DeleteGroupDialog.test.tsx`, `CoachStudentsPage.actions.test.tsx`; `messages.test.ts`;
   `tests/db/groups.test.ts` (Sofia's group with its lesson and payment, Sofia kept in Aiman &
   Sofia; a new student going with a new group; the refusals) and `rls.test.ts` (the grant).
+  After Herman's push to dev: `npm run test:db` 13 files, 303 tests passed; `db:types` from
+  dev gives the same `database.types.ts` as the hand edit.
   Full unit run: 253 files, 1919 tests passed; typecheck, lint, format clean. In Chrome (demo,
   1280 and 390): `frontend-plan/tools/delete-group-steps.mjs` → `out/delete-group-{history,
   confirm,deleted,refused}@…` (focus on Keep group, then on the notice; no console errors).
@@ -42,7 +42,7 @@ on dev and `test:db` passes.
 the `zh` chunk is 6.0 kB gzipped). `npm run test:db` on dev passed on 9 Oct with v0.26's two
 migrations (299).
 **Deploy**, in this order:
-1. Dev (Herman, the CLI linked to dev): `npx supabase db push --dry-run` lists only
+1. Done 9 Oct. Dev (Herman, the CLI linked to dev): `npx supabase db push --dry-run` lists only
    `20261009120000_delete_group.sql`; `npx supabase db push`. Then Claude: `npm run test:db`,
    `npm run db:types` (same file as the hand edit), and `frontend-first` fast-forwarded to
    `delete-group`.
