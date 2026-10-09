@@ -3,7 +3,34 @@
 Update this file at the end of every Claude Code session. Newest entry on top.
 Keep entries short; link to files instead of pasting code.
 
-## v0.26 · 7–9 Oct 2026 · English and Chinese; removing a payment (in progress)
+## v0.27 · 9 Oct 2026 · Going live: English and Chinese, Remove payment
+**State**: `chinese` (v0.26: stages 1 to 4 and Remove payment) is fast-forwarded into
+`frontend-first` to go live (Herman, 9 Oct: "now i just have to make the system goes live with
+the update i made"). The reader hasn't read the Chinese yet: their corrections ship later as
+an ordinary website deploy. Not pushed or deployed when this was written.
+**Checked before the merge**: typecheck, lint, format:check, unit (252 files, 1908 tests), a
+production `vite build` into the scratchpad (names the production project; the `zh` chunk is
+6.0 kB gzipped). `npm run test:db` on dev passed on 9 Oct with both migrations (299, v0.26).
+**Decided**: "Unpaid packages allowed" stays 1 (Herman, 9 Oct: "can just remain 1 for now").
+**Deploy** (Herman, PRODUCTION.md §3). The database goes before the website: the new site
+reads `profiles.language` and calls `remove_payment`, so a site deployed first fails on every
+signed-in page.
+1. `git push origin frontend-first`; CI green; `git fetch . frontend-first:main`;
+   `git push origin main`.
+2. `npx supabase link --project-ref lzpvvgbnyyqzzohwncxc`; `npx supabase db push --dry-run`
+   must list exactly `20261008100000_profile_language.sql` and
+   `20261009100000_remove_payment.sql`; `npx supabase db push`; straight away
+   `npx supabase link --project-ref uhrgtttvzqjrdtdzyzkr` (back to dev).
+3. `npm run build`; `npx wrangler deploy`.
+4. Claude checks the live site: headers, a deep link, the `zh` chunk, the toggle on /login.
+5. PRODUCTION.md 1.3: Confirm signup template = the new `confirmation.html`. Until then a
+   sign-up made in 中文 gets the English email.
+**Next**: the live checks after the deploy; then v0.26 Next 1 and 2 (the reader, Waiting for
+approval's shot, the corrections). Still open: PRODUCTION.md 1.3 and 1.8, the signed-in
+first-load and Lighthouse checks, §2 students, HANDOFF v1.0. The local `chinese` branch can
+go once `frontend-first` is pushed.
+
+## v0.26 · 7–9 Oct 2026 · English and Chinese; removing a payment
 **State**: the working copy is on the local branch `chinese` (stages 1 to 4, Remove payment
 and these notes), which isn't pushed. Stage 4's and Remove payment's migrations are on dev
 (Herman pushed them 8 and 9 Oct), not production.
